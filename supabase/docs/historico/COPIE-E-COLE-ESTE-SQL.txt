@@ -1,0 +1,15 @@
+INSTRUÇÕES ULTRA-RÁPIDAS:
+
+1. Abra: https://rptkhrboejbwexseikuo.supabase.co/project/rptkhrboejbwexseikuo/sql/new
+
+2. Abra o arquivo: DEPLOY-SQL-UNICO.sql (está na mesma pasta deste arquivo)
+
+3. CTRL+A (selecionar tudo) → CTRL+C (copiar)
+
+4. Cole no SQL Editor (CTRL+V)
+
+5. Clique em RUN (botão verde)
+
+6. Aguarde 15 segundos
+
+PRONTO! Depois me avise que eu verifico se funcionou.

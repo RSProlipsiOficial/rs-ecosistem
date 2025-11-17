@@ -1,0 +1,112 @@
+PRD – CONFIGURAÇÕES GERAIS E PERFIS (RS PRÓLIPSI)
+Documento técnico-funcional do módulo de Configurações Gerais e Perfis do ecossistema RS Prólipsi. Define a arquitetura central de controle de acessos, permissões, planos e módulos. O objetivo é permitir que o administrador tenha total domínio sobre ativações, liberações e personalizações de recursos para Consultores, Logistas, CDs e demais perfis do sistema.
+1. Visão Geral
+
+O módulo Configurações Gerais / Perfis é o núcleo de controle do sistema RS Prólipsi.
+Ele centraliza todas as ativações de módulos, permissões de acesso e planos premium. 
+Através dele, o administrador define quais recursos estão ativos, quais usuários têm acesso a cada módulo e como os upgrades de planos são processados.
+
+2. Estrutura de Banco de Dados (Configuração Global)
+
+Tabela | Função | Atualização
+--------|---------|-------------
+system_settings | Configurações globais do sistema (ex: tema, URLs, chaves) | Manual / Automática
+user_roles | Perfis de usuário (Admin, Consultor, Logista, CD) | Manual
+user_permissions | Permissões de cada função | Manual
+premium_features | Recursos premium liberados por plano | Manual / Automática
+module_status | Status ativo/inativo dos módulos | Automática
+upgrade_requests | Solicitações de upgrade de plano | Automática
+plan_configurations | Definição de planos e licenças | Manual
+system_logs | Histórico de alterações no sistema | Automática
+
+3. Estrutura de Perfis e Hierarquia
+
+Perfil | Descrição | Permissões
+--------|------------|------------
+Administrador Global | Controle total de todos os módulos e configurações | Criar, editar, excluir, auditar
+Administrador Regional / CD | Controle logístico e de rede local | Acesso parcial a relatórios e finanças
+Consultor Premium | Acesso a loja personalizada, RS Studio e WalletPay | Recursos premium habilitados
+Consultor Básico | Acesso padrão à rede e bônus SIGMA | Funções restritas
+Lojista / Parceiro | Cadastro de produtos e afiliados | Estoque e vendas
+
+4. Áreas de Configuração (no Painel Admin)
+
+1. Configurações do Sistema
+   - Ativar/desativar módulos (WalletPay, RS Studio, Marketplace, SIGMA)
+   - Ajustar tema, cores e subdomínios
+   - Configurar chaves de API (PIX, Supabase, IA)
+2. Gestão de Perfis
+   - Criar e editar papéis de usuário
+   - Atribuir permissões específicas por perfil
+   - Revogar acessos e redefinir senhas
+3. Planos e Licenças
+   - Definir planos (Básico, Premium, Master)
+   - Atribuir recursos premium (edição de loja, painel personalizado, RS Studio)
+   - Gerenciar valores e prazos de cobrança
+4. Controle de Upgrades
+   - Aprovar upgrades de planos
+   - Validar pagamentos via WalletPay
+   - Atualizar automaticamente permissões
+5. Auditoria e Segurança
+   - Visualizar logs e ações recentes
+   - Resetar tokens e chaves do sistema
+   - Monitorar alterações em tempo real
+
+5. Integrações Principais
+
+Módulo | Função | Tipo de Comunicação
+---------|----------|----------------------
+Marketplace | Liberação de lojas premium | API interna
+WalletPay | Validação de pagamentos de upgrade | Webhook
+SIGMA | Sincronização de qualificações e matrizes | Automática
+RS Studio | Liberação de treinamentos e IA | API REST
+Admin Central | Logs e auditorias de permissões | Automática
+
+6. Campos Importantes no Banco
+
+Campo | Tabela | Descrição
+--------|---------|-----------
+feature_name | premium_features | Nome do recurso premium
+is_active | module_status | Estado do módulo (ativo/inativo)
+plan_level | plan_configurations | Plano mínimo exigido para acesso
+user_role | user_roles | Tipo de usuário
+permissions | user_permissions | Lista de permissões atribuídas
+request_status | upgrade_requests | Status do upgrade (pendente, aprovado, recusado)
+
+7. Fluxo Operacional
+
+1. O administrador define quais módulos estão ativos.
+2. O consultor solicita um upgrade de plano.
+3. WalletPay confirma pagamento e envia webhook.
+4. O Admin aprova e o sistema libera automaticamente o acesso.
+5. Marketplace e RS Studio recebem a atualização de plano.
+6. Logs são gravados e replicados no painel do Admin.
+
+8. Relatórios
+
+Relatório | Finalidade
+------------|-------------
+Usuários por perfil | Quantidade de usuários por tipo
+Módulos ativos/inativos | Situação atual dos módulos
+Upgrades pendentes/aprovados | Controle de planos premium
+Histórico de alterações | Acompanhamento de mudanças no sistema
+Permissões por perfil | Escopo de acesso de cada usuário
+
+9. Segurança e Auditoria
+
+- Logs criptografados com hash SHA256
+- Controle granular de permissões (ACL)
+- Confirmação 2FA em upgrades críticos
+- Histórico detalhado por campo e usuário
+- Backup automático de configurações (Supabase)
+- Rastreabilidade completa por IP e UUID
+
+10. Roadmap de Expansão
+
+Fase | Entrega | Descrição
+------|----------|-----------
+Fase 1 | Configurações de sistema e perfis | Base funcional
+Fase 2 | Integração com WalletPay e Marketplace | Automação de upgrades
+Fase 3 | Painel visual de controle | Editor interativo de permissões
+Fase 4 | Relatórios inteligentes (RS.IA) | Recomendações automáticas
+Fase 5 | API pública de configuração | Integração com redes externas

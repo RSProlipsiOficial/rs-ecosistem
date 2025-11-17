@@ -1,0 +1,91 @@
+Padr�o Unificado de Escrit�rios RS Pr�lipsi
+Vers�o 1.0 � 05/11/2025 12:15
+Este documento � o padr�o oficial de Design + UX + Componentes para TODOS os escrit�rios (Admin, Consultor e futuros m�dulos), tomando o Painel do Consultor como refer�ncia visual e mantendo as regras de neg�cio do Administrativo (marketing/comunica��o, finan�as, SIGMA, carreira, etc.).
+1. Princ�pios de Design e Produto
+1.1 Consist�ncia acima de tudo: o Painel do Consultor define o visual-base (cores, espa�amento, tipografia, cards, menus).
+1.2 Prioridade ao dark theme com destaques em dourado (acessibilidade AA).
+1.3 Modularidade: todos os componentes s�o reus�veis entre Admin e Consultor.
+1.4 Performance e legibilidade: layouts de poucas camadas, sombras suaves e estados de foco claros.
+1.5 Auditabilidade: qualquer dado apresentado deve ter origem e logs rastre�veis.
+2. Paleta de Cores (Base no Painel do Consultor)
+� Prim�rio (Gold): #C8A74E
+� Prim�rio � hover: #B8943F
+� Prim�rio � muted: #E6D7A5
+� Fundo base (Graphite 900): #0F1115
+� Superf�cie (Graphite 800): #161A21
+� Card (Graphite 750): #1B2029
+� Bordas (Graphite 650): #2A303B
+� Texto t�tulo (Zircon 50): #F2F4F8
+� Texto corpo (Zircon 200): #B7C0CD
+� Texto suave (Zircon 350): #93A0B1
+� Info: #3BAFDA
+� Success: #38C793
+� Warning: #E6A23C
+� Danger: #EF5A5A
+Gradiente hero: linear-gradient(135deg, #0F1115 0%, #161A21 40%, #1B2029 100%).
+3. Tokens, Tipografia e Espa�amentos
+� Raio padr�o: 16px (cantos 2xl).
+� Sombra: 0 10px 30px rgba(0,0,0,0.45).
+� Ring de foco: 0 0 0 2px rgba(200,167,78,.25) (dourado).
+� Tipografia: t�tulos sem serifa de alta legibilidade; corpo em 14�16px; labels em 12�13px.
+� Espa�amento: grid de 4px (4,8,12,16,24,32) com prefer�ncia por 8/16/24 nas �reas principais.
+4. Layout e Navega��o (Modelo do Consultor)
+� Sidebar � esquerda (colaps�vel), �cones lineares e tooltip no colapso.
+� Topbar com breadcrumb, busca compacta e avatar/a��es r�pidas.
+� P�ginas com padding lateral 24px�32px; conte�do em cards.
+� Responsividade: breakpoints sm (=640), md (=768), lg (=1024), xl (=1280).
+� Anima��es: 200�250ms com easing cubic-bezier(.2,.8,.2,1).
+5. Componentes Padronizados
+5.1 Cards: fundo #1B2029, borda #2A303B, t�tulo em #F2F4F8, a��es � direita, radius 16px.
+5.2 KPI Cards: altura 88�112px, n�mero grande, label pequena, �cone sutil em cont�iner #161A21.
+5.3 Tabelas: header sticky, zebra leve (rgba(255,255,255,0.02)), hover suave, a��es por linha.
+5.4 Formularios: inputs em #161A21, borda #2A303B, foco com ring dourado; valida��es inline.
+5.5 Gr�ficos: linhas/colunas simples; evitar polui��o visual; legenda minimalista.
+5.6 Bot�es: prim�rio dourado, texto preto; secund�rio superf�cie, texto claro; perigosos em #EF5A5A.
+5.7 Badges/Status: success #38C793, warning #E6A23C, danger #EF5A5A, info #3BAFDA.
+5.8 Avatares/�cones: tra�o regular, contraste alto sobre superf�cies escuras.
+6. SIGMA � Matriz e Ciclo (Est�tica)
+� N�s da matriz com borda dourada quando ativos; preenchimento neutro quando neutros; anel externo por status.
+� Status de n�s: completed (verde), in_progress (amarelo), locked (cinza/borda).
+� Linhas de conex�o discretas, sem polui��o; labels apenas quando necess�rio.
+� Cards auxiliares: metas por n�vel (6,36,216,1.296,7.776,46.656), progresso e elegibilidade.
+7. Marketing & Comunica��o (Regras do Admin preservadas)
+� Manter m�dulos de Marketing, Pixels e Comunica��o do Admin, apenas herdando o visual do Consultor.
+� Pixels: Google/Meta/TikTok/Taboola/LinkedIn por consultor/loja; consent mode; logs de firing por dom�nio.
+� Comunica��o: Treinamentos, Cat�logo e Downloads com versionamento e controle de acesso.
+� M�tricas: funil (view?cart?purchase), CTR/ROAS e engajamento de conte�do.
+8. Acessibilidade (AA)
+� Contraste m�nimo AA em todos os estados (normal e hover).
+� Foco vis�vel com ring dourado em todos os elementos interativos.
+� Tamanho m�nimo de alvo 40�40px para bot�es e �cones.
+� Navega��o por teclado e leitura por tecnologias assistivas (labels/aria).
+9. Estrutura de Menus � Padr�o
+Admin: Dashboard; SIGMA; Carreira (PIN); Wallet; Marketplace; Afilia��o & Drop; Marketing & Pixels; Treinamentos; Usu�rios; Configura��es.
+Consultor: Dashboard; SIGMA (Matriz/Ciclo); B�nus; Carreira; Wallet; RS Shopping; Afilia��o; Comunica��o; Studio/RS.IA; Suporte.
+10. Estados, Feedback e Mensageria
+� Sucesso: banners discretos em verde com �cone de check; tempo de vida curto.
+� Erros: mensagem clara com a��o sugerida; log interno obrigat�rio.
+� Loading: skeletons em cards e tabelas; evitar spinners persistentes.
+� Vazios (empty states): instru��es curtas e call-to-action direta.
+11. Conte�do e Texto
+� T�tulos curtos e descritivos; subt�tulos para contexto.
+� Unidades e moeda padr�o (R$, %, pontos); n�meros leg�veis (separador de milhar).
+� Linguagem direta, t�cnica quando necess�rio; evitar jarg�es desnecess�rios.
+12. CRM � Sequ�ncia de Entrega (Vis�o Geral)
+CRM-01 Cadastros & KYC (entregue) � base de pessoas, documentos, consentimento.
+CRM-02 Qualifica��o & Ativa��es (entregue) � ativa��es mensais, diretos, reentradas, auditoria.
+CRM-03 SIGMA (Matriz & Ciclo) � �rvore de rede, ciclos, metas, elegibilidade.
+CRM-04 B�nus (Profundidade, Fidelidade, Top) � c�lculo, auditoria e relat�rios.
+CRM-05 Carreira (PIN) � apura��o trimestral, VMEc, linhas m�nimas, b�nus por PIN.
+CRM-06 Wallet � extrato, saques, links/POS, taxas, concilia��o.
+CRM-07 Marketplace � pedidos, pagamentos, fretes, devolu��es.
+CRM-08 Afilia��o & Dropshipping � comiss�o, pontos por R$, parceiros (premia��o de carreira do Drop = TBD).
+CRM-09 Pixels & Marketing � disparos por consultor/loja, UTMs, consent.
+CRM-10 Comunica��o & Treinamentos � biblioteca, notifica��es, engajamento.
+CRM-11 Auditoria & Compliance � logs imut�veis, trilhas de aprova��o.
+CRM-12 BI & KPIs � dashboards por m�dulo, snapshots, exporta��es.
+13. Governan�a e Publica��o
+� Cada altera��o de padr�o visual deve manter paleta e tokens; mudan�as passam por aprova��o do Admin.
+� Publica��o segue o pipeline da VPS (build, PM2, Nginx); ambientes de teste e produ��o separados.
+� Logs de configura��o (percentuais, pools, spillover, reentrada) e financeiros obrigat�rios.
+Observa��o: Qualquer m�dulo novo deve respeitar integralmente este padr�o visual e de experi�ncia, herdando componentes e tokens para evitar diverg�ncia entre pain�is.

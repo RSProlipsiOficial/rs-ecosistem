@@ -1,0 +1,176 @@
+CRM / PRD – ESCRITÓRIO DO CONSULTOR (RS PRÓLIPSI)
+Documento relacional e técnico-funcional do módulo Escritório do Consultor RS Prólipsi. Baseado na estrutura real do código (Rs Prólipsi Consultor.zip), descreve todas as camadas operacionais, integrações, árvore SIGME, WalletPay, Marketplace, RS Studio e Configurações Gerais, com foco em rastreabilidade total de dados.
+1. Objetivo e Escopo
+
+O módulo Escritório do Consultor é o ambiente digital central de cada consultor dentro do ecossistema RS Prólipsi.
+Integra as operações com SIGMA, WalletPay, Marketplace, RS Studio e Configurações Globais.
+Garante controle da rede, visualização da árvore genealógica SIGME, acompanhamento financeiro e acesso a recursos de marketing e comunicação.
+
+2. Estrutura Técnica e Lógica do Sistema
+
+Ambiente: React + Vite + Supabase Auth
+Banco: PostgreSQL (Supabase)
+Autenticação: JWT + Roles (consultant, admin, support)
+Estilo: Tailwind + Shadcn/UI
+Deploy: VPS Hostinger, Porta 5002
+Domínio: escritorio.rsprolipsi.com.br
+Integrações: SIGMA, WalletPay, Marketplace, RS Studio e Configurações Globais
+
+3. Estrutura de Pastas (ZIP original)
+
+/src
+  /components
+    /dashboard
+    /network
+    /wallet
+    /store
+    /communication
+    /profile
+  /pages
+    index.jsx
+    network.jsx
+    wallet.jsx
+    store.jsx
+    communication.jsx
+    profile.jsx
+    support.jsx
+  /services
+    api.js
+    sigma.js
+    wallet.js
+    market.js
+    rsstudio.js
+  /hooks
+  /utils
+  /config
+  /styles
+.env
+
+4. Dashboard Principal
+
+Objetivo: visão consolidada da operação do consultor.
+Elementos:
+- Saldo Atual (WalletPay)
+- Pontos Acumulados (SIGME)
+- Matrizes Ativas
+- Ciclos Concluídos
+- Gráfico de desempenho semanal
+- Botão “Sincronizar Dados” (executa syncNetworkTree)
+
+5. Módulo SIGME / Árvore Genealógica
+
+Componente: NetworkTree.jsx
+Biblioteca: D3.js (SVG Dinâmico)
+Renderização: baseada em coordenadas X/Y pré-calculadas via backend Supabase.
+
+Regras:
+- Raiz: consultor autenticado.
+- Cada nó representa membro ativo (tabela network_nodes).
+- Campos: id, nome, nível, ativo, posição, status_ciclo, diretos.
+- Cores: verde (ativo), cinza (inativo), dourado (PIN).
+Interatividade:
+- Zoom/pan, expansão de níveis, tooltip com dados.
+- Atualização via função syncNetworkTree().
+
+Fonte de dados: network_nodes, matrix_cycles, bonus_ledger.
+
+6. Módulo Financeiro / WalletPay
+
+Funções:
+- Exibir saldo total e ganhos mensais
+- Histórico de bônus (fidelidade, profundidade, ciclo)
+- Solicitar saque via PIX
+- Webhook de conciliação
+Endpoints:
+- GET /wallet/balance
+- GET /wallet/transactions
+- POST /wallet/withdraw
+- POST /wallet/webhook
+
+7. Módulo Marketplace / Loja
+
+Página: /pages/store.jsx
+Link de afiliado: https://loja.rsprolipsi.com.br/?ref={consultant_id}
+Recursos:
+- Catálogo, estoque e comissão
+- Integração market.js
+- Registro automático de vendas e comissões
+
+8. Módulo Comunicação / RS Studio
+
+Central de comunicação e treinamento.
+Funções:
+- Chat RSA (IA)
+- Painel de treinamentos e mensagens automáticas
+- Notificações corporativas
+Tabelas: studio_messages, trainings_progress
+
+9. Perfil e Configurações
+
+Página: /pages/profile.jsx
+Funções:
+- Edição de nome, CPF/CNPJ, email, telefone
+- Upload de documentos (KYC)
+- Alteração de senha / 2FA
+- Atualização de plano (WalletPay + Config)
+Campos: user_role, plan_level, is_verified, wallet_linked
+
+10. Banco de Dados e Relações Principais
+
+Tabela | Função
+--------|---------
+consultants | Cadastro base
+network_nodes | Estrutura da rede
+matrix_cycles | Controle de ciclos
+bonus_ledger | Histórico de bônus
+wallet_accounts | Carteiras do consultor
+wallet_transactions | Extratos financeiros
+orders | Vendas
+studio_messages | Comunicação
+trainings_progress | Treinamentos
+audit_logs | Logs do sistema
+
+11. Segurança e Auditoria
+
+- JWT + Supabase Auth
+- Logs de IP e dispositivo
+- Criptografia AES para PIX e dados sensíveis
+- Auditoria automática em audit_logs
+- Conformidade LGPD total
+
+12. KPIs e Indicadores
+
+Indicador | Fonte | Descrição
+-----------|--------|-----------
+Pontos pessoais | SIGMA | Pontos do próprio consumo
+Pontos de equipe | SIGMA | Volume gerado pela rede
+Ganhos totais | WalletPay | Soma dos bônus
+Ciclos ativos | SIGMA | Matrizes em andamento
+Saques processados | WalletPay | Retiradas confirmadas
+Taxa de engajamento | RS Studio | Mensagens/vídeos concluídos
+
+13. Triggers e Processos Automáticos
+
+Trigger | Ação | Origem | Destino
+----------|------|--------|----------
+trg_bonus_on_cycle_complete | Gera lançamentos de bônus | SIGMA | WalletPay
+trg_wallet_on_bonus_credit | Atualiza saldo | SIGMA | Wallet
+trg_commission_on_order_paid | Registra comissão | Marketplace | Wallet
+trg_tree_on_new_registration | Atualiza árvore | SIGMA | Consultor
+
+14. Segurança de Rede e Perfis
+
+RLS ativa em todas as tabelas.
+Consultores acessam apenas seus dados e rede direta.
+Admins regionais têm escopo parcial.
+Backups automáticos e restore seletivo.
+
+15. Roadmap Técnico
+
+Fase | Entrega | Descrição
+------|----------|-----------
+F1 | SIGMA + Árvore | Núcleo de rede funcional
+F2 | Financeiro | WalletPay completo
+F3 | Comunicação | Chat RSA e treinamentos
+F4 | Marketplace Premium | Loja personalizável
+F5 | RS.IA | Inteligência e relatórios automáticos

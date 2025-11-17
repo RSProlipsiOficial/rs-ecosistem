@@ -1,0 +1,183 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Status de pedidos e entregas - RS Prólipsi Logística",
+  
+  "status_pedido": {
+    "pending": {
+      "nome": "Aguardando Pagamento",
+      "cor": "#FFA500",
+      "icone": "⏳",
+      "descricao": "Pedido criado, aguardando confirmação de pagamento",
+      "proximo": ["payment_confirmed", "cancelled"]
+    },
+    "payment_confirmed": {
+      "nome": "Pagamento Confirmado",
+      "cor": "#00CED1",
+      "icone": "💰",
+      "descricao": "Pagamento aprovado, aguardando seleção de CD",
+      "proximo": ["cd_selected"]
+    },
+    "cd_selected": {
+      "nome": "CD Selecionado",
+      "cor": "#4169E1",
+      "icone": "📍",
+      "descricao": "Centro de Distribuição definido",
+      "proximo": ["preparing"]
+    },
+    "preparing": {
+      "nome": "Em Separação",
+      "cor": "#FFD700",
+      "icone": "📦",
+      "descricao": "Produtos sendo separados no CD",
+      "proximo": ["ready_to_ship"]
+    },
+    "ready_to_ship": {
+      "nome": "Pronto para Despacho",
+      "cor": "#32CD32",
+      "icone": "✅",
+      "descricao": "Pedido embalado e pronto para envio",
+      "proximo": ["dispatched"]
+    },
+    "dispatched": {
+      "nome": "Despachado",
+      "cor": "#1E90FF",
+      "icone": "🚚",
+      "descricao": "Pedido saiu do CD para entrega",
+      "proximo": ["in_transit"]
+    },
+    "in_transit": {
+      "nome": "Em Trânsito",
+      "cor": "#FF8C00",
+      "icone": "🛣️",
+      "descricao": "Pedido a caminho do destino",
+      "proximo": ["out_for_delivery"]
+    },
+    "out_for_delivery": {
+      "nome": "Saiu para Entrega",
+      "cor": "#FFD700",
+      "icone": "🚗",
+      "descricao": "Pedido com o motorista para entrega final",
+      "proximo": ["delivered", "delivery_failed"]
+    },
+    "delivered": {
+      "nome": "Entregue",
+      "cor": "#00FF00",
+      "icone": "✅",
+      "descricao": "Pedido entregue com sucesso",
+      "proximo": ["completed"],
+      "acoes_automaticas": [
+        "fechar_ciclo_sigma",
+        "liberar_pontos_carreira",
+        "enviar_notificacao_entrega"
+      ]
+    },
+    "delivery_failed": {
+      "nome": "Falha na Entrega",
+      "cor": "#FF4500",
+      "icone": "❌",
+      "descricao": "Tentativa de entrega sem sucesso",
+      "proximo": ["rescheduled", "return_to_cd"]
+    },
+    "rescheduled": {
+      "nome": "Reagendado",
+      "cor": "#FFA500",
+      "icone": "📅",
+      "descricao": "Nova tentativa de entrega agendada",
+      "proximo": ["out_for_delivery"]
+    },
+    "return_to_cd": {
+      "nome": "Retornando ao CD",
+      "cor": "#DC143C",
+      "icone": "↩️",
+      "descricao": "Pedido voltando para o CD",
+      "proximo": ["returned"]
+    },
+    "returned": {
+      "nome": "Devolvido",
+      "cor": "#8B0000",
+      "icone": "🔙",
+      "descricao": "Pedido devolvido ao CD",
+      "proximo": ["refund_processing"]
+    },
+    "refund_processing": {
+      "nome": "Processando Reembolso",
+      "cor": "#4B0082",
+      "icone": "💸",
+      "descricao": "Reembolso em processamento",
+      "proximo": ["refunded"]
+    },
+    "refunded": {
+      "nome": "Reembolsado",
+      "cor": "#800080",
+      "icone": "💵",
+      "descricao": "Valor devolvido ao cliente",
+      "proximo": []
+    },
+    "cancelled": {
+      "nome": "Cancelado",
+      "cor": "#FF0000",
+      "icone": "🚫",
+      "descricao": "Pedido cancelado",
+      "proximo": []
+    },
+    "completed": {
+      "nome": "Concluído",
+      "cor": "#228B22",
+      "icone": "🎉",
+      "descricao": "Processo finalizado com sucesso",
+      "proximo": []
+    }
+  },
+  
+  "status_estoque": {
+    "available": {
+      "nome": "Disponível",
+      "cor": "#00FF00",
+      "icone": "✅"
+    },
+    "low_stock": {
+      "nome": "Estoque Baixo",
+      "cor": "#FFA500",
+      "icone": "⚠️",
+      "threshold": 10
+    },
+    "out_of_stock": {
+      "nome": "Sem Estoque",
+      "cor": "#FF0000",
+      "icone": "❌"
+    },
+    "reserved": {
+      "nome": "Reservado",
+      "cor": "#FFD700",
+      "icone": "🔒"
+    }
+  },
+  
+  "notificacoes_automaticas": {
+    "payment_confirmed": {
+      "enviar": true,
+      "canais": ["email", "push"],
+      "template": "pagamento_confirmado"
+    },
+    "dispatched": {
+      "enviar": true,
+      "canais": ["email", "push", "sms"],
+      "template": "pedido_despachado"
+    },
+    "out_for_delivery": {
+      "enviar": true,
+      "canais": ["push", "sms"],
+      "template": "saiu_para_entrega"
+    },
+    "delivered": {
+      "enviar": true,
+      "canais": ["email", "push"],
+      "template": "entrega_confirmada"
+    },
+    "delivery_failed": {
+      "enviar": true,
+      "canais": ["email", "push", "sms"],
+      "template": "falha_entrega"
+    }
+  }
+}

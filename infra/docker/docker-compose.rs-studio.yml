@@ -1,0 +1,57 @@
+name: rs-studio-stack
+networks:
+  rs_network:
+    name: rs_network
+services:
+  rs-bolt:
+    container_name: rs-bolt
+    build:
+      context: ../../apps/rs-studio/bolt.diy-main/bolt.diy-main
+      dockerfile: Dockerfile
+    env_file:
+      - ../../apps/rs-studio/.env
+      - ../docker/.env.tools
+    # no env overrides; Bolt exposes 5173 internally
+    ports:
+      - "5601:5173"
+    networks:
+      - rs_network
+    restart: unless-stopped
+
+  rs-n8n:
+    container_name: rs-n8n
+    build:
+      context: ../../apps/rs-studio/n8n-master/n8n-master
+      dockerfile: local.Dockerfile
+    env_file:
+      - ../docker/.env.tools
+      - ../../apps/rs-studio/.env
+    environment:
+      N8N_PORT: 5678
+      N8N_PROTOCOL: http
+      N8N_HOST: studio.rsprolipsi.com.br
+      N8N_EDITOR_BASE_URL: ${N8N_BASE_URL}
+      WEBHOOK_URL: ${N8N_BASE_URL}
+      N8N_PUBLIC_PATH: /agents/
+      N8N_SECURE_COOKIE: "false"
+    ports:
+      - "5678:5678"
+    networks:
+      - rs_network
+    restart: unless-stopped
+
+  rs-whatsapp:
+    container_name: rs-whatsapp
+    build:
+      context: ../../apps/rs-studio/evolution-api-main/evolution-api-main
+      dockerfile: Dockerfile
+    env_file:
+      - ../../apps/rs-studio/.env
+    environment:
+      - SERVER_PORT=${EVOLUTION_SERVER_PORT:-8080}
+      - SERVER_TYPE=http
+    ports:
+      - "${EVOLUTION_SERVER_PORT:-8080}:8080"
+    networks:
+      - rs_network
+    restart: unless-stopped

@@ -1,0 +1,9 @@
+{
+  "participant": {
+    "name": "João Silva",
+    "email": "joao@example.com",
+    "cpf": "98765432100"
+  },
+  "paymentAmount": 50.00,
+  "paymentMethod": "pix"
+}

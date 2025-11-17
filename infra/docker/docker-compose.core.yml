@@ -1,0 +1,204 @@
+version: "3.9"
+services:
+  rs-site:
+    container_name: rs-site
+    build:
+      context: ../../apps/rs-site
+    env_file:
+      - .env.core
+      - ../../apps/rs-site/.env
+    ports:
+      - "${RS_SITE_PORT}:${RS_SITE_PORT}"
+    environment:
+      - PORT=${RS_SITE_PORT}
+      - RS_API_URL=http://rs-api:${RS_API_PORT}
+    depends_on:
+      - rs-api
+    restart: unless-stopped
+
+  rs-admin:
+    container_name: rs-admin
+    build:
+      context: ../../apps/rs-admin
+    env_file:
+      - .env.core
+      - ../../apps/rs-admin/.env
+    ports:
+      - "${RS_ADMIN_PORT}:${RS_ADMIN_PORT}"
+    environment:
+      - PORT=${RS_ADMIN_PORT}
+      - RS_API_URL=http://rs-api:${RS_API_PORT}
+    depends_on:
+      - rs-api
+    restart: unless-stopped
+
+  rs-consultor:
+    container_name: rs-consultor
+    build:
+      context: ../../apps/rs-consultor
+    env_file:
+      - .env.core
+      - ../../apps/rs-consultor/.env
+    ports:
+      - "${RS_CONSULTOR_PORT}:${RS_CONSULTOR_PORT}"
+    environment:
+      - PORT=${RS_CONSULTOR_PORT}
+      - RS_API_URL=http://rs-api:${RS_API_PORT}
+    depends_on:
+      - rs-api
+    restart: unless-stopped
+
+  rs-marketplace:
+    container_name: rs-marketplace
+    build:
+      context: ../../apps/rs-marketplace
+    env_file:
+      - .env.core
+      - .env.tools
+      - ../../apps/rs-marketplace/.env
+    ports:
+      - "${RS_MARKETPLACE_PORT}:${RS_MARKETPLACE_PORT}"
+    environment:
+      - PORT=${RS_MARKETPLACE_PORT}
+      - RS_API_URL=http://rs-api:${RS_API_PORT}
+    depends_on:
+      - rs-api
+    restart: unless-stopped
+
+  rs-walletpay:
+    container_name: rs-walletpay
+    build:
+      context: ../../apps/rs-walletpay
+    env_file:
+      - .env.core
+      - .env.tools
+      - ../../apps/rs-walletpay/.env
+    ports:
+      - "${RS_WALLETPAY_PORT}:${RS_WALLETPAY_PORT}"
+    environment:
+      - PORT=${RS_WALLETPAY_PORT}
+      - RS_API_URL=http://rs-api:${RS_API_PORT}
+    depends_on:
+      - rs-api
+    restart: unless-stopped
+
+  rs-logistica:
+    container_name: rs-logistica
+    build:
+      context: ../../apps/rs-logistica
+    env_file:
+      - .env.core
+      - ../../apps/rs-logistica/.env
+    ports:
+      - "${RS_LOGISTICA_PORT}:${RS_LOGISTICA_PORT}"
+    environment:
+      - PORT=${RS_LOGISTICA_PORT}
+      - RS_API_URL=http://rs-api:${RS_API_PORT}
+    depends_on:
+      - rs-api
+    restart: unless-stopped
+
+  rs-studio:
+    container_name: rs-studio
+    build:
+      context: ../../apps/rs-studio
+    env_file:
+      - .env.core
+      - .env.tools
+      - ../../apps/rs-studio/.env
+    ports:
+      - "${RS_STUDIO_PORT}:${RS_STUDIO_PORT}"
+    environment:
+      - PORT=${RS_STUDIO_PORT}
+      - RS_API_URL=http://rs-api:${RS_API_PORT}
+    depends_on:
+      - rs-api
+    restart: unless-stopped
+
+  rs-docs:
+    container_name: rs-docs
+    build:
+      context: ../../apps/rs-docs
+    env_file:
+      - .env.core
+      - ../../apps/rs-docs/.env
+    ports:
+      - "${RS_DOCS_PORT}:${RS_DOCS_PORT}"
+    environment:
+      - PORT=${RS_DOCS_PORT}
+      - RS_API_URL=http://rs-api:${RS_API_PORT}
+    depends_on:
+      - rs-api
+    restart: unless-stopped
+
+  rs-template-game:
+    container_name: rs-template-game
+    build:
+      context: ../../apps/rs-template-game
+    env_file:
+      - .env.core
+      - ../../apps/rs-template-game/.env
+    ports:
+      - "${RS_TEMPLATE_GAME_PORT}:${RS_TEMPLATE_GAME_PORT}"
+    environment:
+      - PORT=${RS_TEMPLATE_GAME_PORT}
+      - RS_API_URL=http://rs-api:${RS_API_PORT}
+    depends_on:
+      - rs-api
+    restart: unless-stopped
+
+  rs-ops-app:
+    container_name: rs-ops-app
+    build:
+      context: ../../apps/rs-ops-app
+    env_file:
+      - .env.core
+      - ../../apps/rs-ops-app/.env
+    ports:
+      - "${RS_OPS_APP_PORT}:${RS_OPS_APP_PORT}"
+    environment:
+      - PORT=${RS_OPS_APP_PORT}
+      - RS_API_URL=http://rs-api:${RS_API_PORT}
+    depends_on:
+      - rs-api
+    restart: unless-stopped
+
+  rs-api:
+    container_name: rs-api
+    build:
+      context: ../../apps/rs-api
+    env_file:
+      - .env.core
+      - .env.tools
+      - ../../apps/rs-api/.env
+    ports:
+      - "${RS_API_PORT}:${RS_API_PORT}"
+    environment:
+      - PORT=${RS_API_PORT}
+    restart: unless-stopped
+
+  rs-core:
+    container_name: rs-core
+    build:
+      context: ../../apps/rs-core
+    env_file:
+      - .env.core
+      - ../../apps/rs-core/.env
+    ports:
+      - "${RS_CORE_PORT}:${RS_CORE_PORT}"
+    environment:
+      - PORT=${RS_CORE_PORT}
+    restart: unless-stopped
+
+  rs-config:
+    container_name: rs-config
+    build:
+      context: ../../apps/rs-config
+    env_file:
+      - .env.core
+      - ../../apps/rs-config/.env
+    ports:
+      - "${RS_CONFIG_PORT}:${RS_CONFIG_PORT}"
+    environment:
+      - PORT=${RS_CONFIG_PORT}
+    restart: unless-stopped

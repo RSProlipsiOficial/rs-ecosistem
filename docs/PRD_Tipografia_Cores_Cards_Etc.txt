@@ -1,0 +1,53 @@
+descrição detalhada da filosofia de design do aplicativo e um Documento de Requisitos do Produto (PRD) de alto nível para orientá-lo no desenvolvimento de outros painéis.
+Segue uma visão geral detalhada:
+Filosofia de cor, modelo e design
+O design do Painel de Consultores da RS Prólipsi foi concebido com base em princípios de sofisticação, clareza e empoderamento, refletindo uma identidade de marca premium.
+1. Paleta de cores:
+O aplicativo utiliza um tema escuro e sofisticado, projetado para alto contraste e foco. Isso reduz o cansaço visual e destaca os dados principais.
+Contextos:A paleta principal consiste em carvões muito escuros (marca-escura: #121212) e cinzas ligeiramente mais claros (marca-cinza: #1E1E1E,marca-cinza-claro: #2A2A2A) para superfícies como cartões e cabeçalhos. Isso cria um ambiente coeso e imersivo.
+Sotaque principal:Uma vibrante e ricaOuro(marca-ouro: #FFD700A cor verde é usada como cor de destaque principal. Ela é aplicada estrategicamente em chamadas para ação, elementos de marca, métricas-chave e indicadores de progresso. Essa escolha evoca uma sensação de qualidade, conquista e valor.
+Texto:O texto principal é de um branco claro (texto-da-marca-leve: #E5E7EB) para máxima legibilidade, enquanto as informações secundárias usam um cinza mais escuro (brand-text-dim: #9CA3AF) para criar uma hierarquia visual clara.
+Efeitos:Uma sutil sombra dourada é aplicada em elementos importantes para dar-lhes destaque e um toque dinâmico e sofisticado.
+2. Modelo de Design (UI/UX):
+O aplicativo segue um modelo de painel de controle moderno e orientado por dados.
+Arquitetura da Informação:A estrutura é modular e hierárquica. Uma barra lateral recolhível organiza um amplo conjunto de recursos em categorias claras e de alto nível (SIGME, Loja RS, Carteira, Estúdio), com itens aninhados para funções específicas. Isso mantém a interface limpa e permite que ela seja facilmente escalável.
+Interface de usuário baseada em componentes:A interface é construída com componentes React reutilizáveis, principalmente oCartãocomponente. Isso garante consistência visual, acelera o desenvolvimento e torna o layout previsível para o usuário.
+Visualização de dados:Em vez de apenas mostrar números, o painel utiliza recursos visuais como oMedidor de progresso do pino, gráficos e oVisão de Matriz IncorporadaTornar dados complexos intuitivos e envolventes à primeira vista.
+Capacidade de resposta:O layout é totalmente responsivo. Em computadores, a barra lateral pode ser recolhida para maximizar o espaço de conteúdo. Em dispositivos móveis, ela se transforma em um menu deslizante, garantindo uma experiência perfeita em qualquer dispositivo.
+Tipografia:OInterA família tipográfica foi escolhida por sua excelente legibilidade em telas de diversos tamanhos e espessuras. Diferentes espessuras de fonte são utilizadas para estabelecer uma hierarquia clara entre títulos, rótulos e valores.
+Documento de Requisitos do Produto (PRD): Painel do Consultor
+Este documento descreve a visão, as características e a arquitetura técnica do painel de consultores.
+1. Introdução e Visão
+Produto:O "Painel Consultor" é uma aplicação web completa que serve como sede digital para os consultores da RS Prólipsi.
+Visão:Capacitar cada consultor com uma plataforma centralizada, intuitiva e poderosa para gerenciar seus negócios, acompanhar o desempenho, acessar recursos e expandir sua rede de contatos, promovendo um senso de profissionalismo e sucesso.
+Público-alvo:Consultores independentes da RS Prólipsi, desde novos recrutas a líderes experientes.
+2. Objetivos principais
+Para o Consultor (Objetivos do Usuário):
+Forneça uma visão geral imediata e concisa da saúde do meu negócio (ganhos, classificação, tamanho da rede).
+Facilite o acesso e o compartilhamento de ferramentas de vendas essenciais, como links de indicação e de afiliados.
+Oferecer um acompanhamento visual e claro do meu progresso em direção às minhas metas de carreira (próximo PIN).
+Centralize a gestão financeira, desde a visualização de comissões até a realização de saques.
+Fornecer ferramentas poderosas baseadas em IA (RS Studio) para criar conteúdo de marketing profissional e automatizar tarefas.
+Para a Empresa (Objetivos Empresariais):
+Aumentar o envolvimento, a atividade e a retenção de consultores.
+Impulsione o crescimento da rede tornando as métricas de desempenho transparentes e acionáveis.
+Simplificar a comunicação e a distribuição de recursos.
+Reforçar uma imagem de marca premium e moderna.
+3. Conjunto de funcionalidades e requisitos
+A aplicação está estruturada em vários módulos principais:
+Módulo	Principais características	Requisitos
+Painel principal	Cartão de informações do usuário, links copiáveis, resumos de bônus, banners promocionais, indicador de progresso na carreira, visão geral de contatos diretos.	Uma visualização personalizável, baseada em widgets, dos KPIs mais importantes. Deve ser clara, concisa e visualmente atraente.
+Painel SIGME	Interactive Network Tree (Árvore Interativa), Cycle Management, Detailed Bonus Reports (Profundidade, Fidelidade, etc.).	Foque na visualização de dados robusta para estruturas de rede complexas. Forneça ferramentas tanto para análises de alto nível quanto para investigações aprofundadas em ramificações específicas.
+Loja RS	Marketplace, Ferramentas de Dropshipping, Geração de Links de Afiliados, Gerenciamento de Pixel de Marketing.	Uma seção dedicada a todas as atividades relacionadas ao comércio eletrônico, separando as ferramentas de vendas voltadas para o consumidor das ferramentas de construção de rede.
+RS Wallet Pay	Visualização de saldo e extrato, transferências de fundos, solicitações de saque, relatórios financeiros.	Uma interface segura e intuitiva para todas as transações financeiras, proporcionando transparência e controle sobre os ganhos.
+RS Studio	Estrategista de Conteúdo(Redator de IA),Mídia IA(Gerador de imagens/vídeos com IA)Automações(Construtor de fluxo de trabalho).	Um conjunto integrado de ferramentas criativas que utiliza a API Gemini para ajudar consultores a criar materiais de marketing e automatizar tarefas repetitivas em mídias sociais, reduzindo as barreiras de acesso ao marketing profissional.
+Comunicação	Comunicados da empresa, Calendário de eventos (aniversários), Centro de treinamento, Downloads de mídia.	Um ponto central para todas as comunicações oficiais, recursos e materiais de treinamento.
+Painel de administração	Editor de painelGestão de Dados Pessoais.	Uma área restrita que permite aos administradores personalizar o layout padrão do painel de controle do consultor e gerenciar dados específicos do usuário.
+4. Arquitetura Técnica e Modelo de Desenvolvimento
+Framework de Frontend: ReagircomTypeScriptpara segurança de tipos e escalabilidade.
+Estilo: Tailwind CSSPara um sistema de design responsivo e focado na utilidade. Os elementos de design da marca (cores, fontes) são configurados globalmente.
+Roteamento: React RouterÉ utilizado para gerenciar toda a navegação do lado do cliente entre páginas e painéis.
+Gestão do Estado: API de Contexto do ReactOferece uma solução leve para gerenciar o estado global, como informações do usuário, configuração do painel e modos de layout.
+Integração de IA:O@google/genesA biblioteca é usada para conectar-se aoAPI Gemini, que alimenta todas as funcionalidades inteligentes do RS Studio e do Chatbot.
+Modularidade:A base de código está organizada por domínios de funcionalidades (por exemplo,/consultor/loja,/admin), tornando mais fácil manter, testar e expandir partes individuais do aplicativo sem afetar outras.
+Camada de dados:O aplicativo está atualmente desenvolvido com umcamada de dados simulada(/consultor/dados.tsIsso permite o desenvolvimento e teste rápidos da interface do usuário, independentemente de um backend em produção. Essa camada foi projetada para ser facilmente intercambiável com chamadas de API reais no futuro.

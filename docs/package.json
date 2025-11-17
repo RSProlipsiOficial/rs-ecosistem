@@ -1,0 +1,36 @@
+{
+  "name": "rs-docs",
+  "version": "1.0.0",
+  "description": "Documentação Técnica e Contratos - RS Prólipsi",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "ts-node-dev --respawn src/index.ts",
+    "build": "tsc",
+    "generate:swagger": "ts-node src/generator/generateSwagger.ts",
+    "generate:mermaid": "ts-node src/generator/exportMermaid.ts",
+    "sync:schemas": "ts-node src/generator/syncSchemas.ts",
+    "validate": "ts-node src/utils/validator.ts",
+    "serve": "http-server public -p 3002 -o"
+  },
+  "keywords": [
+    "docs",
+    "api",
+    "swagger",
+    "openapi",
+    "rs-prolipsi"
+  ],
+  "author": "Roberto Camargo - RS Prólipsi",
+  "license": "UNLICENSED",
+  "private": true,
+  "dependencies": {
+    "yaml": "^2.3.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@types/yaml": "^1.9.7",
+    "http-server": "^14.1.1",
+    "ts-node": "^10.9.2",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.3.3"
+  }
+}

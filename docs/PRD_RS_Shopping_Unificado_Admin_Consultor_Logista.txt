@@ -1,0 +1,144 @@
+PRD � RS SHOPPING UNIFICADO (ADMIN / CONSULTOR / LOGISTA)
+Documento completo da nova estrutura unificada do Marketplace RS Pr�lipsi � contemplando o painel administrativo, consultor e logista, com todos os m�dulos, permiss�es e fluxos j� finalizados.
+1. Estrutura Conceitual
+
+O novo RS Marketplace Unificado � composto por tr�s perfis principais:
+
+Perfil | Acesso | Descri��o
+--------|--------|-----------
+Administrador | Painel completo (controle global) | Gerencia produtos, lojas, afiliados, fretes, pagamentos e relat�rios.
+Consultor | Painel unificado (vers�o b�sica) | Vende produtos, acompanha comiss�es e pedidos. Pode migrar para Premium.
+Logista (Parceiro / Vendedor) | Painel id�ntico ao do consultor | Cadastra produtos pr�prios e participa do programa de afiliados.
+
+Consultor e Logista compartilham o mesmo painel, mas:
+- O Consultor faz parte da rede MMN (SIGMA + Wallet Pay).
+- O Logista n�o � afiliado at� optar por ativar o modo afiliado.
+
+2. Estrutura Hier�rquica de M�dulos
+
+Painel atual do Marketplace, replicado dentro do painel unificado (Consultor / Logista):
+
+1. Dashboard Geral
+2. Produtos
+3. Pedidos e Faturamento
+4. Frete e Log�stica
+5. Pagamentos
+6. Afilia��o e Dropshipping
+7. Lojas e Logistas
+8. Financeiro e Wallet Pay
+9. Relat�rios e BI
+10. Marketing e Pixels
+11. Treinamentos e Comunica��o
+12. Configura��es / Template Premium
+
+3. M�dulo 1 � Dashboard Geral
+
+- Total de vendas (m�s / total acumulado)
+- Pedidos pendentes, produtos ativos, clientes cadastrados
+- Ticket m�dio de compra
+- Gr�ficos de desempenho e KPIs (Recharts)
+
+4. M�dulo 2 � Produtos
+
+- Cadastro, edi��o e exclus�o de produtos
+- Campos: t�tulo, descri��o, pre�o, SKU, varia��o, peso, estoque
+- Categorias hier�rquicas em 3 n�veis
+- Hist�rico de altera��es e logs de edi��o
+
+5. M�dulo 3 � Pedidos e Faturamento
+
+- Lista de pedidos com filtros por status
+- Detalhes: cliente, valor, data, transportadora, pagamento
+- A��es: aprovar, cancelar, reenviar e-mail de confirma��o
+
+6. M�dulo 4 � Frete e Log�stica
+
+- Integra��es: Correios, Melhor Envio, Azul Cargo, Total Express, Loggi, Jadlog, SuperFrete
+- C�lculo autom�tico de frete e rastreamento
+- Frete personalizado por loja
+
+7. M�dulo 5 � Pagamentos
+
+- Gateways integrados: MercadoPago, PagSeguro, PIX, Boleto
+- Split autom�tico entre vendedor, afiliado e plataforma
+- Logs antifraude e concilia��o autom�tica
+
+8. M�dulo 6 � Afilia��o e Dropshipping
+
+- Link �nico por consultor/logista (ex: loja.rsprolipsi.com.br/consultor/nome)
+- Comiss�o direta e pontos de rede
+- Dropshipping com fornecedores oficiais e webhooks
+
+9. M�dulo 7 � Lojas e Logistas
+
+- Painel do logista id�ntico ao do consultor
+- Meus Produtos, Afiliados, Financeiro, Minha Loja
+- Logista pode comprar ou publicar templates Premium
+
+10. M�dulo 8 � Financeiro e Wallet Pay
+
+- Extrato de comiss�es e vendas
+- Saques e transfer�ncias
+- Lan�amentos autom�ticos (commission_shop, bonus, fees)
+- Exporta��o de relat�rios
+
+11. M�dulo 9 � Relat�rios e BI
+
+- Relat�rios: vendas por produto, loja, afiliado, lucro l�quido
+- Exporta��o CSV / PDF
+- Dashboards integrados com filtros (Data, Consultor, Produto, Estado)
+
+12. M�dulo 10 � Marketing e Pixels
+
+- Configura��o de pixels (Google, Meta, TikTok, Taboola, LinkedIn)
+- Logs de firing e controle LGPD
+- Integra��o com RS.IA Marketing
+
+13. M�dulo 11 � Treinamentos e Comunica��o
+
+- Biblioteca de v�deos tutoriais
+- Notifica��es internas e campanhas
+- Canal de suporte via WhatsApp e RS.IA Chatbot
+
+14. M�dulo 12 � Configura��es / Template Premium
+
+Consultor Premium / Logista Premium pode:
+- Alterar cores, logos, banners
+- Editar layout (componentes e se��es)
+- Publicar templates no marketplace de templates
+- Conectar dom�nio pr�prio
+
+Admin controla:
+- Permiss�es de edi��o
+- Aprova��o de templates antes da publica��o
+
+15. Fluxo de Acesso (Vis�o L�gica)
+
+1. Visitante compra ? pagamento ? entrega
+2. Consultor recebe comiss�o e pontos
+3. Logista recebe repasse
+4. Admin controla relat�rios e templates
+5. Consultor/Logista Premium edita layout
+
+16. Permiss�es de Acesso
+
+Fun��o | Consultor | Logista | Admin
+--------|------------|---------|-------
+Acesso � loja pessoal | ? | ? | ?
+Editar produtos | ? / ? Premium | ? | ?
+Gerenciar pedidos | ? | ? | ?
+Receber comiss�o | ? | ? | ?
+Acessar Wallet | ? | ? | ?
+Criar templates | ? / ? Premium | ? | ?
+Publicar template | ? | ? | ?
+Gerenciar logistas | ? | ? | ?
+
+17. Estrutura Final de Deploy
+
+M�dulo | Caminho | Porta | Status
+--------|----------|-------|--------
+Admin | admin.rsprolipsi.com.br | 5001 | Ativo
+Consultor (Unificado) | consultor.rsprolipsi.com.br | 5002 | Ativo
+Marketplace / Loja P�blica | marketplace.rsprolipsi.com.br | 5003 | Ativo
+Wallet Pay | wallet.rsprolipsi.com.br | 5004 | Integrado
+SIGMA | sigma.rsprolipsi.com.br | 5005 | Integrado

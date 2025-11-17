@@ -1,0 +1,16 @@
+{
+  "orderId": "TEST-SHARED-001",
+  "totalAmount": 150.00,
+  "deliveryAddress": {
+    "street": "Rua Teste",
+    "number": "123",
+    "city": "São Paulo",
+    "state": "SP"
+  },
+  "organizer": {
+    "name": "Roberto Camargo",
+    "email": "roberto@test.com",
+    "cpf": "12345678900"
+  },
+  "maxParticipants": 3
+}

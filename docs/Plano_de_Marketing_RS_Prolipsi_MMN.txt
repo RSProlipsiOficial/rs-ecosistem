@@ -1,0 +1,82 @@
+PLANO DE MARKETING � RS PR�LIPSI (Conforme Painel Administrativo Oficial)
+1. CICLO DA MATRIZ
+
+Valor Total do Ciclo: R$ 360,00
+Payout do Ciclo (Valor): R$ 108,00
+Payout do Ciclo (%): 30,00 %
+Reentrada Autom�tica: Ativada (Kit Ativa��o Essencial � Entrega em Casa)
+Limite de Reentradas/M�s: 10 vezes
+Derramamento (Spillover): Linha Ascendente
+Pontos para Carreira: 1 ponto
+
+2. B�NUS DE PROFUNDIDADE (L1�L6)
+Base de C�lculo: 6,81 % sobre R$ 360,00 = R$ 24,52
+N�vel	% do B�nus	Valor/Venda (R$)
+L1	7 %	1,716
+L2	8 %	1,961
+L3	10 %	2,452
+L4	15 %	3,677
+L5	25 %	6,129
+L6	35 %	8,581
+TOTAL	100 %	24,516
+Cada vez que um ciclo de R$ 360,00 � fechado em sua rede at� a 6� gera��o, o sistema paga automaticamente as porcentagens acima sobre o valor total do ciclo.
+3. B�NUS FIDELIDADE (POOL DE REENTRADAS)
+
+Fonte do B�nus (%): 1,25 %
+Valor Base do Ciclo: R$ 360,00
+Total do B�nus (Pool): R$ 4,50
+
+Gatilho: Pago a cada reentrada ativa na matriz.
+Elegibilidade: Requer que o consultor tenha avan�ado para a pr�xima matriz.
+
+Premia��o de const�ncia � o consultor recebe b�nus de fidelidade somente ap�s abrir a matriz seguinte (ex.: ao abrir a matriz 2, ganha da 1). O c�lculo � feito no final do m�s, verificando quantos ciclos completos a pessoa realizou.
+Distribui��o por N�vel:
+N�vel	% do B�nus	Valor/Venda (R$)
+L1	7 %	0,315
+L2	8 %	0,360
+L3	10 %	0,450
+L4	15 %	0,675
+L5	25 %	1,125
+L6	35 %	1,575
+TOTAL	100 %	4,50
+4. TOP SIGMA (POOL GLOBAL DE LIDERAN�A)
+Base de C�lculo: 4,5 % sobre R$ 360,00 = R$ 16,20
+Ranking	% do Pool
+1�	2 %
+2�	1,5 %
+3�	1,2 %
+4�	1 %
+5�	0,8 %
+6�	0,7 %
+7�	0,6 %
+8�	0,5 %
+9�	0,4 %
+10�	0,3 %
+TOTAL	9,0 %
+O Top SIGMA distribui 4,5 % do valor global de todos os ciclos (R$ 16,20 por ciclo global), dividido entre os 10 melhores consultores do per�odo, conforme ranking acima.
+5. PLANO DE CARREIRA � 13 PINs OFICIAIS
+
+Valor Base do Ciclo (Fator B�nus): R$ 360,00
+Percentual para B�nus de Carreira: 6,39 %
+Valor L�quido por Ciclo: R$ 23,00
+Per�odo de Apura��o: Trimestral
+Reconhecimento do PIN: O PIN � conquistado e permanece v�lido durante o per�odo de apura��o (trimestre).
+Pagamento do B�nus: Pago ao atingir a meta, com valor liberado imediatamente.
+VMEC (Defini��o): Volume M�ximo por Equipe e por Ciclo.
+Pontua��o: Cada ciclo ativo na matriz SIGMA gera 1 ponto/ciclo para o plano de carreira.
+
+PIN	Ciclos	Linhas M�n.	VMEC %	Recompensa (R$)
+Bronze	5	0	�	13,50
+Prata	15	1	100 %	40,50
+Ouro	70	1	100 %	189,00
+Safira	150	2	60 / 40	405,00
+Esmeralda	300	2	60 / 40	810,00
+Top�zio	500	2	60 / 40	1.350,00
+Rubi	750	3	50 / 30 / 20	2.025,00
+Diamante	1.500	3	50 / 30 / 20	4.050,00
+Duplo Diamante	3.000	4	40 / 30 / 20 / 10	18.450,00
+Triplo Diamante	5.000	5	35 / 25 / 20 / 10 / 10	36.450,00
+Diamante Red	15.000	6	30 / 20 / 18 / 12 / 10 / 10 / 1	67.500,00
+Diamante Blue	25.000	6	30 / 20 / 18 / 12 / 10 / 10 / 1	105.300,00
+Diamante Black	50.000	6	30 / 20 / 18 / 12 / 10 / 10 / 1	135.000,00
+				

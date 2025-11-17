@@ -1,0 +1,78 @@
+{
+  "folders": [
+    {
+      "name": "rs-admin",
+      "path": "rs-admin"
+    },
+    {
+      "name": "rs-marketplace",
+      "path": "rs-marketplace"
+    },
+    {
+      "name": "rs-api",
+      "path": "rs-api"
+    },
+    {
+      "name": "rs-config",
+      "path": "rs-config"
+    },
+    {
+      "name": "rs-ops",
+      "path": "rs-ops"
+    },
+    {
+      "name": "rs-core",
+      "path": "rs-core"
+    },
+    {
+      "name": "rs-docs",
+      "path": "rs-docs"
+    },
+    {
+      "name": "rs-logistica",
+      "path": "rs-logistica"
+    },
+    {
+      "name": "rs-rotafacil",
+      "path": "rs-rotafacil"
+    },
+    {
+      "name": "rs-studio",
+      "path": "rs-studio"
+    },
+    {
+      "name": "rs-walletpay",
+      "path": "rs-walletpay"
+    },
+    {
+      "name": "rs-agendaviva",
+      "path": "rs-agendaviva"
+    },
+    {
+      "name": "rs-site",
+      "path": "../Documentação RS Prólipsi/rs-site"
+    },
+    {
+      "path": "../Documentação RS Prólipsi/rs-robo-kagi-binance"
+    },
+    {
+      "path": "../Documentação RS Prólipsi/rs-consultor"
+    }
+  ],
+  "settings": {
+    "git.enabled": true,
+    "git.autofetch": true,
+    "git.confirmSync": false,
+    "git.openRepositoryInParentFolders": "always",
+    "terminal.integrated.cwd": "${workspaceFolder}",
+    "files.exclude": {
+      "**/.git": false,
+      "**/.DS_Store": true,
+      "**/node_modules": false
+    },
+    "editor.fontFamily": "Consolas, 'Courier New', monospace",
+    "editor.fontSize": 14,
+    "workbench.colorTheme": "Monokai Dimmed",
+    "workbench.iconTheme": "vs-seti"
+  }
+}

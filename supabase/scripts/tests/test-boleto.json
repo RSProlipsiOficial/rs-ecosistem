@@ -1,0 +1,9 @@
+{
+  "orderId": "TEST790",
+  "amount": 25.00,
+  "buyer": {
+    "name": "Roberto Camargo",
+    "email": "robertorjbc@gmail.com",
+    "cpf": "01234567890"
+  }
+}

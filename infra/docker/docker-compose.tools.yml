@@ -1,0 +1,20 @@
+version: "3.9"
+services:
+  rs-studio-dev:
+    container_name: rs-studio-dev
+    image: node:18-alpine
+    env_file:
+      - .env.tools
+    command: sh -c "npm i -g http-server && http-server -p ${RS_BOLT_PORT} -c-1"
+    ports:
+      - "${RS_BOLT_PORT}:${RS_BOLT_PORT}"
+    restart: unless-stopped
+
+  rs-studio-agents:
+    container_name: rs-studio-agents
+    image: n8nio/n8n:latest
+    env_file:
+      - .env.tools
+    ports:
+      - "${RS_N8N_PORT}:5678"
+    restart: unless-stopped
