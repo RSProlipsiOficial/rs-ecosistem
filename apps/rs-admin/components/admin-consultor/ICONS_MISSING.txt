@@ -1,0 +1,19 @@
+ÍCONES QUE PRECISAM SER ADICIONADOS AO icons.tsx:
+
+IconQrCode, IconCreditCard, IconBox, IconDollarSign, IconPackage, IconUnlock, IconShield,
+IconPhone, IconMail, IconGlobe, IconCamera, IconVideo, IconMusic, IconPaperclip, IconFolder,
+IconRefreshCw, IconChevronUp, IconArrowRight, IconArrowLeft, IconArrowUp, IconArrowDown,
+IconHome, IconZap, IconHeart, IconTag, IconPrinter, IconShare, IconFlag, IconClock,
+IconCheck, IconTerminal, IconCpu, IconServer, IconCode, IconStop, IconFastForward,
+IconRewind, IconVolume2, IconWifi, IconTool, IconCalculator, IconClipboard, IconScissors,
+IconLoader, IconRocket, IconFlame, IconLightbulb, IconFlask, IconAtSign, IconHash,
+IconPercent, IconDatabase, IconLayers, IconPaintbrush, IconMonitor, IconKey,
+IconMessageCircle, IconBriefcase, IconSlash, IconMessageSquare, IconRefreshCw,
+IconMap, IconGift, IconTable, IconList, IconGrid, IconGridIcon, IconColumns,
+IconSun, IconMoon, IconArrowDownCircle, IconArrowUpCircle, IconPlusCircle,
+IconMinusCircle, IconHand, IconThumbsUp, IconThumbsDown, IconSmile, IconFrown,
+IconUserPlus, IconUserMinus, IconUserCheck, IconUserX, IconBellOff, IconInbox,
+IconFolderOpen, IconScale, IconMoreHorizontal, IconBookmark, IconDna, IconPlayCircle,
+IconBook, IconPause
+
+TOTAL: ~100 ícones faltando!

@@ -1,0 +1,102 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "TOP SIGMA - Pool mensal 4,5% distribuído por 10 níveis (L1..L10)",
+  "meta": {
+    "version": "1.0.0",
+    "updatedAt": "2025-11-06",
+    "notes": "TOP SIGMA – pool mensal 4,5% distribuído por 10 níveis (L1..L10). Profundidade e lateralidade ILIMITADAS."
+  },
+  
+  "payout": {
+    "frequency": "monthly",
+    "closeDay": 30,
+    "poolPct": 0.045,
+    "poolBase": "gross_cycles_value",
+    "description": "Fechamento mensal no dia 30. Base: total de ciclos × R$ 360 × 4,5%"
+  },
+  
+  "levelWeights": {
+    "description": "Pesos de distribuição por nível (L1 a L10). Soma deve ser 1.0",
+    "weights": [
+      0.20,
+      0.15,
+      0.12,
+      0.10,
+      0.09,
+      0.08,
+      0.07,
+      0.06,
+      0.065,
+      0.065
+    ],
+    "labels": ["L1", "L2", "L3", "L4", "L5", "L6", "L7", "L8", "L9", "L10"],
+    "validation": {
+      "sumMustBe": 1.0,
+      "minWeight": 0.0,
+      "maxWeight": 1.0
+    }
+  },
+  
+  "eligibility": {
+    "mustBeActive": true,
+    "minCyclesInMonth": 0,
+    "kycWalletPay": true,
+    "excludeSuspended": true,
+    "description": "Consultor deve estar ativo e ter KYC aprovado para receber"
+  },
+  
+  "calculation": {
+    "countOwnCycles": true,
+    "countTeamCycles": true,
+    "maxDepth": "unlimited",
+    "maxWidth": "unlimited",
+    "includeReentries": true,
+    "description": "Conta TODOS os ciclos da rede inteira, sem limites de profundidade ou lateralidade"
+  },
+  
+  "rounding": {
+    "mode": "floor_centavo",
+    "precision": 2,
+    "carryRemainderToNextMonth": true,
+    "description": "Arredonda para baixo (floor) com 2 casas decimais. Resto vai para o próximo mês."
+  },
+  
+  "distribution": {
+    "method": "proportional_by_level",
+    "description": "Em cada nível Lk, distribui proporcionalmente aos ciclos válidos do consultor naquele nível"
+  },
+  
+  "audit": {
+    "snapshotTable": "top_sigma_snapshots",
+    "payoutTable": "top_sigma_payouts",
+    "storeBreakdown": true,
+    "retentionYears": 7,
+    "description": "Snapshots e payouts armazenados para auditoria. Retenção de 7 anos."
+  },
+  
+  "notifications": {
+    "onClose": {
+      "enabled": true,
+      "channels": ["email", "dashboard"],
+      "template": "top_sigma_monthly_close",
+      "recipients": ["top_10", "admin"]
+    },
+    "onPayout": {
+      "enabled": true,
+      "channels": ["email", "push"],
+      "template": "top_sigma_payout",
+      "includeBreakdown": true
+    }
+  },
+  
+  "display": {
+    "showTop": 10,
+    "showBreakdownByLevel": true,
+    "showHistoricalTrend": true,
+    "chartTypes": ["pie", "bar", "line"],
+    "colors": {
+      "primary": "#FFD700",
+      "secondary": "#000000"
+    }
+  }
+}

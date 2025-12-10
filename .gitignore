@@ -21,9 +21,27 @@ dist-ssr/
 !.env.example
 !.env.example
 
-# OS/editor noise
+# OS/editor noise# OS
 .DS_Store
-.vscode/
+Thumbs.db
+
+# Heavy External Sources (monorepo should utilize packages, not source dumps)
+apps/rs-studio/n8n-master/
+apps/rs-studio/evolution-api-main/
+apps/rs-studio/bolt.diy-main/
+
+# Archives
+*.zip
+*.tar.gz
+*.rar
+
+# Backups and temporary files
+apps/rs-marketplace/backup-producao.js/
+apps/rs-marketplace/dist_backup_/
+apps/rs-marketplace/VERSAO-BOA-*.js
+apps/rs-marketplace/App.tsx.BACKUP*
+apps/rs-marketplace/*.ultimo-deploy
+vscode/
 !.vscode/extensions.json
 .idea/
 *.log

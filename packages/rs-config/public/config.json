@@ -1,0 +1,103 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Configuração pública do sistema - Visível para front-ends",
+  "meta": {
+    "version": "1.0.0",
+    "lastUpdate": "",
+    "environment": "development"
+  },
+  
+  "app": {
+    "name": "RS Prólipsi",
+    "slogan": "Transformando Vidas",
+    "logo": "/assets/logo.png",
+    "favicon": "/assets/favicon.ico",
+    "colors": {
+      "primary": "#FFD700",
+      "secondary": "#000000",
+      "accent": "#FFED4E"
+    }
+  },
+  
+  "sistema": {
+    "nome": "Marketing Multinível",
+    "tipo": "Matriz SIGME 1x6",
+    "moeda": "BRL",
+    "simbolo": "R$",
+    "timezone": "America/Sao_Paulo",
+    "idioma": "pt-BR"
+  },
+  
+  "planos": {
+    "matriz": {
+      "nome": "SIGME",
+      "descricao": "Matriz de crescimento 1 nível por 6 posições",
+      "icone": "📊",
+      "status": "ativo"
+    },
+    "fidelidade": {
+      "nome": "Pool de Fidelidade",
+      "descricao": "Participação em pool mensal de fidelidade",
+      "icone": "💛",
+      "status": "ativo"
+    },
+    "topSigma": {
+      "nome": "Pool Top SIGMA",
+      "descricao": "Ranking global dos Top 10 consultores",
+      "icone": "🏆",
+      "status": "ativo"
+    },
+    "carreira": {
+      "nome": "Plano de Carreira",
+      "descricao": "13 graduações com recompensas crescentes",
+      "icone": "📈",
+      "status": "ativo"
+    }
+  },
+  
+  "graduacoes": [
+    { "nome": "Bronze", "icone": "🥉", "nivel": 1 },
+    { "nome": "Prata", "icone": "🥈", "nivel": 2 },
+    { "nome": "Ouro", "icone": "🥇", "nivel": 3 },
+    { "nome": "Safira", "icone": "💎", "nivel": 4 },
+    { "nome": "Esmeralda", "icone": "💚", "nivel": 5 },
+    { "nome": "Topázio", "icone": "💛", "nivel": 6 },
+    { "nome": "Rubi", "icone": "❤️", "nivel": 7 },
+    { "nome": "Diamante", "icone": "💎", "nivel": 8 },
+    { "nome": "Duplo Diamante", "icone": "💎💎", "nivel": 9 },
+    { "nome": "Triplo Diamante", "icone": "💎💎💎", "nivel": 10 },
+    { "nome": "Diamante Red", "icone": "🔴💎", "nivel": 11 },
+    { "nome": "Diamante Blue", "icone": "🔵💎", "nivel": 12 },
+    { "nome": "Diamante Black", "icone": "⚫💎", "nivel": 13 }
+  ],
+  
+  "features": {
+    "manutencao": false,
+    "cadastroAberto": true,
+    "verificacaoEmail": true,
+    "suporteChat": true
+  },
+  
+  "limites": {
+    "maxReentradaMes": 10,
+    "maxUploadMB": 5,
+    "timeoutSessaoMin": 60
+  },
+  
+  "contato": {
+    "suporte": "suporte@rsprolipsi.com.br",
+    "site": "https://rsprolipsi.com.br",
+    "redesSociais": {
+      "facebook": "",
+      "instagram": "",
+      "youtube": "",
+      "linkedin": ""
+    }
+  },
+  
+  "legal": {
+    "termos": "/legal/termos",
+    "privacidade": "/legal/privacidade",
+    "cookies": "/legal/cookies"
+  }
+}

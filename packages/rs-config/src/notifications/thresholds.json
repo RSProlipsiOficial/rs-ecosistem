@@ -1,0 +1,171 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Thresholds para alertas automáticos - RS Prólipsi",
+  "version": "1.0.0",
+  
+  "saldo_carteira": {
+    "alerta_baixo": {
+      "valor": 50.00,
+      "ativo": true,
+      "frequencia": "diaria",
+      "canal": ["dashboard"],
+      "mensagem": "Seu saldo está em R$ {saldo}. Considere solicitar saque."
+    },
+    "alerta_alto": {
+      "valor": 1000.00,
+      "ativo": true,
+      "frequencia": "semanal",
+      "canal": ["email", "dashboard"],
+      "mensagem": "Você tem R$ {saldo} disponível! Que tal realizar um saque?"
+    }
+  },
+  
+  "ciclo_matriz": {
+    "quase_completo": {
+      "slots_minimo": 5,
+      "ativo": true,
+      "canal": ["push", "dashboard"],
+      "mensagem": "Falta apenas 1 vaga para você ciclar!"
+    },
+    "parado": {
+      "dias_sem_atividade": 15,
+      "ativo": true,
+      "frequencia": "semanal",
+      "canal": ["email", "push"],
+      "mensagem": "Seu ciclo está parado há {dias} dias. Hora de reativar?"
+    },
+    "primeira_vaga": {
+      "ativo": true,
+      "canal": ["push", "dashboard"],
+      "mensagem": "Primeira vaga preenchida! Mais 5 para ciclar."
+    }
+  },
+  
+  "plano_carreira": {
+    "proximo_pin": {
+      "percentual_minimo": 80,
+      "ativo": true,
+      "frequencia": "mensal",
+      "canal": ["email", "dashboard"],
+      "mensagem": "Você está a {progresso}% do PIN {pin_nome}! Continue firme!"
+    },
+    "estagnado": {
+      "meses_sem_progresso": 3,
+      "ativo": true,
+      "canal": ["email"],
+      "mensagem": "Você não progrediu nos últimos 3 meses. Precisa de ajuda?"
+    }
+  },
+  
+  "rede": {
+    "novo_membro": {
+      "ativo": true,
+      "canal": ["push", "dashboard"],
+      "mensagem": "{nome} entrou na sua linha {linha}!"
+    },
+    "linha_inativa": {
+      "dias_sem_atividade": 30,
+      "ativo": true,
+      "frequencia": "mensal",
+      "canal": ["email"],
+      "mensagem": "Sua linha {linha} está inativa há {dias} dias."
+    },
+    "volume_alto": {
+      "ciclos_mes": 50,
+      "ativo": true,
+      "frequencia": "mensal",
+      "canal": ["email", "push"],
+      "mensagem": "Sua rede fez {ciclos} ciclos este mês! Parabéns!"
+    }
+  },
+  
+  "bonus": {
+    "acumulado_alto": {
+      "valor_minimo": 500.00,
+      "ativo": true,
+      "canal": ["email", "dashboard"],
+      "mensagem": "Você tem R$ {valor} em bônus pendentes!"
+    },
+    "pool_elegivel": {
+      "ativo": true,
+      "canal": ["push", "dashboard"],
+      "mensagem": "Você está elegível para o pool de {tipo}!"
+    }
+  },
+  
+  "top_sigma": {
+    "entrada_top10": {
+      "ativo": true,
+      "canal": ["email", "push", "whatsapp"],
+      "mensagem": "Você entrou no Top 10! Posição #{posicao}"
+    },
+    "saida_top10": {
+      "ativo": true,
+      "canal": ["email", "dashboard"],
+      "mensagem": "Atenção: você saiu do Top 10. Continue se esforçando!"
+    },
+    "proximos_top10": {
+      "posicoes_mostrar": 5,
+      "ativo": true,
+      "frequencia": "semanal",
+      "canal": ["dashboard"],
+      "mensagem": "Você está na posição #{posicao}. Faltam {ciclos} ciclos para o Top 10!"
+    }
+  },
+  
+  "reentrada": {
+    "limite_mensal": {
+      "reentradas_minimo": 8,
+      "ativo": true,
+      "canal": ["push", "dashboard"],
+      "mensagem": "Você tem {restantes} reentradas disponíveis este mês!"
+    },
+    "limite_atingido": {
+      "ativo": true,
+      "canal": ["email", "push"],
+      "mensagem": "Você atingiu o limite de 10 reentradas este mês."
+    }
+  },
+  
+  "sistema": {
+    "manutencao_programada": {
+      "horas_antecedencia": 24,
+      "ativo": true,
+      "canal": ["email", "push", "dashboard"],
+      "mensagem": "Manutenção programada em {horas}h. Planeje-se!"
+    },
+    "falha_servico": {
+      "ativo": true,
+      "canal": ["email", "discord"],
+      "mensagem": "Falha detectada no serviço {servico}. Equipe já foi notificada."
+    }
+  },
+  
+  "meta_tracking": {
+    "meta_diaria": {
+      "ciclos_dia": 1,
+      "ativo": false,
+      "canal": ["dashboard"]
+    },
+    "meta_semanal": {
+      "ciclos_semana": 5,
+      "ativo": true,
+      "canal": ["dashboard", "email"]
+    },
+    "meta_mensal": {
+      "ciclos_mes": 20,
+      "ativo": true,
+      "canal": ["email", "push"]
+    }
+  },
+  
+  "configuracoes_gerais": {
+    "verificacao_intervalo_minutos": 30,
+    "batch_size": 100,
+    "log_alertas": true,
+    "log_path": "logs/alertas/",
+    "retry_falhas": true,
+    "retry_max_tentativas": 3,
+    "cache_thresholds_minutos": 60
+  }
+}

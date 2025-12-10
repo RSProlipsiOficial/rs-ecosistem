@@ -1,0 +1,185 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Templates de notificações automáticas - RS Prólipsi",
+  "version": "1.0.0",
+  
+  "ciclo_completo": {
+    "titulo": "🎉 Ciclo Completado!",
+    "mensagem": "Parabéns! Você completou o ciclo #{cycle_number}. R$ {payout} foram creditados na sua carteira.",
+    "tipo": "sucesso",
+    "prioridade": "alta",
+    "channels": ["email", "push", "dashboard"],
+    "variaveis": ["cycle_number", "payout"]
+  },
+  
+  "ciclo_quase_completo": {
+    "titulo": "⚡ Falta pouco!",
+    "mensagem": "Seu ciclo está em {slots_filled}/6. Mais {remaining} vendas para ciclar!",
+    "tipo": "info",
+    "prioridade": "media",
+    "channels": ["push", "dashboard"],
+    "variaveis": ["slots_filled", "remaining"]
+  },
+  
+  "nova_venda": {
+    "titulo": "💰 Nova Venda",
+    "mensagem": "Venda registrada! {product_name} - R$ {amount}. Slot {slot}/6 preenchido.",
+    "tipo": "sucesso",
+    "prioridade": "media",
+    "channels": ["push", "dashboard"],
+    "variaveis": ["product_name", "amount", "slot"]
+  },
+  
+  "bonus_recebido": {
+    "titulo": "💎 Bônus Recebido",
+    "mensagem": "Você recebeu R$ {valor} de bônus {tipo}. Confira sua carteira!",
+    "tipo": "sucesso",
+    "prioridade": "alta",
+    "channels": ["email", "push", "dashboard"],
+    "variaveis": ["valor", "tipo"]
+  },
+  
+  "upgrade_pin": {
+    "titulo": "🏆 Novo PIN Conquistado!",
+    "mensagem": "Parabéns! Você alcançou o PIN {pin_nome}! Recompensa de R$ {recompensa} creditada.",
+    "tipo": "sucesso",
+    "prioridade": "alta",
+    "channels": ["email", "push", "dashboard", "whatsapp"],
+    "variaveis": ["pin_nome", "recompensa"]
+  },
+  
+  "proximo_pin": {
+    "titulo": "📊 Progresso de Carreira",
+    "mensagem": "Faltam {ciclos_faltantes} ciclos para o PIN {proximo_pin}. Você está a {progresso}%!",
+    "tipo": "info",
+    "prioridade": "baixa",
+    "channels": ["dashboard"],
+    "variaveis": ["ciclos_faltantes", "proximo_pin", "progresso"]
+  },
+  
+  "ciclo_parado": {
+    "titulo": "⏰ Ciclo sem movimentação",
+    "mensagem": "Seu ciclo está parado há {dias} dias com {slots_filled}/6 vagas. Que tal reativar?",
+    "tipo": "aviso",
+    "prioridade": "media",
+    "channels": ["email", "push"],
+    "variaveis": ["dias", "slots_filled"]
+  },
+  
+  "novo_downline": {
+    "titulo": "👥 Novo Membro na Rede",
+    "mensagem": "{nome} entrou na sua linha {linha}. Bem-vindo ao time!",
+    "tipo": "info",
+    "prioridade": "media",
+    "channels": ["push", "dashboard"],
+    "variaveis": ["nome", "linha"]
+  },
+  
+  "downline_ciclou": {
+    "titulo": "🎯 Membro da Rede Ciclou",
+    "mensagem": "{nome} completou um ciclo! Você recebeu R$ {bonus_profundidade} de bônus.",
+    "tipo": "sucesso",
+    "prioridade": "alta",
+    "channels": ["push", "dashboard"],
+    "variaveis": ["nome", "bonus_profundidade"]
+  },
+  
+  "pool_fidelidade": {
+    "titulo": "💚 Pool de Fidelidade",
+    "mensagem": "Você recebeu R$ {valor} do pool de fidelidade deste mês!",
+    "tipo": "sucesso",
+    "prioridade": "alta",
+    "channels": ["email", "push"],
+    "variaveis": ["valor"]
+  },
+  
+  "top_sigma": {
+    "titulo": "⭐ Top SIGMA Pool",
+    "mensagem": "Você está na posição #{posicao} do ranking! Pool: R$ {valor}",
+    "tipo": "sucesso",
+    "prioridade": "alta",
+    "channels": ["email", "push", "dashboard"],
+    "variaveis": ["posicao", "valor"]
+  },
+  
+  "saldo_baixo": {
+    "titulo": "💳 Saldo Baixo",
+    "mensagem": "Seu saldo está em R$ {saldo}. Considere solicitar um saque.",
+    "tipo": "aviso",
+    "prioridade": "baixa",
+    "channels": ["dashboard"],
+    "variaveis": ["saldo"]
+  },
+  
+  "saque_aprovado": {
+    "titulo": "✅ Saque Aprovado",
+    "mensagem": "Seu saque de R$ {valor} foi aprovado! Prazo: {prazo} dias úteis.",
+    "tipo": "sucesso",
+    "prioridade": "alta",
+    "channels": ["email", "push", "dashboard", "whatsapp"],
+    "variaveis": ["valor", "prazo"]
+  },
+  
+  "saque_rejeitado": {
+    "titulo": "❌ Saque Negado",
+    "mensagem": "Seu saque de R$ {valor} foi rejeitado. Motivo: {motivo}",
+    "tipo": "erro",
+    "prioridade": "alta",
+    "channels": ["email", "push", "dashboard"],
+    "variaveis": ["valor", "motivo"]
+  },
+  
+  "bem_vindo": {
+    "titulo": "🌟 Bem-vindo ao RS Prólipsi!",
+    "mensagem": "Olá {nome}! Sua conta foi ativada. Seu patrocinador é {patrocinador}. Vamos começar?",
+    "tipo": "info",
+    "prioridade": "alta",
+    "channels": ["email", "whatsapp"],
+    "variaveis": ["nome", "patrocinador"]
+  },
+  
+  "aniversario_cadastro": {
+    "titulo": "🎂 Aniversário RS Prólipsi",
+    "mensagem": "Hoje você completa {anos} ano(s) conosco! Total de ciclos: {total_ciclos}. Parabéns!",
+    "tipo": "info",
+    "prioridade": "media",
+    "channels": ["email", "push"],
+    "variaveis": ["anos", "total_ciclos"]
+  },
+  
+  "meta_mensal_atingida": {
+    "titulo": "🎯 Meta Atingida!",
+    "mensagem": "Você bateu sua meta mensal de {meta_ciclos} ciclos! Continue assim!",
+    "tipo": "sucesso",
+    "prioridade": "alta",
+    "channels": ["email", "push", "dashboard"],
+    "variaveis": ["meta_ciclos"]
+  },
+  
+  "produto_entregue": {
+    "titulo": "📦 Produto Entregue",
+    "mensagem": "Seu produto {produto} foi entregue! Código de rastreio: {tracking}",
+    "tipo": "info",
+    "prioridade": "media",
+    "channels": ["email", "push"],
+    "variaveis": ["produto", "tracking"]
+  },
+  
+  "manutencao_programada": {
+    "titulo": "🔧 Manutenção Programada",
+    "mensagem": "Sistema em manutenção {data} das {hora_inicio} às {hora_fim}. Planeje-se!",
+    "tipo": "aviso",
+    "prioridade": "alta",
+    "channels": ["email", "push", "dashboard"],
+    "variaveis": ["data", "hora_inicio", "hora_fim"]
+  },
+  
+  "atualizacao_sistema": {
+    "titulo": "🚀 Nova Atualização",
+    "mensagem": "Sistema atualizado para v{versao}! Confira as novidades: {link}",
+    "tipo": "info",
+    "prioridade": "media",
+    "channels": ["email", "dashboard"],
+    "variaveis": ["versao", "link"]
+  }
+}

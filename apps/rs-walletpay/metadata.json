@@ -1,0 +1,5 @@
+{
+  "name": "RS WalletPay",
+  "description": "A digital wallet and multi-payment banking interface for the RS Prólipsi ecosystem, featuring commission and bonus management, transaction ledger, payment processing, and financial reporting, all with a sleek dark and gold theme.",
+  "requestFramePermissions": []
+}

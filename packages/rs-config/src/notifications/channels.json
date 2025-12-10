@@ -1,0 +1,165 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Configuração de canais de notificação - RS Prólipsi",
+  "version": "1.0.0",
+  
+  "email": {
+    "ativo": true,
+    "provider": "smtp",
+    "config": {
+      "host": "smtp.gmail.com",
+      "port": 587,
+      "secure": false,
+      "from": "noreply@rsprolipsi.com.br",
+      "replyTo": "suporte@rsprolipsi.com.br"
+    },
+    "rate_limit": {
+      "max_per_hour": 100,
+      "max_per_day": 500
+    },
+    "prioridades_aceitas": ["alta", "media", "baixa"]
+  },
+  
+  "push": {
+    "ativo": true,
+    "provider": "firebase",
+    "config": {
+      "project_id": "rs-prolipsi",
+      "topics": ["geral", "ciclos", "bonus", "carreira"]
+    },
+    "rate_limit": {
+      "max_per_hour": 500,
+      "max_per_day": 2000
+    },
+    "prioridades_aceitas": ["alta", "media"]
+  },
+  
+  "whatsapp": {
+    "ativo": false,
+    "provider": "twilio",
+    "config": {
+      "from": "+55XXXXXXXXXXX",
+      "templates_approved": true
+    },
+    "rate_limit": {
+      "max_per_hour": 50,
+      "max_per_day": 200
+    },
+    "prioridades_aceitas": ["alta"],
+    "observacao": "Apenas para notificações críticas"
+  },
+  
+  "sms": {
+    "ativo": false,
+    "provider": "twilio",
+    "config": {
+      "from": "+55XXXXXXXXXXX"
+    },
+    "rate_limit": {
+      "max_per_hour": 30,
+      "max_per_day": 100
+    },
+    "prioridades_aceitas": ["alta"]
+  },
+  
+  "dashboard": {
+    "ativo": true,
+    "provider": "interno",
+    "config": {
+      "realtime": true,
+      "keep_days": 30,
+      "max_per_user": 100
+    },
+    "prioridades_aceitas": ["alta", "media", "baixa"],
+    "observacao": "Notificações sempre visíveis no painel"
+  },
+  
+  "discord": {
+    "ativo": true,
+    "provider": "webhook",
+    "config": {
+      "webhook_url": "DISCORD_WEBHOOK_URL_ENV",
+      "channels": {
+        "geral": "channel_id_1",
+        "alertas": "channel_id_2",
+        "ciclos": "channel_id_3"
+      }
+    },
+    "rate_limit": {
+      "max_per_hour": 100
+    },
+    "prioridades_aceitas": ["alta", "media"],
+    "observacao": "Usado para equipe admin"
+  },
+  
+  "telegram": {
+    "ativo": false,
+    "provider": "bot",
+    "config": {
+      "bot_token": "TELEGRAM_BOT_TOKEN_ENV",
+      "default_chat_id": "TELEGRAM_CHAT_ID_ENV"
+    },
+    "rate_limit": {
+      "max_per_hour": 200
+    },
+    "prioridades_aceitas": ["alta", "media"]
+  },
+  
+  "preferencias_padrao": {
+    "usuario_novo": ["email", "push", "dashboard"],
+    "usuario_ativo": ["email", "push", "dashboard"],
+    "usuario_vip": ["email", "push", "dashboard", "whatsapp"]
+  },
+  
+  "regras_envio": {
+    "nao_perturbar": {
+      "ativo": true,
+      "horario_inicio": "22:00",
+      "horario_fim": "07:00",
+      "excecoes_prioridade": ["alta"]
+    },
+    
+    "agrupamento": {
+      "ativo": true,
+      "intervalo_minutos": 15,
+      "max_por_grupo": 5,
+      "descricao": "Agrupa notificações similares para evitar spam"
+    },
+    
+    "throttling": {
+      "ativo": true,
+      "max_por_usuario_hora": 20,
+      "max_por_usuario_dia": 100
+    }
+  },
+  
+  "tipos_notificacao": {
+    "sucesso": {
+      "cor": "#10b981",
+      "icon": "✅",
+      "som": "success.mp3"
+    },
+    "info": {
+      "cor": "#3b82f6",
+      "icon": "ℹ️",
+      "som": "info.mp3"
+    },
+    "aviso": {
+      "cor": "#f59e0b",
+      "icon": "⚠️",
+      "som": "warning.mp3"
+    },
+    "erro": {
+      "cor": "#ef4444",
+      "icon": "❌",
+      "som": "error.mp3"
+    }
+  },
+  
+  "observacoes": {
+    "rate_limit": "Limites aplicados por canal para evitar spam",
+    "prioridades": "alta (urgente), media (importante), baixa (informativo)",
+    "env_vars": "Tokens e webhooks devem estar em .env",
+    "gdpr": "Usuário pode desabilitar canais nas preferências"
+  }
+}

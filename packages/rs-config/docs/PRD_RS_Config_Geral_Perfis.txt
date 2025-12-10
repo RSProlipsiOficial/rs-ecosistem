@@ -1,0 +1,112 @@
+PRD � CONFIGURA��ES GERAIS E PERFIS (RS PR�LIPSI)
+Documento t�cnico-funcional do m�dulo de Configura��es Gerais e Perfis do ecossistema RS Pr�lipsi. Define a arquitetura central de controle de acessos, permiss�es, planos e m�dulos. O objetivo � permitir que o administrador tenha total dom�nio sobre ativa��es, libera��es e personaliza��es de recursos para Consultores, Logistas, CDs e demais perfis do sistema.
+1. Vis�o Geral
+
+O m�dulo Configura��es Gerais / Perfis � o n�cleo de controle do sistema RS Pr�lipsi.
+Ele centraliza todas as ativa��es de m�dulos, permiss�es de acesso e planos premium. 
+Atrav�s dele, o administrador define quais recursos est�o ativos, quais usu�rios t�m acesso a cada m�dulo e como os upgrades de planos s�o processados.
+
+2. Estrutura de Banco de Dados (Configura��o Global)
+
+Tabela | Fun��o | Atualiza��o
+--------|---------|-------------
+system_settings | Configura��es globais do sistema (ex: tema, URLs, chaves) | Manual / Autom�tica
+user_roles | Perfis de usu�rio (Admin, Consultor, Logista, CD) | Manual
+user_permissions | Permiss�es de cada fun��o | Manual
+premium_features | Recursos premium liberados por plano | Manual / Autom�tica
+module_status | Status ativo/inativo dos m�dulos | Autom�tica
+upgrade_requests | Solicita��es de upgrade de plano | Autom�tica
+plan_configurations | Defini��o de planos e licen�as | Manual
+system_logs | Hist�rico de altera��es no sistema | Autom�tica
+
+3. Estrutura de Perfis e Hierarquia
+
+Perfil | Descri��o | Permiss�es
+--------|------------|------------
+Administrador Global | Controle total de todos os m�dulos e configura��es | Criar, editar, excluir, auditar
+Administrador Regional / CD | Controle log�stico e de rede local | Acesso parcial a relat�rios e finan�as
+Consultor Premium | Acesso a loja personalizada, RS Studio e WalletPay | Recursos premium habilitados
+Consultor B�sico | Acesso padr�o � rede e b�nus SIGMA | Fun��es restritas
+Lojista / Parceiro | Cadastro de produtos e afiliados | Estoque e vendas
+
+4. �reas de Configura��o (no Painel Admin)
+
+1. Configura��es do Sistema
+   - Ativar/desativar m�dulos (WalletPay, RS Studio, Marketplace, SIGMA)
+   - Ajustar tema, cores e subdom�nios
+   - Configurar chaves de API (PIX, Supabase, IA)
+2. Gest�o de Perfis
+   - Criar e editar pap�is de usu�rio
+   - Atribuir permiss�es espec�ficas por perfil
+   - Revogar acessos e redefinir senhas
+3. Planos e Licen�as
+   - Definir planos (B�sico, Premium, Master)
+   - Atribuir recursos premium (edi��o de loja, painel personalizado, RS Studio)
+   - Gerenciar valores e prazos de cobran�a
+4. Controle de Upgrades
+   - Aprovar upgrades de planos
+   - Validar pagamentos via WalletPay
+   - Atualizar automaticamente permiss�es
+5. Auditoria e Seguran�a
+   - Visualizar logs e a��es recentes
+   - Resetar tokens e chaves do sistema
+   - Monitorar altera��es em tempo real
+
+5. Integra��es Principais
+
+M�dulo | Fun��o | Tipo de Comunica��o
+---------|----------|----------------------
+Marketplace | Libera��o de lojas premium | API interna
+WalletPay | Valida��o de pagamentos de upgrade | Webhook
+SIGMA | Sincroniza��o de qualifica��es e matrizes | Autom�tica
+RS Studio | Libera��o de treinamentos e IA | API REST
+Admin Central | Logs e auditorias de permiss�es | Autom�tica
+
+6. Campos Importantes no Banco
+
+Campo | Tabela | Descri��o
+--------|---------|-----------
+feature_name | premium_features | Nome do recurso premium
+is_active | module_status | Estado do m�dulo (ativo/inativo)
+plan_level | plan_configurations | Plano m�nimo exigido para acesso
+user_role | user_roles | Tipo de usu�rio
+permissions | user_permissions | Lista de permiss�es atribu�das
+request_status | upgrade_requests | Status do upgrade (pendente, aprovado, recusado)
+
+7. Fluxo Operacional
+
+1. O administrador define quais m�dulos est�o ativos.
+2. O consultor solicita um upgrade de plano.
+3. WalletPay confirma pagamento e envia webhook.
+4. O Admin aprova e o sistema libera automaticamente o acesso.
+5. Marketplace e RS Studio recebem a atualiza��o de plano.
+6. Logs s�o gravados e replicados no painel do Admin.
+
+8. Relat�rios
+
+Relat�rio | Finalidade
+------------|-------------
+Usu�rios por perfil | Quantidade de usu�rios por tipo
+M�dulos ativos/inativos | Situa��o atual dos m�dulos
+Upgrades pendentes/aprovados | Controle de planos premium
+Hist�rico de altera��es | Acompanhamento de mudan�as no sistema
+Permiss�es por perfil | Escopo de acesso de cada usu�rio
+
+9. Seguran�a e Auditoria
+
+- Logs criptografados com hash SHA256
+- Controle granular de permiss�es (ACL)
+- Confirma��o 2FA em upgrades cr�ticos
+- Hist�rico detalhado por campo e usu�rio
+- Backup autom�tico de configura��es (Supabase)
+- Rastreabilidade completa por IP e UUID
+
+10. Roadmap de Expans�o
+
+Fase | Entrega | Descri��o
+------|----------|-----------
+Fase 1 | Configura��es de sistema e perfis | Base funcional
+Fase 2 | Integra��o com WalletPay e Marketplace | Automa��o de upgrades
+Fase 3 | Painel visual de controle | Editor interativo de permiss�es
+Fase 4 | Relat�rios inteligentes (RS.IA) | Recomenda��es autom�ticas
+Fase 5 | API p�blica de configura��o | Integra��o com redes externas

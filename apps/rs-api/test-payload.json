@@ -1,0 +1,19 @@
+{
+  "from": {
+    "postal_code": "29146-385"
+  },
+  "to": {
+    "postal_code": "01310-100"
+  },
+  "products": [
+    {
+      "id": "1",
+      "width": 20,
+      "height": 30,
+      "length": 10,
+      "weight": 0.5,
+      "insurance_value": 150,
+      "quantity": 1
+    }
+  ]
+}

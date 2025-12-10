@@ -1,0 +1,114 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Configuração de Pedidos Compartilhados",
+  "meta": {
+    "version": "1.0.0",
+    "updatedAt": "2025-11-06",
+    "notes": "Compra coletiva com endereço comum e pagamento dividido"
+  },
+  
+  "enabled": true,
+  "requireSameOrigin": true,
+  "maxParticipants": 10,
+  "minParticipants": 2,
+  
+  "payment": {
+    "splitMode": "proportional",
+    "allowFullPaymentByOne": true,
+    "showProgress": true,
+    "progressMilestones": [30, 50, 75, 100],
+    "description": "Divide valor conforme % de cada pedido. Permite um pagar tudo.",
+    "validation": {
+      "mustCoverTotal": true,
+      "allowPartialPayments": true,
+      "lockAfterFirstPayment": false
+    }
+  },
+  
+  "delivery": {
+    "sharedAddress": true,
+    "allowMultipleAddresses": false,
+    "useFixedOrigin": true,
+    "logisticsCenterFallback": "manual_reassignment",
+    "trackingPerItem": true,
+    "consolidatedShipping": true,
+    "sharedTracking": true,
+    "description": "Entrega em endereço único. Expede da origem fixa do grupo."
+  },
+  
+  "lifecycle": {
+    "creationTimeout": 48,
+    "paymentTimeout": 72,
+    "expirationAfterCreation": 168,
+    "description": "Timeouts em horas: criação (48h), pagamento (72h), expiração (7 dias)"
+  },
+  
+  "permissions": {
+    "initiatorCanCancel": true,
+    "participantCanLeave": true,
+    "requireInitiatorApproval": false,
+    "allowInviteOnly": true,
+    "description": "Permissões de gerenciamento do pedido compartilhado"
+  },
+  
+  "fees": {
+    "coordinationFee": 0.00,
+    "splitByParticipants": true,
+    "description": "Sem taxa de coordenação. Custos divididos proporcionalmente."
+  },
+  
+  "audit": {
+    "table": "shared_orders",
+    "participantsTable": "shared_order_participants",
+    "paymentsTable": "shared_order_payments",
+    "logTable": "shared_order_logs",
+    "retentionYears": 7
+  },
+  
+  "notifications": {
+    "onOrderCreated": {
+      "enabled": true,
+      "channels": ["email", "push"],
+      "template": "shared_order_created",
+      "recipients": ["initiator"]
+    },
+    "onParticipantJoined": {
+      "enabled": true,
+      "channels": ["push"],
+      "template": "shared_order_participant_joined",
+      "recipients": ["initiator", "all_participants"]
+    },
+    "onPaymentReceived": {
+      "enabled": true,
+      "channels": ["push"],
+      "template": "shared_order_payment_received",
+      "recipients": ["all_participants"]
+    },
+    "onOrderCompleted": {
+      "enabled": true,
+      "channels": ["email", "push"],
+      "template": "shared_order_completed",
+      "recipients": ["all_participants"]
+    }
+  },
+  
+  "status": {
+    "draft": "Rascunho",
+    "open": "Aberto",
+    "partial": "Parcialmente Pago",
+    "paid": "Pago",
+    "processing": "Processando",
+    "shipped": "Enviado",
+    "delivered": "Entregue",
+    "cancelled": "Cancelado",
+    "expired": "Expirado"
+  },
+  
+  "display": {
+    "showParticipants": true,
+    "showPaymentProgress": true,
+    "showIndividualContributions": true,
+    "showSharedAddress": true,
+    "showTrackingPerItem": true
+  }
+}

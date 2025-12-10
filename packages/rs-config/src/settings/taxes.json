@@ -1,0 +1,109 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Configuração de Impostos e Taxas Fiscais",
+  "meta": {
+    "version": "1.0.0",
+    "updatedAt": "2025-11-06",
+    "notes": "Parâmetros fiscais para marketplace e serviços"
+  },
+  
+  "taxes": {
+    "iss": {
+      "enabled": true,
+      "percentage": 0.05,
+      "description": "ISS - Imposto Sobre Serviços (5%)",
+      "applyTo": ["services", "commissions"],
+      "exemptions": ["products"]
+    },
+    "icms": {
+      "enabled": false,
+      "percentage": 0.18,
+      "description": "ICMS - Imposto sobre Circulação de Mercadorias (18%)",
+      "applyTo": ["products"],
+      "note": "Desabilitado - produtos digitais"
+    },
+    "pis": {
+      "enabled": true,
+      "percentage": 0.0065,
+      "description": "PIS - Programa de Integração Social (0,65%)"
+    },
+    "cofins": {
+      "enabled": true,
+      "percentage": 0.03,
+      "description": "COFINS - Contribuição para Financiamento da Seguridade Social (3%)"
+    },
+    "irrf": {
+      "enabled": true,
+      "percentage": 0.015,
+      "description": "IRRF - Imposto de Renda Retido na Fonte (1,5%)",
+      "threshold": 1903.98,
+      "applyAbove": true
+    }
+  },
+  
+  "marketplace": {
+    "platformFee": {
+      "enabled": true,
+      "percentage": 0.10,
+      "description": "Taxa da plataforma (10%)",
+      "applyTo": ["sales", "services"]
+    },
+    "paymentProcessing": {
+      "enabled": true,
+      "pix": 0.00,
+      "creditCard": 0.035,
+      "debitCard": 0.02,
+      "boleto": 3.50,
+      "description": "Taxas de processamento de pagamento"
+    },
+    "antifraud": {
+      "enabled": true,
+      "percentage": 0.005,
+      "description": "Taxa de antifraude (0,5%)"
+    }
+  },
+  
+  "withholding": {
+    "enabled": true,
+    "automatic": true,
+    "description": "Retenção automática de impostos",
+    "rules": {
+      "issWithholding": true,
+      "irrfWithholding": true,
+      "pisWithholding": false,
+      "cofinsWithholding": false
+    }
+  },
+  
+  "invoicing": {
+    "enabled": true,
+    "provider": "NFe Brasil",
+    "automatic": true,
+    "types": {
+      "nfe": {
+        "enabled": true,
+        "description": "Nota Fiscal Eletrônica"
+      },
+      "nfse": {
+        "enabled": true,
+        "description": "Nota Fiscal de Serviço Eletrônica"
+      }
+    }
+  },
+  
+  "reporting": {
+    "enabled": true,
+    "monthly": true,
+    "quarterly": true,
+    "annual": true,
+    "formats": ["PDF", "XML", "CSV"],
+    "retention": 7
+  },
+  
+  "audit": {
+    "taxTable": "tax_records",
+    "invoiceTable": "invoices",
+    "retentionYears": 7,
+    "storeCalculations": true
+  }
+}

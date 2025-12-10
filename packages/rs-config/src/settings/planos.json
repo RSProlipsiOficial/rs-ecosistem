@@ -1,0 +1,102 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Configuração de planos e matrizes do sistema",
+  "version": "1.0.0",
+  "lastUpdate": "",
+  
+  "matriz": {
+    "nome": "SIGME",
+    "tipo": "1x6",
+    "estrutura": {
+      "niveis": 1,
+      "posicoesPorNivel": 6,
+      "totalPosicoes": 6
+    },
+    "valores": {
+      "entrada": 60.00,
+      "reentrada": 60.00,
+      "cicloCompleto": 360.00
+    },
+    "regras": {
+      "limiteReentradas": 10,
+      "periodoLimite": "mensal",
+      "derramamento": "ascendente",
+      "pontosPorCiclo": 1
+    },
+    "status": "ativo"
+  },
+  
+  "fidelidade": {
+    "nome": "Pool de Fidelidade",
+    "tipo": "pool",
+    "desbloqueio": {
+      "criterio": "reentrada",
+      "requerDiretos": false,
+      "valorMinimo": 60.00
+    },
+    "alcance": {
+      "niveis": 6,
+      "semLimiteLateral": true
+    },
+    "distribuicao": {
+      "tipo": "ponderada",
+      "periodo": "mensal"
+    },
+    "status": "ativo"
+  },
+  
+  "topSigma": {
+    "nome": "Pool Top SIGMA",
+    "tipo": "ranking",
+    "qualificacao": {
+      "top": 10,
+      "requerDiretos": false,
+      "semLimiteLateral": true,
+      "semLimiteProfundidade": true
+    },
+    "alcance": {
+      "niveis": 0
+    },
+    "ranking": {
+      "contaParaCarreira": true,
+      "criterio": "volume"
+    },
+    "distribuicao": {
+      "periodo": "mensal"
+    },
+    "status": "ativo"
+  },
+  
+  "carreira": {
+    "nome": "Plano de Carreira",
+    "tipo": "binario",
+    "limites": {
+      "profundidade": "ilimitada",
+      "lateralidade": "ilimitada"
+    },
+    "vme": {
+      "ativo": true,
+      "tipo": "volumeMaximoEquipe"
+    },
+    "graduacoes": {
+      "total": 13,
+      "criterio": "ciclos",
+      "periodo": "trimestral"
+    },
+    "pontua": {
+      "ciclosSigme": true,
+      "fidelidadePool": true,
+      "topSigmaPool": true,
+      "volumePessoal": true,
+      "volumeEquipe": true
+    },
+    "status": "ativo"
+  },
+  
+  "metadados": {
+    "moeda": "BRL",
+    "simbolo": "R$",
+    "timezone": "America/Sao_Paulo",
+    "idioma": "pt-BR"
+  }
+}

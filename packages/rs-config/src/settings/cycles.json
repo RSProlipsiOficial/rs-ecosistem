@@ -1,0 +1,268 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Configuração de fechamento de ciclos e períodos - RS Prólipsi",
+  "version": "1.0.0",
+  
+  "matrix": {
+    "autoPay": true,
+    "triggerOnCycleComplete": true,
+    "cycleSize": 6,
+    "pointsPerCycle": 1,
+    "description": "Matriz SIGMA 1x6 - Fecha automaticamente ao completar 6 vendas",
+    "reentryLimit": 10,
+    "reentryResetDay": 1,
+    "reentryResetFrequency": "monthly"
+  },
+  
+  "bonuses": {
+    "cycle": {
+      "name": "Bônus de Ciclo",
+      "percentage": 30.00,
+      "value": 108.00,
+      "payoutFrequency": "immediate",
+      "description": "Pago imediatamente ao completar o ciclo"
+    },
+    "depth": {
+      "name": "Bônus de Profundidade",
+      "percentage": 6.81,
+      "value": 24.52,
+      "payoutFrequency": "immediate",
+      "levels": 6,
+      "distribution": {
+        "L1": 40,
+        "L2": 25,
+        "L3": 15,
+        "L4": 10,
+        "L5": 6,
+        "L6": 4
+      },
+      "description": "Distribuído entre L1-L6 ao completar ciclo"
+    },
+    "fidelity": {
+      "name": "Pool de Fidelidade",
+      "poolPct": 1.25,
+      "payoutFrequency": "monthly",
+      "closeDay": 30,
+      "eligibility": {
+        "minCycles": 1,
+        "minMonthsActive": 1,
+        "mustBeActive": true
+      },
+      "distribution": "proportional_to_cycles",
+      "description": "Distribuído mensalmente entre consultores ativos"
+    },
+    "topSigma": {
+      "name": "Pool Top SIGMA",
+      "poolPct": 4.5,
+      "payoutFrequency": "monthly",
+      "closeDay": 30,
+      "top": 10,
+      "distribution": {
+        "1": 20.00,
+        "2": 15.00,
+        "3": 12.00,
+        "4": 10.00,
+        "5": 9.00,
+        "6": 8.00,
+        "7": 7.00,
+        "8": 6.00,
+        "9": 6.50,
+        "10": 6.50
+      },
+      "description": "Distribuído entre Top 10 consultores do mês"
+    },
+    "career": {
+      "name": "Bônus de Carreira",
+      "percentage": 6.39,
+      "value": 23.00,
+      "payoutFrequency": "immediate",
+      "vmecApplied": true,
+      "description": "Pago por ciclo válido (após VMEC) ao completar ciclo"
+    }
+  },
+  
+  "career": {
+    "quarterly": true,
+    "quarters": [
+      {
+        "name": "Q1",
+        "months": ["Jan", "Feb", "Mar"],
+        "closeDay": 31,
+        "closeMonth": "Mar",
+        "startDate": "2025-01-01",
+        "endDate": "2025-03-31"
+      },
+      {
+        "name": "Q2",
+        "months": ["Apr", "May", "Jun"],
+        "closeDay": 30,
+        "closeMonth": "Jun",
+        "startDate": "2025-04-01",
+        "endDate": "2025-06-30"
+      },
+      {
+        "name": "Q3",
+        "months": ["Jul", "Aug", "Sep"],
+        "closeDay": 30,
+        "closeMonth": "Sep",
+        "startDate": "2025-07-01",
+        "endDate": "2025-09-30"
+      },
+      {
+        "name": "Q4",
+        "months": ["Oct", "Nov", "Dec"],
+        "closeDay": 31,
+        "closeMonth": "Dec",
+        "startDate": "2025-10-01",
+        "endDate": "2025-12-31"
+      }
+    ],
+    "careerPinReset": false,
+    "bonusReset": false,
+    "pointsCarryOver": true,
+    "description": "Plano de carreira avaliado trimestralmente, pontos acumulam",
+    "upgradeRules": {
+      "automatic": true,
+      "requiresApproval": false,
+      "notifyOnUpgrade": true,
+      "rewardOnUpgrade": true
+    }
+  },
+  
+  "timing": {
+    "timezone": "America/Sao_Paulo",
+    "autoStart": true,
+    "startMonth": "Jan",
+    "startYear": 2025,
+    "fiscalYearStart": "Jan",
+    "weekStartDay": "monday",
+    "businessDays": ["mon", "tue", "wed", "thu", "fri"],
+    "holidays": [
+      "2025-01-01",
+      "2025-04-18",
+      "2025-04-21",
+      "2025-05-01",
+      "2025-09-07",
+      "2025-10-12",
+      "2025-11-02",
+      "2025-11-15",
+      "2025-11-20",
+      "2025-12-25"
+    ]
+  },
+  
+  "automation": {
+    "enableAutoClosure": true,
+    "closureTime": "03:00",
+    "notifyBeforeClosure": true,
+    "notifyDaysBefore": 3,
+    "generateReports": true,
+    "freezeDataOnClose": true,
+    "autoOpenNextPeriod": true,
+    "sendPaymentFile": true,
+    "logAllActions": true
+  },
+  
+  "notifications": {
+    "onCycleComplete": {
+      "enabled": true,
+      "channels": ["email", "push", "dashboard"],
+      "template": "cycle_completed"
+    },
+    "onMonthlyClose": {
+      "enabled": true,
+      "channels": ["email", "dashboard"],
+      "template": "monthly_closure",
+      "recipients": ["consultores_ativos", "admin"]
+    },
+    "onQuarterlyClose": {
+      "enabled": true,
+      "channels": ["email", "push", "dashboard"],
+      "template": "quarterly_closure",
+      "recipients": ["all_consultores", "admin"]
+    },
+    "onPinUpgrade": {
+      "enabled": true,
+      "channels": ["email", "push", "whatsapp", "dashboard"],
+      "template": "pin_upgrade"
+    },
+    "beforeClosure": {
+      "enabled": true,
+      "channels": ["email", "dashboard"],
+      "template": "closure_reminder",
+      "daysBefore": [7, 3, 1]
+    }
+  },
+  
+  "reports": {
+    "monthly": {
+      "enabled": true,
+      "generateOn": "closeDay",
+      "format": ["pdf", "excel", "json"],
+      "include": [
+        "total_cycles",
+        "fidelity_pool_distribution",
+        "top_sigma_ranking",
+        "total_bonuses_paid",
+        "active_consultores",
+        "new_consultores"
+      ],
+      "sendTo": ["admin", "finance"]
+    },
+    "quarterly": {
+      "enabled": true,
+      "generateOn": "closeDay",
+      "format": ["pdf", "excel"],
+      "include": [
+        "career_upgrades",
+        "total_points_awarded",
+        "pin_distribution",
+        "quarterly_performance",
+        "vmec_analysis",
+        "network_growth"
+      ],
+      "sendTo": ["admin", "finance", "leadership"]
+    },
+    "annual": {
+      "enabled": true,
+      "generateOn": "2025-12-31",
+      "format": ["pdf"],
+      "include": [
+        "annual_summary",
+        "total_compensation",
+        "top_performers",
+        "growth_metrics",
+        "financial_overview"
+      ],
+      "sendTo": ["admin", "finance", "board"]
+    }
+  },
+  
+  "audit": {
+    "enabled": true,
+    "logAllClosures": true,
+    "requireApproval": false,
+    "approvers": ["admin"],
+    "retentionDays": 2555,
+    "backupBeforeClose": true,
+    "allowManualClose": true,
+    "allowManualReopen": false,
+    "trackChanges": true
+  },
+  
+  "rollback": {
+    "enabled": false,
+    "maxDaysAfterClose": 7,
+    "requiresApproval": true,
+    "approvers": ["admin", "finance"],
+    "notifyOnRollback": true,
+    "logReason": true
+  },
+  
+  "metadata": {
+    "lastUpdated": "2025-11-06",
+    "updatedBy": "Roberto Camargo",
+    "version": "1.0.0",
+    "notes": "Configuração inicial do sistema de fechamento de ciclos"
+  }
+}

@@ -1,0 +1,126 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Configuração da Matriz SIGMA 1x6",
+  "meta": {
+    "version": "1.0.0",
+    "updatedAt": "2025-11-06",
+    "notes": "Estrutura SIGMA 1x6 com compressão dinâmica e reentrada automática"
+  },
+  
+  "matrix": {
+    "name": "SIGMA",
+    "type": "1x6",
+    "size": 6,
+    "levels": 1,
+    "description": "Matriz SIGMA 1x6 - 6 posições em linha única"
+  },
+  
+  "slots": {
+    "total": 6,
+    "positions": [1, 2, 3, 4, 5, 6],
+    "fillOrder": "sequential",
+    "allowSkip": false,
+    "description": "6 slots preenchidos sequencialmente"
+  },
+  
+  "cycle": {
+    "completionRequirement": 6,
+    "value": 360.00,
+    "currency": "BRL",
+    "description": "Ciclo completa com 6/6 posições preenchidas. Valor: R$ 360,00"
+  },
+  
+  "compression": {
+    "enabled": true,
+    "automatic": true,
+    "mode": "dynamic",
+    "rules": {
+      "fillFromTop": true,
+      "compressOnCycleComplete": true,
+      "redistributeOverflow": true
+    },
+    "description": "Compressão dinâmica: preenche de cima para baixo, redistribui overflow"
+  },
+  
+  "reentry": {
+    "enabled": true,
+    "automatic": true,
+    "position": "bottom",
+    "cost": 360.00,
+    "maxReentries": 999,
+    "description": "Reentrada automática ao completar ciclo. Posição: final da fila."
+  },
+  
+  "bonuses": {
+    "cycle": {
+      "enabled": true,
+      "percentage": 0.30,
+      "value": 108.00,
+      "description": "30% do ciclo (R$ 108,00)"
+    },
+    "depth": {
+      "enabled": true,
+      "percentage": 0.0681,
+      "maxLevels": 6,
+      "description": "6,81% distribuído em até 6 níveis de profundidade"
+    },
+    "fidelity": {
+      "enabled": true,
+      "percentage": 0.0125,
+      "poolType": "monthly",
+      "description": "1,25% para pool de fidelidade mensal"
+    },
+    "topSigma": {
+      "enabled": true,
+      "percentage": 0.045,
+      "levels": 10,
+      "poolType": "monthly",
+      "description": "4,5% para pool TOP SIGMA (10 níveis)"
+    },
+    "career": {
+      "enabled": true,
+      "percentage": 0.0639,
+      "poolType": "quarterly",
+      "description": "6,39% para pool de carreira trimestral"
+    }
+  },
+  
+  "validation": {
+    "requireActiveUser": true,
+    "requireKYC": false,
+    "requireMinimumBalance": false,
+    "allowDuplicates": false,
+    "description": "Validações ao preencher slot"
+  },
+  
+  "events": {
+    "onSlotFilled": {
+      "notify": true,
+      "log": true,
+      "webhook": false
+    },
+    "onCycleComplete": {
+      "notify": true,
+      "log": true,
+      "webhook": true,
+      "actions": ["distribute_bonus", "create_reentry", "compress_matrix"]
+    },
+    "onReentry": {
+      "notify": true,
+      "log": true,
+      "webhook": false
+    }
+  },
+  
+  "display": {
+    "showPositions": true,
+    "showProgress": true,
+    "showNextSlot": true,
+    "highlightComplete": true,
+    "colors": {
+      "empty": "#CCCCCC",
+      "filled": "#FFD700",
+      "complete": "#000000"
+    }
+  }
+}

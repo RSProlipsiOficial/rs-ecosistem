@@ -1,0 +1,139 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Configuração do Programa de Afiliados",
+  "meta": {
+    "version": "1.0.0",
+    "updatedAt": "2025-11-06",
+    "notes": "Regras para links de afiliado e comissões"
+  },
+  
+  "program": {
+    "enabled": true,
+    "name": "Programa de Afiliados RS Prólipsi",
+    "description": "Ganhe comissões indicando novos consultores e vendas"
+  },
+  
+  "commission": {
+    "enabled": true,
+    "percentage": 0.10,
+    "minPayout": 50.00,
+    "maxPayout": 10000.00,
+    "description": "Comissão de 10% sobre vendas indicadas",
+    "tiers": {
+      "bronze": {
+        "minSales": 0,
+        "percentage": 0.10,
+        "description": "Até R$ 10.000 em vendas"
+      },
+      "silver": {
+        "minSales": 10000,
+        "percentage": 0.12,
+        "description": "R$ 10.000 a R$ 50.000 em vendas"
+      },
+      "gold": {
+        "minSales": 50000,
+        "percentage": 0.15,
+        "description": "Acima de R$ 50.000 em vendas"
+      }
+    }
+  },
+  
+  "links": {
+    "enabled": true,
+    "maxPerUser": 10,
+    "format": "https://rsprolipsi.com.br/ref/{code}",
+    "codeLength": 8,
+    "allowCustomCode": true,
+    "expirationDays": 365,
+    "description": "Cada afiliado pode ter até 10 links ativos"
+  },
+  
+  "tracking": {
+    "enabled": true,
+    "cookieName": "rs_affiliate",
+    "cookieDuration": 30,
+    "cookieUnit": "days",
+    "description": "Cookie de 30 dias para rastreamento",
+    "attribution": {
+      "model": "last_click",
+      "allowOverride": false,
+      "description": "Último clique ganha a comissão"
+    }
+  },
+  
+  "eligibility": {
+    "requireActiveStatus": true,
+    "requireKYC": true,
+    "requireMinAge": 18,
+    "allowSelfReferral": false,
+    "description": "Requisitos para participar do programa"
+  },
+  
+  "payout": {
+    "enabled": true,
+    "frequency": "monthly",
+    "minAmount": 50.00,
+    "methods": ["PIX", "BankTransfer"],
+    "processingDays": 7,
+    "description": "Pagamento mensal com mínimo de R$ 50,00"
+  },
+  
+  "materials": {
+    "enabled": true,
+    "banners": true,
+    "landingPages": true,
+    "emailTemplates": true,
+    "socialMedia": true,
+    "description": "Materiais de marketing disponíveis"
+  },
+  
+  "restrictions": {
+    "prohibitedMethods": [
+      "spam",
+      "fake_reviews",
+      "misleading_ads",
+      "trademark_bidding"
+    ],
+    "requireDisclosure": true,
+    "description": "Métodos proibidos de promoção"
+  },
+  
+  "reporting": {
+    "enabled": true,
+    "realtime": true,
+    "metrics": {
+      "clicks": true,
+      "conversions": true,
+      "sales": true,
+      "commissions": true,
+      "conversionRate": true
+    },
+    "exports": ["PDF", "CSV", "Excel"]
+  },
+  
+  "notifications": {
+    "onSale": {
+      "enabled": true,
+      "channels": ["email", "push"],
+      "template": "affiliate_sale"
+    },
+    "onPayout": {
+      "enabled": true,
+      "channels": ["email", "push"],
+      "template": "affiliate_payout"
+    },
+    "onMilestone": {
+      "enabled": true,
+      "channels": ["email"],
+      "template": "affiliate_milestone"
+    }
+  },
+  
+  "audit": {
+    "linksTable": "affiliate_links",
+    "clicksTable": "affiliate_clicks",
+    "salesTable": "affiliate_sales",
+    "commissionsTable": "affiliate_commissions",
+    "retentionYears": 7
+  }
+}

@@ -1,0 +1,173 @@
+PLANO DE SISTEMA � RS PR�LIPSI MARKETPLACE (RS SHOPPING)
+Vers�o funcional completa � estrutura tratada como finalizada
+1. Estrutura Geral do Marketplace
+
+O RS Shopping � o marketplace oficial da RS Pr�lipsi, totalmente integrado ao ecossistema do escrit�rio virtual (Admin e Consultor).
+Permite vendas diretas, afiliadas e dropshipping, com repasse autom�tico de comiss�es e pontua��o ao SIGMA e Wallet Pay.
+
+Dom�nio oficial: marketplace.rsprolipsi.com.br
+Ambiente de produ��o: Porta 5003 � Nginx + SSL ativo
+Banco de dados: Supabase (products, orders, commissions, stores, affiliates, wallet_transactions)
+Infraestrutura: Node.js + Next.js + Supabase REST API + PM2 deploy
+Cores padr�o: preto #0F1115, dourado #C8A74E, cinza #1B2029
+
+2. Cat�logo e Estrutura de Produtos
+
+Produtos:
+- Cadastro completo com t�tulo, descri��o, imagens, pre�o, SKU, peso e estoque.
+- Suporte a varia��es (tamanho, cor, modelo).
+- Controle de estoque autom�tico e baixa ap�s cada pedido.
+- Filtros por categoria, pre�o, relev�ncia e avalia��o.
+- Exibi��o em cards com hover dourado e bot�o de compra direto.
+
+Categorias:
+- Hierarquia em at� tr�s n�veis (Categoria > Subcategoria > Item).
+- Possibilidade de destacar categorias principais na home.
+- API /api/categories integrada ao painel Admin.
+
+Pedidos e Faturamento:
+- Gera��o autom�tica de n�mero de pedido, nota fiscal e fatura.
+- Status: Pendente, Aprovado, Enviado, Entregue, Cancelado.
+- Hist�rico completo por cliente e consultor.
+- Painel de auditoria para cada pedido com timeline detalhada.
+
+Log�stica e Entregas:
+- Integra��o total com Correios, Melhor Envio, Azul Cargo, Loggi, Total Express, Jadlog e SuperFrete.
+- C�lculo autom�tico de frete no checkout via API (CEP de origem do CD).
+- Rastreamento em tempo real.
+- Suporte a c�lculo de frete personalizado por loja.
+
+3. Pagamentos e Processamento Financeiro
+
+Gateways Integrados:
+- MercadoPago, PagSeguro, PIX (QR Code Din�mico) e Boleto Banc�rio.
+- Split autom�tico para Wallet Pay e comiss�o do afiliado.
+- Pagamento confirmado ? pedido aprovado ? comiss�o liberada.
+- Todos os pagamentos registrados na tabela wallet_transactions.
+
+Auditoria de Pagamentos:
+- Logs autom�ticos de cada transa��o.
+- Verifica��o antifraude e chargeback.
+- Rotina cron mensal para concilia��o e repasse autom�tico.
+
+4. Afilia��o e Dropshipping
+
+Afiliados:
+- Cada consultor tem um link �nico de loja (loja.rsprolipsi.com.br/consultor/nome).
+- Cada venda feita por esse link gera comiss�o direta e pontos de rede.
+- Registros autom�ticos dos eventos de pixel (View ? AddToCart ? Purchase).
+- Painel do consultor mostra total de vendas, comiss�o total e convers�o.
+
+Lojas Individuais:
+- Loja replicada da principal com pixels configur�veis.
+- Consultor pode ativar/desativar produtos do cat�logo.
+- Comiss�o e pontua��o calculadas individualmente.
+
+Dropshipping:
+- Parceria com fornecedores cadastrados no Admin.
+- Pedidos encaminhados automaticamente aos fornecedores.
+- Repasses autom�ticos e auditoria via webhook /api/dropshipping/confirm.
+
+5. Painel do Consultor (RS Shopping)
+
+Painel exibe informa��es de vendas, produtos e comiss�es.
+
+Telas Principais:
+1. Resumo Geral: total de vendas, comiss�o, clientes e produtos vendidos.
+2. Pedidos: hist�rico com status e datas.
+3. Extrato Financeiro: comiss�es pagas e pendentes.
+4. Link de Afiliado: c�pia r�pida + QR Code.
+5. Relat�rios: exporta��o em CSV e PDF.
+6. Ranking: posi��o no TOP Vendas.
+7. Cat�logo: busca por categoria.
+8. Treinamentos: v�deos curtos sobre t�cnicas de vendas.
+
+Integra��es autom�ticas:
+- Wallet Pay (extrato e saldo).
+- RS.IA (automa��o de copy, an�ncios e posts).
+- Painel SIGMA (reflexo em pontos de rede).
+
+6. Painel Administrativo (Admin)
+
+Painel administrativo controla todo o marketplace.
+
+Telas e Fun��es:
+1. Produtos: cria��o, edi��o e destaque.
+2. Lojas e Afiliados: cadastro e vincula��o.
+3. Pedidos: acompanhamento e status.
+4. Comiss�es: configura��o de percentual e split.
+5. Fretes e Pagamentos: configura��o de provedores.
+6. Relat�rios: vendas, lucros e top vendedores.
+7. Auditoria: log de a��es com ID e data/hora.
+
+7. Integra��o com Wallet Pay
+
+Todos os eventos financeiros passam pela Wallet Pay.
+
+Evento | Origem | Descri��o
+commission_shop | Venda | Comiss�o da loja ou afiliado
+bonus | SIGMA | Reflexo de pontos de rede
+withdrawal | Consultor | Saque de valores
+transfer | Interno | Transfer�ncia entre contas RS
+fees | Sistema | Taxas operacionais
+
+- Logs autom�ticos e snapshots di�rios.
+- Transa��es conciliadas com hash de seguran�a.
+- Exporta��o de extratos em PDF e CSV.
+
+8. Pixels e Rastreamento
+
+Cada loja tem seus pr�prios pixels:
+
+Tipo | Plataforma | Evento
+Pixel Google | Google Ads | ViewItem, AddToCart, Purchase
+Pixel Meta | Facebook/Instagram | ViewContent, AddToCart, Purchase
+Pixel TikTok | TikTok Ads | ProductView, AddToCart, CompletePayment
+Pixel Taboola | Taboola Ads | Click ? Conversion
+Pixel LinkedIn | LinkedIn Ads | PageView, Lead, Purchase
+
+- Todos os pixels seguem o Consent Mode (LGPD).
+- Disparo autom�tico com base em dom�nio e ID do consultor.
+- Logs armazenados em pixels_logs.
+
+9. Comunica��o e Treinamentos
+
+- M�dulo interno de mensagens e notifica��es.
+- Publica��o de campanhas e banners.
+- �rea de aprendizado com v�deos explicativos.
+- Canal direto com suporte via WhatsApp e RS.IA Chatbot.
+
+10. Design e Experi�ncia (UX/UI)
+
+- Tema Dark com Dourado (padr�o RS Unificado).
+- Layout responsivo mobile-first.
+- Sidebar retr�til, cards com sombra 2xl.
+- Gr�ficos com Recharts e �cones Lucide-React.
+- Skeletons em carregamento e anima��es Framer Motion.
+- �reas de busca, filtros e ordena��o integradas.
+
+11. Checklists Internos de Implanta��o
+
+? Cadastro de produtos e categorias
+? Configura��o de gateways de pagamento e frete
+? Cadastro de fornecedores e dropshipping
+? Cria��o das lojas pessoais dos consultores
+? Conex�o dos pixels individuais
+? Auditoria de logs e comiss�es
+? Testes de compra e concilia��o financeira
+? Valida��o da integra��o com Wallet Pay e SIGMA
+? Ativa��o da �rea de treinamentos
+? Revis�o dos relat�rios administrativos
+
+12. Estrutura CRM / PRD Oficial
+
+C�digo | M�dulo | Descri��o
+CRM-01 | Cat�logo & Produtos | Gerenciamento de produtos e categorias
+CRM-02 | Pedidos & Faturamento | Controle de pedidos, status e notas
+CRM-03 | Pagamentos | Integra��es com gateways e wallet
+CRM-04 | Afilia��o & Dropshipping | Controle de afiliados e comiss�es
+CRM-05 | Pixels & Marketing | Rastreamento e an�ncios
+CRM-06 | Painel do Consultor | Relat�rios, extratos e links pessoais
+CRM-07 | Painel Administrativo | Gest�o de vendas e auditoria
+CRM-08 | Comunica��o & Treinamentos | Notifica��es e v�deos internos
+CRM-09 | Design & UX | Layouts, interatividade e anima��es

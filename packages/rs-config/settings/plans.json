@@ -1,0 +1,25 @@
+{
+  "bonus": {
+    "sigme": {
+      "percent": 30,
+      "base_value": 360,
+      "payout": 108
+    },
+    "profundidade": {
+      "percent": 6.81,
+      "base_value": 360
+    },
+    "pool_top_sigme": {
+      "percent": 4.5,
+      "levels": 10
+    }
+  },
+  "fidelidade": {
+    "regra": "recebe ciclo anterior ao ativar próximo ciclo"
+  },
+  "plano_carreira": {
+    "market_digital": {
+      "descricao": "acúmulos por eventos de ciclo e vendas"
+    }
+  }
+}

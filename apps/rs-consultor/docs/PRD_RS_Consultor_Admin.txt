@@ -1,0 +1,153 @@
+PRD � M�DULO CONSULTOR (PAINEL ADMINISTRATIVO RS PR�LIPSI)
+Documento t�cnico-funcional referente ao m�dulo 'Consultor' dentro do Painel Administrativo RS Pr�lipsi. Este m�dulo permite ao administrador visualizar, auditar e gerenciar todos os consultores cadastrados, incluindo dados pessoais, estrutura de rede, hist�rico financeiro, relat�rios de vendas e bonifica��es, e integra��es com SIGMA, WalletPay e Marketplace.
+1. Vis�o Geral
+
+O m�dulo Consultor (Admin) centraliza o gerenciamento completo dos consultores cadastrados na plataforma RS Pr�lipsi.
+Ele possibilita o controle total dos dados cadastrais, situa��o de rede, transa��es financeiras, bonifica��es, hist�rico de vendas e engajamento.
+
+2. Estrutura de Cadastro do Consultor (Ficha T�cnica Completa)
+
+Campos de Identifica��o:
+- ID do Consultor (UUID)
+- Nome completo
+- E-mail
+- CPF ou CNPJ
+- Endere�o completo (rua, n�mero, bairro, cidade, estado, CEP)
+- Telefone (WhatsApp integrado)
+- Data de nascimento (opcional)
+- Login / Usu�rio
+- Senha criptografada
+- Status da Conta (Ativo, Inativo, Pendente, Banido)
+- Tipo de Perfil (Consultor, Logista, Admin Secund�rio)
+
+Campos de Rede:
+- ID e Nome do Patrocinador
+- Matriz atual (ex: 3x5, 4x5)
+- N�vel de Carreira (PIN)
+- Diretos Ativos
+- Ciclo SIGMA Atual
+- Status de Ativa��o Mensal
+- Data da �ltima reativa��o
+
+Campos Financeiros (WalletPay):
+- Saldo Atual
+- Chave PIX (criptografada)
+- Hist�rico de Saques e Transfer�ncias
+- Taxas Aplicadas
+- Total de B�nus Recebidos
+- Total de Comiss�es Recebidas
+
+Campos de Rede (Gera��es e Ganhos):
+- Total de pessoas na rede (at� 9 gera��es)
+- Volume total da rede (em pontos)
+- Ganhos por n�vel (L1 a L9 com percentuais configur�veis)
+- B�nus total por gera��o
+
+Campos de Auditoria:
+- Data de cria��o
+- �ltimo login
+- �ltima compra
+- �ltima atualiza��o
+- Usu�rio respons�vel por altera��es
+
+3. Funcionalidades do Painel Admin (Consultores)
+
+?? Lista de Consultores:
+- Pesquisa por nome, e-mail, CPF ou ID
+- Filtros por status, PIN, matriz e cidade
+- Ordena��o por data de cadastro ou volume de rede
+
+?? Ficha T�cnica Completa:
+- Painel lateral com dados completos (pessoal, rede, financeiro)
+- Edi��o de campos individuais
+- Hist�rico de a��es e auditoria
+
+?? Financeiro Integrado:
+- Visualiza��o de saldo, b�nus, saques e comiss�es
+- Link direto com m�dulo WalletPay
+- Aprova��o manual de saques
+- Gr�ficos de ganhos mensais e anuais
+
+?? Estrutura de Rede:
+- Visualiza��o hier�rquica (�rvore) at� 9 gera��es
+- C�lculo de pontos e ganhos por gera��o
+- Clique em membro para abrir ficha detalhada
+
+??? Relat�rios de Vendas:
+- Integra��o com Marketplace
+- Exibi��o de produtos vendidos, valores e status
+- Identifica��o de quem recebeu comiss�o
+- Exporta��o de relat�rios
+
+?? Relat�rios de B�nus SIGMA:
+- Exibe b�nus por n�vel e valor monet�rio
+- C�lculo autom�tico de pontos e ganhos
+- Exporta��o por per�odo
+
+?? Painel de An�lise Global:
+- Indicadores: total de consultores ativos, faturamento, b�nus pagos, m�dia de ganhos, atrasos de ativa��o
+- Gr�ficos: crescimento de rede, ganhos mensais, evolu��o de matrizes
+
+?? Integra��o com RS Studio:
+- Hist�rico de mensagens e treinamentos
+- Progresso e certificados
+- Engajamento dos consultores
+
+?? Seguran�a e Controle:
+- Permiss�es por cargo
+- Logs de auditoria com IP e timestamp
+- Criptografia de dados sens�veis
+
+4. Integra��es do M�dulo Consultor
+
+Sistema | Tipo de Integra��o | Dados Trocados
+---------|--------------------|----------------
+SIGMA | Rede e matrizes | Estrutura, pontos e b�nus
+WalletPay | Financeiro | Cr�ditos, d�bitos, saldos e saques
+Marketplace | Vendas e comiss�es | Pedidos, produtos e repasses
+RS Studio | Comunica��o e IA | Mensagens, treinamentos e notifica��es
+RS.IA | Intelig�ncia | Suporte e relat�rios autom�ticos
+Admin Central | Auditoria | Logs, acessos e permiss�es
+
+5. Relat�rios Espec�ficos do Consultor
+
+A. Relat�rio de Pagamentos:
+- Vendas originadas pelo consultor
+- Distribui��o de ganhos por n�veis (L1-L9)
+- Rela��o entre pagador e recebedor
+- N�mero de beneficiados e percentuais
+
+B. Relat�rio Financeiro:
+- Cr�ditos: b�nus, comiss�es, transfer�ncias
+- D�bitos: saques, taxas, ajustes
+- Saldo di�rio e acumulado
+
+C. Relat�rio de Rede:
+- Crescimento mensal da rede
+- Volume total de pontos
+- Ranking de desempenho
+
+D. Relat�rio de Engajamento (RS Studio):
+- Conclus�o de treinamentos
+- Mensagens lidas e campanhas abertas
+- Intera��es com IA
+
+6. Design e UX
+
+- Tema dark e dourado (padr�o RS)
+- Abas: Ficha, Financeiro, Rede, Vendas, B�nus, Treinamentos
+- Sidebar com �cones e cores din�micas
+- Layout responsivo com cards e pain�is colaps�veis
+- Gr�ficos Recharts e exporta��o CSV/PDF
+
+7. Checklists de Implementa��o
+
+? Cadastro completo do consultor (dados pessoais, rede e financeiro)
+? Visualiza��o e edi��o dentro do Admin
+? Relat�rios de vendas integrados ao Marketplace
+? Relat�rios de b�nus integrados ao SIGMA
+? Relat�rios financeiros integrados � WalletPay
+? Logs e auditoria de a��es
+? Exporta��o de relat�rios (CSV e PDF)
+?? Adicionar painel de engajamento (RS Studio)
+?? Criar gr�fico consolidado de crescimento da rede

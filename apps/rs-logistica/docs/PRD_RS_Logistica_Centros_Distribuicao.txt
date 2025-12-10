@@ -1,0 +1,106 @@
+PRD � M�DULO LOG�STICO (CENTROS DE DISTRIBUI��O RS PR�LIPSI)
+Documento t�cnico-funcional do m�dulo log�stico RS Pr�lipsi, respons�vel pelos Centros de Distribui��o (CDs). Define a estrutura de funcionamento, integra��es, banco de dados e processos operacionais entre Admin, Marketplace, WalletPay, SIGMA e RS Studio.
+1. Vis�o Geral do Novo Modelo
+
+O m�dulo de Centros de Distribui��o (CD) da RS Pr�lipsi permite que cada unidade funcione como uma loja autorizada, 
+espelhando o cat�logo do Marketplace e operando de forma integrada com o SIGMA e WalletPay.
+Cada CD possui painel pr�prio para controle de estoque, pedidos, entregas e relat�rios de vendas, com repasses autom�ticos via WalletPay.
+
+2. Estrutura de Banco de Dados (Proposta Completa)
+
+Tabela | Fun��o | Origem / M�dulo | Atualiza��o
+--------|---------|-----------------|--------------
+distribution_centers | Cadastro dos CDs | Admin | Manual / Autom�tica
+cd_products | Produtos dispon�veis em cada CD | Marketplace | Autom�tica (espelhamento)
+cd_orders | Pedidos feitos nos CDs | Marketplace / Logista | Autom�tica
+cd_inventory | Controle de estoque local | CD / Admin | Em tempo real
+cd_shipments | Controle de entregas e transportes | CD | Manual / Autom�tica
+cd_wallet | Movimenta��es financeiras do CD | WalletPay | Webhook
+cd_reports | Relat�rios e indicadores | Admin | Di�ria
+cd_logs | Auditoria e hist�rico de a��es | Admin | Autom�tica
+
+3. Ficha T�cnica do Centro de Distribui��o
+
+Campos principais:
+- ID do CD (UUID)
+- Nome do CD / Fantasia
+- Raz�o social (opcional)
+- CNPJ / CPF respons�vel
+- Gestor vinculado (user_id)
+- Endere�o completo
+- Telefone / WhatsApp
+- E-mail
+- Chave PIX
+- Data de cadastro / ativa��o
+- Status (ativo, bloqueado, pendente)
+- Tipo de CD (Regional, Estadual, Municipal, Delivery, Central)
+
+4. Integra��es Entre M�dulos
+
+Origem | Integra��o | Tipo de Dados | Descri��o
+--------|-------------|---------------|-----------
+Marketplace | Espelhamento de produtos e pedidos | Produtos, pre�os, descri��es, pedidos | Cada CD replica o cat�logo do Marketplace
+WalletPay | Controle financeiro | Cr�ditos, d�bitos, repasses | O CD recebe repasses autom�ticos das vendas
+SIGMA | Volume e pontua��o | Pontos, ciclos, reativa��es | Cada venda do CD gera pontua��o na rede
+Admin | Cadastro e controle | Status, auditoria, relat�rios | Gest�o global dos CDs
+RS Studio | Comunica��o e treinamento | Mensagens, treinamentos e suporte | CD recebe avisos e treinamentos autom�ticos
+RS.IA | Intelig�ncia operacional | Alertas, an�lise de estoque, performance | Gera��o de insights e alertas autom�ticos
+
+5. Espelhamento do Marketplace (L�gica Principal)
+
+1. Admin cadastra o CD e define tipo e regi�o.
+2. Marketplace envia cat�logo via API e o CD replica produtos (nome, imagem, pre�o, descri��o, estoque).
+3. Pedidos feitos localmente s�o registrados em cd_orders.
+4. WalletPay registra as comiss�es de cada venda automaticamente.
+5. Admin acompanha as opera��es em tempo real.
+
+6. Pain�is de Acesso
+
+Painel | Fun��es | Permiss�es
+---------|----------|------------
+Admin Log�stico | Cadastro, estoque, auditoria e relat�rios de todos os CDs | Total
+Gestor de CD | Visualiza��o de pedidos, controle de estoque, financeiro e relat�rios | Parcial
+Consultor (Rede) | Compra e retirada no CD, visualiza��o de estoque local | Limitado
+Financeiro (WalletPay) | Repasse autom�tico e controle de saldo | Restrito
+Auditor | Logs e movimenta��es | Leitura
+
+7. Relat�rios Operacionais do CD
+
+Tipo de Relat�rio | Origem | Finalidade
+--------------------|---------|-------------
+Vendas di�rias e mensais | Marketplace / CD | Controle financeiro e estat�stico
+Estoque dispon�vel | cd_inventory | Planejamento log�stico
+Pedidos pendentes / entregues | cd_orders / cd_shipments | Controle de entregas
+Repasses financeiros | WalletPay | Auditoria e concilia��o
+Ranking de CDs por desempenho | Admin | Comparativo de performance
+Produtos mais vendidos | Marketplace | Intelig�ncia de mercado
+
+8. Fluxo de Opera��o
+
+1. Admin cadastra CD (define gestor e regi�o).
+2. CD sincroniza cat�logo com o Marketplace.
+3. Consultor realiza pedido e o CD processa localmente.
+4. WalletPay efetua repasse autom�tico ao CD.
+5. SIGMA gera pontos de rede para o consultor.
+6. Admin monitora relat�rios consolidados.
+
+9. Indicadores-Chave (KPIs)
+
+Indicador | Fonte | Descri��o
+------------|--------|-----------
+Total de CDs ativos | Admin | Quantidade de CDs operacionais
+Volume total de vendas por CD | Marketplace / WalletPay | Soma de todas as vendas
+Ticket m�dio por CD | Marketplace | Valor m�dio das compras
+Pontua��o total gerada | SIGMA | Pontos de rede vindos dos CDs
+Entregas atrasadas | cd_shipments | Monitoramento de SLA
+Repasses pendentes | WalletPay | Controle financeiro
+
+10. Roadmap de Implementa��o
+
+Fase | Entrega | Descri��o
+------|----------|-----------
+Fase 1 | Base log�stica | Cadastro de CDs, controle de estoque e espelhamento
+Fase 2 | Integra��o Marketplace | Sincroniza��o de produtos, pedidos e pre�os
+Fase 3 | Financeiro e WalletPay | Repasses autom�ticos e relat�rios de saldo
+Fase 4 | SIGMA e Pontua��o | Gera��o autom�tica de volume de rede
+Fase 5 | Intelig�ncia RS.IA | Monitoramento de performance e alertas preditivos

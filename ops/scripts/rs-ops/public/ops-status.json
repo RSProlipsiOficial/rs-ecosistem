@@ -1,0 +1,67 @@
+{
+  "timestamp": "",
+  "status": "operational",
+  "services": {
+    "vps": {
+      "status": "online",
+      "uptime": 0,
+      "cpu": 0,
+      "memory": 0,
+      "disk": 0
+    },
+    "api": {
+      "status": "online",
+      "responseTime": 0,
+      "endpoint": "http://localhost:8080"
+    },
+    "supabase": {
+      "status": "connected",
+      "responseTime": 0
+    },
+    "walletpay": {
+      "status": "online",
+      "responseTime": 0,
+      "balance": 0
+    }
+  },
+  "crons": {
+    "activateMatriz": {
+      "lastRun": null,
+      "nextRun": null,
+      "status": "scheduled"
+    },
+    "resetCounters": {
+      "lastRun": null,
+      "nextRun": null,
+      "status": "scheduled"
+    },
+    "fidelityPool": {
+      "lastRun": null,
+      "nextRun": null,
+      "status": "scheduled"
+    },
+    "topSigmaPool": {
+      "lastRun": null,
+      "nextRun": null,
+      "status": "scheduled"
+    }
+  },
+  "jobs": {
+    "recalcBonuses": {
+      "lastRun": null,
+      "status": "idle"
+    },
+    "updateRanks": {
+      "lastRun": null,
+      "status": "idle"
+    },
+    "cleanLogs": {
+      "lastRun": null,
+      "status": "idle"
+    },
+    "backupWallets": {
+      "lastRun": null,
+      "status": "idle"
+    }
+  }
+}

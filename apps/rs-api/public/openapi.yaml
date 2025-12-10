@@ -1,0 +1,110 @@
+openapi: 3.0.0
+info:
+  title: RS-API
+  version: 1.0.0
+  description: API principal do RS Prólipsi - Sistema de gestão e bônus
+
+servers:
+  - url: http://localhost:5020/v1
+    description: Desenvolvimento local
+  - url: https://api.rsprolipsi.com.br/v1
+    description: Produção
+
+paths:
+  /health:
+    get:
+      summary: Health check
+      responses:
+        '200':
+          description: API funcionando
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  ts:
+                    type: number
+
+  /products:
+    get:
+      summary: Listar produtos
+      responses:
+        '200':
+          description: Lista de produtos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Product'
+    post:
+      summary: Criar produto
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductInput'
+      responses:
+        '201':
+          description: Produto criado
+
+  /bonus:
+    get:
+      summary: Listar regras de bônus
+      responses:
+        '200':
+          description: Regras de bônus
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /bonus/simulate:
+    post:
+      summary: Simular distribuição de bônus
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                price:
+                  type: number
+                points:
+                  type: number
+      responses:
+        '200':
+          description: Simulação de bônus
+
+components:
+  schemas:
+    Product:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        price:
+          type: number
+        sku:
+          type: string
+    
+    ProductInput:
+      type: object
+      required:
+        - name
+        - price
+      properties:
+        name:
+          type: string
+          minLength: 2
+        price:
+          type: number
+          minimum: 0
+        sku:
+          type: string

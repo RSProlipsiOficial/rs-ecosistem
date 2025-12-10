@@ -1,0 +1,105 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Configuração de Pagamentos, Saques e Liquidação",
+  "meta": {
+    "version": "1.0.0",
+    "updatedAt": "2025-11-06",
+    "notes": "Janelas de saque, políticas de liquidez, limites e taxas"
+  },
+  
+  "withdrawals": {
+    "requestWindow": {
+      "startDay": 1,
+      "endDay": 5,
+      "description": "Janela de solicitação de saque: dias 1 a 5 do mês"
+    },
+    "payoutWindow": {
+      "startDay": 10,
+      "endDay": 15,
+      "description": "Janela de pagamento: dias 10 a 15 do mês"
+    },
+    "minWithdrawal": 50.00,
+    "maxWithdrawal": 50000.00,
+    "feePct": 0.02,
+    "feeMin": 2.00,
+    "feeMax": 100.00,
+    "methods": ["PIX", "BankTransfer", "TED"],
+    "walletSource": "main_balance",
+    "requireKYC": true,
+    "require2FA": false,
+    "dailyLimit": 1,
+    "monthlyLimit": 5,
+    "validation": {
+      "checkBalance": true,
+      "checkPendingWithdrawals": true,
+      "checkMinimumDays": 7
+    }
+  },
+  
+  "autoReinvest": {
+    "enabled": true,
+    "minPercent": 0.05,
+    "maxPercent": 0.30,
+    "defaultPercent": 0.10,
+    "description": "Reinvestimento automático de 5% a 30% dos ganhos",
+    "applyTo": ["bonuses", "commissions"],
+    "excludeFrom": ["withdrawals", "transfers"]
+  },
+  
+  "settlement": {
+    "currency": "BRL",
+    "timezone": "America/Sao_Paulo",
+    "roundingMode": "nearest_cent",
+    "precision": 2,
+    "description": "Configurações de liquidação em Real (BRL)"
+  },
+  
+  "limits": {
+    "dailyWithdrawal": 10000.00,
+    "monthlyWithdrawal": 100000.00,
+    "yearlyWithdrawal": 500000.00,
+    "description": "Limites de saque por período"
+  },
+  
+  "audit": {
+    "withdrawalTable": "wallet_withdrawals",
+    "payoutTable": "wallet_payouts",
+    "transactionTable": "wallet_transactions",
+    "logTable": "payment_logs",
+    "retentionYears": 7,
+    "storeMetadata": true
+  },
+  
+  "notifications": {
+    "onWithdrawalRequest": {
+      "enabled": true,
+      "channels": ["email", "push"],
+      "template": "withdrawal_requested"
+    },
+    "onWithdrawalApproved": {
+      "enabled": true,
+      "channels": ["email", "push", "sms"],
+      "template": "withdrawal_approved"
+    },
+    "onWithdrawalPaid": {
+      "enabled": true,
+      "channels": ["email", "push"],
+      "template": "withdrawal_paid"
+    },
+    "onWithdrawalRejected": {
+      "enabled": true,
+      "channels": ["email"],
+      "template": "withdrawal_rejected"
+    }
+  },
+  
+  "status": {
+    "requested": "Solicitado",
+    "pending_approval": "Aguardando Aprovação",
+    "approved": "Aprovado",
+    "processing": "Processando",
+    "paid": "Pago",
+    "rejected": "Rejeitado",
+    "cancelled": "Cancelado"
+  }
+}

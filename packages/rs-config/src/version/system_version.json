@@ -1,0 +1,137 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Controle de versão do sistema - RS Prólipsi",
+  
+  "current": {
+    "version": "1.0.0",
+    "codename": "Genesis",
+    "releaseDate": "2025-11-06",
+    "status": "stable"
+  },
+  
+  "changelog": [
+    {
+      "version": "1.0.0",
+      "date": "2025-11-06",
+      "type": "major",
+      "changes": {
+        "added": [
+          "Sistema de matriz SIGMA 1x6 completo",
+          "Plano de carreira com 13 PINs",
+          "Bônus de profundidade (L1-L6)",
+          "Pool de fidelidade (1.25%)",
+          "Pool Top SIGMA (4.5%)",
+          "Sistema de reentradas (10/mês)",
+          "VMEC - Volume Máximo por Equipe e Ciclo",
+          "Motor operacional com CRONs",
+          "Dashboard de métricas",
+          "Notificações multi-canal",
+          "Sistema de carteira digital",
+          "CI/CD com GitHub Actions"
+        ],
+        "modified": [],
+        "fixed": [],
+        "deprecated": [],
+        "removed": [],
+        "security": [
+          "Implementação de JWT",
+          "Row Level Security no Supabase",
+          "Validação de permissões",
+          "Logs de auditoria"
+        ]
+      },
+      "breaking": false,
+      "notes": "Lançamento inicial do sistema RS Prólipsi",
+      "author": "Roberto Camargo",
+      "modules_affected": [
+        "rs-config",
+        "rs-ops",
+        "rs-core",
+        "rs-api",
+        "rs-docs"
+      ]
+    }
+  ],
+  
+  "compatibility": {
+    "node_version": ">=18.0.0",
+    "typescript_version": "^5.3.0",
+    "supabase_version": "latest",
+    "browsers": [
+      "Chrome >= 90",
+      "Firefox >= 88",
+      "Safari >= 14",
+      "Edge >= 90"
+    ]
+  },
+  
+  "modules_versions": {
+    "rs-config": "1.0.0",
+    "rs-ops": "2.0.0",
+    "rs-core": "1.0.0",
+    "rs-api": "1.0.0",
+    "rs-walletpay": "0.5.0",
+    "rs-admin": "0.3.0",
+    "rs-consultor": "0.3.0",
+    "rs-marketplace": "0.2.0",
+    "rs-studio": "0.2.0",
+    "rs-docs": "1.0.0"
+  },
+  
+  "roadmap": {
+    "v1.1.0": {
+      "planned_date": "2025-12-01",
+      "features": [
+        "Integração completa WalletPay",
+        "Dashboard analytics avançado",
+        "Sistema de notificações push",
+        "Relatórios PDF automáticos"
+      ]
+    },
+    "v1.2.0": {
+      "planned_date": "2026-01-01",
+      "features": [
+        "App mobile (React Native)",
+        "Gamificação e conquistas",
+        "Certificados digitais",
+        "Sistema de chat interno"
+      ]
+    },
+    "v2.0.0": {
+      "planned_date": "2026-03-01",
+      "features": [
+        "Marketplace de produtos completo",
+        "Sistema de logística integrado",
+        "API pública para parceiros",
+        "Blockchain para rastreabilidade"
+      ]
+    }
+  },
+  
+  "deprecation_warnings": [],
+  
+  "known_issues": [
+    {
+      "id": "ISSUE-001",
+      "severity": "low",
+      "description": "Lint errors em node-cron (instalar dependências resolve)",
+      "workaround": "npm install no rs-ops",
+      "fix_planned": "1.0.1"
+    }
+  ],
+  
+  "metrics": {
+    "lines_of_code": "~15000",
+    "files_created": "~130",
+    "test_coverage": "0%",
+    "performance_score": "pending",
+    "security_score": "pending"
+  },
+  
+  "last_audit": {
+    "date": "2025-11-06",
+    "auditor": "Roberto Camargo",
+    "score": "87%",
+    "notes": "Sistema funcional e validado. Pronto para testes."
+  }
+}

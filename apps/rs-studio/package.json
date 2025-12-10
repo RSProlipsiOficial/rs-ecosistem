@@ -1,0 +1,12 @@
+{
+  "name": "rs-studio",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "echo build",
+    "start": "node index.js || serve -p $PORT ."
+  },
+  "dependencies": {
+    "serve": "^14.2.1"
+  }
+}

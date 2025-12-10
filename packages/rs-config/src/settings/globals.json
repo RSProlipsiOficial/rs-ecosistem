@@ -1,0 +1,119 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Configurações Globais do Sistema RS Prólipsi",
+  "meta": {
+    "version": "1.0.0",
+    "updatedAt": "2025-11-06",
+    "notes": "Config geral: timezone, moeda, reentrada, sistema"
+  },
+  
+  "system": {
+    "name": "RS Prólipsi",
+    "version": "1.0.0",
+    "environment": "production",
+    "timezone": "America/Sao_Paulo",
+    "locale": "pt-BR",
+    "currency": "BRL",
+    "currencySymbol": "R$",
+    "decimalPlaces": 2,
+    "dateFormat": "DD/MM/YYYY",
+    "timeFormat": "HH:mm:ss"
+  },
+  
+  "company": {
+    "name": "RS Prólipsi Oficial",
+    "legalName": "RS Prólipsi LTDA",
+    "cnpj": "00.000.000/0001-00",
+    "email": "rsprolipsioficial@gmail.com",
+    "phone": "(41) 3000-0000",
+    "website": "https://rsprolipsi.com.br",
+    "address": {
+      "street": "Av. Central",
+      "number": "1000",
+      "city": "Curitiba",
+      "state": "PR",
+      "zip": "80000-000",
+      "country": "Brasil"
+    }
+  },
+  
+  "reentry": {
+    "enabled": true,
+    "automatic": true,
+    "maxReentries": 999,
+    "costPerReentry": 360.00,
+    "description": "Reentrada automática ilimitada ao completar ciclo"
+  },
+  
+  "features": {
+    "matrix": true,
+    "career": true,
+    "topSigma": true,
+    "ranking": true,
+    "wallet": true,
+    "marketplace": true,
+    "logistics": true,
+    "sharedOrders": true,
+    "affiliates": true,
+    "dropship": true
+  },
+  
+  "limits": {
+    "maxDirects": 999,
+    "maxDepth": 999,
+    "maxWidth": 999,
+    "maxCyclesPerMonth": 999,
+    "maxWithdrawalPerDay": 10000.00,
+    "maxTransferPerDay": 5000.00,
+    "description": "Limites do sistema (999 = ilimitado)"
+  },
+  
+  "maintenance": {
+    "enabled": false,
+    "message": "Sistema em manutenção. Retornaremos em breve.",
+    "allowedIPs": [],
+    "estimatedReturn": null
+  },
+  
+  "integrations": {
+    "supabase": {
+      "enabled": true,
+      "url": "https://rptkhrboejbwexseikuo.supabase.co"
+    },
+    "walletPay": {
+      "enabled": true,
+      "provider": "WalletPay"
+    },
+    "correios": {
+      "enabled": true,
+      "apiKey": ""
+    },
+    "whatsapp": {
+      "enabled": true,
+      "provider": "Twilio"
+    },
+    "email": {
+      "enabled": true,
+      "provider": "SendGrid"
+    }
+  },
+  
+  "security": {
+    "jwtSecret": "CHANGE_THIS_IN_PRODUCTION",
+    "jwtExpiration": "7d",
+    "bcryptRounds": 10,
+    "maxLoginAttempts": 5,
+    "lockoutDuration": 900,
+    "require2FA": false,
+    "allowedOrigins": ["*"]
+  },
+  
+  "audit": {
+    "enabled": true,
+    "logLevel": "info",
+    "retentionDays": 90,
+    "logTransactions": true,
+    "logLogins": true,
+    "logChanges": true
+  }
+}

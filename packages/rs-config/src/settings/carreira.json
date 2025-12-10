@@ -1,0 +1,378 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Plano de Carreira RS Prólipsi - 13 PINs com VMEC Trimestral",
+  "meta": {
+    "version": "1.0.0",
+    "updatedAt": "2025-11-06",
+    "timezone": "America/Sao_Paulo",
+    "notes": "Plano de carreira trimestral com 13 PINs e VMEC. Profundidade e lateralidade ilimitadas, controladas por VMEC."
+  },
+  
+  "window": {
+    "type": "quarterly",
+    "quarters": [
+      { "id": "Q1", "months": ["Jan","Feb","Mar"], "closeDay": 31, "closeMonth": "Mar" },
+      { "id": "Q2", "months": ["Apr","May","Jun"], "closeDay": 30, "closeMonth": "Jun" },
+      { "id": "Q3", "months": ["Jul","Aug","Sep"], "closeDay": 30, "closeMonth": "Sep" },
+      { "id": "Q4", "months": ["Oct","Nov","Dec"], "closeDay": 31, "closeMonth": "Dec" }
+    ],
+    "carryoverBetweenQuarters": false,
+    "countCyclesFromAnyJoinDate": true,
+    "pointsPerMatrixCycle": 1,
+    "description": "Avaliação trimestral. Pontos NÃO acumulam entre trimestres (reset a cada Q)."
+  },
+  
+  "vmec": {
+    "description": "Volume Máximo Elegível por Equipe e por Ciclo no trimestre. Controla distribuição de pontos por linha direta.",
+    "enabled": true,
+    "applyOrder": ["perLineCap", "perTeamCap"],
+    "perLineCap": "dynamic",
+    "perTeamCap": null,
+    "perCycleCap": null,
+    "includeSelfCycles": true,
+    "includeIndirectCycles": true,
+    "linesEligibleDepth": "unlimited",
+    "linesEligibleWidth": "unlimited",
+    "notes": "VMEC é aplicado POR PIN. Cada PIN tem seus próprios percentuais máximos por linha. Profundidade e lateralidade são ilimitadas."
+  },
+  
+  "eligibility": {
+    "activeStatusRequired": true,
+    "minPersonalPurchase": 1,
+    "kycRequired": true,
+    "complianceFlags": ["noChargebacks", "noFraud"],
+    "description": "Consultor deve estar ativo, ter pelo menos 1 reentrada no trimestre e KYC aprovado."
+  },
+  
+  "pins": [
+    {
+      "code": "PIN01",
+      "label": "Bronze",
+      "nivel": 1,
+      "requirements": {
+        "minQuarterPoints": 5,
+        "minActiveDirects": 0,
+        "minLinesContributing": 0,
+        "vmecPercentages": [],
+        "description": "5 ciclos no trimestre, sem exigência de linhas diretas"
+      },
+      "benefits": {
+        "badge": true,
+        "poolAccess": false,
+        "reward": 13.50,
+        "notes": "Primeiro PIN, entrada no plano de carreira"
+      },
+      "retention": {
+        "downgradeIfBelowInNextQuarter": true,
+        "graceQuarters": 0,
+        "notes": "Perde o PIN se não mantiver 5 ciclos no próximo trimestre"
+      }
+    },
+    {
+      "code": "PIN02",
+      "label": "Prata",
+      "nivel": 2,
+      "requirements": {
+        "minQuarterPoints": 15,
+        "minActiveDirects": 1,
+        "minLinesContributing": 1,
+        "vmecPercentages": [100],
+        "description": "15 ciclos, 1 linha direta ativa, VMEC [100%]"
+      },
+      "benefits": {
+        "badge": true,
+        "poolAccess": false,
+        "reward": 40.50,
+        "notes": "Primeira linha direta requerida"
+      },
+      "retention": {
+        "downgradeIfBelowInNextQuarter": true,
+        "graceQuarters": 0
+      }
+    },
+    {
+      "code": "PIN03",
+      "label": "Ouro",
+      "nivel": 3,
+      "requirements": {
+        "minQuarterPoints": 70,
+        "minActiveDirects": 1,
+        "minLinesContributing": 1,
+        "vmecPercentages": [100],
+        "description": "70 ciclos, 1 linha direta, VMEC [100%]"
+      },
+      "benefits": {
+        "badge": true,
+        "poolAccess": false,
+        "reward": 189.00,
+        "notes": "Consolidação da primeira linha"
+      },
+      "retention": {
+        "downgradeIfBelowInNextQuarter": true,
+        "graceQuarters": 0
+      }
+    },
+    {
+      "code": "PIN04",
+      "label": "Safira",
+      "nivel": 4,
+      "requirements": {
+        "minQuarterPoints": 150,
+        "minActiveDirects": 2,
+        "minLinesContributing": 2,
+        "vmecPercentages": [60, 40],
+        "description": "150 ciclos, 2 linhas diretas, VMEC [60%, 40%]"
+      },
+      "benefits": {
+        "badge": true,
+        "poolAccess": false,
+        "reward": 405.00,
+        "notes": "Início do balanceamento de linhas com VMEC"
+      },
+      "retention": {
+        "downgradeIfBelowInNextQuarter": true,
+        "graceQuarters": 0
+      }
+    },
+    {
+      "code": "PIN05",
+      "label": "Esmeralda",
+      "nivel": 5,
+      "requirements": {
+        "minQuarterPoints": 300,
+        "minActiveDirects": 2,
+        "minLinesContributing": 2,
+        "vmecPercentages": [60, 40],
+        "description": "300 ciclos, 2 linhas diretas, VMEC [60%, 40%]"
+      },
+      "benefits": {
+        "badge": true,
+        "poolAccess": false,
+        "reward": 810.00,
+        "notes": "Duplicação da meta Safira"
+      },
+      "retention": {
+        "downgradeIfBelowInNextQuarter": true,
+        "graceQuarters": 0
+      }
+    },
+    {
+      "code": "PIN06",
+      "label": "Topázio",
+      "nivel": 6,
+      "requirements": {
+        "minQuarterPoints": 500,
+        "minActiveDirects": 2,
+        "minLinesContributing": 2,
+        "vmecPercentages": [60, 40],
+        "description": "500 ciclos, 2 linhas diretas, VMEC [60%, 40%]"
+      },
+      "benefits": {
+        "badge": true,
+        "poolAccess": false,
+        "reward": 1350.00,
+        "notes": "Consolidação das 2 linhas"
+      },
+      "retention": {
+        "downgradeIfBelowInNextQuarter": true,
+        "graceQuarters": 0
+      }
+    },
+    {
+      "code": "PIN07",
+      "label": "Rubi",
+      "nivel": 7,
+      "requirements": {
+        "minQuarterPoints": 750,
+        "minActiveDirects": 3,
+        "minLinesContributing": 3,
+        "vmecPercentages": [50, 30, 20],
+        "description": "750 ciclos, 3 linhas diretas, VMEC [50%, 30%, 20%]"
+      },
+      "benefits": {
+        "badge": true,
+        "poolAccess": false,
+        "reward": 2025.00,
+        "notes": "Terceira linha requerida, VMEC mais distribuído"
+      },
+      "retention": {
+        "downgradeIfBelowInNextQuarter": true,
+        "graceQuarters": 0
+      }
+    },
+    {
+      "code": "PIN08",
+      "label": "Diamante",
+      "nivel": 8,
+      "requirements": {
+        "minQuarterPoints": 1500,
+        "minActiveDirects": 3,
+        "minLinesContributing": 3,
+        "vmecPercentages": [50, 30, 20],
+        "description": "1500 ciclos, 3 linhas diretas, VMEC [50%, 30%, 20%]"
+      },
+      "benefits": {
+        "badge": true,
+        "poolAccess": true,
+        "reward": 4050.00,
+        "notes": "Primeiro Diamante, acesso a pools especiais"
+      },
+      "retention": {
+        "downgradeIfBelowInNextQuarter": true,
+        "graceQuarters": 1,
+        "notes": "1 trimestre de graça antes de downgrade"
+      }
+    },
+    {
+      "code": "PIN09",
+      "label": "Duplo Diamante",
+      "nivel": 9,
+      "requirements": {
+        "minQuarterPoints": 3000,
+        "minActiveDirects": 4,
+        "minLinesContributing": 4,
+        "vmecPercentages": [40, 30, 20, 10],
+        "description": "3000 ciclos, 4 linhas diretas, VMEC [40%, 30%, 20%, 10%]"
+      },
+      "benefits": {
+        "badge": true,
+        "poolAccess": true,
+        "reward": 18450.00,
+        "notes": "Quarta linha requerida, VMEC mais equilibrado"
+      },
+      "retention": {
+        "downgradeIfBelowInNextQuarter": true,
+        "graceQuarters": 1
+      }
+    },
+    {
+      "code": "PIN10",
+      "label": "Triplo Diamante",
+      "nivel": 10,
+      "requirements": {
+        "minQuarterPoints": 5000,
+        "minActiveDirects": 5,
+        "minLinesContributing": 5,
+        "vmecPercentages": [35, 25, 20, 10, 10],
+        "description": "5000 ciclos, 5 linhas diretas, VMEC [35%, 25%, 20%, 10%, 10%]"
+      },
+      "benefits": {
+        "badge": true,
+        "poolAccess": true,
+        "reward": 36450.00,
+        "notes": "Quinta linha requerida"
+      },
+      "retention": {
+        "downgradeIfBelowInNextQuarter": true,
+        "graceQuarters": 2,
+        "notes": "2 trimestres de graça"
+      }
+    },
+    {
+      "code": "PIN11",
+      "label": "Diamante Red",
+      "nivel": 11,
+      "requirements": {
+        "minQuarterPoints": 15000,
+        "minActiveDirects": 6,
+        "minLinesContributing": 6,
+        "vmecPercentages": [30, 20, 18, 12, 10, 10],
+        "description": "15000 ciclos, 6 linhas diretas, VMEC [30%, 20%, 18%, 12%, 10%, 10%]"
+      },
+      "benefits": {
+        "badge": true,
+        "poolAccess": true,
+        "reward": 67500.00,
+        "notes": "Sexta linha requerida, elite do sistema"
+      },
+      "retention": {
+        "downgradeIfBelowInNextQuarter": true,
+        "graceQuarters": 2
+      }
+    },
+    {
+      "code": "PIN12",
+      "label": "Diamante Blue",
+      "nivel": 12,
+      "requirements": {
+        "minQuarterPoints": 25000,
+        "minActiveDirects": 6,
+        "minLinesContributing": 6,
+        "vmecPercentages": [30, 20, 18, 12, 10, 10],
+        "description": "25000 ciclos, 6 linhas diretas, VMEC [30%, 20%, 18%, 12%, 10%, 10%]"
+      },
+      "benefits": {
+        "badge": true,
+        "poolAccess": true,
+        "reward": 105300.00,
+        "notes": "Penúltimo PIN, liderança consolidada"
+      },
+      "retention": {
+        "downgradeIfBelowInNextQuarter": true,
+        "graceQuarters": 3,
+        "notes": "3 trimestres de graça"
+      }
+    },
+    {
+      "code": "PIN13",
+      "label": "Diamante Black",
+      "nivel": 13,
+      "requirements": {
+        "minQuarterPoints": 50000,
+        "minActiveDirects": 6,
+        "minLinesContributing": 6,
+        "vmecPercentages": [30, 20, 18, 12, 10, 10],
+        "description": "50000 ciclos, 6 linhas diretas, VMEC [30%, 20%, 18%, 12%, 10%, 10%]"
+      },
+      "benefits": {
+        "badge": true,
+        "poolAccess": true,
+        "reward": 135000.00,
+        "notes": "PIN máximo, topo absoluto do plano de carreira"
+      },
+      "retention": {
+        "downgradeIfBelowInNextQuarter": false,
+        "graceQuarters": 999,
+        "notes": "Diamante Black é vitalício, não há downgrade"
+      }
+    }
+  ],
+  
+  "display": {
+    "showUnlimitedDepthNote": true,
+    "showUnlimitedWidthNote": true,
+    "showVmecExplanation": true,
+    "pinOrder": ["PIN01","PIN02","PIN03","PIN04","PIN05","PIN06","PIN07","PIN08","PIN09","PIN10","PIN11","PIN12","PIN13"],
+    "labels": {
+      "PIN01": "Bronze",
+      "PIN02": "Prata",
+      "PIN03": "Ouro",
+      "PIN04": "Safira",
+      "PIN05": "Esmeralda",
+      "PIN06": "Topázio",
+      "PIN07": "Rubi",
+      "PIN08": "Diamante",
+      "PIN09": "Duplo Diamante",
+      "PIN10": "Triplo Diamante",
+      "PIN11": "Diamante Red",
+      "PIN12": "Diamante Blue",
+      "PIN13": "Diamante Black"
+    }
+  },
+  
+  "audit": {
+    "writeSnapshotsAtQuarterClose": true,
+    "snapshotTable": "career_snapshots",
+    "historyTable": "career_rank_history",
+    "storeVmecBreakdown": true,
+    "retentionYears": 7,
+    "description": "Snapshots e histórico armazenados para auditoria. Retenção de 7 anos."
+  },
+  
+  "bonusCarreira": {
+    "percentual": 6.39,
+    "valorPorCiclo": 23.00,
+    "pagamento": "immediate",
+    "description": "R$ 23 por ciclo válido (após VMEC), pago imediatamente ao completar ciclo"
+  }
+}

@@ -1,0 +1,231 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Configuração Completa de Bônus - RS Prólipsi (Conforme Manual Oficial)",
+  "meta": {
+    "version": "1.0.0",
+    "updatedAt": "2025-11-06",
+    "source": "Plano_de_Marketing_RS_Prolipsi_MMN.txt",
+    "notes": "Todos os valores baseados no manual oficial. Ciclo R$ 360,00"
+  },
+  
+  "ciclo": {
+    "enabled": true,
+    "percentual": 0.30,
+    "valorBase": 360.00,
+    "valorPayout": 108.00,
+    "description": "Bônus de 30% pago ao consultor que fecha o ciclo 6/6",
+    "trigger": "cycle_complete",
+    "paymentTiming": "immediate",
+    "eligibility": {
+      "requireActiveStatus": true,
+      "requireKYC": false
+    }
+  },
+  
+  "profundidade": {
+    "enabled": true,
+    "percentualTotal": 0.0681,
+    "valorBase": 360.00,
+    "valorTotal": 24.52,
+    "maxLevels": 6,
+    "description": "Bônus de 6,81% distribuído em 6 níveis de profundidade (L1-L6)",
+    "trigger": "downline_cycle_complete",
+    "paymentTiming": "immediate",
+    "levels": {
+      "L1": { 
+        "percentage": 0.07, 
+        "value": 1.716,
+        "description": "7% do bônus de profundidade"
+      },
+      "L2": { 
+        "percentage": 0.08, 
+        "value": 1.961,
+        "description": "8% do bônus de profundidade"
+      },
+      "L3": { 
+        "percentage": 0.10, 
+        "value": 2.452,
+        "description": "10% do bônus de profundidade"
+      },
+      "L4": { 
+        "percentage": 0.15, 
+        "value": 3.677,
+        "description": "15% do bônus de profundidade"
+      },
+      "L5": { 
+        "percentage": 0.25, 
+        "value": 6.129,
+        "description": "25% do bônus de profundidade"
+      },
+      "L6": { 
+        "percentage": 0.35, 
+        "value": 8.581,
+        "description": "35% do bônus de profundidade"
+      }
+    },
+    "eligibility": {
+      "requireActiveStatus": true,
+      "requireActiveDownline": true,
+      "maxDepth": 6
+    },
+    "validation": {
+      "sumPercentages": 1.00,
+      "sumValues": 24.52
+    }
+  },
+  
+  "fidelidade": {
+    "enabled": true,
+    "percentualPool": 0.0125,
+    "valorBase": 360.00,
+    "valorPool": 4.50,
+    "maxLevels": 6,
+    "description": "Pool de 1,25% para fidelidade. Pago mensalmente.",
+    "trigger": "reentry_active",
+    "paymentTiming": "monthly",
+    "period": "monthly",
+    "eligibility": {
+      "requireActiveStatus": true,
+      "requireAdvancedToNextMatrix": true,
+      "description": "Consultor deve ter avançado para próxima matriz (ex: matriz 2 ganha da 1)"
+    },
+    "calculation": {
+      "method": "end_of_month",
+      "description": "Cálculo no final do mês verificando ciclos completos"
+    },
+    "levels": {
+      "L1": { 
+        "percentage": 0.07, 
+        "value": 0.315,
+        "description": "7% do pool de fidelidade"
+      },
+      "L2": { 
+        "percentage": 0.08, 
+        "value": 0.360,
+        "description": "8% do pool de fidelidade"
+      },
+      "L3": { 
+        "percentage": 0.10, 
+        "value": 0.450,
+        "description": "10% do pool de fidelidade"
+      },
+      "L4": { 
+        "percentage": 0.15, 
+        "value": 0.675,
+        "description": "15% do pool de fidelidade"
+      },
+      "L5": { 
+        "percentage": 0.25, 
+        "value": 1.125,
+        "description": "25% do pool de fidelidade"
+      },
+      "L6": { 
+        "percentage": 0.35, 
+        "value": 1.575,
+        "description": "35% do pool de fidelidade"
+      }
+    },
+    "validation": {
+      "sumPercentages": 1.00,
+      "sumValues": 4.50
+    }
+  },
+  
+  "topSigma": {
+    "enabled": true,
+    "percentualPool": 0.045,
+    "valorBase": 360.00,
+    "valorPool": 16.20,
+    "description": "Pool de 4,5% distribuído entre Top 10 consultores",
+    "period": "monthly",
+    "ranking": "top_10",
+    "distribution": {
+      "1": { 
+        "percentage": 0.02, 
+        "description": "1º lugar - 2% do pool global"
+      },
+      "2": { 
+        "percentage": 0.015, 
+        "description": "2º lugar - 1,5% do pool global"
+      },
+      "3": { 
+        "percentage": 0.012, 
+        "description": "3º lugar - 1,2% do pool global"
+      },
+      "4": { 
+        "percentage": 0.010, 
+        "description": "4º lugar - 1% do pool global"
+      },
+      "5": { 
+        "percentage": 0.008, 
+        "description": "5º lugar - 0,8% do pool global"
+      },
+      "6": { 
+        "percentage": 0.007, 
+        "description": "6º lugar - 0,7% do pool global"
+      },
+      "7": { 
+        "percentage": 0.006, 
+        "description": "7º lugar - 0,6% do pool global"
+      },
+      "8": { 
+        "percentage": 0.005, 
+        "description": "8º lugar - 0,5% do pool global"
+      },
+      "9": { 
+        "percentage": 0.004, 
+        "description": "9º lugar - 0,4% do pool global"
+      },
+      "10": { 
+        "percentage": 0.003, 
+        "description": "10º lugar - 0,3% do pool global"
+      }
+    },
+    "validation": {
+      "sumPercentages": 0.09,
+      "note": "9% do pool global distribuído entre Top 10"
+    }
+  },
+  
+  "carreira": {
+    "enabled": true,
+    "percentual": 0.0639,
+    "valorBase": 360.00,
+    "valorPorCiclo": 23.00,
+    "description": "Bônus de 6,39% para plano de carreira com VMEC",
+    "period": "quarterly",
+    "paymentTiming": "on_qualification",
+    "eligibility": {
+      "requirePinQualification": true,
+      "requireMinCycles": true,
+      "requireMinDirectLines": true,
+      "applyVMEC": true
+    }
+  },
+  
+  "summary": {
+    "totalPercentage": 0.4895,
+    "totalValue": 176.22,
+    "breakdown": {
+      "ciclo": 0.30,
+      "profundidade": 0.0681,
+      "fidelidade": 0.0125,
+      "topSigma": 0.045,
+      "carreira": 0.0639
+    },
+    "validation": {
+      "sumPercentages": 0.4895,
+      "sumValues": 176.22,
+      "status": "OK",
+      "note": "48,95% do valor do ciclo distribuído em bônus"
+    }
+  },
+  
+  "audit": {
+    "bonusTable": "bonuses",
+    "transactionTable": "transactions",
+    "logTable": "bonus_logs",
+    "retentionYears": 7,
+    "storeCalculationDetails": true
+  }
+}

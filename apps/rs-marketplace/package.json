@@ -1,0 +1,39 @@
+{
+  "name": "rs-marketplace",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --port 3003",
+    "build": "vite build",
+    "preview": "vite preview --port 3003"
+  },
+  "dependencies": {
+    "@google/genai": "^1.25.0",
+    "@supabase/supabase-js": "^2.39.0",
+    "@tiptap/extension-color": "^3.7.2",
+    "@tiptap/extension-highlight": "^3.7.2",
+    "@tiptap/extension-image": "^3.7.2",
+    "@tiptap/extension-link": "^3.7.2",
+    "@tiptap/extension-text-align": "^3.7.2",
+    "@tiptap/extension-text-style": "^3.7.2",
+    "@tiptap/extension-underline": "^3.7.2",
+    "@tiptap/react": "^3.7.2",
+    "@tiptap/starter-kit": "^3.7.2",
+    "lucide-react": "^0.460.0",
+    "recharts": "^3.5.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.17",
+    "@types/node": "^22.14.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "autoprefixer": "^10.4.22",
+    "postcss": "^8.5.6",
+    "postcss-nested": "^7.0.2",
+    "tailwindcss": "^4.1.17",
+    "typescript": "~5.8.2",
+    "vite": "^6.2.0"
+  }
+}

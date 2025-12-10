@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RS Prólipsi</title>
+  <link id="favicon" rel="icon" href="">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            rs: {
+              black: '#0a0a0a',
+              dark: '#121212',
+              card: '#1e1e1e',
+              gold: '#d4af37',
+              goldLight: '#f3e5ab',
+              goldDim: '#8a7020',
+            },
+            'rs-gold': {
+              DEFAULT: '#C8A74E',
+              hover: '#B8943F',
+              muted: '#E6D7A5',
+            },
+            'graphite': {
+              900: '#0F1115',
+              800: '#161A21',
+              750: '#1B2029',
+              650: '#2A303B',
+            },
+            'zircon': {
+              50: '#F2F4F8',
+              200: '#B7C0CD',
+              350: '#93A0B1',
+            },
+            'status': {
+              info: '#3BAFDA',
+              success: '#38C793',
+              warning: '#E6A23C',
+              danger: '#EF5A5A',
+            },
+            dark: {
+              950: '#0F1115',
+              900: '#161A21',
+              800: '#1B2029',
+              700: '#2A303B',
+            },
+            gold: {
+              400: '#C8A74E',
+              500: '#C8A74E',
+              600: '#B8943F',
+            },
+          },
+          borderRadius: {
+            'rs': '16px',
+          },
+          boxShadow: {
+            'rs': '0 10px 30px rgba(0,0,0,0.45)',
+          },
+        },
+      },
+    }
+  </script>
+  <style>
+    :root {
+      /* Cores do Marketplace - Paleta RS Prólipsi */
+      --color-brand-dark: 15, 17, 21;
+      /* #0F1115 (Graphite 900) */
+      --color-brand-gray: 22, 26, 33;
+      /* #161A21 (Graphite 800) */
+      --color-brand-gray-light: 42, 48, 59;
+      /* #2A303B (Graphite 650) */
+      --color-brand-gold: 200, 167, 78;
+      /* #C8A74E (Gold principal) */
+      --color-brand-text-light: 242, 244, 248;
+      /* #F2F4F8 (Zircon 50) */
+      --color-brand-text-dim: 147, 160, 177;
+      /* #93A0B1 (Zircon 350) */
+      --color-brand-primary: 200, 167, 78;
+      /* #C8A74E (Gold) */
+      --color-brand-secondary: 184, 148, 63;
+      /* #B8943F (Gold Hover) */
+      --color-success: 56, 199, 147;
+      /* #38C793 (Success) */
+      --color-warning: 230, 162, 60;
+      /* #E6A23C (Warning) */
+      --color-error: 239, 90, 90;
+      /* #EF5A5A (Danger) */
+      --color-info: 59, 175, 218;
+      /* #3BAFDA (Info) */
+      --color-active-lime: 127 255 0;
+      /* A bright lime green for active buttons */
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: rgb(15, 17, 21);
+      color: rgb(242, 244, 248);
+      margin: 0;
+      min-height: 100vh;
+    }
+
+    .font-display {
+      font-family: 'Playfair Display', serif;
+    }
+
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: rgb(var(--color-brand-dark));
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: rgb(var(--color-brand-gray-light));
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgb(var(--color-brand-gray));
+    }
+  </style>
+  <link rel="stylesheet" href="/index.css">
+  <script type="importmap">
+  {
+    "imports": {
+      "@tiptap/extension-underline": "https://aistudiocdn.com/@tiptap/extension-underline@^3.7.2",
+      "@tiptap/starter-kit": "https://aistudiocdn.com/@tiptap/starter-kit@^3.7.2",
+      "@tiptap/react": "https://aistudiocdn.com/@tiptap/react@^3.7.2",
+      "@tiptap/extension-link": "https://aistudiocdn.com/@tiptap/extension-link@^3.7.2",
+      "@tiptap/extension-text-align": "https://aistudiocdn.com/@tiptap/extension-text-align@^3.7.2",
+      "@tiptap/extension-color": "https://aistudiocdn.com/@tiptap/extension-color@^3.7.2",
+      "@tiptap/extension-text-style": "https://aistudiocdn.com/@tiptap/extension-text-style@^3.7.2",
+      "@tiptap/extension-highlight": "https://aistudiocdn.com/@tiptap/extension-highlight@^3.7.2",
+      "@tiptap/extension-image": "https://aistudiocdn.com/@tiptap/extension-image@^3.7.2",
+      "@google/genai": "https://aistudiocdn.com/@google/genai@^1.25.0"
+    }
+  }
+  </script>
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+
+</html>

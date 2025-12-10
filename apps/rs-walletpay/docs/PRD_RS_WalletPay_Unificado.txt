@@ -1,0 +1,122 @@
+PRD � RS WALLET PAY (UNIFICADO COM ECOSSISTEMA RS PR�LIPSI)
+Documento t�cnico-funcional da RS Wallet Pay integrada ao ecossistema RS Pr�lipsi. Este documento descreve como a Wallet Pay interage com os m�dulos Marketplace, SIGMA, Admin e Consultor, mantendo total rastreabilidade financeira e integridade de dados.
+1. Vis�o Geral da Integra��o
+
+A RS Wallet Pay � o n�cleo financeiro que centraliza todas as transa��es dentro do ecossistema RS Pr�lipsi. 
+Ela conecta e automatiza os fluxos de pagamento entre Marketplace, SIGMA e os pain�is de Admin, Consultor e Logista.
+
+Fun��es principais:
+- Receber e processar comiss�es do Marketplace.
+- Executar pagamentos de b�nus do SIGMA (fidelidade, profundidade, top e PINs).
+- Processar saques, transfer�ncias e concilia��es de valores.
+- Gerar relat�rios e auditorias para o painel administrativo.
+
+2. Estrutura de Integra��o Entre M�dulos
+
+M�dulo | Integra��o com Wallet Pay | Tipo de Opera��o
+--------|----------------------------|-----------------
+Marketplace | Cr�ditos de vendas, comiss�es, dropshipping | Entrada de valores (commission_shop)
+SIGMA | Pagamento de b�nus e fidelidade | Entrada de valores (bonus, fidelidade, top, PINs)
+Admin | Concilia��o, ajustes, auditoria, relat�rios | Opera��es manuais e autom�ticas
+Consultor | Visualiza��o de saldo, extrato, saques, transfer�ncias | Opera��es de usu�rio final
+Logista | Recebimento de repasses e controle de vendas | Opera��es de cr�dito e relat�rio de repasse
+
+3. Painel de Acesso Unificado
+
+A Wallet Pay est� acess�vel a partir dos pain�is principais do ecossistema RS:
+
+1. **Admin** � Controle global e financeiro:
+   - Visualiza��o de saldo consolidado de toda a rede.
+   - Aprova��o de saques, ajustes e concilia��o PSP.
+   - Configura��o de taxas, limites e webhooks.
+   - Acesso total a relat�rios e auditoria financeira.
+
+2. **Consultor** � Acesso via Backoffice:
+   - Visualiza��o de saldo individual.
+   - Hist�rico de ganhos por b�nus e vendas.
+   - Saques via PIX e transfer�ncias internas.
+   - Exporta��o de relat�rios de ganhos.
+
+3. **Logista** � Acesso via Painel do Marketplace:
+   - Consulta de repasses de vendas.
+   - Saques autom�ticos por chave PIX.
+   - Relat�rios por produto e per�odo.
+
+4. APIs e Conex�es
+
+Integra��es via API REST (autenticadas com chaves HMAC e tokens JWT):
+
+- POST /credits  ? Recebe cr�ditos de comiss�es e b�nus.
+- POST /debits   ? Registra d�bitos (saques e taxas).
+- POST /transfers ? Processa transfer�ncias internas.
+- GET /balance   ? Retorna saldo atualizado por conta.
+- GET /ledger    ? Retorna extrato detalhado de transa��es.
+- POST /webhook  ? Registra endpoints externos para callbacks seguros.
+
+Eventos registrados:
+- commission_shop (Marketplace)
+- bonus (SIGMA)
+- withdrawal (Consultor)
+- transfer (interno)
+- fees (Admin)
+
+5. Workflow de Transa��es
+
+Fluxo operacional entre m�dulos:
+
+1. **Venda no Marketplace**
+   - Compra confirmada ? Wallet Pay recebe evento ? Cria cr�dito 'commission_shop' ? Atualiza saldo do consultor e logista.
+
+2. **Fechamento SIGMA**
+   - SIGMA processa ciclo ? Wallet Pay distribui b�nus de fidelidade, profundidade e top.
+
+3. **Saque pelo Consultor**
+   - Consultor solicita saque ? Valida��o KYC ? PSP processa ? Status atualizado em tempo real.
+
+4. **Transfer�ncia Interna**
+   - Consultor transfere saldo para outro usu�rio ? Ledger registra cr�dito/d�bito simult�neo.
+
+5. **Admin/Auditoria**
+   - Admin gera relat�rios ? Concilia��o autom�tica PSP x Ledger x Origem.
+
+6. Relat�rios e Auditoria
+
+- Relat�rios por m�dulo (Marketplace, SIGMA, Wallet).
+- Exporta��o consolidada CSV/PDF.
+- Snapshots di�rios de ledger e saldo total.
+- Log imut�vel de ajustes e concilia��es.
+- Painel de auditoria integrado ao Admin (com permiss�es espec�ficas).
+
+7. Seguran�a e Acesso
+
+- Autentica��o via JWT + 2FA + rate limiting.
+- Permiss�es diferenciadas por tipo de painel.
+- Criptografia de dados sens�veis (PIX, documentos KYC).
+- Webhooks assinados com HMAC e reenvio autom�tico.
+- Auditoria de todas as a��es (quem, quando e onde).
+
+8. Design e UX Unificado
+
+- Tema padr�o RS (Dark + Gold).
+- Tabelas com filtros e pagina��o din�mica.
+- Painel responsivo (mobile-first).
+- Cards de saldo, movimenta��es e gr�ficos Recharts.
+- Indicadores de status (verde=cr�dito, vermelho=d�bito, amarelo=pendente).
+
+9. Checklists de Integra��o
+
+? Conex�o Marketplace ? Wallet Pay (commission_shop)
+? Conex�o SIGMA ? Wallet Pay (bonus, fidelidade, top, PINs)
+? Conex�o Consultor ? Wallet Pay (saques, transfer�ncias)
+? Conex�o Logista ? Wallet Pay (repasses e relat�rios)
+? Conex�o Admin ? Wallet Pay (auditoria e concilia��o)
+? API p�blica REST com chaves e webhooks ativos
+? Snapshots e trilha de auditoria ativa
+? Ambiente homolog/produ��o sincronizado
+
+10. Roadmap Operacional
+
+Fase 1 � Integra��o completa com Marketplace e SIGMA (cr�ditos e b�nus).
+Fase 2 � Libera��o de painel aut�nomo e 2FA individual.
+Fase 3 � API p�blica com chaves escopo-limitadas.
+Fase 4 � M�dulo antifraude e sandbox financeiro.

@@ -1,0 +1,147 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Configuração de Logística e Expedição",
+  "meta": {
+    "version": "1.0.2",
+    "updatedAt": "2025-11-06",
+    "notes": "Origem obrigatória ANTES da loja. Dropship=Central, Afiliado=Loja do Link, CD=Escolhido. Nunca recalcula."
+  },
+  
+  "entryGate": {
+    "requireOriginBeforeBrowse": true,
+    "originTypes": ["CD", "Central", "AffiliateStore"],
+    "cookieName": "rs_cd_origin",
+    "sessionKey": "origin_id",
+    "description": "Obrigatório escolher origem antes de ver produtos"
+  },
+  
+  "shipping": {
+    "modes": ["correios", "transportadora", "retirada_cd", "motoboy"],
+    "allowGroupDelivery": true,
+    "allowAddressMerge": true,
+    "sharedOrderRouting": "fixed_cd",
+    "description": "CD de origem fixa - escolhido no checkout e não muda. Suporta dropshipping descentralizado.",
+    "tracking": {
+      "groupTracking": true,
+      "perItemTracking": true,
+      "provider": "Correios",
+      "updateFrequency": "realtime"
+    },
+    "dispatchCondition": "100_percent_paid",
+    "cdAssignmentPolicy": "buyer_choice",
+    "requireCdConfirmation": true,
+    "dispatchWindow": {
+      "cutoffTime": "17:00",
+      "timezone": "America/Sao_Paulo",
+      "description": "Pedidos pagos até 17h são despachados no mesmo dia"
+    }
+  },
+  
+  "pickup": {
+    "enabled": true,
+    "requirePaymentProof": true,
+    "requireID": true,
+    "cdSelection": "user_defined_only",
+    "allowThirdPartyPickup": true,
+    "description": "Retirada no CD escolhido pelo comprador. Requer comprovante e documento."
+  },
+  
+  "originRules": {
+    "Dropship": {
+      "origin": "Central",
+      "allowCD": false,
+      "allowAffiliateStore": false,
+      "description": "Dropship sempre expede pela Central"
+    },
+    "Affiliate": {
+      "origin": "AffiliateStore",
+      "lockedToLinkStore": true,
+      "description": "Afiliado sempre expede pela loja do link"
+    },
+    "DirectCD": {
+      "origin": "CD",
+      "lockedToChosenCD": true,
+      "description": "CD direto expede pelo CD escolhido"
+    }
+  },
+  
+  "cdNetwork": {
+    "table": "distribution_centers",
+    "regions": ["Curitiba", "São Paulo", "Rio de Janeiro", "Belo Horizonte"],
+    "assignLogic": "fixed_origin",
+    "allowCrossShipping": false,
+    "fallbackLogic": "manual_reassignment",
+    "description": "CD de origem fixa. Nunca recalcula para 'mais próximo'. Cada CD gerencia apenas seus pedidos.",
+    "capacityCheck": {
+      "enabled": true,
+      "maxWeightKg": 1000,
+      "maxVolumeM3": 50,
+      "maxOrdersPerDay": 500
+    }
+  },
+  
+  "packaging": {
+    "consolidateItems": true,
+    "separateByParticipant": true,
+    "labelPerParticipant": true,
+    "includeInvoice": true,
+    "description": "Consolida itens mas separa por participante com etiqueta individual"
+  },
+  
+  "delivery": {
+    "estimatedDays": {
+      "same_city": 1,
+      "same_state": 3,
+      "other_state": 7,
+      "remote_area": 15
+    },
+    "proofOfDelivery": {
+      "required": true,
+      "methods": ["signature", "photo", "gps"],
+      "storeInTable": "delivery_proofs"
+    }
+  },
+  
+  "returns": {
+    "enabled": true,
+    "windowDays": 7,
+    "requireReason": true,
+    "refundMode": "wallet_balance",
+    "restockingFee": 0.00,
+    "description": "Devolução em até 7 dias. Reembolso na carteira."
+  },
+  
+  "integration": {
+    "notifyModules": ["marketplace", "walletPay", "admin"],
+    "trackingAPI": "correios",
+    "invoiceAPI": "nfe_brasil"
+  },
+  
+  "notifications": {
+    "onDispatch": {
+      "enabled": true,
+      "channels": ["email", "push", "sms"],
+      "template": "order_dispatched",
+      "includeTracking": true
+    },
+    "onInTransit": {
+      "enabled": true,
+      "channels": ["push"],
+      "template": "order_in_transit"
+    },
+    "onDelivered": {
+      "enabled": true,
+      "channels": ["email", "push", "whatsapp"],
+      "template": "order_delivered",
+      "requestReview": true
+    }
+  },
+  
+  "audit": {
+    "dispatchTable": "logistics_dispatches",
+    "trackingTable": "logistics_tracking",
+    "deliveryTable": "logistics_deliveries",
+    "returnTable": "logistics_returns",
+    "retentionYears": 7
+  }
+}

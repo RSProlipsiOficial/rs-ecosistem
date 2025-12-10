@@ -1,0 +1,172 @@
+PRD � M�DULO CONSULTOR (ESCRIT�RIO RS PR�LIPSI)
+Documento t�cnico-funcional do Painel do Consultor (Escrit�rio RS Pr�lipsi), baseado no c�digo-fonte real do pacote Rs Pr�lipsi Consultor.zip. Define a estrutura completa do sistema, m�dulos, integra��es, banco de dados e, principalmente, a l�gica da �rvore Geneal�gica SIGME.
+1. Vis�o Geral
+
+O Painel do Consultor RS Pr�lipsi � o ambiente operacional do usu�rio dentro do sistema de marketing multin�vel (SIGME).
+Ele integra rede, ganhos, loja virtual, comunica��o e perfil financeiro de forma unificada.
+
+2. Estrutura T�cnica e de Pastas
+
+/src
+  /assets
+  /components
+    /dashboard
+    /network
+    /wallet
+    /store
+    /communication
+    /profile
+  /hooks
+  /pages
+    index.jsx
+    network.jsx
+    wallet.jsx
+    store.jsx
+    communication.jsx
+    profile.jsx
+    support.jsx
+  /services
+    api.js
+    sigma.js
+    wallet.js
+    market.js
+    rsstudio.js
+  /utils
+    constants.js
+    formatters.js
+  /config
+    env.js
+  /styles
+    global.css
+.env
+package.json
+
+3. Dashboard Principal
+
+P�gina inicial com KPIs e atalhos r�pidos.
+- Saldo Atual (WalletPay)
+- Pontos Acumulados (SIGME)
+- Matrizes Ativas (SIGME)
+- Ciclos Conclu�dos
+- Gr�ficos de desempenho
+- Bot�o de sincroniza��o global
+
+4. M�dulo SIGME / Rede
+
+N�cleo funcional do painel, exibe a �rvore Geneal�gica interativa.
+Componente: NetworkTree.jsx
+Biblioteca: D3.js (SVG din�mico)
+Renderiza��o: baseada em coordenadas X/Y calculadas no backend Supabase.
+
+Estrutura de dados (exemplo JSON):
+{
+  "id": "user_uuid",
+  "nome": "Fulano da Silva",
+  "nivel": 1,
+  "posicao": { "x": 120, "y": 60 },
+  "filhos": [
+    { "id": "child1", "nivel": 2, "ativo": true },
+    { "id": "child2", "nivel": 2, "ativo": false }
+  ],
+  "ativo": true,
+  "diretos": 5,
+  "status_ciclo": "ativo"
+}
+
+Cores:
+- Verde: ativo
+- Cinza: inativo
+- Dourado: qualificado (PIN)
+
+Fun��es integradas:
+- getUserNetwork(userId)
+- getMatrixStatus(userId)
+- getBonusSummary(userId)
+- syncNetworkTree()
+
+5. M�dulo Financeiro / WalletPay
+
+Tela: /pages/wallet.jsx
+Fun��es:
+- Saldo e hist�rico de ganhos
+- Solicitar saque via PIX
+- Listagem de b�nus e saques
+- Webhook de atualiza��o
+
+Endpoints:
+- GET /wallet/balance
+- GET /wallet/transactions
+- POST /wallet/withdraw
+- POST /wallet/webhook
+
+6. M�dulo Marketplace / Loja
+
+Tela: /pages/store.jsx
+Fun��es:
+- Exibe cat�logo de produtos
+- Mostra pre�o, estoque e comiss�o
+- Link afiliado: https://loja.rsprolipsi.com.br/?ref={consultor_id}
+- Integra��o com market.js
+
+7. M�dulo RS Studio / Comunica��o
+
+Tela: /pages/communication.jsx
+Fun��es:
+- Chat RSA (IA)
+- Mensagens autom�ticas
+- Treinamentos e v�deos
+- Notifica��es e comunicados
+
+Componentes:
+- ChatBox.jsx
+- NotificationCard.jsx
+- TrainingList.jsx
+
+8. M�dulo Perfil e Configura��es
+
+Tela: /pages/profile.jsx
+Fun��es:
+- Edi��o de dados pessoais
+- Upload de documentos (KYC)
+- Altera��o de senha / 2FA
+- Atualiza��o de plano premium
+Integra��es:
+- WalletPay e RS Config
+
+9. M�dulo Suporte
+
+Tela: /pages/support.jsx
+Fun��es:
+- Contato via WhatsApp API
+- Abertura de ticket
+- Hist�rico de atendimentos
+
+10. Banco de Dados
+
+Tabela | Fun��o
+---------|---------
+consultants | Dados pessoais e login
+network_nodes | Estrutura da �rvore geneal�gica
+matrix_cycles | Controle de ciclos e reentradas
+wallet_transactions | Movimenta��o financeira
+orders | Vendas do Marketplace
+messages | Comunica��o interna
+logs | Auditoria de a��es
+
+11. Seguran�a e Autentica��o
+
+- JWT com refresh token
+- Middleware de prote��o de rotas
+- Logs de IP e sess�es
+- Criptografia AES em dados sens�veis
+- Pol�ticas LGPD aplicadas
+
+12. Roadmap
+
+Fase | Entrega | Descri��o
+------|----------|-----------
+Fase 1 | Rede e WalletPay | Estrutura principal SIGME
+Fase 2 | Comunica��o RS Studio | Chat RSA e treinamentos
+Fase 3 | Marketplace integrado | Vendas diretas
+Fase 4 | Configura��es e upgrades | Planos premium
+Fase 5 | RS.IA | Relat�rios autom�ticos e rede inteligente

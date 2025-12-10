@@ -1,0 +1,127 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply bg-base text-text-body;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply text-text-title font-display;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-gold text-base font-semibold px-6 py-3 rounded-lg hover:bg-gold-hover transition-all duration-200 shadow-custom-sm hover:shadow-custom-md;
+  }
+  
+  .btn-secondary {
+    @apply bg-surface text-text-body font-semibold px-6 py-3 rounded-lg hover:bg-surface-light border border-border transition-all duration-200;
+  }
+  
+  .card {
+    @apply bg-card rounded-2xl border border-border p-6 shadow-custom-sm hover:shadow-custom-md transition-all duration-200;
+  }
+  
+  .input-field {
+    @apply w-full px-4 py-3 rounded-lg bg-surface border border-border text-text-body placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-gold/25 focus:border-gold transition-all duration-200;
+  }
+  
+  .badge {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold;
+  }
+  
+  .badge-success {
+    @apply badge bg-success/10 text-success border border-success/20;
+  }
+  
+  .badge-danger {
+    @apply badge bg-danger/10 text-danger border border-danger/20;
+  }
+  
+  .badge-warning {
+    @apply badge bg-warning/10 text-warning border border-warning/20;
+  }
+  
+  .badge-gold {
+    @apply badge bg-gold/10 text-gold border border-gold/20;
+  }
+}
+
+@layer utilities {
+  .text-gradient-gold {
+    @apply bg-gradient-to-r from-gold via-gold-light to-gold bg-clip-text text-transparent;
+  }
+  
+  .bg-gradient-gold {
+    @apply bg-gradient-to-br from-gold via-gold-light to-gold-dark;
+  }
+  
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: #FFD700 #1A1A1A;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: #1A1A1A;
+    border-radius: 4px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: #FFD700;
+    border-radius: 4px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: #E6C200;
+  }
+}
+
+/* Custom animations */
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 2s infinite linear;
+  background: linear-gradient(
+    to right,
+    #1A1A1A 0%,
+    #2A2A2A 20%,
+    #1A1A1A 40%,
+    #1A1A1A 100%
+  );
+  background-size: 1000px 100%;
+}
+
+/* Loading spinner */
+.spinner {
+  border: 3px solid #2A2A2A;
+  border-top: 3px solid #FFD700;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

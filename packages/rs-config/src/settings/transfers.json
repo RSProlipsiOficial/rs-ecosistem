@@ -1,0 +1,75 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Configuração de Transferências entre Usuários",
+  "meta": {
+    "version": "1.0.0",
+    "updatedAt": "2025-11-06",
+    "notes": "Regras para transferência de saldo entre consultores"
+  },
+  
+  "enabled": true,
+  "require2FA": true,
+  "requireKYC": true,
+  
+  "limits": {
+    "minTransfer": 5.00,
+    "maxTransfer": 5000.00,
+    "dailyLimit": 3,
+    "dailyAmountLimit": 10000.00,
+    "monthlyLimit": 20,
+    "monthlyAmountLimit": 50000.00,
+    "description": "Limites de transferência por período"
+  },
+  
+  "fees": {
+    "feePct": 0.01,
+    "feeMin": 0.50,
+    "feeMax": 50.00,
+    "freeTransfersPerMonth": 2,
+    "description": "Taxa de 1% por transferência (mín R$ 0,50, máx R$ 50,00). 2 transferências grátis por mês."
+  },
+  
+  "wallets": {
+    "sourceWallet": "main_balance",
+    "destinationWallet": "main_balance",
+    "allowCrossWallet": false,
+    "description": "Transferências apenas entre saldos principais"
+  },
+  
+  "validation": {
+    "checkBalance": true,
+    "checkRecipientExists": true,
+    "checkRecipientActive": true,
+    "checkRecipientKYC": false,
+    "preventSelfTransfer": true,
+    "requireConfirmation": true
+  },
+  
+  "audit": {
+    "table": "wallet_transfers",
+    "logTable": "transfer_logs",
+    "storeMetadata": true,
+    "retentionYears": 7
+  },
+  
+  "notifications": {
+    "onTransferSent": {
+      "enabled": true,
+      "channels": ["email", "push"],
+      "template": "transfer_sent"
+    },
+    "onTransferReceived": {
+      "enabled": true,
+      "channels": ["email", "push"],
+      "template": "transfer_received"
+    }
+  },
+  
+  "status": {
+    "pending": "Pendente",
+    "processing": "Processando",
+    "completed": "Concluído",
+    "failed": "Falhou",
+    "cancelled": "Cancelado"
+  }
+}

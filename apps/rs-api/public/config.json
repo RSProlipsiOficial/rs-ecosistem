@@ -1,0 +1,108 @@
+{
+  "name": "rs-api",
+  "version": "1.0.0",
+  "description": "API principal do RS Prólipsi",
+  "environment": "production",
+  "consultant_dashboard_config": {
+    "bonusCards": [
+      {
+        "id": "bonus-1",
+        "title": "Bônus Ciclo Global",
+        "source": "bonusCicloGlobal",
+        "icon": "IconGitFork"
+      },
+      {
+        "id": "bonus-2",
+        "title": "Bônus Top SIGME",
+        "source": "bonusTopSigme",
+        "icon": "IconStar"
+      }
+    ],
+    "userInfo": [
+      {
+        "id": "userInfo-1",
+        "label": "Graduação",
+        "source": "graduacao"
+      },
+      {
+        "id": "userInfo-2",
+        "label": "Status da Conta",
+        "source": "status"
+      },
+      {
+        "id": "userInfo-3",
+        "label": "Atividade Mensal",
+        "source": "monthlyActivity"
+      },
+      {
+        "id": "userInfo-4",
+        "label": "Categoria",
+        "source": "categoria"
+      }
+    ],
+    "links": [
+      {
+        "id": "link-1",
+        "label": "Link de Indicação",
+        "source": "linkIndicacao"
+      },
+      {
+        "id": "link-2",
+        "label": "Link de Afiliado",
+        "source": "linkAfiliado"
+      }
+    ],
+    "pinLogos": {}
+  },
+  "marketplace_dashboard_config": {
+    "bonusCards": [
+      {
+        "id": "bonus-1",
+        "title": "Bônus Ciclo Global  33",
+        "source": "bonusCicloGlobal",
+        "icon": "IconGitFork"
+      },
+      {
+        "id": "bonus-2",
+        "title": "Bônus Top SIGME",
+        "source": "bonusTopSigme",
+        "icon": "IconStar"
+      }
+    ],
+    "userInfo": [
+      {
+        "id": "userInfo-1",
+        "label": "Graduação",
+        "source": "graduacao"
+      },
+      {
+        "id": "userInfo-2",
+        "label": "Status da Conta",
+        "source": "status"
+      },
+      {
+        "id": "userInfo-3",
+        "label": "Atividade Mensal",
+        "source": "monthlyActivity"
+      },
+      {
+        "id": "userInfo-4",
+        "label": "Categoria",
+        "source": "categoria"
+      }
+    ],
+    "links": [
+      {
+        "id": "link-1",
+        "label": "Link de Indicação",
+        "source": "linkIndicacao"
+      },
+      {
+        "id": "link-2",
+        "label": "Link de Afiliado",
+        "source": "linkAfiliado"
+      }
+    ],
+    "pinLogos": {}
+  }
+}

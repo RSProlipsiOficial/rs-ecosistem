@@ -1,0 +1,119 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Ranking de Ciclos - Mensal e Trimestral com snapshots e gráficos",
+  "meta": {
+    "version": "1.0.0",
+    "updatedAt": "2025-11-06",
+    "notes": "Ranking de ciclos mensal e trimestral, com snapshots e gráficos. Profundidade e lateralidade ILIMITADAS."
+  },
+  
+  "window": {
+    "monthly": {
+      "enabled": true,
+      "closeDay": 30,
+      "description": "Ranking mensal fecha no dia 30"
+    },
+    "quarterly": {
+      "enabled": true,
+      "description": "Ranking trimestral orquestrado por cycles.json"
+    },
+    "annual": {
+      "enabled": true,
+      "description": "Ranking anual (acumulado do ano)"
+    }
+  },
+  
+  "metrics": {
+    "countUserCycles": true,
+    "countTeamCycles": true,
+    "depthForTeam": "unlimited",
+    "widthForTeam": "unlimited",
+    "includeReentries": true,
+    "description": "Conta ciclos próprios e da equipe inteira, sem limites"
+  },
+  
+  "display": {
+    "leaderboardSize": 100,
+    "showTop": 10,
+    "charts": {
+      "timeSeries": true,
+      "distribution": true,
+      "byRegion": true,
+      "byPin": true,
+      "trend": true
+    },
+    "columns": [
+      "position",
+      "name",
+      "pin",
+      "own_cycles",
+      "team_cycles",
+      "total_cycles",
+      "variation_vs_previous"
+    ],
+    "colors": {
+      "gold": "#FFD700",
+      "silver": "#C0C0C0",
+      "bronze": "#CD7F32"
+    }
+  },
+  
+  "eligibility": {
+    "mustBeActive": true,
+    "excludeSuspended": true,
+    "excludeBlocked": true,
+    "description": "Apenas consultores ativos aparecem no ranking"
+  },
+  
+  "rewards": {
+    "top1": {
+      "badge": "🥇 Campeão do Mês",
+      "bonus": 0,
+      "highlight": true
+    },
+    "top3": {
+      "badge": "🏆 Top 3",
+      "highlight": true
+    },
+    "top10": {
+      "badge": "⭐ Top 10",
+      "highlight": true
+    },
+    "top100": {
+      "badge": "💎 Top 100",
+      "highlight": false
+    }
+  },
+  
+  "audit": {
+    "snapshotTable": "cycle_ranking_snapshots",
+    "storeDaily": false,
+    "storeMonthly": true,
+    "storeQuarterly": true,
+    "storeAnnual": true,
+    "retentionYears": 7
+  },
+  
+  "notifications": {
+    "onRankingClose": {
+      "enabled": true,
+      "channels": ["email", "dashboard"],
+      "template": "ranking_monthly_close",
+      "recipients": ["top_10", "admin"]
+    },
+    "onPositionChange": {
+      "enabled": true,
+      "channels": ["push"],
+      "template": "ranking_position_change",
+      "threshold": 10,
+      "description": "Notifica se subir/descer mais de 10 posições"
+    }
+  },
+  
+  "cache": {
+    "enabled": true,
+    "ttl": 3600,
+    "refreshOnUpdate": true,
+    "description": "Cache de 1 hora para performance"
+  }
+}

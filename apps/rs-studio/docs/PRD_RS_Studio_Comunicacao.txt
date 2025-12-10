@@ -1,0 +1,114 @@
+PRD � RS STUDIO (M�DULO DE COMUNICA��O, TREINAMENTOS E RSA CHATBOT)
+Documento t�cnico-funcional do RS Studio � painel aut�nomo respons�vel pela comunica��o interna, treinamentos, campanhas e integra��o com o ChatBot RSA. O RS Studio ser� a base criativa e de comunica��o digital da RS Pr�lipsi, integrando IA, aprendizado e ferramentas futuras para marketing e automa��o.
+1. Conceito e Fun��o
+
+O RS Studio � o novo m�dulo independente do ecossistema RS Pr�lipsi, substituindo o antigo sistema de Comunica��o RS.
+Sua fun��o � unificar: comunica��o administrativa, treinamentos, ChatBot RSA e futuras ferramentas digitais.
+Servir� como a ponte de aprendizado e automa��o entre Admin, Consultor, Logista e IA.
+
+2. Estrutura T�cnica
+
+Dom�nio: studio.rsprolipsi.com.br
+Porta: 5006
+Banco: rs_studio (schema dedicado no Supabase)
+Framework: Next.js + Node.js + Supabase REST
+Padr�o visual: dark (#0F1115) e dourado (#C8A74E)
+Autentica��o: login pr�prio com integra��o via token interno (Admin, Consultor, Logista)
+Integra��o com IA: RS.IA Core
+
+3. M�dulos Principais
+
+1. RSA ChatBot � suporte inteligente e aprendizado automatizado.
+2. Treinamentos RS � trilhas, v�deos, certifica��es e cursos.
+3. Comunica��o e Campanhas � avisos, notifica��es, banners e mensagens push.
+4. Ferramentas Digitais (expans�o futura) � IA de copy, LP Builder, automa��es.
+5. Biblioteca RSA � base de conhecimento e indexa��o sem�ntica.
+
+4. Detalhamento dos M�dulos
+
+?? RSA ChatBot:
+- Chat com IA contextual (aprendizado dos documentos oficiais).
+- Interface com avatar animado, �cones dourados e bolhas de chat.
+- Fun��es r�pidas: �Status da rede�, �Meus b�nus�, �Criar an�ncio autom�tico�.
+- Logs de conversa e base de aprendizado integrada.
+
+?? Treinamentos RS:
+- Upload de v�deos e materiais (Admin e Instrutores).
+- Trilhas por categoria, n�vel e PIN.
+- Certificados autom�ticos e m�tricas de conclus�o.
+- Notifica��es autom�ticas ao finalizar curso.
+
+?? Comunica��o e Campanhas:
+- Mensagens push, banners e campanhas segmentadas.
+- Agendamento de campanhas e rastreamento de engajamento.
+- Integra��o com ChatBot para mensagens autom�ticas.
+- Relat�rios de leitura e cliques.
+
+?? Ferramentas Digitais (Futuro):
+- Construtor de p�ginas (LP Builder).
+- Gerador de copy IA (integrado ao RS.IA).
+- Automa��o de e-mails e WhatsApp.
+- Editor de criativos (banners e mockups).
+
+??? Biblioteca RSA:
+- Base de conhecimento com busca sem�ntica.
+- Categorias: Marketing, SIGMA, WalletPay, Treinamentos.
+- Feedback de usu�rios e curadoria de conte�do.
+
+5. Perfis e Permiss�es
+
+Perfil | Acesso | Fun��es
+--------|---------|---------
+Admin Studio | Total | Cria cursos, campanhas, biblioteca e IA.
+Consultor | Parcial | Acessa treinamentos, chat RSA e notifica��es.
+Logista | Parcial | Visualiza treinamentos e campanhas.
+Instrutor | Limitado | Publica v�deos e materiais de aprendizado.
+IA RSA | Autom�tico | Processa perguntas e respostas inteligentes.
+
+6. Integra��es Entre M�dulos
+
+Origem | Integra��o | Exemplo
+--------|-------------|---------
+Admin | Publica conte�dos e campanhas | Treinamentos, comunicados
+Consultor | Consome conte�do e interage | Cursos, Chat RSA, suporte
+Marketplace | Mensagens transacionais | �Seu pedido foi enviado�
+WalletPay | Alertas financeiros | �Seu saque foi aprovado�
+SIGMA | Notifica��es de b�nus e rede | �Voc� completou um ciclo�
+RS.IA | Motor IA central | Treina ChatBot e gera conte�dos autom�ticos
+
+7. Recursos Futuros
+
+- Automa��o de mensagens baseada em comportamento (Wallet, SIGMA, Marketplace).
+- Integra��o com plataformas de an�ncios (Meta, Google Ads).
+- Editor visual drag-and-drop para p�ginas e campanhas.
+- Cria��o de escolas internas (RS Academy, RS Marketing).
+- Gamifica��o (ranking de aprendizado e pontua��o).
+
+8. Design e UX
+
+- Tema dark e dourado com padr�o RS.
+- Sidebar animada (Framer Motion).
+- Cards modulares e responsivos.
+- Gr�ficos de progresso (Recharts).
+- Layout mobile-first e interativo.
+
+9. Roadmap de Implementa��o
+
+Fase | Entrega | Descri��o
+------|----------|-----------
+Fase 1 | Comunica��o + Treinamentos + ChatBot | Vers�o base com mensagens e suporte IA
+Fase 2 | IA Contextual + Biblioteca RSA | Aprendizado autom�tico e base de conhecimento
+Fase 3 | Ferramentas Digitais | IA de copy, LP Builder e automa��es
+Fase 4 | Integra��es Externas | APIs para Meta Ads, Google Ads e automa��es externas
+Fase 5 | Gamifica��o | Certifica��es e ranking de engajamento
+
+10. Checklists Iniciais
+
+? Estrutura base replicada do Admin
+? Painel aut�nomo configurado (dom�nio pr�prio)
+? ChatBot RSA integrado ao Consultor
+? M�dulo de Treinamentos ativo
+? Comunica��o interna funcional
+?? Schema de Ferramentas Digitais preparado
+?? Relat�rios de engajamento pendentes
+?? Integra��o direta com RS.IA em andamento

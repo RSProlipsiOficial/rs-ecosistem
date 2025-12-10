@@ -1,0 +1,42 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Histórico de alterações nas configurações",
+  "project": "RS Prólipsi - Config System",
+  
+  "releases": [
+    {
+      "version": "1.0.0",
+      "date": "",
+      "type": "initial",
+      "description": "Versão inicial do sistema de configuração",
+      "changes": [
+        {
+          "category": "feature",
+          "description": "Estrutura base de settings criada",
+          "files": ["bonus.json", "planos.json", "carreira.json"]
+        },
+        {
+          "category": "feature",
+          "description": "Sistema de versionamento implementado",
+          "files": ["changelog.json", "version.ts"]
+        },
+        {
+          "category": "feature",
+          "description": "Variáveis de ambiente centralizadas",
+          "files": ["env/*.ts"]
+        }
+      ],
+      "breaking": false,
+      "author": "Roberto Camargo"
+    }
+  ],
+  
+  "categorias": {
+    "feature": "Nova funcionalidade",
+    "fix": "Correção de bug",
+    "update": "Atualização de valores",
+    "refactor": "Refatoração de estrutura",
+    "security": "Segurança",
+    "breaking": "Mudança que quebra compatibilidade"
+  }
+}

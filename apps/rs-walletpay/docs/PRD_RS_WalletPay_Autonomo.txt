@@ -1,0 +1,109 @@
+PRD � RS WALLET PAY (AUT�NOMO)
+Documento t�cnico-funcional completo do sistema financeiro aut�nomo RS Wallet Pay � carteira digital integrada ao ecossistema RS Pr�lipsi, com painel pr�prio, login independente, seguran�a de dados e integra��o com os m�dulos Marketplace, SIGMA, Admin e Consultor.
+1. Vis�o Geral
+
+O RS Wallet Pay � o m�dulo de carteira digital da RS Pr�lipsi. Atua de forma aut�noma, permitindo a movimenta��o financeira de todo o ecossistema � consultores, logistas, administradores e m�dulos externos.
+Opera com um painel web pr�prio, autentica��o individual e APIs seguras para integra��o com Marketplace e SIGMA.
+
+2. Arquitetura e M�dulos
+
+1. Ledger de dupla entrada com integridade de hash e saldo em tempo real.
+2. Engine de taxas e limites personaliz�veis por perfil.
+3. KYC/KYB com verifica��o de identidade (CPF/CNPJ, documentos, selfie).
+4. Sistema de saques PIX/TED e reconcilia��o PSP.
+5. Integra��es seguras com Marketplace, SIGMA e Admin.
+6. Gest�o de disputas, estornos e ajustes financeiros.
+7. Relat�rios e BI financeiro com exporta��o CSV/PDF.
+8. Painel aut�nomo com login e autentica��o 2FA (TOTP/SMS).
+9. Seguran�a, auditoria e rastreabilidade total de transa��es.
+
+3. Estrutura de Banco de Dados
+
+Tabelas principais:
+- wallet_accounts (id_usuario, tipo, status, KYC_status)
+- wallet_balances (account_id, current_balance, last_seq)
+- wallet_ledger (seq, tipo, amount, origem, refer�ncia, hash, estado, data)
+- wallet_transfers (de_conta, para_conta, valor, taxa, motivo, estado)
+- wallet_withdrawals (conta, valor, pix_key, estado, comprovante)
+- wallet_fees (configura��o de taxas por tipo e plano)
+- wallet_limits (limites di�rios/mensais por perfil)
+- wallet_disputes (refer�ncia, motivo, evid�ncias, decis�o)
+- wallet_webhooks (endpoint, segredo, escopo, tentativas, dead_letter)
+- wallet_audit (altera��es, aprovador, timestamp, hash_anterior)
+- wallet_api_keys (chaves de integra��o com escopo limitado)
+
+4. Perfis e Permiss�es
+
+Perfil | Fun��es
+--------|---------
+Consultor | visualizar saldo, sacar, transferir, baixar extratos
+Logista | visualizar saldo e repasses, relat�rios de loja
+Admin Financeiro | aprovar saques, ajustar saldos, conciliar PSP
+Admin Auditor | leitura de todas as transa��es e logs
+Admin Global | gest�o de chaves, limites, taxas e integra��es
+Premium | relat�rios avan�ados e taxas reduzidas
+
+5. Fluxos Operacionais
+
+1. Cr�dito autom�tico (ex: comiss�o de Marketplace)
+   - API /credits ? registra cr�dito, atualiza saldo, envia webhook.
+2. B�nus SIGMA/Fidelidade
+   - SIGMA fecha ciclo ? Wallet Pay credita contas correspondentes.
+3. Saque PIX/TED
+   - Usu�rio solicita ? valida KYC, saldo e limites ? envia PSP ? reconcilia��o.
+4. Transfer�ncia interna
+   - Entre contas Wallet Pay, real-time, sem tarifa (opcional).
+5. Estornos/Chargebacks
+   - Recebidos via PSP/Marketplace ? bloqueio parcial, an�lise e revers�o.
+6. Concilia��o autom�tica
+   - CRON di�rio/mensal compara ledger, PSP e origens (Marketplace/SIGMA).
+
+6. Painel Web Aut�nomo
+
+- Login individual (usu�rio/senha) com 2FA opcional.
+- Dashboard: saldo, previstos, �ltimas transa��es e KPIs (saques, comiss�es, b�nus).
+- Extrato detalhado com filtros e exporta��o (CSV/PDF).
+- Opera��es: saque PIX, transfer�ncias, cadastro de chaves.
+- Relat�rios por origem (Marketplace, SIGMA, Admin).
+- Disputas e evid�ncias com trilha de auditoria.
+- Admins: aprova��es, reconcilia��o, ajustes e relat�rios globais.
+
+7. Integra��es e Webhooks
+
+Integra��es de entrada:
+- Marketplace (commission_shop)
+- SIGMA (bonus, fidelidade, top)
+- Admin (ajustes manuais, retroativos)
+
+Integra��es de sa�da:
+- Webhooks assinados HMAC para confirma��o de cr�dito/d�bito.
+- Reenvio autom�tico (retry exponencial) e fila de dead-letter.
+- API p�blica REST com autentica��o por chave e escopo limitado.
+
+8. Seguran�a e Compliance
+
+- Criptografia AES para dados sens�veis (PIX, documentos).
+- Autentica��o JWT + 2FA + rate limiting.
+- Logs imut�veis e trilha de auditoria por hash encadeado.
+- Pol�ticas LGPD: consentimento, anonimiza��o e reten��o.
+- Bloqueios autom�ticos para contas suspeitas (velocity/fraud check).
+- Segrega��o de fun��es (quem cria ? quem aprova ? quem audita).
+
+9. Relat�rios e BI
+
+- Relat�rios por tipo de opera��o, origem e usu�rio.
+- Exporta��o CSV, PDF e gr�ficos din�micos.
+- Snapshots di�rios para auditoria financeira.
+- Indicadores: volume total, m�dia de saque, chargebacks, saldo global.
+
+10. Observabilidade e SRE
+
+- M�tricas: lat�ncia de APIs, erros de concilia��o, fila de reconcilia��o, tempo m�dio de saque.
+- Alertas: falhas de webhook, picos de chargeback, saldo negativo.
+- Dashboards de monitoramento por ambiente (produ��o/homologa��o).
+
+11. Roadmap de Implementa��o
+
+Fase A � Funda��o: painel web, ledger dupla entrada, login e 2FA, KYC b�sico, extrato e saques.
+Fase B � Opera��o: concilia��o PSP, engine de taxas/limites, disputas e relat�rios avan�ados.
+Fase C � Escala: API p�blica, sandbox, antifraude, observabilidade e otimiza��o de filas.

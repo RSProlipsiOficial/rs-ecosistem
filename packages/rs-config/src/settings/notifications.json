@@ -1,0 +1,227 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Configuração de Notificações Automáticas",
+  "meta": {
+    "version": "1.0.0",
+    "updatedAt": "2025-11-06",
+    "notes": "Push, Email, WhatsApp e SMS"
+  },
+  
+  "channels": {
+    "email": {
+      "enabled": true,
+      "provider": "SendGrid",
+      "from": "noreply@rsprolipsi.com.br",
+      "fromName": "RS Prólipsi",
+      "replyTo": "suporte@rsprolipsi.com.br"
+    },
+    "push": {
+      "enabled": true,
+      "provider": "Firebase",
+      "priority": "high"
+    },
+    "whatsapp": {
+      "enabled": true,
+      "provider": "Twilio",
+      "from": "+5541999999999"
+    },
+    "sms": {
+      "enabled": false,
+      "provider": "Twilio",
+      "from": "+5541999999999"
+    }
+  },
+  
+  "events": {
+    "user": {
+      "onRegister": {
+        "enabled": true,
+        "channels": ["email"],
+        "template": "welcome",
+        "delay": 0
+      },
+      "onKYCApproved": {
+        "enabled": true,
+        "channels": ["email", "push"],
+        "template": "kyc_approved"
+      },
+      "onKYCRejected": {
+        "enabled": true,
+        "channels": ["email"],
+        "template": "kyc_rejected"
+      }
+    },
+    "matrix": {
+      "onSlotFilled": {
+        "enabled": true,
+        "channels": ["push"],
+        "template": "slot_filled"
+      },
+      "onCycleComplete": {
+        "enabled": true,
+        "channels": ["email", "push", "whatsapp"],
+        "template": "cycle_complete"
+      },
+      "onReentry": {
+        "enabled": true,
+        "channels": ["push"],
+        "template": "reentry_created"
+      }
+    },
+    "wallet": {
+      "onCredit": {
+        "enabled": true,
+        "channels": ["push"],
+        "template": "wallet_credit",
+        "minAmount": 10.00
+      },
+      "onDebit": {
+        "enabled": true,
+        "channels": ["push"],
+        "template": "wallet_debit",
+        "minAmount": 10.00
+      },
+      "onWithdrawalRequested": {
+        "enabled": true,
+        "channels": ["email", "push"],
+        "template": "withdrawal_requested"
+      },
+      "onWithdrawalApproved": {
+        "enabled": true,
+        "channels": ["email", "push", "sms"],
+        "template": "withdrawal_approved"
+      },
+      "onWithdrawalPaid": {
+        "enabled": true,
+        "channels": ["email", "push"],
+        "template": "withdrawal_paid"
+      },
+      "onTransferReceived": {
+        "enabled": true,
+        "channels": ["push"],
+        "template": "transfer_received"
+      }
+    },
+    "career": {
+      "onPinUpgrade": {
+        "enabled": true,
+        "channels": ["email", "push", "whatsapp"],
+        "template": "pin_upgrade"
+      },
+      "onQuarterClose": {
+        "enabled": true,
+        "channels": ["email"],
+        "template": "quarter_close"
+      }
+    },
+    "orders": {
+      "onOrderCreated": {
+        "enabled": true,
+        "channels": ["email"],
+        "template": "order_created"
+      },
+      "onPaymentConfirmed": {
+        "enabled": true,
+        "channels": ["email", "push"],
+        "template": "payment_confirmed"
+      },
+      "onOrderDispatched": {
+        "enabled": true,
+        "channels": ["email", "push", "sms"],
+        "template": "order_dispatched"
+      },
+      "onOrderDelivered": {
+        "enabled": true,
+        "channels": ["email", "push"],
+        "template": "order_delivered"
+      }
+    },
+    "sharedOrders": {
+      "onGroupCreated": {
+        "enabled": true,
+        "channels": ["email", "push"],
+        "template": "shared_order_created"
+      },
+      "onParticipantJoined": {
+        "enabled": true,
+        "channels": ["push"],
+        "template": "participant_joined"
+      },
+      "onPaymentProgress": {
+        "enabled": true,
+        "channels": ["push"],
+        "template": "payment_progress",
+        "milestones": [25, 50, 75, 100]
+      },
+      "onGroupCompleted": {
+        "enabled": true,
+        "channels": ["email", "push", "whatsapp"],
+        "template": "shared_order_completed"
+      }
+    },
+    "ranking": {
+      "onMonthlyClose": {
+        "enabled": true,
+        "channels": ["email"],
+        "template": "ranking_monthly",
+        "recipients": ["top_10"]
+      },
+      "onPositionChange": {
+        "enabled": true,
+        "channels": ["push"],
+        "template": "ranking_position_change",
+        "threshold": 10
+      }
+    }
+  },
+  
+  "templates": {
+    "welcome": "Bem-vindo ao RS Prólipsi!",
+    "kyc_approved": "Seu KYC foi aprovado",
+    "kyc_rejected": "Seu KYC foi rejeitado",
+    "slot_filled": "Nova posição preenchida na matriz",
+    "cycle_complete": "Ciclo completado! Bônus disponível",
+    "reentry_created": "Reentrada automática criada",
+    "wallet_credit": "Crédito recebido na carteira",
+    "wallet_debit": "Débito na carteira",
+    "withdrawal_requested": "Saque solicitado",
+    "withdrawal_approved": "Saque aprovado",
+    "withdrawal_paid": "Saque pago",
+    "transfer_received": "Transferência recebida",
+    "pin_upgrade": "Parabéns! Novo PIN conquistado",
+    "quarter_close": "Trimestre encerrado",
+    "order_created": "Pedido criado",
+    "payment_confirmed": "Pagamento confirmado",
+    "order_dispatched": "Pedido enviado",
+    "order_delivered": "Pedido entregue",
+    "shared_order_created": "Pedido em grupo criado",
+    "participant_joined": "Novo participante no grupo",
+    "payment_progress": "Progresso de pagamento do grupo",
+    "shared_order_completed": "Pedido em grupo completo",
+    "ranking_monthly": "Ranking mensal",
+    "ranking_position_change": "Sua posição no ranking mudou"
+  },
+  
+  "preferences": {
+    "allowUserOptOut": true,
+    "defaultChannels": ["email", "push"],
+    "quietHours": {
+      "enabled": true,
+      "start": "22:00",
+      "end": "08:00",
+      "timezone": "America/Sao_Paulo"
+    }
+  },
+  
+  "queue": {
+    "enabled": true,
+    "provider": "BullMQ",
+    "retryAttempts": 3,
+    "retryDelay": 60000,
+    "priority": {
+      "high": ["withdrawal_approved", "order_dispatched"],
+      "medium": ["cycle_complete", "pin_upgrade"],
+      "low": ["slot_filled", "ranking_position_change"]
+    }
+  }
+}

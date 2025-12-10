@@ -1,0 +1,364 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Configuração Completa do WalletPay - Sistema de Pagamentos RS Prólipsi",
+  "meta": {
+    "version": "1.0.0",
+    "updatedAt": "2025-11-06",
+    "notes": "Sistema bancário completo integrado com Asaas, PIX e cartões"
+  },
+  
+  "system": {
+    "name": "RS WalletPay",
+    "description": "Sistema de pagamentos e carteira digital integrado",
+    "currency": "BRL",
+    "enabled": true,
+    "maintenanceMode": false
+  },
+  
+  "wallet": {
+    "enabled": true,
+    "autoCreate": true,
+    "initialBalance": 0.00,
+    "minBalance": 0.00,
+    "maxBalance": 1000000.00,
+    "allowNegative": false,
+    "description": "Carteira digital para cada usuário"
+  },
+  
+  "deposits": {
+    "enabled": true,
+    "methods": {
+      "pix": {
+        "enabled": true,
+        "minAmount": 10.00,
+        "maxAmount": 50000.00,
+        "fee": 0.00,
+        "instantCredit": true,
+        "description": "Depósito via PIX - Instantâneo e sem taxas"
+      },
+      "bankSlip": {
+        "enabled": true,
+        "minAmount": 50.00,
+        "maxAmount": 50000.00,
+        "fee": 3.50,
+        "daysToExpire": 3,
+        "creditAfterDays": 1,
+        "description": "Boleto bancário - Crédito em 1 dia útil"
+      },
+      "creditCard": {
+        "enabled": true,
+        "minAmount": 20.00,
+        "maxAmount": 10000.00,
+        "fee": 0.035,
+        "installments": {
+          "enabled": true,
+          "max": 12,
+          "minAmountPerInstallment": 20.00
+        },
+        "instantCredit": true,
+        "description": "Cartão de crédito - Até 12x"
+      },
+      "debitCard": {
+        "enabled": true,
+        "minAmount": 10.00,
+        "maxAmount": 5000.00,
+        "fee": 0.02,
+        "instantCredit": true,
+        "description": "Cartão de débito"
+      }
+    },
+    "limits": {
+      "daily": 50000.00,
+      "monthly": 200000.00,
+      "perTransaction": 50000.00
+    }
+  },
+  
+  "withdrawals": {
+    "enabled": true,
+    "methods": {
+      "pix": {
+        "enabled": true,
+        "minAmount": 10.00,
+        "maxAmount": 50000.00,
+        "fee": {
+          "type": "percentage",
+          "value": 0.02,
+          "min": 2.00,
+          "max": 100.00
+        },
+        "processingTime": "instant",
+        "description": "Saque via PIX - Instantâneo"
+      },
+      "bankTransfer": {
+        "enabled": true,
+        "minAmount": 50.00,
+        "maxAmount": 50000.00,
+        "fee": {
+          "type": "fixed",
+          "value": 5.00
+        },
+        "processingTime": "1-2_business_days",
+        "description": "TED/DOC - 1-2 dias úteis"
+      }
+    },
+    "requestWindow": {
+      "startDay": 1,
+      "endDay": 5,
+      "description": "Solicitações aceitas do dia 1 ao 5 de cada mês"
+    },
+    "payoutWindow": {
+      "startDay": 10,
+      "endDay": 15,
+      "description": "Pagamentos realizados do dia 10 ao 15"
+    },
+    "limits": {
+      "daily": 10000.00,
+      "monthly": 50000.00,
+      "perTransaction": 10000.00
+    },
+    "kyc": {
+      "required": true,
+      "documents": ["cpf", "rg", "selfie", "proof_of_address"],
+      "description": "KYC obrigatório para saques"
+    }
+  },
+  
+  "transfers": {
+    "enabled": true,
+    "internal": {
+      "enabled": true,
+      "minAmount": 1.00,
+      "maxAmount": 50000.00,
+      "fee": {
+        "type": "percentage",
+        "value": 0.01,
+        "min": 0.00,
+        "max": 50.00
+      },
+      "freeTransfersPerMonth": 2,
+      "instantTransfer": true,
+      "description": "Transferência entre usuários RS Prólipsi"
+    },
+    "limits": {
+      "daily": 20000.00,
+      "monthly": 100000.00,
+      "perTransaction": 10000.00
+    }
+  },
+  
+  "pix": {
+    "enabled": true,
+    "provider": "Asaas",
+    "apiKey": "9de0b2ef-9d5d-462d-87f7-1780650fbdb3",
+    "environment": "production",
+    "keys": {
+      "static": {
+        "enabled": true,
+        "type": "random",
+        "description": "Chave PIX aleatória gerada automaticamente"
+      },
+      "dynamic": {
+        "enabled": true,
+        "expirationMinutes": 30,
+        "description": "QR Code dinâmico com validade de 30 minutos"
+      }
+    },
+    "webhook": {
+      "enabled": true,
+      "url": "https://api.rsprolipsi.com.br/webhooks/pix",
+      "events": ["PAYMENT_RECEIVED", "PAYMENT_CONFIRMED"]
+    },
+    "limits": {
+      "minAmount": 0.01,
+      "maxAmount": 50000.00,
+      "dailyLimit": 50000.00
+    }
+  },
+  
+  "asaas": {
+    "enabled": true,
+    "apiKey": "9de0b2ef-9d5d-462d-87f7-1780650fbdb3",
+    "environment": "production",
+    "baseUrl": "https://api.asaas.com/v3",
+    "features": {
+      "pix": true,
+      "bankSlip": true,
+      "creditCard": true,
+      "debitCard": true,
+      "subscriptions": false
+    },
+    "webhook": {
+      "enabled": true,
+      "url": "https://api.rsprolipsi.com.br/webhooks/asaas",
+      "events": [
+        "PAYMENT_RECEIVED",
+        "PAYMENT_CONFIRMED",
+        "PAYMENT_OVERDUE",
+        "PAYMENT_DELETED"
+      ]
+    }
+  },
+  
+  "antifraud": {
+    "enabled": true,
+    "provider": "internal",
+    "rules": {
+      "maxTransactionsPerHour": 10,
+      "maxAmountPerHour": 10000.00,
+      "maxFailedAttemptsPerDay": 5,
+      "blockSuspiciousIPs": true,
+      "requireDeviceFingerprint": true
+    },
+    "riskLevels": {
+      "low": {
+        "autoApprove": true,
+        "maxAmount": 1000.00
+      },
+      "medium": {
+        "autoApprove": false,
+        "requireManualReview": true,
+        "maxAmount": 5000.00
+      },
+      "high": {
+        "autoApprove": false,
+        "requireManualReview": true,
+        "block": true
+      }
+    }
+  },
+  
+  "fees": {
+    "deposit": {
+      "pix": 0.00,
+      "bankSlip": 3.50,
+      "creditCard": 0.035,
+      "debitCard": 0.02
+    },
+    "withdrawal": {
+      "pix": {
+        "percentage": 0.02,
+        "min": 2.00,
+        "max": 100.00
+      },
+      "bankTransfer": 5.00
+    },
+    "transfer": {
+      "percentage": 0.01,
+      "min": 0.00,
+      "max": 50.00,
+      "freePerMonth": 2
+    }
+  },
+  
+  "compliance": {
+    "kyc": {
+      "enabled": true,
+      "required": true,
+      "levels": {
+        "basic": {
+          "documents": ["cpf"],
+          "limits": {
+            "daily": 1000.00,
+            "monthly": 5000.00
+          }
+        },
+        "intermediate": {
+          "documents": ["cpf", "rg", "selfie"],
+          "limits": {
+            "daily": 5000.00,
+            "monthly": 20000.00
+          }
+        },
+        "advanced": {
+          "documents": ["cpf", "rg", "selfie", "proof_of_address"],
+          "limits": {
+            "daily": 50000.00,
+            "monthly": 200000.00
+          }
+        }
+      }
+    },
+    "aml": {
+      "enabled": true,
+      "checkTransactions": true,
+      "reportThreshold": 10000.00,
+      "description": "Anti-Money Laundering"
+    },
+    "pld": {
+      "enabled": true,
+      "description": "Prevenção à Lavagem de Dinheiro"
+    }
+  },
+  
+  "notifications": {
+    "enabled": true,
+    "channels": ["email", "push", "sms"],
+    "events": {
+      "depositReceived": {
+        "enabled": true,
+        "channels": ["email", "push"]
+      },
+      "withdrawalRequested": {
+        "enabled": true,
+        "channels": ["email", "push"]
+      },
+      "withdrawalApproved": {
+        "enabled": true,
+        "channels": ["email", "push", "sms"]
+      },
+      "transferReceived": {
+        "enabled": true,
+        "channels": ["push"]
+      },
+      "lowBalance": {
+        "enabled": true,
+        "threshold": 10.00,
+        "channels": ["push"]
+      }
+    }
+  },
+  
+  "statements": {
+    "enabled": true,
+    "formats": ["PDF", "CSV", "Excel"],
+    "periods": ["daily", "weekly", "monthly", "custom"],
+    "autoGenerate": {
+      "monthly": true,
+      "sendEmail": true
+    }
+  },
+  
+  "audit": {
+    "enabled": true,
+    "logAllTransactions": true,
+    "retentionYears": 7,
+    "tables": {
+      "transactions": "wallet_transactions",
+      "deposits": "wallet_deposits",
+      "withdrawals": "wallet_withdrawals",
+      "transfers": "wallet_transfers",
+      "fees": "wallet_fees",
+      "logs": "wallet_logs"
+    }
+  },
+  
+  "integrations": {
+    "asaas": {
+      "enabled": true,
+      "apiKey": "9de0b2ef-9d5d-462d-87f7-1780650fbdb3"
+    },
+    "pix": {
+      "enabled": true,
+      "provider": "Asaas"
+    },
+    "sms": {
+      "enabled": true,
+      "provider": "Twilio"
+    },
+    "email": {
+      "enabled": true,
+      "provider": "SendGrid"
+    }
+  }
+}

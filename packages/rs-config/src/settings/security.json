@@ -1,0 +1,177 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Configuração de Segurança e Permissões",
+  "meta": {
+    "version": "1.0.0",
+    "updatedAt": "2025-11-06",
+    "notes": "Autenticação, autorização, roles e permissões"
+  },
+  
+  "authentication": {
+    "provider": "JWT",
+    "jwtSecret": "CHANGE_THIS_IN_PRODUCTION_USE_ENV",
+    "jwtExpiration": "7d",
+    "refreshTokenExpiration": "30d",
+    "bcryptRounds": 10,
+    "require2FA": false,
+    "sessionTimeout": 3600,
+    "description": "JWT com expiração de 7 dias. 2FA opcional."
+  },
+  
+  "roles": {
+    "admin": {
+      "level": 100,
+      "label": "Administrador",
+      "permissions": ["*"],
+      "description": "Acesso total ao sistema"
+    },
+    "manager": {
+      "level": 80,
+      "label": "Gerente",
+      "permissions": [
+        "view_all_users",
+        "view_reports",
+        "manage_orders",
+        "manage_logistics",
+        "approve_withdrawals"
+      ],
+      "description": "Gerencia operações e relatórios"
+    },
+    "cd_operator": {
+      "level": 60,
+      "label": "Operador CD",
+      "permissions": [
+        "view_cd_orders",
+        "manage_cd_stock",
+        "dispatch_orders",
+        "view_cd_reports"
+      ],
+      "description": "Opera centro de distribuição"
+    },
+    "consultor": {
+      "level": 40,
+      "label": "Consultor",
+      "permissions": [
+        "view_own_data",
+        "create_order",
+        "view_wallet",
+        "request_withdrawal",
+        "transfer_balance",
+        "view_matrix",
+        "view_career"
+      ],
+      "description": "Consultor padrão"
+    },
+    "affiliate": {
+      "level": 30,
+      "label": "Afiliado",
+      "permissions": [
+        "view_own_store",
+        "view_own_sales",
+        "create_affiliate_link",
+        "view_commissions"
+      ],
+      "description": "Lojista afiliado"
+    },
+    "customer": {
+      "level": 10,
+      "label": "Cliente",
+      "permissions": [
+        "create_order",
+        "view_own_orders",
+        "track_order"
+      ],
+      "description": "Cliente final"
+    }
+  },
+  
+  "permissions": {
+    "view_all_users": "Visualizar todos os usuários",
+    "view_reports": "Visualizar relatórios",
+    "manage_orders": "Gerenciar pedidos",
+    "manage_logistics": "Gerenciar logística",
+    "approve_withdrawals": "Aprovar saques",
+    "view_cd_orders": "Ver pedidos do CD",
+    "manage_cd_stock": "Gerenciar estoque do CD",
+    "dispatch_orders": "Expedir pedidos",
+    "view_cd_reports": "Ver relatórios do CD",
+    "view_own_data": "Ver próprios dados",
+    "create_order": "Criar pedido",
+    "view_wallet": "Ver carteira",
+    "request_withdrawal": "Solicitar saque",
+    "transfer_balance": "Transferir saldo",
+    "view_matrix": "Ver matriz",
+    "view_career": "Ver carreira",
+    "view_own_store": "Ver própria loja",
+    "view_own_sales": "Ver próprias vendas",
+    "create_affiliate_link": "Criar link de afiliado",
+    "view_commissions": "Ver comissões",
+    "view_own_orders": "Ver próprios pedidos",
+    "track_order": "Rastrear pedido"
+  },
+  
+  "rateLimiting": {
+    "enabled": true,
+    "windowMs": 900000,
+    "maxRequests": 100,
+    "message": "Muitas requisições. Tente novamente em 15 minutos.",
+    "skipSuccessfulRequests": false,
+    "description": "100 requisições por 15 minutos"
+  },
+  
+  "ipBlocking": {
+    "enabled": true,
+    "blacklist": [],
+    "whitelist": [],
+    "autoBlock": {
+      "enabled": true,
+      "maxFailedAttempts": 10,
+      "blockDuration": 3600,
+      "description": "Bloqueia IP após 10 tentativas falhas por 1 hora"
+    }
+  },
+  
+  "passwordPolicy": {
+    "minLength": 8,
+    "requireUppercase": true,
+    "requireLowercase": true,
+    "requireNumbers": true,
+    "requireSpecialChars": false,
+    "expirationDays": 0,
+    "preventReuse": 3,
+    "description": "Senha mínima 8 caracteres com maiúsculas, minúsculas e números"
+  },
+  
+  "twoFactor": {
+    "enabled": false,
+    "required": false,
+    "methods": ["totp", "sms", "email"],
+    "defaultMethod": "totp",
+    "description": "2FA opcional via TOTP, SMS ou Email"
+  },
+  
+  "sessionManagement": {
+    "maxConcurrentSessions": 3,
+    "invalidateOnPasswordChange": true,
+    "rememberMeDuration": 2592000,
+    "description": "Máximo 3 sessões simultâneas. Remember me: 30 dias"
+  },
+  
+  "audit": {
+    "logLogins": true,
+    "logFailedAttempts": true,
+    "logPermissionChanges": true,
+    "logRoleChanges": true,
+    "retentionDays": 90,
+    "description": "Auditoria de acessos e mudanças por 90 dias"
+  },
+  
+  "cors": {
+    "enabled": true,
+    "allowedOrigins": ["*"],
+    "allowedMethods": ["GET", "POST", "PUT", "DELETE", "PATCH"],
+    "allowedHeaders": ["Content-Type", "Authorization"],
+    "credentials": true,
+    "maxAge": 86400
+  }
+}

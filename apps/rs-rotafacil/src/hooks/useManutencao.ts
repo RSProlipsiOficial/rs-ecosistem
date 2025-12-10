@@ -1,0 +1,196 @@
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { ManutencaoVan } from '@/types/manutencao';
+import { useToast } from '@/hooks/use-toast';
+
+export function useManutencao() {
+  const [manutencoes, setManutencoes] = useState<ManutencaoVan[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+
+  const fetchManutencoes = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('manutencoes_van')
+        .select('*')
+        .order('data_relato', { ascending: false });
+
+      if (error) throw error;
+      setManutencoes((data || []) as ManutencaoVan[]);
+    } catch (error) {
+      console.error('Erro ao buscar manutenções:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível carregar as manutenções.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const createManutencao = async (manutencaoData: Record<string, any>) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const userId = user?.id || '00000000-0000-0000-0000-000000000000';
+
+      const insertData = {
+        user_id: userId,
+        data_relato: new Date().toISOString().split('T')[0],
+        van_id: manutencaoData.van_id,
+        tipo_problema: manutencaoData.tipo_problema,
+        descricao_problema: manutencaoData.descricao_problema,
+        prioridade: manutencaoData.prioridade,
+      };
+
+      const { data, error } = await supabase
+        .from('manutencoes_van')
+        .insert([insertData])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setManutencoes(prev => [data as ManutencaoVan, ...prev]);
+      
+      toast({
+        title: "Sucesso",
+        description: "Problema reportado com sucesso!",
+      });
+
+      return data;
+    } catch (error: any) {
+      console.error('Erro ao criar manutenção:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível reportar o problema.",
+        variant: "destructive",
+      });
+      throw error;
+    }
+  };
+
+  const updateManutencao = async (id: string, updates: Partial<Record<string, any>>) => {
+    try {
+      const { data, error } = await supabase
+        .from('manutencoes_van')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setManutencoes(prev => prev.map(item => 
+        item.id === id ? { ...item, ...data } as ManutencaoVan : item
+      ));
+
+      toast({
+        title: "Sucesso",
+        description: "Manutenção atualizada com sucesso!",
+      });
+
+      return data;
+    } catch (error) {
+      console.error('Erro ao atualizar manutenção:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar a manutenção.",
+        variant: "destructive",
+      });
+      throw error;
+    }
+  };
+
+  const markAsCompleted = async (id: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('manutencoes_van')
+        .update({ 
+          status: 'concluido',
+          data_solucao: new Date().toISOString().split('T')[0]
+        })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setManutencoes(prev => prev.map(item => 
+        item.id === id ? { ...item, ...data } as ManutencaoVan : item
+      ));
+
+      toast({
+        title: "Sucesso",
+        description: "Manutenção marcada como concluída!",
+      });
+
+      return data;
+    } catch (error) {
+      console.error('Erro ao marcar manutenção como concluída:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível marcar a manutenção como concluída.",
+        variant: "destructive",
+      });
+      throw error;
+    }
+  };
+
+  const deleteManutencao = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('manutencoes_van')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setManutencoes(prev => prev.filter(item => item.id !== id));
+      toast({
+        title: "Sucesso",
+        description: "Manutenção removida com sucesso!",
+      });
+    } catch (error) {
+      console.error('Erro ao deletar manutenção:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível remover a manutenção.",
+        variant: "destructive",
+      });
+      throw error;
+    }
+  };
+
+  const getResumoManutencoes = () => {
+    const total = manutencoes.length;
+    const pendentes = manutencoes.filter(m => m.status === 'pendente').length;
+    const emAndamento = manutencoes.filter(m => m.status === 'em_andamento').length;
+    const concluidas = manutencoes.filter(m => m.status === 'concluido').length;
+    const urgentes = manutencoes.filter(m => m.prioridade === 'urgente' && m.status !== 'concluido').length;
+
+    return {
+      total,
+      pendentes,
+      emAndamento,
+      concluidas,
+      urgentes,
+    };
+  };
+
+  useEffect(() => {
+    fetchManutencoes();
+  }, []);
+
+  return {
+    manutencoes,
+    loading,
+    createManutencao,
+    updateManutencao,
+    deleteManutencao,
+    markAsCompleted,
+    getResumoManutencoes,
+    refetch: fetchManutencoes,
+  };
+}

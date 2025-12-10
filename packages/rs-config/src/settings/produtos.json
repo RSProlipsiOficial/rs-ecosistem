@@ -1,0 +1,147 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Configuração de produtos e precificação - RS Prólipsi",
+  "version": "1.0.0",
+  "lastUpdate": "2025-11-06",
+  
+  "produto_principal": {
+    "nome": "Kit de Ativação SIGMA 1x6",
+    "descricao": "Kit completo para ativação na matriz SIGMA",
+    "sku": "KIT-SIGMA-1X6",
+    "categoria": "Ativação",
+    
+    "precificacao": {
+      "preco_base": 120.00,
+      "preco_consultor": 60.00,
+      "preco_cd": 50.88,
+      
+      "descontos": {
+        "cliente": 0.00,
+        "consultor": 50.00,
+        "cd": 57.60
+      },
+      
+      "calculo_cd": {
+        "desconto_base": 50.00,
+        "desconto_adicional": 15.20,
+        "desconto_total": 57.60,
+        "formula": "120 × 0.5 × 0.848 = 50.88"
+      }
+    },
+    
+    "matriz": {
+      "contribui_para_matriz": true,
+      "vagas_por_compra": 1,
+      "pontos_por_ciclo": 1
+    }
+  },
+  
+  "regras_matriz": {
+    "tipo": "SIGMA_1x6",
+    "vagas_por_ciclo": 6,
+    "valor_por_vaga": 60.00,
+    "valor_total_ciclo": 360.00,
+    
+    "payout": {
+      "percentual": 30.00,
+      "valor": 108.00,
+      "formula": "360 × 0.30 = 108"
+    },
+    
+    "reentrada": {
+      "automatica": true,
+      "valor": 60.00,
+      "novo_ciclo_abre": true
+    },
+    
+    "pontuacao": {
+      "pontos_por_ciclo_completo": 1,
+      "acumula_para_carreira": true,
+      "periodo_apuracao": "trimestral"
+    }
+  },
+  
+  "tipos_usuario": {
+    "cliente": {
+      "nome": "Cliente Final",
+      "descricao": "Visitante sem cadastro ativo",
+      "preco": 120.00,
+      "desconto": 0.00,
+      "acessa_matriz": false,
+      "pode_indicar": false
+    },
+    
+    "consultor": {
+      "nome": "Consultor Ativo",
+      "descricao": "Participa da matriz SIGMA",
+      "preco": 60.00,
+      "desconto": 50.00,
+      "acessa_matriz": true,
+      "pode_indicar": true,
+      "recebe_bonus": true
+    },
+    
+    "cd": {
+      "nome": "Centro de Distribuição",
+      "descricao": "Administrador de rede física",
+      "preco": 50.88,
+      "desconto": 57.60,
+      "acessa_matriz": true,
+      "pode_indicar": true,
+      "recebe_bonus": true,
+      "beneficios_adicionais": [
+        "Desconto extra de 15.2%",
+        "Região de atuação exclusiva",
+        "Suporte prioritário"
+      ]
+    }
+  },
+  
+  "catalogo_complementar": {
+    "ativo": false,
+    "produtos_futuros": [
+      {
+        "nome": "Suplemento Prólipsi Premium",
+        "sku": "SUPL-PREMIUM-001",
+        "preco_base": 150.00,
+        "preco_consultor": 75.00,
+        "preco_cd": 63.60,
+        "categoria": "Produtos"
+      }
+    ]
+  },
+  
+  "validacao": {
+    "preco_minimo": 50.88,
+    "preco_maximo": 120.00,
+    "desconto_maximo_percent": 57.60,
+    "verifica_estoque": true,
+    "permite_parcelamento": false
+  },
+  
+  "integracao": {
+    "supabase": {
+      "tabela": "product_catalog",
+      "sync_automatico": true
+    },
+    "api": {
+      "endpoint_produtos": "/v1/products",
+      "endpoint_compra": "/v1/sales/register"
+    },
+    "ops": {
+      "atualiza_ciclo": true,
+      "calcula_bonus": true,
+      "gera_ponto_carreira": true
+    }
+  },
+  
+  "observacoes": {
+    "preco_vitrine": "Sempre R$ 120,00 para clientes não cadastrados",
+    "desconto_consultor": "50% aplicado automaticamente ao logar",
+    "desconto_cd": "Requer código de CD válido e região configurada",
+    "ciclagem": "Cada venda = 1 vaga | 6 vendas = 1 ciclo completo",
+    "pontuacao": "1 ponto por ciclo, acumulado para graduação"
+  },
+  
+  "status": "ativo"
+}

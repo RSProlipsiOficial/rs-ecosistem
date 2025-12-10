@@ -1,0 +1,34 @@
+project_id = "rptkhrboejbwexseikuo"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[auth]
+enabled = true
+port = 54324
+site_url = "http://localhost:3000"
+additional_redirect_urls = ["https://rptkhrboejbwexseikuo.supabase.co"]
+jwt_expiry = 3600
+enable_refresh_token_rotation = true
+refresh_token_reuse_interval = 10
+enable_manual_linking = false
+
+[edge_functions]
+enabled = true
+port = 54323
+
+[functions.openrouter-chat]
+verify_jwt = false
+
+[functions.mercado-pago-payment]
+verify_jwt = false
+
+[functions.whatsapp-baileys]
+verify_jwt = false
+
+[functions.mercado-pago-webhook]
+verify_jwt = false

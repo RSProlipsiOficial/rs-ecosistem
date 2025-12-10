@@ -1,0 +1,12 @@
+{
+  "name": "rs-template-game",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "echo build",
+    "start": "serve -p $PORT ."
+  },
+  "dependencies": {
+    "serve": "^14.2.1"
+  }
+}

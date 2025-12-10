@@ -1,0 +1,109 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Configuração de Pedidos - Individual e Coletivo",
+  "meta": {
+    "version": "1.0.0",
+    "updatedAt": "2025-11-06",
+    "notes": "Sistema de pedidos com suporte a grupos, pagamentos multiformes e logística integrada"
+  },
+  
+  "order": {
+    "allowSharedOrders": true,
+    "allowIndividualOrders": true,
+    "originRequired": true,
+    "paymentModes": ["balance", "pix", "card", "boleto", "onsite"],
+    "autoSplit": true,
+    "description": "Origem obrigatória. Permite pedidos individuais e em grupo com pagamentos flexíveis."
+  },
+  
+  "multiPay": {
+    "enabled": true,
+    "splitLogic": "proportional",
+    "maxParticipants": 10,
+    "minParticipants": 2,
+    "allowFullPaymentByOne": true,
+    "displayProgress": true,
+    "progressThreshold": 100,
+    "progressMilestones": [20, 40, 60, 80, 100],
+    "description": "Divide conforme % de cada subpedido. Permite um pagar tudo. Libera expedição com 100%."
+  },
+  
+  "billing": {
+    "allowGroupBilling": true,
+    "allowIndividualBilling": true,
+    "invoiceMerge": true,
+    "groupInvoiceProvider": "WalletPay",
+    "individualInvoiceProvider": "WalletPay",
+    "description": "Gera boleto/PIX único do grupo OU boletos individuais. Consolida NF."
+  },
+  
+  "validation": {
+    "checkStock": true,
+    "checkPaymentMethods": true,
+    "checkShippingAddress": true,
+    "checkCDCapacity": true,
+    "requireFullPaymentBeforeDispatch": true,
+    "description": "Validações automáticas antes de processar pedido"
+  },
+  
+  "integration": {
+    "notifyModules": ["walletPay", "marketplace", "logistics", "admin"],
+    "webhooks": {
+      "onOrderCreated": true,
+      "onPaymentReceived": true,
+      "onOrderCompleted": true,
+      "onOrderDispatched": true,
+      "onOrderDelivered": true
+    }
+  },
+  
+  "status": {
+    "draft": "Rascunho",
+    "pending_payment": "Aguardando Pagamento",
+    "partial_payment": "Pagamento Parcial",
+    "paid": "Pago",
+    "processing": "Processando",
+    "dispatched": "Enviado",
+    "in_transit": "Em Trânsito",
+    "delivered": "Entregue",
+    "cancelled": "Cancelado",
+    "refunded": "Reembolsado"
+  },
+  
+  "notifications": {
+    "onOrderCreated": {
+      "enabled": true,
+      "channels": ["email", "push"],
+      "template": "order_created"
+    },
+    "onPaymentReceived": {
+      "enabled": true,
+      "channels": ["push"],
+      "template": "payment_received"
+    },
+    "onOrderCompleted": {
+      "enabled": true,
+      "channels": ["email", "push", "whatsapp"],
+      "template": "order_completed"
+    },
+    "onOrderDispatched": {
+      "enabled": true,
+      "channels": ["email", "push", "sms"],
+      "template": "order_dispatched"
+    },
+    "onOrderDelivered": {
+      "enabled": true,
+      "channels": ["email", "push"],
+      "template": "order_delivered"
+    }
+  },
+  
+  "audit": {
+    "orderTable": "orders",
+    "orderItemsTable": "order_items",
+    "sharedOrdersTable": "shared_orders",
+    "paymentsTable": "shared_order_payments",
+    "logTable": "order_logs",
+    "retentionYears": 7
+  }
+}

@@ -1,0 +1,442 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Configuração do RS Assistant - Sistema de IA Multimodal",
+  "meta": {
+    "version": "1.0.0",
+    "updatedAt": "2025-11-07",
+    "notes": "Assistente de IA completo com OpenAI, ElevenLabs, geração de imagens e treinamento"
+  },
+  
+  "system": {
+    "name": "RS Assistant",
+    "nickname": "Pai Baluco",
+    "description": "Assistente inteligente multimodal para vendas, recrutamento, suporte e treinamento",
+    "enabled": true,
+    "version": "1.0.0",
+    "personality": {
+      "tone": "profissional, motivador e acolhedor",
+      "style": "coach e mentor",
+      "language": "pt-BR",
+      "emoji": true
+    }
+  },
+  
+  "capabilities": {
+    "chat": {
+      "enabled": true,
+      "provider": "OpenAI",
+      "model": "gpt-4-turbo-preview",
+      "temperature": 0.7,
+      "maxTokens": 2000,
+      "contextWindow": 8000,
+      "streamResponse": true
+    },
+    "voice": {
+      "enabled": true,
+      "provider": "ElevenLabs",
+      "voiceId": "ObHunter_Voice_ID",
+      "model": "eleven_multilingual_v2",
+      "stability": 0.75,
+      "similarityBoost": 0.75,
+      "style": 0.5,
+      "useSpeakerBoost": true
+    },
+    "imageGeneration": {
+      "enabled": true,
+      "provider": "OpenAI",
+      "model": "dall-e-3",
+      "quality": "hd",
+      "size": "1024x1024",
+      "style": "vivid"
+    },
+    "videoGeneration": {
+      "enabled": true,
+      "provider": "Runway",
+      "model": "gen-2",
+      "duration": 4,
+      "resolution": "1280x768"
+    },
+    "audioGeneration": {
+      "enabled": true,
+      "provider": "ElevenLabs",
+      "soundEffects": true,
+      "musicGeneration": false
+    }
+  },
+  
+  "integrations": {
+    "openai": {
+      "enabled": true,
+      "apiKey": "sk-proj-Rvl9DdYYXDIBPPQdFjKNT3BlbkFJnQdFuJGnRbGnRbGnRbGn",
+      "organization": "RS Prólipsi",
+      "models": {
+        "chat": "gpt-4-turbo-preview",
+        "embedding": "text-embedding-3-large",
+        "image": "dall-e-3",
+        "tts": "tts-1-hd",
+        "whisper": "whisper-1"
+      }
+    },
+    "elevenlabs": {
+      "enabled": true,
+      "apiKey": "sk_f8f9e0c1a2b3c4d5e6f7g8h9i0j1k2l3",
+      "voiceId": "ObHunter_Custom_Voice",
+      "model": "eleven_multilingual_v2",
+      "features": {
+        "textToSpeech": true,
+        "voiceCloning": true,
+        "soundEffects": true
+      }
+    },
+    "youtube": {
+      "enabled": true,
+      "apiKey": "AIzaSyC1234567890abcdefghijklmnopqrstuv",
+      "channelId": "UCRSProlipsiOfficial",
+      "autoSync": true,
+      "syncInterval": 3600
+    },
+    "supabase": {
+      "enabled": true,
+      "url": "https://rptkhrboejbwexseikuo.supabase.co",
+      "anonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+      "serviceKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+    }
+  },
+  
+  "roles": {
+    "vendedor": {
+      "enabled": true,
+      "priority": 1,
+      "description": "Agente de vendas inteligente",
+      "capabilities": [
+        "apresentar_produtos",
+        "calcular_valores",
+        "simular_ganhos",
+        "processar_pedidos",
+        "enviar_propostas"
+      ],
+      "prompts": {
+        "greeting": "Olá! Sou o Pai Baluco, seu assistente de vendas da RS Prólipsi! Como posso ajudar você hoje?",
+        "productPresentation": "Vou apresentar nossos produtos incríveis que vão transformar sua vida!",
+        "closeSale": "Vamos finalizar seu pedido? Estou aqui para facilitar tudo!"
+      }
+    },
+    "recrutador": {
+      "enabled": true,
+      "priority": 2,
+      "description": "Recrutador e mentor de novos consultores",
+      "capabilities": [
+        "explicar_plano",
+        "calcular_ganhos",
+        "mostrar_carreira",
+        "responder_duvidas",
+        "agendar_reunioes"
+      ],
+      "prompts": {
+        "greeting": "Bem-vindo à família RS Prólipsi! Vou te mostrar como construir seu negócio!",
+        "planExplanation": "Nosso plano de marketing é revolucionário! Deixa eu te explicar...",
+        "careerPath": "Vou te mostrar o caminho até o topo da carreira!"
+      }
+    },
+    "coach": {
+      "enabled": true,
+      "priority": 3,
+      "description": "Coach e mentor dos consultores",
+      "capabilities": [
+        "consultar_nivel",
+        "mostrar_progresso",
+        "calcular_falta",
+        "sugerir_acoes",
+        "motivar"
+      ],
+      "prompts": {
+        "greeting": "E aí, campeão! Vamos ver seu progresso hoje?",
+        "progress": "Você está arrasando! Veja onde você está:",
+        "motivation": "Continue assim! Você está cada vez mais perto do seu objetivo!"
+      }
+    },
+    "suporte": {
+      "enabled": true,
+      "priority": 4,
+      "description": "Suporte técnico e atendimento",
+      "capabilities": [
+        "responder_faq",
+        "resolver_problemas",
+        "abrir_tickets",
+        "consultar_saldo",
+        "gerar_relatorios"
+      ],
+      "prompts": {
+        "greeting": "Olá! Estou aqui para resolver qualquer dúvida ou problema!",
+        "problemSolving": "Vou te ajudar a resolver isso rapidinho!",
+        "ticketCreated": "Ticket aberto! Nossa equipe vai te retornar em breve."
+      }
+    },
+    "criador": {
+      "enabled": true,
+      "priority": 5,
+      "description": "Criador de conteúdo multimodal",
+      "capabilities": [
+        "gerar_imagens",
+        "gerar_audio",
+        "gerar_videos",
+        "criar_posts",
+        "criar_paginas"
+      ],
+      "prompts": {
+        "greeting": "Vamos criar conteúdo incrível juntos!",
+        "imageGeneration": "Vou criar uma imagem perfeita para você!",
+        "contentCreation": "Deixa comigo! Vou criar um conteúdo de impacto!"
+      }
+    }
+  },
+  
+  "knowledgeBase": {
+    "enabled": true,
+    "sources": [
+      {
+        "type": "manual",
+        "name": "Plano de Marketing",
+        "path": "rs-docs/Plano_de_Marketing_RS_Prolipsi_MMN.txt",
+        "priority": 1,
+        "autoUpdate": true
+      },
+      {
+        "type": "manual",
+        "name": "Credenciais e Configurações",
+        "path": "rs-docs/Credenciais Geral – RSPrólipsi.txt",
+        "priority": 2,
+        "autoUpdate": true
+      },
+      {
+        "type": "manual",
+        "name": "Padrões Visuais",
+        "path": "rs-docs/PRD_Tipografia_Cores_Cards_Etc.txt",
+        "priority": 3,
+        "autoUpdate": true
+      },
+      {
+        "type": "database",
+        "name": "FAQ Database",
+        "table": "knowledge_faq",
+        "autoSync": true
+      },
+      {
+        "type": "database",
+        "name": "Training Videos",
+        "table": "training_videos",
+        "autoSync": true
+      }
+    ],
+    "embedding": {
+      "enabled": true,
+      "model": "text-embedding-3-large",
+      "dimensions": 3072,
+      "chunkSize": 1000,
+      "chunkOverlap": 200
+    },
+    "vectorStore": {
+      "enabled": true,
+      "provider": "Supabase",
+      "table": "knowledge_embeddings",
+      "similarityThreshold": 0.7,
+      "maxResults": 5
+    }
+  },
+  
+  "training": {
+    "enabled": true,
+    "youtube": {
+      "enabled": true,
+      "autoImport": true,
+      "channelId": "UCRSProlipsiOfficial",
+      "playlistIds": [
+        "PLRSProlipsi_Treinamentos",
+        "PLRSProlipsi_Produtos",
+        "PLRSProlipsi_Carreira"
+      ],
+      "features": {
+        "autoTranscription": true,
+        "autoSummary": true,
+        "autoQuiz": true,
+        "autoQA": true
+      }
+    },
+    "videoProcessing": {
+      "transcription": {
+        "enabled": true,
+        "provider": "OpenAI Whisper",
+        "language": "pt-BR",
+        "format": "srt"
+      },
+      "summary": {
+        "enabled": true,
+        "provider": "OpenAI GPT-4",
+        "maxLength": 500,
+        "includeKeyPoints": true,
+        "includeTimestamps": true
+      },
+      "quiz": {
+        "enabled": true,
+        "questionsPerVideo": 5,
+        "difficulty": "medium",
+        "types": ["multiple_choice", "true_false"]
+      }
+    },
+    "completion": {
+      "trackProgress": true,
+      "requireQuiz": true,
+      "minQuizScore": 70,
+      "certificateEnabled": true
+    }
+  },
+  
+  "dataAccess": {
+    "enabled": true,
+    "permissions": {
+      "readUserData": true,
+      "readWalletData": true,
+      "readCareerData": true,
+      "readMatrixData": true,
+      "readBonusData": true,
+      "readOrdersData": true,
+      "readReportsData": true
+    },
+    "queries": {
+      "userLevel": "SELECT * FROM vw_user_career_status WHERE user_id = $1",
+      "walletBalance": "SELECT * FROM vw_wallet_summary WHERE user_id = $1",
+      "matrixPosition": "SELECT * FROM vw_matrix_position WHERE user_id = $1",
+      "bonusHistory": "SELECT * FROM bonuses WHERE user_id = $1 ORDER BY created_at DESC LIMIT 10",
+      "teamSize": "SELECT COUNT(*) FROM downlines WHERE upline_id = $1",
+      "nextLevel": "SELECT * FROM vw_next_level_requirements WHERE user_id = $1"
+    }
+  },
+  
+  "notifications": {
+    "enabled": true,
+    "channels": ["chat", "email", "push", "whatsapp"],
+    "events": {
+      "levelUp": {
+        "enabled": true,
+        "message": "🎉 Parabéns! Você subiu de nível! Agora você é {new_level}!",
+        "channels": ["chat", "email", "push"]
+      },
+      "bonusReceived": {
+        "enabled": true,
+        "message": "💰 Você recebeu um bônus de R$ {amount}! Confira sua carteira!",
+        "channels": ["chat", "push"]
+      },
+      "cycleCompleted": {
+        "enabled": true,
+        "message": "🔄 Ciclo completado! Você ganhou R$ {amount}!",
+        "channels": ["chat", "email", "push"]
+      },
+      "newTeamMember": {
+        "enabled": true,
+        "message": "👥 Novo membro na sua equipe: {member_name}!",
+        "channels": ["chat", "push"]
+      }
+    }
+  },
+  
+  "contentGeneration": {
+    "images": {
+      "enabled": true,
+      "useCases": [
+        "product_showcase",
+        "social_media_posts",
+        "banners",
+        "profile_pictures",
+        "certificates"
+      ],
+      "styles": [
+        "professional",
+        "modern",
+        "vibrant",
+        "minimalist"
+      ],
+      "brandColors": ["#FFD700", "#000000", "#FFFFFF"]
+    },
+    "audio": {
+      "enabled": true,
+      "useCases": [
+        "welcome_messages",
+        "congratulations",
+        "notifications",
+        "training_narration"
+      ],
+      "voice": "ObHunter_Custom_Voice",
+      "language": "pt-BR"
+    },
+    "text": {
+      "enabled": true,
+      "useCases": [
+        "product_descriptions",
+        "social_media_captions",
+        "email_templates",
+        "sales_scripts",
+        "training_materials"
+      ],
+      "tone": "motivacional e profissional"
+    }
+  },
+  
+  "analytics": {
+    "enabled": true,
+    "track": {
+      "conversations": true,
+      "userQuestions": true,
+      "responseTime": true,
+      "satisfaction": true,
+      "conversions": true
+    },
+    "metrics": {
+      "avgResponseTime": "target: 2s",
+      "satisfactionScore": "target: 4.5/5",
+      "resolutionRate": "target: 90%",
+      "conversionRate": "target: 15%"
+    }
+  },
+  
+  "limits": {
+    "messagesPerUser": {
+      "free": 50,
+      "consultant": 200,
+      "premium": -1
+    },
+    "imageGenerations": {
+      "free": 5,
+      "consultant": 20,
+      "premium": 100
+    },
+    "audioGenerations": {
+      "free": 10,
+      "consultant": 50,
+      "premium": 200
+    },
+    "rateLimiting": {
+      "requestsPerMinute": 60,
+      "requestsPerHour": 1000
+    }
+  },
+  
+  "fallback": {
+    "enabled": true,
+    "humanHandoff": {
+      "enabled": true,
+      "triggers": [
+        "user_frustrated",
+        "complex_issue",
+        "payment_problem",
+        "explicit_request"
+      ],
+      "notifyTeam": true,
+      "maxWaitTime": 300
+    },
+    "defaultResponses": {
+      "notUnderstood": "Desculpe, não entendi bem. Pode reformular sua pergunta?",
+      "error": "Ops! Tive um problema técnico. Pode tentar novamente?",
+      "offline": "Estou temporariamente indisponível. Tente novamente em instantes!"
+    }
+  }
+}
