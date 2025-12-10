@@ -1,0 +1,177 @@
+version: "3.9"
+
+services:
+  rs-api:
+    container_name: rs-api
+    build:
+      context: .
+      dockerfile: apps/rs-api/Dockerfile
+    env_file:
+      - .env
+    environment:
+      - PORT=4000
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+    ports:
+      - "4000:4000"
+    networks:
+      - rs-network
+
+  rs-admin:
+    container_name: rs-admin
+    build:
+      context: ./apps/rs-admin
+      dockerfile: Dockerfile
+    environment:
+      - PORT=3001
+      - VITE_API_URL=${VITE_API_URL:-http://localhost:4000}
+    ports:
+      - "3001:3001"
+    depends_on:
+      - rs-api
+    networks:
+      - rs-network
+
+  rs-consultor:
+    container_name: rs-consultor
+    build:
+      context: ./apps/rs-consultor
+      dockerfile: Dockerfile
+    environment:
+      - PORT=3002
+      - VITE_API_URL=${VITE_API_URL:-http://localhost:4000}
+    ports:
+      - "3002:3002"
+    depends_on:
+      - rs-api
+    networks:
+      - rs-network
+
+  rs-marketplace:
+    container_name: rs-marketplace
+    build:
+      context: ./apps/rs-marketplace
+      dockerfile: Dockerfile
+    environment:
+      - PORT=3003
+      - VITE_API_URL=${VITE_API_URL:-http://localhost:4000}
+    ports:
+      - "3003:3003"
+    depends_on:
+      - rs-api
+    networks:
+      - rs-network
+
+  rs-site:
+    container_name: rs-site
+    build:
+      context: ./apps/rs-site
+      dockerfile: Dockerfile
+    environment:
+      - PORT=3004
+      - VITE_API_URL=${VITE_API_URL:-http://localhost:4000}
+    ports:
+      - "3004:3004"
+    depends_on:
+      - rs-api
+    networks:
+      - rs-network
+
+  rs-walletpay:
+    container_name: rs-walletpay
+    build:
+      context: ./apps/rs-walletpay
+      dockerfile: Dockerfile
+    environment:
+      - PORT=3005
+      - VITE_API_URL=${VITE_API_URL:-http://localhost:4000}
+    ports:
+      - "3005:3005"
+    depends_on:
+      - rs-api
+    networks:
+      - rs-network
+
+  rs-studio:
+    container_name: rs-studio
+    build:
+      context: ./apps/rs-studio
+      dockerfile: Dockerfile
+    environment:
+      - PORT=3006
+    ports:
+      - "3006:3006"
+    networks:
+      - rs-network
+
+  rs-logistica:
+    container_name: rs-logistica
+    build:
+      context: ./apps/rs-logistica
+      dockerfile: Dockerfile
+    environment:
+      - PORT=3007
+      - RS_API_URL=${RS_API_URL:-http://rs-api:4000}
+    ports:
+      - "3007:3007"
+    depends_on:
+      - rs-api
+    networks:
+      - rs-network
+
+  rs-config:
+    container_name: rs-config
+    build:
+      context: ./apps/rs-config
+      dockerfile: Dockerfile
+    environment:
+      - PORT=3008
+    ports:
+      - "3008:3008"
+    networks:
+      - rs-network
+
+  rs-core:
+    container_name: rs-core
+    build:
+      context: .
+      dockerfile: apps/rs-core/Dockerfile
+    environment:
+      - PORT=3009
+      - RS_API_URL=${RS_API_URL:-http://rs-api:4000}
+    ports:
+      - "3009:4001"
+    depends_on:
+      - rs-api
+    networks:
+      - rs-network
+
+  rs-docs:
+    container_name: rs-docs
+    build:
+      context: ./apps/rs-docs
+      dockerfile: Dockerfile
+    environment:
+      - PORT=3010
+    ports:
+      - "3010:3010"
+    networks:
+      - rs-network
+
+
+  rs-template-game:
+    container_name: rs-template-game
+    build:
+      context: ./apps/rs-template-game
+      dockerfile: Dockerfile
+    environment:
+      - PORT=3013
+    ports:
+      - "3013:3013"
+    networks:
+      - rs-network
+
+networks:
+  rs-network:
+    driver: bridge

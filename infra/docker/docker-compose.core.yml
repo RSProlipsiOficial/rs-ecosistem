@@ -166,7 +166,8 @@ services:
   rs-api:
     container_name: rs-api
     build:
-      context: ../../apps/rs-api
+      context: ../..
+      dockerfile: apps/rs-api/Dockerfile
     env_file:
       - .env.core
       - .env.tools
@@ -180,7 +181,8 @@ services:
   rs-core:
     container_name: rs-core
     build:
-      context: ../../apps/rs-core
+      context: ../..
+      dockerfile: apps/rs-core/Dockerfile
     env_file:
       - .env.core
       - ../../apps/rs-core/.env

@@ -1,0 +1,2676 @@
+[2025-12-09T13:22:17.440Z] ============================================================
+[2025-12-09T13:22:17.482Z]   CADASTRO EM MASSA - REDE RS PRÓLIPSI
+[2025-12-09T13:22:17.485Z] ============================================================
+[2025-12-09T13:22:17.488Z] 
+[2025-12-09T13:22:17.490Z] ⚠️  MODO DE TESTE: Executando sem autenticação real
+[2025-12-09T13:22:17.492Z] 
+[2025-12-09T13:22:17.495Z] 📖 Lendo planilha Excel...
+[2025-12-09T13:22:17.618Z] 📊 Total de linhas encontradas: 759
+[2025-12-09T13:22:17.621Z] ✅ Total de consultores processados: 379
+[2025-12-09T13:22:17.623Z] 
+🚀 Iniciando cadastro sequencial...
+
+[2025-12-09T13:22:17.627Z] 
+[1/379] Processando: RS Prólipsi (ID: 7838667)
+[2025-12-09T13:22:17.630Z]    Username: user7838667
+[2025-12-09T13:22:17.636Z]    Indicador: admin
+[2025-12-09T13:22:17.638Z]    Senha: RSnbERZW
+[2025-12-09T13:22:17.672Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:17.675Z]    ❌ Erro: undefined
+[2025-12-09T13:22:17.891Z] 
+[2/379] Processando: Emanuel Mendes Claro (ID: 9772169)
+[2025-12-09T13:22:17.914Z]    Username: emclaro
+[2025-12-09T13:22:17.920Z]    Indicador: rsprolipsi
+[2025-12-09T13:22:17.923Z]    Senha: RSD3HCwv
+[2025-12-09T13:22:17.930Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:17.932Z]    ❌ Erro: undefined
+[2025-12-09T13:22:18.139Z] 
+[3/379] Processando: maxwel santos (ID: 5519519)
+[2025-12-09T13:22:18.171Z]    Username: maxwel
+[2025-12-09T13:22:18.176Z]    Indicador: emclaro
+[2025-12-09T13:22:18.179Z]    Senha: RSZuVWAx
+[2025-12-09T13:22:18.187Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:18.190Z]    ❌ Erro: undefined
+[2025-12-09T13:22:18.407Z] 
+[4/379] Processando: Joana Alcina Rodrigues Castro Mendes Claro (ID: 5485192)
+[2025-12-09T13:22:18.425Z]    Username: joanamendes
+[2025-12-09T13:22:18.427Z]    Indicador: emclaro
+[2025-12-09T13:22:18.429Z]    Senha: RSP6MMUK
+[2025-12-09T13:22:18.435Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:18.439Z]    ❌ Erro: undefined
+[2025-12-09T13:22:18.649Z] 
+[5/379] Processando: joão josé oliveira miranda (ID: 4328739)
+[2025-12-09T13:22:18.681Z]    Username: miranda
+[2025-12-09T13:22:18.683Z]    Indicador: maxwel
+[2025-12-09T13:22:18.686Z]    Senha: RSW8UtzF
+[2025-12-09T13:22:18.691Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:18.693Z]    ❌ Erro: undefined
+[2025-12-09T13:22:18.931Z] 
+[6/379] Processando: Michael De Araújo Medeiros (ID: 193789)
+[2025-12-09T13:22:18.981Z]    Username: michael
+[2025-12-09T13:22:19.021Z]    Indicador: maxwel
+[2025-12-09T13:22:19.023Z]    Senha: RSUGvvUr
+[2025-12-09T13:22:19.029Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:19.031Z]    ❌ Erro: undefined
+[2025-12-09T13:22:19.243Z] 
+[7/379] Processando: José Luiz de Souza (ID: 4656279)
+[2025-12-09T13:22:19.270Z]    Username: jose
+[2025-12-09T13:22:19.274Z]    Indicador: miranda
+[2025-12-09T13:22:19.278Z]    Senha: RS8CHh9W
+[2025-12-09T13:22:19.284Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:19.288Z]    ❌ Erro: undefined
+[2025-12-09T13:22:19.494Z] 
+[8/379] Processando: celso lopes da rosa (ID: 6819895)
+[2025-12-09T13:22:19.525Z]    Username: celso
+[2025-12-09T13:22:19.527Z]    Indicador: miranda
+[2025-12-09T13:22:19.530Z]    Senha: RSBuEqbd
+[2025-12-09T13:22:19.535Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:19.540Z]    ❌ Erro: undefined
+[2025-12-09T13:22:19.759Z] 
+[9/379] Processando: Alaor Garcia da Silva (ID: 1889291)
+[2025-12-09T13:22:19.781Z]    Username: alaor
+[2025-12-09T13:22:19.783Z]    Indicador: celso
+[2025-12-09T13:22:19.787Z]    Senha: RSgLKfcp
+[2025-12-09T13:22:19.792Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:19.795Z]    ❌ Erro: undefined
+[2025-12-09T13:22:20.008Z] 
+[10/379] Processando: fabíola francisco luiz (ID: 9281850)
+[2025-12-09T13:22:20.037Z]    Username: fabiola
+[2025-12-09T13:22:20.041Z]    Indicador: jose
+[2025-12-09T13:22:20.043Z]    Senha: RSe9bBns
+[2025-12-09T13:22:20.048Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:20.051Z]    ❌ Erro: undefined
+[2025-12-09T13:22:20.256Z] 
+[11/379] Processando: laudenice da silva (ID: 8277490)
+[2025-12-09T13:22:20.291Z]    Username: nice
+[2025-12-09T13:22:20.294Z]    Indicador: fabiola
+[2025-12-09T13:22:20.297Z]    Senha: RSLF2uwJ
+[2025-12-09T13:22:20.317Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:20.335Z]    ❌ Erro: undefined
+[2025-12-09T13:22:20.601Z] 
+[12/379] Processando: mauricio pereira de carvalho (ID: 6264927)
+[2025-12-09T13:22:20.636Z]    Username: mauricio
+[2025-12-09T13:22:20.640Z]    Indicador: celso
+[2025-12-09T13:22:20.643Z]    Senha: RSwNLRNA
+[2025-12-09T13:22:20.646Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:20.649Z]    ❌ Erro: undefined
+[2025-12-09T13:22:20.882Z] 
+[13/379] Processando: Fabiano Moreira (ID: 6269938)
+[2025-12-09T13:22:20.900Z]    Username: fabianomoreira
+[2025-12-09T13:22:20.902Z]    Indicador: alaor
+[2025-12-09T13:22:20.906Z]    Senha: RSs7S7Ud
+[2025-12-09T13:22:20.912Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:20.916Z]    ❌ Erro: undefined
+[2025-12-09T13:22:21.129Z] 
+[14/379] Processando: Oseias Silva (ID: 4812810)
+[2025-12-09T13:22:21.147Z]    Username: oseiasrs
+[2025-12-09T13:22:21.150Z]    Indicador: rsprolipsi
+[2025-12-09T13:22:21.153Z]    Senha: RStGRfGG
+[2025-12-09T13:22:21.158Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:21.161Z]    ❌ Erro: undefined
+[2025-12-09T13:22:21.378Z] 
+[15/379] Processando: jose costa dos santos (ID: 1194111)
+[2025-12-09T13:22:21.392Z]    Username: zequinha
+[2025-12-09T13:22:21.394Z]    Indicador: rsprolipsi
+[2025-12-09T13:22:21.397Z]    Senha: RSryGnGL
+[2025-12-09T13:22:21.401Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:21.403Z]    ❌ Erro: undefined
+[2025-12-09T13:22:21.611Z] 
+[16/379] Processando: zilda pereia dos santos (ID: 1319340)
+[2025-12-09T13:22:21.636Z]    Username: zilda
+[2025-12-09T13:22:21.640Z]    Indicador: zequinha
+[2025-12-09T13:22:21.643Z]    Senha: RSJyM97j
+[2025-12-09T13:22:21.648Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:21.651Z]    ❌ Erro: undefined
+[2025-12-09T13:22:21.859Z] 
+[17/379] Processando: leonina silva dias (ID: 4027616)
+[2025-12-09T13:22:21.897Z]    Username: leonina
+[2025-12-09T13:22:21.901Z]    Indicador: zilda
+[2025-12-09T13:22:21.911Z]    Senha: RSEcjMkq
+[2025-12-09T13:22:21.917Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:21.920Z]    ❌ Erro: undefined
+[2025-12-09T13:22:22.140Z] 
+[18/379] Processando: joziana pereira dos santos (ID: 1925021)
+[2025-12-09T13:22:22.159Z]    Username: jozi
+[2025-12-09T13:22:22.161Z]    Indicador: zilda
+[2025-12-09T13:22:22.164Z]    Senha: RS2HZXCX
+[2025-12-09T13:22:22.168Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:22.171Z]    ❌ Erro: undefined
+[2025-12-09T13:22:22.386Z] 
+[19/379] Processando: silso pereira da silva (ID: 2259260)
+[2025-12-09T13:22:22.414Z]    Username: silso
+[2025-12-09T13:22:22.417Z]    Indicador: zequinha
+[2025-12-09T13:22:22.419Z]    Senha: RSUsU92c
+[2025-12-09T13:22:22.428Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:22.431Z]    ❌ Erro: undefined
+[2025-12-09T13:22:22.646Z] 
+[20/379] Processando: cleuci costa do santos (ID: 7706031)
+[2025-12-09T13:22:22.651Z]    Username: cleuci
+[2025-12-09T13:22:22.653Z]    Indicador: jozi
+[2025-12-09T13:22:22.658Z]    Senha: RStsDwKF
+[2025-12-09T13:22:22.666Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:22.668Z]    ❌ Erro: undefined
+[2025-12-09T13:22:22.880Z] 
+[21/379] Processando: joci costa dos santos (ID: 853700)
+[2025-12-09T13:22:22.903Z]    Username: joci
+[2025-12-09T13:22:22.905Z]    Indicador: cleuci
+[2025-12-09T13:22:22.908Z]    Senha: RStXLrMX
+[2025-12-09T13:22:22.915Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:22.917Z]    ❌ Erro: undefined
+[2025-12-09T13:22:23.128Z] 
+[22/379] Processando: davi gomes (ID: 1812304)
+[2025-12-09T13:22:23.158Z]    Username: davi
+[2025-12-09T13:22:23.162Z]    Indicador: silso
+[2025-12-09T13:22:23.164Z]    Senha: RSzNQsuG
+[2025-12-09T13:22:23.169Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:23.172Z]    ❌ Erro: undefined
+[2025-12-09T13:22:23.378Z] 
+[23/379] Processando: ilson daniel de oliveira (ID: 336450)
+[2025-12-09T13:22:23.414Z]    Username: ilson
+[2025-12-09T13:22:23.416Z]    Indicador: cleuci
+[2025-12-09T13:22:23.418Z]    Senha: RSzy78f6
+[2025-12-09T13:22:23.422Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:23.427Z]    ❌ Erro: undefined
+[2025-12-09T13:22:23.635Z] 
+[24/379] Processando: pedro lourival pires de oliveira (ID: 7886870)
+[2025-12-09T13:22:23.659Z]    Username: pedro
+[2025-12-09T13:22:23.662Z]    Indicador: davi
+[2025-12-09T13:22:23.665Z]    Senha: RSDNxdZ6
+[2025-12-09T13:22:23.670Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:23.672Z]    ❌ Erro: undefined
+[2025-12-09T13:22:23.882Z] 
+[25/379] Processando: paulo de quadros (ID: 6419540)
+[2025-12-09T13:22:23.903Z]    Username: paulo
+[2025-12-09T13:22:23.905Z]    Indicador: ilson
+[2025-12-09T13:22:23.907Z]    Senha: RS7XeQfG
+[2025-12-09T13:22:23.913Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:23.917Z]    ❌ Erro: undefined
+[2025-12-09T13:22:24.131Z] 
+[26/379] Processando: Olinda pereira dos santos (ID: 1928261)
+[2025-12-09T13:22:24.159Z]    Username: olinda
+[2025-12-09T13:22:24.163Z]    Indicador: zilda
+[2025-12-09T13:22:24.166Z]    Senha: RSRGwFRr
+[2025-12-09T13:22:24.172Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:24.184Z]    ❌ Erro: undefined
+[2025-12-09T13:22:24.394Z] 
+[27/379] Processando: jhonny vasconcelos (ID: 6873657)
+[2025-12-09T13:22:24.414Z]    Username: jhonny
+[2025-12-09T13:22:24.417Z]    Indicador: maxwel
+[2025-12-09T13:22:24.420Z]    Senha: RS5BFyvu
+[2025-12-09T13:22:24.435Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:24.439Z]    ❌ Erro: undefined
+[2025-12-09T13:22:24.650Z] 
+[28/379] Processando: Matheus dorneles medeiros (ID: 9346820)
+[2025-12-09T13:22:24.703Z]    Username: matheus
+[2025-12-09T13:22:24.705Z]    Indicador: oseiasrs
+[2025-12-09T13:22:24.707Z]    Senha: RSkef8Jz
+[2025-12-09T13:22:24.715Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:24.718Z]    ❌ Erro: undefined
+[2025-12-09T13:22:24.934Z] 
+[29/379] Processando: Thais Alencar Moreira Medeiros (ID: 7720293)
+[2025-12-09T13:22:24.947Z]    Username: thais
+[2025-12-09T13:22:24.950Z]    Indicador: michael
+[2025-12-09T13:22:24.952Z]    Senha: RSRfnkkG
+[2025-12-09T13:22:24.956Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:24.958Z]    ❌ Erro: undefined
+[2025-12-09T13:22:25.171Z] 
+[30/379] Processando: Laiany Manuela Oliveira de Siqueira (ID: 6684648)
+[2025-12-09T13:22:25.192Z]    Username: laianysiqueira
+[2025-12-09T13:22:25.196Z]    Indicador: jhonny
+[2025-12-09T13:22:25.200Z]    Senha: RSjysgJU
+[2025-12-09T13:22:25.207Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:25.210Z]    ❌ Erro: undefined
+[2025-12-09T13:22:25.421Z] 
+[31/379] Processando: lucimara aparecida dorneles christen (ID: 9107999)
+[2025-12-09T13:22:25.522Z]    Username: lucimara
+[2025-12-09T13:22:25.578Z]    Indicador: matheus
+[2025-12-09T13:22:25.637Z]    Senha: RSFeRMtT
+[2025-12-09T13:22:25.642Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:25.646Z]    ❌ Erro: undefined
+[2025-12-09T13:22:25.863Z] 
+[32/379] Processando: Lucas dorneles medeiros (ID: 2687353)
+[2025-12-09T13:22:25.881Z]    Username: lucas
+[2025-12-09T13:22:25.883Z]    Indicador: matheus
+[2025-12-09T13:22:25.885Z]    Senha: RSfF5FEN
+[2025-12-09T13:22:25.889Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:25.891Z]    ❌ Erro: undefined
+[2025-12-09T13:22:26.099Z] 
+[33/379] Processando: odete aparecida dorneles (ID: 2757118)
+[2025-12-09T13:22:26.125Z]    Username: odete
+[2025-12-09T13:22:26.128Z]    Indicador: lucas
+[2025-12-09T13:22:26.130Z]    Senha: RSsn6ueW
+[2025-12-09T13:22:26.136Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:26.139Z]    ❌ Erro: undefined
+[2025-12-09T13:22:26.374Z] 
+[34/379] Processando: sidnalva maria bueno camargo (ID: 948317)
+[2025-12-09T13:22:26.389Z]    Username: sidnalva
+[2025-12-09T13:22:26.392Z]    Indicador: rsprolipsi
+[2025-12-09T13:22:26.396Z]    Senha: RSGdSUPa
+[2025-12-09T13:22:26.402Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:26.404Z]    ❌ Erro: undefined
+[2025-12-09T13:22:26.617Z] 
+[35/379] Processando: maria conceição de souza marques (ID: 3234332)
+[2025-12-09T13:22:26.637Z]    Username: maria
+[2025-12-09T13:22:26.639Z]    Indicador: sidnalva
+[2025-12-09T13:22:26.642Z]    Senha: RSBrvLPs
+[2025-12-09T13:22:26.647Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:26.649Z]    ❌ Erro: undefined
+[2025-12-09T13:22:26.865Z] 
+[36/379] Processando: adilson fernandes borges (ID: 7861792)
+[2025-12-09T13:22:26.892Z]    Username: adilson
+[2025-12-09T13:22:26.896Z]    Indicador: miranda
+[2025-12-09T13:22:26.898Z]    Senha: RSCv6xs5
+[2025-12-09T13:22:26.903Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:26.906Z]    ❌ Erro: undefined
+[2025-12-09T13:22:27.114Z] 
+[37/379] Processando: Jailton Bispo (ID: 6546972)
+[2025-12-09T13:22:27.147Z]    Username: jailton
+[2025-12-09T13:22:27.150Z]    Indicador: michael
+[2025-12-09T13:22:27.153Z]    Senha: RSEQDhXE
+[2025-12-09T13:22:27.158Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:27.160Z]    ❌ Erro: undefined
+[2025-12-09T13:22:27.364Z] 
+[38/379] Processando: Maria Julia (ID: 1506629)
+[2025-12-09T13:22:27.403Z]    Username: julia
+[2025-12-09T13:22:27.408Z]    Indicador: fabiola
+[2025-12-09T13:22:27.410Z]    Senha: RSCBzRVf
+[2025-12-09T13:22:27.417Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:27.420Z]    ❌ Erro: undefined
+[2025-12-09T13:22:27.625Z] 
+[39/379] Processando: Luciano Cleiton Miguel (ID: 6921285)
+[2025-12-09T13:22:27.628Z]    Username: maxbrasil
+[2025-12-09T13:22:27.630Z]    Indicador: emclaro
+[2025-12-09T13:22:27.633Z]    Senha: RSkxSYAy
+[2025-12-09T13:22:27.637Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:27.639Z]    ❌ Erro: undefined
+[2025-12-09T13:22:27.844Z] 
+[40/379] Processando: Ewerton camargo simer (ID: 2540577)
+[2025-12-09T13:22:27.881Z]    Username: ewerton
+[2025-12-09T13:22:27.884Z]    Indicador: miranda
+[2025-12-09T13:22:27.887Z]    Senha: RSbcAhwB
+[2025-12-09T13:22:27.891Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:27.893Z]    ❌ Erro: undefined
+[2025-12-09T13:22:28.109Z] 
+[41/379] Processando: Maria Machado (ID: 5291669)
+[2025-12-09T13:22:28.137Z]    Username: marialoira
+[2025-12-09T13:22:28.140Z]    Indicador: fabiola
+[2025-12-09T13:22:28.143Z]    Senha: RSAcs8tH
+[2025-12-09T13:22:28.150Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:28.152Z]    ❌ Erro: undefined
+[2025-12-09T13:22:28.358Z] 
+[42/379] Processando: Eunilde Penteado (ID: 7918637)
+[2025-12-09T13:22:28.392Z]    Username: eunilde
+[2025-12-09T13:22:28.394Z]    Indicador: fabiola
+[2025-12-09T13:22:28.398Z]    Senha: RST8wE2t
+[2025-12-09T13:22:28.402Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:28.408Z]    ❌ Erro: undefined
+[2025-12-09T13:22:28.623Z] 
+[43/379] Processando: Regina Paula (ID: 8321472)
+[2025-12-09T13:22:28.648Z]    Username: reginapaula
+[2025-12-09T13:22:28.651Z]    Indicador: fabiola
+[2025-12-09T13:22:28.654Z]    Senha: RSqeFMYf
+[2025-12-09T13:22:28.659Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:28.662Z]    ❌ Erro: undefined
+[2025-12-09T13:22:28.895Z] 
+[44/379] Processando: Alex Lourenco (ID: 6420730)
+[2025-12-09T13:22:29.003Z]    Username: leaoalex1
+[2025-12-09T13:22:29.026Z]    Indicador: maxwel
+[2025-12-09T13:22:29.127Z]    Senha: RSMmdZWE
+[2025-12-09T13:22:29.279Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:29.378Z]    ❌ Erro: undefined
+[2025-12-09T13:22:29.606Z] 
+[45/379] Processando: antonio martins da costa (ID: 9044685)
+[2025-12-09T13:22:29.692Z]    Username: antonio
+[2025-12-09T13:22:29.704Z]    Indicador: emclaro
+[2025-12-09T13:22:29.742Z]    Senha: RSLSqk42
+[2025-12-09T13:22:29.747Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:29.833Z]    ❌ Erro: undefined
+[2025-12-09T13:22:30.077Z] 
+[46/379] Processando: charles batista dos santos (ID: 2539833)
+[2025-12-09T13:22:30.173Z]    Username: charles
+[2025-12-09T13:22:30.245Z]    Indicador: ewerton
+[2025-12-09T13:22:30.257Z]    Senha: RSTPtx9F
+[2025-12-09T13:22:30.361Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:30.622Z]    ❌ Erro: undefined
+[2025-12-09T13:22:30.930Z] 
+[47/379] Processando: sônia de lima barbosa (ID: 4935966)
+[2025-12-09T13:22:30.976Z]    Username: sonia
+[2025-12-09T13:22:30.980Z]    Indicador: charles
+[2025-12-09T13:22:30.990Z]    Senha: RSMvkqjX
+[2025-12-09T13:22:30.998Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:31.016Z]    ❌ Erro: undefined
+[2025-12-09T13:22:31.274Z] 
+[48/379] Processando: Jorge pereira dos santos (ID: 5523698)
+[2025-12-09T13:22:31.376Z]    Username: jorge
+[2025-12-09T13:22:31.443Z]    Indicador: jose
+[2025-12-09T13:22:31.509Z]    Senha: RSQBWQWj
+[2025-12-09T13:22:31.582Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:31.676Z]    ❌ Erro: undefined
+[2025-12-09T13:22:31.938Z] 
+[49/379] Processando: Jose Maria Figueiredo dos Santos (ID: 9411059)
+[2025-12-09T13:22:31.992Z]    Username: josesantos
+[2025-12-09T13:22:32.004Z]    Indicador: jorge
+[2025-12-09T13:22:32.024Z]    Senha: RSXCfq9u
+[2025-12-09T13:22:32.044Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:32.050Z]    ❌ Erro: undefined
+[2025-12-09T13:22:32.289Z] 
+[50/379] Processando: edson padilha miranda (ID: 9350468)
+[2025-12-09T13:22:32.349Z]    Username: edson
+[2025-12-09T13:22:32.364Z]    Indicador: miranda
+[2025-12-09T13:22:32.374Z]    Senha: RSBpESfu
+[2025-12-09T13:22:32.383Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:32.494Z]    ❌ Erro: undefined
+[2025-12-09T13:22:32.726Z] 
+[51/379] Processando: washington padilha miranda (ID: 3606617)
+[2025-12-09T13:22:32.765Z]    Username: washington
+[2025-12-09T13:22:32.784Z]    Indicador: edson
+[2025-12-09T13:22:32.857Z]    Senha: RSFxvH7j
+[2025-12-09T13:22:32.875Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:32.890Z]    ❌ Erro: undefined
+[2025-12-09T13:22:33.127Z] 
+[52/379] Processando: ingrid padilha miranda (ID: 4872431)
+[2025-12-09T13:22:33.149Z]    Username: ingrid
+[2025-12-09T13:22:33.168Z]    Indicador: edson
+[2025-12-09T13:22:33.181Z]    Senha: RSKpVwUx
+[2025-12-09T13:22:33.208Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:33.238Z]    ❌ Erro: undefined
+[2025-12-09T13:22:33.512Z] 
+[53/379] Processando: jurandir padilha miranda (ID: 7410743)
+[2025-12-09T13:22:33.609Z]    Username: jurandir
+[2025-12-09T13:22:33.650Z]    Indicador: miranda
+[2025-12-09T13:22:33.711Z]    Senha: RSGUHB7Q
+[2025-12-09T13:22:33.724Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:33.761Z]    ❌ Erro: undefined
+[2025-12-09T13:22:34.194Z] 
+[54/379] Processando: wellington padilha miranda (ID: 3203045)
+[2025-12-09T13:22:34.215Z]    Username: wellington
+[2025-12-09T13:22:34.265Z]    Indicador: jurandir
+[2025-12-09T13:22:34.359Z]    Senha: RSVay4dc
+[2025-12-09T13:22:34.368Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:34.389Z]    ❌ Erro: undefined
+[2025-12-09T13:22:34.677Z] 
+[55/379] Processando: francisco josé oliveira miranda (ID: 6333411)
+[2025-12-09T13:22:34.702Z]    Username: francisco
+[2025-12-09T13:22:34.722Z]    Indicador: jurandir
+[2025-12-09T13:22:34.735Z]    Senha: RSZurzav
+[2025-12-09T13:22:34.891Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:34.987Z]    ❌ Erro: undefined
+[2025-12-09T13:22:35.291Z] 
+[56/379] Processando: miguel josé oliveira miranda (ID: 8205825)
+[2025-12-09T13:22:35.336Z]    Username: miguel
+[2025-12-09T13:22:35.392Z]    Indicador: ingrid
+[2025-12-09T13:22:35.548Z]    Senha: RSLaaDj2
+[2025-12-09T13:22:35.576Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:35.664Z]    ❌ Erro: undefined
+[2025-12-09T13:22:35.962Z] 
+[57/379] Processando: zilma dos santos (ID: 64104)
+[2025-12-09T13:22:36.032Z]    Username: zilma
+[2025-12-09T13:22:36.062Z]    Indicador: ingrid
+[2025-12-09T13:22:36.246Z]    Senha: RS7r9vpM
+[2025-12-09T13:22:36.280Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:36.324Z]    ❌ Erro: undefined
+[2025-12-09T13:22:36.718Z] 
+[58/379] Processando: Leticia De Almeida silva (ID: 1133686)
+[2025-12-09T13:22:36.762Z]    Username: letia
+[2025-12-09T13:22:36.818Z]    Indicador: jhonny
+[2025-12-09T13:22:36.850Z]    Senha: RS83yr5L
+[2025-12-09T13:22:36.987Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:36.998Z]    ❌ Erro: undefined
+[2025-12-09T13:22:37.297Z] 
+[59/379] Processando: Mickaela Galhardohormam (ID: 8964699)
+[2025-12-09T13:22:37.472Z]    Username: mickaela
+[2025-12-09T13:22:37.736Z]    Indicador: laianysiqueira
+[2025-12-09T13:22:37.769Z]    Senha: RSFgLdg9
+[2025-12-09T13:22:37.836Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:37.897Z]    ❌ Erro: undefined
+[2025-12-09T13:22:38.140Z] 
+[60/379] Processando: Eliene costa da Silva costa da Silva (ID: 2061844)
+[2025-12-09T13:22:38.246Z]    Username: eliene
+[2025-12-09T13:22:38.287Z]    Indicador: sidnalva
+[2025-12-09T13:22:38.486Z]    Senha: RSehbLS6
+[2025-12-09T13:22:38.505Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:38.599Z]    ❌ Erro: undefined
+[2025-12-09T13:22:38.921Z] 
+[61/379] Processando: luiz carlos ribeiro dos santos (ID: 2632006)
+[2025-12-09T13:22:39.082Z]    Username: luiz
+[2025-12-09T13:22:39.272Z]    Indicador: mauricio
+[2025-12-09T13:22:39.347Z]    Senha: RSK6aKnw
+[2025-12-09T13:22:39.375Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:39.384Z]    ❌ Erro: undefined
+[2025-12-09T13:22:39.614Z] 
+[62/379] Processando: carmiele pitombeira lima ferreira (ID: 918012)
+[2025-12-09T13:22:39.741Z]    Username: carmiele
+[2025-12-09T13:22:39.795Z]    Indicador: eliene
+[2025-12-09T13:22:39.868Z]    Senha: RSx4wPNs
+[2025-12-09T13:22:40.057Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:40.100Z]    ❌ Erro: undefined
+[2025-12-09T13:22:40.364Z] 
+[63/379] Processando: aparecido inocencio da silva (ID: 9129517)
+[2025-12-09T13:22:40.519Z]    Username: aparecido
+[2025-12-09T13:22:40.540Z]    Indicador: carmiele
+[2025-12-09T13:22:40.557Z]    Senha: RSFS4QLM
+[2025-12-09T13:22:40.697Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:40.835Z]    ❌ Erro: undefined
+[2025-12-09T13:22:41.074Z] 
+[64/379] Processando: jose alceu (ID: 4059576)
+[2025-12-09T13:22:41.115Z]    Username: josealceu
+[2025-12-09T13:22:41.124Z]    Indicador: oseiasrs
+[2025-12-09T13:22:41.255Z]    Senha: RSghRXv5
+[2025-12-09T13:22:41.285Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:41.334Z]    ❌ Erro: undefined
+[2025-12-09T13:22:41.571Z] 
+[65/379] Processando: hedi wilson claro (ID: 8433321)
+[2025-12-09T13:22:41.651Z]    Username: hedi
+[2025-12-09T13:22:41.665Z]    Indicador: charles
+[2025-12-09T13:22:41.768Z]    Senha: RSUv5UV2
+[2025-12-09T13:22:41.789Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:41.855Z]    ❌ Erro: undefined
+[2025-12-09T13:22:42.207Z] 
+[66/379] Processando: maria helena bernardo bandeira (ID: 2175053)
+[2025-12-09T13:22:42.438Z]    Username: helena
+[2025-12-09T13:22:42.568Z]    Indicador: hedi
+[2025-12-09T13:22:42.658Z]    Senha: RSAjMhFx
+[2025-12-09T13:22:42.751Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:42.803Z]    ❌ Erro: undefined
+[2025-12-09T13:22:43.139Z] 
+[67/379] Processando: fernanda pereira dos santos (ID: 2864629)
+[2025-12-09T13:22:43.217Z]    Username: fernanda
+[2025-12-09T13:22:43.284Z]    Indicador: ewerton
+[2025-12-09T13:22:43.404Z]    Senha: RSyNGmsM
+[2025-12-09T13:22:43.624Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:43.703Z]    ❌ Erro: undefined
+[2025-12-09T13:22:44.006Z] 
+[68/379] Processando: dineuza josé ferreira pinto (ID: 3203729)
+[2025-12-09T13:22:44.071Z]    Username: dineuza
+[2025-12-09T13:22:44.269Z]    Indicador: jailton
+[2025-12-09T13:22:44.281Z]    Senha: RSpjsaLM
+[2025-12-09T13:22:44.311Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:47.516Z]    ❌ Erro: undefined
+[2025-12-09T13:22:47.766Z] 
+[69/379] Processando: liliane luciano algostinho (ID: 2999668)
+[2025-12-09T13:22:47.910Z]    Username: liliane
+[2025-12-09T13:22:47.947Z]    Indicador: ewerton
+[2025-12-09T13:22:48.061Z]    Senha: RSGht8yp
+[2025-12-09T13:22:48.097Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:48.180Z]    ❌ Erro: undefined
+[2025-12-09T13:22:48.465Z] 
+[70/379] Processando: elizeu lopes da rosa (ID: 4116969)
+[2025-12-09T13:22:48.483Z]    Username: elizeu
+[2025-12-09T13:22:48.556Z]    Indicador: celso
+[2025-12-09T13:22:48.669Z]    Senha: RSSKd225
+[2025-12-09T13:22:48.822Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:48.881Z]    ❌ Erro: undefined
+[2025-12-09T13:22:49.152Z] 
+[71/379] Processando: ezaul fabio de mello (ID: 2607383)
+[2025-12-09T13:22:49.228Z]    Username: ezaul
+[2025-12-09T13:22:49.329Z]    Indicador: elizeu
+[2025-12-09T13:22:49.443Z]    Senha: RSvJHaCX
+[2025-12-09T13:22:49.484Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:49.658Z]    ❌ Erro: undefined
+[2025-12-09T13:22:50.059Z] 
+[72/379] Processando: maria da gloria da silva (ID: 4341825)
+[2025-12-09T13:22:50.091Z]    Username: mariadagloria
+[2025-12-09T13:22:50.119Z]    Indicador: ezaul
+[2025-12-09T13:22:50.145Z]    Senha: RSkKMWVW
+[2025-12-09T13:22:50.162Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:50.181Z]    ❌ Erro: undefined
+[2025-12-09T13:22:50.393Z] 
+[73/379] Processando: Maria Aparecida de Sousa (ID: 4764164)
+[2025-12-09T13:22:50.411Z]    Username: cida1
+[2025-12-09T13:22:50.647Z]    Indicador: maxbrasil
+[2025-12-09T13:22:50.727Z]    Senha: RSJt5HNk
+[2025-12-09T13:22:50.874Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:51.025Z]    ❌ Erro: undefined
+[2025-12-09T13:22:51.384Z] 
+[74/379] Processando: Elivelton Drey (ID: 1218531)
+[2025-12-09T13:22:51.421Z]    Username: elivelton
+[2025-12-09T13:22:51.449Z]    Indicador: jorge
+[2025-12-09T13:22:51.483Z]    Senha: RS6kYx5c
+[2025-12-09T13:22:51.588Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:51.673Z]    ❌ Erro: undefined
+[2025-12-09T13:22:51.933Z] 
+[75/379] Processando: edilson santos de jesus (ID: 1332375)
+[2025-12-09T13:22:51.947Z]    Username: edilson
+[2025-12-09T13:22:52.080Z]    Indicador: jhonny
+[2025-12-09T13:22:52.102Z]    Senha: RSxyXb5q
+[2025-12-09T13:22:52.206Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:52.305Z]    ❌ Erro: undefined
+[2025-12-09T13:22:52.660Z] 
+[76/379] Processando: bismarck padilha miranda (ID: 3894298)
+[2025-12-09T13:22:52.903Z]    Username: bismarck
+[2025-12-09T13:22:52.971Z]    Indicador: wellington
+[2025-12-09T13:22:53.125Z]    Senha: RSV3U5ck
+[2025-12-09T13:22:53.341Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:53.501Z]    ❌ Erro: undefined
+[2025-12-09T13:22:54.002Z] 
+[77/379] Processando: marlene gonçalves carneiro (ID: 6561608)
+[2025-12-09T13:22:54.203Z]    Username: marlene
+[2025-12-09T13:22:54.612Z]    Indicador: wellington
+[2025-12-09T13:22:54.916Z]    Senha: RSMyDEhv
+[2025-12-09T13:22:54.984Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:55.013Z]    ❌ Erro: undefined
+[2025-12-09T13:22:55.292Z] 
+[78/379] Processando: nilson da cruz (ID: 7684942)
+[2025-12-09T13:22:55.432Z]    Username: nilson
+[2025-12-09T13:22:55.485Z]    Indicador: adilson
+[2025-12-09T13:22:55.512Z]    Senha: RSwf7yhu
+[2025-12-09T13:22:55.547Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:55.587Z]    ❌ Erro: undefined
+[2025-12-09T13:22:55.988Z] 
+[79/379] Processando: jose raimundo da silva (ID: 3001694)
+[2025-12-09T13:22:56.364Z]    Username: raimundo
+[2025-12-09T13:22:56.641Z]    Indicador: adilson
+[2025-12-09T13:22:56.687Z]    Senha: RS7Hd23E
+[2025-12-09T13:22:56.826Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:57.009Z]    ❌ Erro: undefined
+[2025-12-09T13:22:57.412Z] 
+[80/379] Processando: sérgio selatchek (ID: 2532230)
+[2025-12-09T13:22:57.501Z]    Username: sergio
+[2025-12-09T13:22:57.549Z]    Indicador: miranda
+[2025-12-09T13:22:57.802Z]    Senha: RSYHYUdA
+[2025-12-09T13:22:57.908Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:58.012Z]    ❌ Erro: undefined
+[2025-12-09T13:22:58.296Z] 
+[81/379] Processando: lindalva dos santos (ID: 2953165)
+[2025-12-09T13:22:58.367Z]    Username: lindalva
+[2025-12-09T13:22:58.566Z]    Indicador: sergio
+[2025-12-09T13:22:58.907Z]    Senha: RSD3EQxm
+[2025-12-09T13:22:59.024Z] ❌ Erro na requisição: 
+[2025-12-09T13:22:59.376Z]    ❌ Erro: undefined
+[2025-12-09T13:22:59.880Z] 
+[82/379] Processando: lucio latczuc (ID: 4951015)
+[2025-12-09T13:23:00.079Z]    Username: lucio
+[2025-12-09T13:23:00.113Z]    Indicador: sergio
+[2025-12-09T13:23:00.219Z]    Senha: RS96FtBR
+[2025-12-09T13:23:00.336Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:00.513Z]    ❌ Erro: undefined
+[2025-12-09T13:23:00.857Z] 
+[83/379] Processando: jorge luis da silva (ID: 9960331)
+[2025-12-09T13:23:00.913Z]    Username: jorgeluis
+[2025-12-09T13:23:00.993Z]    Indicador: miranda
+[2025-12-09T13:23:01.012Z]    Senha: RStvHGuk
+[2025-12-09T13:23:01.021Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:01.029Z]    ❌ Erro: undefined
+[2025-12-09T13:23:01.331Z] 
+[84/379] Processando: giseli da silva (ID: 6421118)
+[2025-12-09T13:23:01.436Z]    Username: giseli
+[2025-12-09T13:23:01.473Z]    Indicador: jorgeluis
+[2025-12-09T13:23:01.613Z]    Senha: RSSWNKQu
+[2025-12-09T13:23:01.663Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:01.740Z]    ❌ Erro: undefined
+[2025-12-09T13:23:02.139Z] 
+[85/379] Processando: joão acir tinesnski (ID: 945289)
+[2025-12-09T13:23:02.250Z]    Username: joao
+[2025-12-09T13:23:02.309Z]    Indicador: jorgeluis
+[2025-12-09T13:23:02.378Z]    Senha: RS6SqWsZ
+[2025-12-09T13:23:02.463Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:02.525Z]    ❌ Erro: undefined
+[2025-12-09T13:23:02.835Z] 
+[86/379] Processando: cleomar pontes macedo (ID: 3563935)
+[2025-12-09T13:23:02.980Z]    Username: cleomar
+[2025-12-09T13:23:03.035Z]    Indicador: washington
+[2025-12-09T13:23:03.075Z]    Senha: RSH2fkAM
+[2025-12-09T13:23:03.151Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:03.376Z]    ❌ Erro: undefined
+[2025-12-09T13:23:03.644Z] 
+[87/379] Processando: ademar roberto boller (ID: 913882)
+[2025-12-09T13:23:03.723Z]    Username: ademar
+[2025-12-09T13:23:03.847Z]    Indicador: washington
+[2025-12-09T13:23:03.983Z]    Senha: RS3uH88Y
+[2025-12-09T13:23:04.048Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:04.311Z]    ❌ Erro: undefined
+[2025-12-09T13:23:04.730Z] 
+[88/379] Processando: Virginia Cordeiro de lara (ID: 3542770)
+[2025-12-09T13:23:04.784Z]    Username: vilara
+[2025-12-09T13:23:04.882Z]    Indicador: jorge
+[2025-12-09T13:23:04.995Z]    Senha: RSBc9gkX
+[2025-12-09T13:23:05.165Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:05.236Z]    ❌ Erro: undefined
+[2025-12-09T13:23:05.641Z] 
+[89/379] Processando: patricia querino vaz dos santos (ID: 103470)
+[2025-12-09T13:23:05.694Z]    Username: patricia
+[2025-12-09T13:23:05.751Z]    Indicador: bismarck
+[2025-12-09T13:23:05.787Z]    Senha: RSyAunx2
+[2025-12-09T13:23:05.863Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:05.874Z]    ❌ Erro: undefined
+[2025-12-09T13:23:06.180Z] 
+[90/379] Processando: samyr erlom rissardi rocha da silva (ID: 1814489)
+[2025-12-09T13:23:06.238Z]    Username: samyr
+[2025-12-09T13:23:06.367Z]    Indicador: bismarck
+[2025-12-09T13:23:06.437Z]    Senha: RSZwYHfq
+[2025-12-09T13:23:06.680Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:06.780Z]    ❌ Erro: undefined
+[2025-12-09T13:23:07.032Z] 
+[91/379] Processando: antonio carlos fermino da silva (ID: 2363539)
+[2025-12-09T13:23:07.118Z]    Username: antoniocarlos
+[2025-12-09T13:23:07.182Z]    Indicador: zilma
+[2025-12-09T13:23:07.227Z]    Senha: RSpZaTH5
+[2025-12-09T13:23:07.331Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:07.402Z]    ❌ Erro: undefined
+[2025-12-09T13:23:07.747Z] 
+[92/379] Processando: nível de jesus nantes borges (ID: 1354156)
+[2025-12-09T13:23:07.796Z]    Username: nivel
+[2025-12-09T13:23:07.839Z]    Indicador: adilson
+[2025-12-09T13:23:07.850Z]    Senha: RS2FaUJv
+[2025-12-09T13:23:07.890Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:07.994Z]    ❌ Erro: undefined
+[2025-12-09T13:23:08.291Z] 
+[93/379] Processando: antônio pereira nantes (ID: 6954522)
+[2025-12-09T13:23:08.341Z]    Username: nantes
+[2025-12-09T13:23:08.400Z]    Indicador: nivel
+[2025-12-09T13:23:08.411Z]    Senha: RSqqV43j
+[2025-12-09T13:23:08.482Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:08.498Z]    ❌ Erro: undefined
+[2025-12-09T13:23:08.740Z] 
+[94/379] Processando: maurilei da silva nascimento (ID: 3952322)
+[2025-12-09T13:23:08.803Z]    Username: maurilei
+[2025-12-09T13:23:08.934Z]    Indicador: zilma
+[2025-12-09T13:23:09.003Z]    Senha: RScWjuDx
+[2025-12-09T13:23:09.020Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:09.024Z]    ❌ Erro: undefined
+[2025-12-09T13:23:09.265Z] 
+[95/379] Processando: anderson tolentino dos santos (ID: 7602020)
+[2025-12-09T13:23:09.330Z]    Username: anderson
+[2025-12-09T13:23:09.357Z]    Indicador: helena
+[2025-12-09T13:23:09.420Z]    Senha: RSm9hhuQ
+[2025-12-09T13:23:09.486Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:09.538Z]    ❌ Erro: undefined
+[2025-12-09T13:23:09.851Z] 
+[96/379] Processando: maikon vinicius borges (ID: 4747902)
+[2025-12-09T13:23:10.047Z]    Username: maikon
+[2025-12-09T13:23:10.151Z]    Indicador: helena
+[2025-12-09T13:23:10.193Z]    Senha: RSncYGbC
+[2025-12-09T13:23:10.242Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:10.256Z]    ❌ Erro: undefined
+[2025-12-09T13:23:10.584Z] 
+[97/379] Processando: iracema ferreira de oliveira tinte (ID: 393954)
+[2025-12-09T13:23:10.701Z]    Username: cema
+[2025-12-09T13:23:10.718Z]    Indicador: lucio
+[2025-12-09T13:23:10.790Z]    Senha: RSNB9ZCP
+[2025-12-09T13:23:10.859Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:10.898Z]    ❌ Erro: undefined
+[2025-12-09T13:23:11.211Z] 
+[98/379] Processando: idalina ferreira de oliveira (ID: 5527453)
+[2025-12-09T13:23:11.274Z]    Username: idalina
+[2025-12-09T13:23:11.320Z]    Indicador: cema
+[2025-12-09T13:23:11.449Z]    Senha: RSrhSyts
+[2025-12-09T13:23:11.519Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:11.597Z]    ❌ Erro: undefined
+[2025-12-09T13:23:11.824Z] 
+[99/379] Processando: reginaldo do nascimento santos (ID: 4329558)
+[2025-12-09T13:23:11.875Z]    Username: reginaldo
+[2025-12-09T13:23:11.892Z]    Indicador: cema
+[2025-12-09T13:23:11.936Z]    Senha: RSsEhCcC
+[2025-12-09T13:23:11.977Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:12.060Z]    ❌ Erro: undefined
+[2025-12-09T13:23:12.293Z] 
+[100/379] Processando: maria teresinha da silva (ID: 5826649)
+[2025-12-09T13:23:12.584Z]    Username: mariateresinha
+[2025-12-09T13:23:12.666Z]    Indicador: lucio
+[2025-12-09T13:23:12.694Z]    Senha: RSEkEySy
+[2025-12-09T13:23:12.804Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:12.866Z]    ❌ Erro: undefined
+[2025-12-09T13:23:13.176Z] 
+[101/379] Processando: gerson dos santos de oliveira (ID: 2920187)
+[2025-12-09T13:23:13.269Z]    Username: gerson
+[2025-12-09T13:23:13.329Z]    Indicador: miguel
+[2025-12-09T13:23:13.357Z]    Senha: RSNuTgxL
+[2025-12-09T13:23:13.431Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:13.477Z]    ❌ Erro: undefined
+[2025-12-09T13:23:13.821Z] 
+[102/379] Processando: darla fernanda szymanski (ID: 791825)
+[2025-12-09T13:23:13.830Z]    Username: darla
+[2025-12-09T13:23:13.842Z]    Indicador: jose
+[2025-12-09T13:23:13.848Z]    Senha: RSU8ccUj
+[2025-12-09T13:23:13.864Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:13.875Z]    ❌ Erro: undefined
+[2025-12-09T13:23:14.122Z] 
+[103/379] Processando: Rosilda Andrade de souza (ID: 5771074)
+[2025-12-09T13:23:14.139Z]    Username: rosilda
+[2025-12-09T13:23:14.145Z]    Indicador: nice
+[2025-12-09T13:23:14.148Z]    Senha: RSVjRnzc
+[2025-12-09T13:23:14.198Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:14.206Z]    ❌ Erro: undefined
+[2025-12-09T13:23:14.436Z] 
+[104/379] Processando: Danier Siqueira monteiro (ID: 2937609)
+[2025-12-09T13:23:14.496Z]    Username: siqueira
+[2025-12-09T13:23:14.522Z]    Indicador: jorge
+[2025-12-09T13:23:14.534Z]    Senha: RSxTp6a5
+[2025-12-09T13:23:14.542Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:14.544Z]    ❌ Erro: undefined
+[2025-12-09T13:23:14.760Z] 
+[105/379] Processando: vanda gonçalves ferreira (ID: 3353478)
+[2025-12-09T13:23:14.763Z]    Username: vanda
+[2025-12-09T13:23:14.766Z]    Indicador: zequinha
+[2025-12-09T13:23:14.769Z]    Senha: RS7PdH5E
+[2025-12-09T13:23:14.773Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:14.776Z]    ❌ Erro: undefined
+[2025-12-09T13:23:14.993Z] 
+[106/379] Processando: valdir roberto scheffelmeier (ID: 1720237)
+[2025-12-09T13:23:14.996Z]    Username: valdir
+[2025-12-09T13:23:14.999Z]    Indicador: vanda
+[2025-12-09T13:23:15.003Z]    Senha: RSqM66GG
+[2025-12-09T13:23:15.009Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:15.012Z]    ❌ Erro: undefined
+[2025-12-09T13:23:15.227Z] 
+[107/379] Processando: carlos ribeiro de andrade (ID: 2160803)
+[2025-12-09T13:23:15.231Z]    Username: carlosribeiro
+[2025-12-09T13:23:15.235Z]    Indicador: davi
+[2025-12-09T13:23:15.239Z]    Senha: RSQQkTQJ
+[2025-12-09T13:23:15.248Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:15.253Z]    ❌ Erro: undefined
+[2025-12-09T13:23:15.459Z] 
+[108/379] Processando: claudinei spindola (ID: 7191506)
+[2025-12-09T13:23:15.463Z]    Username: claudinei
+[2025-12-09T13:23:15.465Z]    Indicador: silso
+[2025-12-09T13:23:15.468Z]    Senha: RSRCE5wu
+[2025-12-09T13:23:15.472Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:15.475Z]    ❌ Erro: undefined
+[2025-12-09T13:23:15.679Z] 
+[109/379] Processando: jose ani cezar correia (ID: 2130334)
+[2025-12-09T13:23:15.796Z]    Username: anicezar
+[2025-12-09T13:23:15.798Z]    Indicador: claudinei
+[2025-12-09T13:23:15.800Z]    Senha: RSnN3LXv
+[2025-12-09T13:23:15.806Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:15.809Z]    ❌ Erro: undefined
+[2025-12-09T13:23:16.025Z] 
+[110/379] Processando: israel fernandes de oliveira (ID: 8131425)
+[2025-12-09T13:23:16.053Z]    Username: israel
+[2025-12-09T13:23:16.056Z]    Indicador: sidnalva
+[2025-12-09T13:23:16.059Z]    Senha: RShcPMsZ
+[2025-12-09T13:23:16.063Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:16.065Z]    ❌ Erro: undefined
+[2025-12-09T13:23:16.273Z] 
+[111/379] Processando: Geraldo renato Alves de solza (ID: 1795663)
+[2025-12-09T13:23:16.310Z]    Username: renato
+[2025-12-09T13:23:16.312Z]    Indicador: sidnalva
+[2025-12-09T13:23:16.314Z]    Senha: RSMGXfmp
+[2025-12-09T13:23:16.320Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:16.323Z]    ❌ Erro: undefined
+[2025-12-09T13:23:16.540Z] 
+[112/379] Processando: Gilmar neves de campos (ID: 4111550)
+[2025-12-09T13:23:16.563Z]    Username: gilmar10
+[2025-12-09T13:23:16.565Z]    Indicador: alaor
+[2025-12-09T13:23:16.567Z]    Senha: RS6hxYFB
+[2025-12-09T13:23:16.576Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:16.585Z]    ❌ Erro: undefined
+[2025-12-09T13:23:16.820Z] 
+[113/379] Processando: Salete Freitas Farias Lourenço (ID: 5636653)
+[2025-12-09T13:23:17.006Z]    Username: salete
+[2025-12-09T13:23:17.009Z]    Indicador: nice
+[2025-12-09T13:23:17.011Z]    Senha: RSqaGvAz
+[2025-12-09T13:23:17.015Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:17.018Z]    ❌ Erro: undefined
+[2025-12-09T13:23:17.227Z] 
+[114/379] Processando: simone de jesus lopes (ID: 6563838)
+[2025-12-09T13:23:17.263Z]    Username: simone
+[2025-12-09T13:23:17.265Z]    Indicador: emclaro
+[2025-12-09T13:23:17.268Z]    Senha: RSsBZhMe
+[2025-12-09T13:23:17.275Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:17.277Z]    ❌ Erro: undefined
+[2025-12-09T13:23:17.491Z] 
+[115/379] Processando: josé valdeci lopes (ID: 7354951)
+[2025-12-09T13:23:17.522Z]    Username: valdecir
+[2025-12-09T13:23:17.525Z]    Indicador: simone
+[2025-12-09T13:23:17.527Z]    Senha: RSh8Ump8
+[2025-12-09T13:23:17.531Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:17.533Z]    ❌ Erro: undefined
+[2025-12-09T13:23:17.748Z] 
+[116/379] Processando: Márcia Velozo (ID: 8332954)
+[2025-12-09T13:23:17.774Z]    Username: marciavelozo
+[2025-12-09T13:23:17.776Z]    Indicador: josesantos
+[2025-12-09T13:23:17.778Z]    Senha: RSaJ8pY2
+[2025-12-09T13:23:17.782Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:17.784Z]    ❌ Erro: undefined
+[2025-12-09T13:23:17.997Z] 
+[117/379] Processando: Fabio Bomfim (ID: 4209211)
+[2025-12-09T13:23:18.107Z]    Username: fabio
+[2025-12-09T13:23:18.109Z]    Indicador: jorge
+[2025-12-09T13:23:18.112Z]    Senha: RSA9ZRKT
+[2025-12-09T13:23:18.116Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:18.118Z]    ❌ Erro: undefined
+[2025-12-09T13:23:18.324Z] 
+[118/379] Processando: Dalmon Pereira dos Santos (ID: 6349551)
+[2025-12-09T13:23:18.454Z]    Username: dalmonsantos
+[2025-12-09T13:23:18.458Z]    Indicador: josesantos
+[2025-12-09T13:23:18.461Z]    Senha: RSZKdeBM
+[2025-12-09T13:23:18.465Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:18.468Z]    ❌ Erro: undefined
+[2025-12-09T13:23:18.684Z] 
+[119/379] Processando: Sara Monteiro (ID: 7767970)
+[2025-12-09T13:23:18.797Z]    Username: saritinha123
+[2025-12-09T13:23:18.799Z]    Indicador: fabio
+[2025-12-09T13:23:18.802Z]    Senha: RSwuUvUT
+[2025-12-09T13:23:18.807Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:18.810Z]    ❌ Erro: undefined
+[2025-12-09T13:23:19.012Z] 
+[120/379] Processando: Joaquim Bomfim (ID: 5755920)
+[2025-12-09T13:23:19.129Z]    Username: joaquim
+[2025-12-09T13:23:19.131Z]    Indicador: fabio
+[2025-12-09T13:23:19.133Z]    Senha: RSUd8Zgk
+[2025-12-09T13:23:19.142Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:19.145Z]    ❌ Erro: undefined
+[2025-12-09T13:23:19.376Z] 
+[121/379] Processando: Andiara Correia (ID: 7258740)
+[2025-12-09T13:23:19.420Z]    Username: andy
+[2025-12-09T13:23:19.432Z]    Indicador: fabio
+[2025-12-09T13:23:19.438Z]    Senha: RSeg5d6q
+[2025-12-09T13:23:19.455Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:19.460Z]    ❌ Erro: undefined
+[2025-12-09T13:23:19.671Z] 
+[122/379] Processando: Rosely Monteiro (ID: 5161089)
+[2025-12-09T13:23:19.677Z]    Username: rosely
+[2025-12-09T13:23:19.679Z]    Indicador: rsprolipsi
+[2025-12-09T13:23:19.682Z]    Senha: RSWbeYJz
+[2025-12-09T13:23:19.686Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:19.690Z]    ❌ Erro: undefined
+[2025-12-09T13:23:19.932Z] 
+[123/379] Processando: sebastiao manuel gonçalves (ID: 9415789)
+[2025-12-09T13:23:19.963Z]    Username: sebastiao
+[2025-12-09T13:23:19.979Z]    Indicador: darla
+[2025-12-09T13:23:19.990Z]    Senha: RScEdBJg
+[2025-12-09T13:23:20.003Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:20.009Z]    ❌ Erro: undefined
+[2025-12-09T13:23:20.259Z] 
+[124/379] Processando: jair da silva fernandes (ID: 6802441)
+[2025-12-09T13:23:20.408Z]    Username: jair
+[2025-12-09T13:23:20.434Z]    Indicador: darla
+[2025-12-09T13:23:20.444Z]    Senha: RSnSTtFc
+[2025-12-09T13:23:20.451Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:20.466Z]    ❌ Erro: undefined
+[2025-12-09T13:23:20.731Z] 
+[125/379] Processando: emerson gomes lemes (ID: 9604483)
+[2025-12-09T13:23:20.862Z]    Username: emerson
+[2025-12-09T13:23:20.902Z]    Indicador: jair
+[2025-12-09T13:23:21.049Z]    Senha: RSxwT9SX
+[2025-12-09T13:23:21.207Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:21.451Z]    ❌ Erro: undefined
+[2025-12-09T13:23:21.861Z] 
+[126/379] Processando: jose ronaldo da silva agiar (ID: 7111285)
+[2025-12-09T13:23:32.661Z]    Username: agiar
+[2025-12-09T13:23:32.837Z]    Indicador: sebastiao
+[2025-12-09T13:23:32.869Z]    Senha: RSzzQHeJ
+[2025-12-09T13:23:33.001Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:33.024Z]    ❌ Erro: undefined
+[2025-12-09T13:23:33.259Z] 
+[127/379] Processando: ezequiel moreira (ID: 2693309)
+[2025-12-09T13:23:33.284Z]    Username: ezequiel
+[2025-12-09T13:23:33.313Z]    Indicador: agiar
+[2025-12-09T13:23:33.350Z]    Senha: RSejDrHU
+[2025-12-09T13:23:33.397Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:33.435Z]    ❌ Erro: undefined
+[2025-12-09T13:23:33.671Z] 
+[128/379] Processando: gilda rosa da silva (ID: 839070)
+[2025-12-09T13:23:33.869Z]    Username: gilda
+[2025-12-09T13:23:33.998Z]    Indicador: ezequiel
+[2025-12-09T13:23:34.106Z]    Senha: RSCFsrDw
+[2025-12-09T13:23:34.421Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:34.476Z]    ❌ Erro: undefined
+[2025-12-09T13:23:34.810Z] 
+[129/379] Processando: Maria Conceição Batista Figueiredo (ID: 5834604)
+[2025-12-09T13:23:34.831Z]    Username: mariaconceicao
+[2025-12-09T13:23:34.973Z]    Indicador: josesantos
+[2025-12-09T13:23:34.992Z]    Senha: RSdkzwXM
+[2025-12-09T13:23:35.004Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:35.038Z]    ❌ Erro: undefined
+[2025-12-09T13:23:35.545Z] 
+[130/379] Processando: Jhonatan Henrique da silva (ID: 6296512)
+[2025-12-09T13:23:35.822Z]    Username: jhonatan
+[2025-12-09T13:23:35.844Z]    Indicador: jhonny
+[2025-12-09T13:23:35.932Z]    Senha: RS2JyJcW
+[2025-12-09T13:23:36.107Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:36.205Z]    ❌ Erro: undefined
+[2025-12-09T13:23:36.541Z] 
+[131/379] Processando: Neusa De Oliveira Baray (ID: 9232773)
+[2025-12-09T13:23:36.562Z]    Username: neusabry
+[2025-12-09T13:23:36.640Z]    Indicador: josesantos
+[2025-12-09T13:23:36.686Z]    Senha: RSvXpDvV
+[2025-12-09T13:23:36.735Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:36.953Z]    ❌ Erro: undefined
+[2025-12-09T13:23:37.214Z] 
+[132/379] Processando: Maria Madalena Costa (ID: 1595041)
+[2025-12-09T13:23:37.301Z]    Username: madalena
+[2025-12-09T13:23:37.358Z]    Indicador: neusabry
+[2025-12-09T13:23:37.405Z]    Senha: RSGpF8sX
+[2025-12-09T13:23:37.516Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:37.543Z]    ❌ Erro: undefined
+[2025-12-09T13:23:37.771Z] 
+[133/379] Processando: Vilma Terezinha gomes (ID: 1966950)
+[2025-12-09T13:23:37.795Z]    Username: vilma
+[2025-12-09T13:23:37.826Z]    Indicador: siqueira
+[2025-12-09T13:23:37.872Z]    Senha: RSNKkRDV
+[2025-12-09T13:23:37.915Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:37.923Z]    ❌ Erro: undefined
+[2025-12-09T13:23:38.223Z] 
+[134/379] Processando: Marcio Clemente (ID: 4016966)
+[2025-12-09T13:23:38.255Z]    Username: marcinho12
+[2025-12-09T13:23:38.388Z]    Indicador: jorge
+[2025-12-09T13:23:38.571Z]    Senha: RSdJX76U
+[2025-12-09T13:23:38.725Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:38.853Z]    ❌ Erro: undefined
+[2025-12-09T13:23:39.173Z] 
+[135/379] Processando: Marisane Antunes de lima (ID: 9541878)
+[2025-12-09T13:23:39.207Z]    Username: marisane123
+[2025-12-09T13:23:39.309Z]    Indicador: rsprolipsi
+[2025-12-09T13:23:39.338Z]    Senha: RSAuQSvj
+[2025-12-09T13:23:39.524Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:39.593Z]    ❌ Erro: undefined
+[2025-12-09T13:23:39.904Z] 
+[136/379] Processando: Érica Farias de Araújo (ID: 240466)
+[2025-12-09T13:23:39.968Z]    Username: erica
+[2025-12-09T13:23:39.981Z]    Indicador: maxwel
+[2025-12-09T13:23:40.085Z]    Senha: RSMnF6Px
+[2025-12-09T13:23:40.174Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:40.245Z]    ❌ Erro: undefined
+[2025-12-09T13:23:40.504Z] 
+[137/379] Processando: Raffael Richard Rocha (ID: 9916761)
+[2025-12-09T13:23:40.677Z]    Username: rafaelrocha
+[2025-12-09T13:23:40.909Z]    Indicador: joanamendes
+[2025-12-09T13:23:41.224Z]    Senha: RSxDfB2m
+[2025-12-09T13:23:41.612Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:41.913Z]    ❌ Erro: undefined
+[2025-12-09T13:23:42.303Z] 
+[138/379] Processando: Ezequiel Guimarães (ID: 3417956)
+[2025-12-09T13:23:42.354Z]    Username: ezequielguima
+[2025-12-09T13:23:42.453Z]    Indicador: rafaelrocha
+[2025-12-09T13:23:42.553Z]    Senha: RStzLvzj
+[2025-12-09T13:23:42.576Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:42.641Z]    ❌ Erro: undefined
+[2025-12-09T13:23:42.868Z] 
+[139/379] Processando: Arnaldo Rodrigues Figueiredo (ID: 8851832)
+[2025-12-09T13:23:42.887Z]    Username: arnaldo
+[2025-12-09T13:23:43.060Z]    Indicador: josesantos
+[2025-12-09T13:23:43.081Z]    Senha: RSK6d2UL
+[2025-12-09T13:23:43.106Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:43.202Z]    ❌ Erro: undefined
+[2025-12-09T13:23:43.421Z] 
+[140/379] Processando: murilo luiz dias henrique (ID: 123601)
+[2025-12-09T13:23:43.453Z]    Username: murilolilo
+[2025-12-09T13:23:43.544Z]    Indicador: topo
+[2025-12-09T13:23:43.590Z]    Senha: RSpbaeu6
+[2025-12-09T13:23:43.705Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:43.757Z]    ❌ Erro: undefined
+[2025-12-09T13:23:44.340Z] 
+[141/379] Processando: Júlio Galvão (ID: 7920234)
+[2025-12-09T13:23:44.473Z]    Username: juliogalvao
+[2025-12-09T13:23:44.543Z]    Indicador: rsprolipsi
+[2025-12-09T13:23:44.625Z]    Senha: RSuCdGQg
+[2025-12-09T13:23:44.715Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:44.788Z]    ❌ Erro: undefined
+[2025-12-09T13:23:45.050Z] 
+[142/379] Processando: ildefonço ferreira de oliveira (ID: 8520902)
+[2025-12-09T13:23:45.069Z]    Username: afonco
+[2025-12-09T13:23:45.075Z]    Indicador: erica
+[2025-12-09T13:23:45.090Z]    Senha: RSBg82RG
+[2025-12-09T13:23:45.132Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:45.143Z]    ❌ Erro: undefined
+[2025-12-09T13:23:45.379Z] 
+[143/379] Processando: Milena Silva (ID: 2595811)
+[2025-12-09T13:23:45.387Z]    Username: milenasilva
+[2025-12-09T13:23:45.438Z]    Indicador: josesantos
+[2025-12-09T13:23:45.462Z]    Senha: RSYChBEN
+[2025-12-09T13:23:45.503Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:45.524Z]    ❌ Erro: undefined
+[2025-12-09T13:23:45.800Z] 
+[144/379] Processando: Patrike Daniel Pedroso (ID: 1340837)
+[2025-12-09T13:23:45.809Z]    Username: patrike
+[2025-12-09T13:23:45.825Z]    Indicador: emclaro
+[2025-12-09T13:23:45.864Z]    Senha: RSukVyDW
+[2025-12-09T13:23:45.871Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:45.896Z]    ❌ Erro: undefined
+[2025-12-09T13:23:46.211Z] 
+[145/379] Processando: Diully Einy Rodrigues Castro Mendes Claro (ID: 9794683)
+[2025-12-09T13:23:46.241Z]    Username: diully
+[2025-12-09T13:23:46.425Z]    Indicador: joanamendes
+[2025-12-09T13:23:46.430Z]    Senha: RSSxGFgj
+[2025-12-09T13:23:46.484Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:46.509Z]    ❌ Erro: undefined
+[2025-12-09T13:23:46.721Z] 
+[146/379] Processando: joao vicente jordao (ID: 2640676)
+[2025-12-09T13:23:46.744Z]    Username: vicente
+[2025-12-09T13:23:46.763Z]    Indicador: miranda
+[2025-12-09T13:23:46.767Z]    Senha: RSRBa72j
+[2025-12-09T13:23:46.772Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:46.783Z]    ❌ Erro: undefined
+[2025-12-09T13:23:47.030Z] 
+[147/379] Processando: Rosilene Figueiredo alves (ID: 6747001)
+[2025-12-09T13:23:47.060Z]    Username: rosialves
+[2025-12-09T13:23:47.063Z]    Indicador: arnaldo
+[2025-12-09T13:23:47.091Z]    Senha: RSDPdMrt
+[2025-12-09T13:23:47.113Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:47.116Z]    ❌ Erro: undefined
+[2025-12-09T13:23:47.353Z] 
+[148/379] Processando: Jean Henrique Aparecido da Silva (ID: 287716)
+[2025-12-09T13:23:47.479Z]    Username: jeanhenrique
+[2025-12-09T13:23:47.546Z]    Indicador: joanamendes
+[2025-12-09T13:23:47.577Z]    Senha: RSFDnmMq
+[2025-12-09T13:23:47.598Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:47.620Z]    ❌ Erro: undefined
+[2025-12-09T13:23:47.831Z] 
+[149/379] Processando: Marcio Jakson Soares de Lima (ID: 7372499)
+[2025-12-09T13:23:47.836Z]    Username: marciojj
+[2025-12-09T13:23:47.851Z]    Indicador: joanamendes
+[2025-12-09T13:23:47.854Z]    Senha: RSbJYgyA
+[2025-12-09T13:23:47.863Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:47.867Z]    ❌ Erro: undefined
+[2025-12-09T13:23:48.103Z] 
+[150/379] Processando: Joyce Emile Feitora Rodrigues (ID: 609849)
+[2025-12-09T13:23:48.110Z]    Username: joyce
+[2025-12-09T13:23:48.117Z]    Indicador: ezequielguima
+[2025-12-09T13:23:48.119Z]    Senha: RSEJdx34
+[2025-12-09T13:23:48.133Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:48.136Z]    ❌ Erro: undefined
+[2025-12-09T13:23:48.361Z] 
+[151/379] Processando: Daniel Ferreira da Silva (ID: 9162624)
+[2025-12-09T13:23:48.364Z]    Username: danielferreira
+[2025-12-09T13:23:48.366Z]    Indicador: ezequielguima
+[2025-12-09T13:23:48.369Z]    Senha: RSK6gjLr
+[2025-12-09T13:23:48.374Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:48.381Z]    ❌ Erro: undefined
+[2025-12-09T13:23:48.599Z] 
+[152/379] Processando: Ydalmi Josefina Herrera Diaz (ID: 3893104)
+[2025-12-09T13:23:48.725Z]    Username: ydalmi
+[2025-12-09T13:23:48.744Z]    Indicador: ezequielguima
+[2025-12-09T13:23:48.797Z]    Senha: RSyNftBF
+[2025-12-09T13:23:48.810Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:48.814Z]    ❌ Erro: undefined
+[2025-12-09T13:23:49.036Z] 
+[153/379] Processando: Arelys Nohemi Herrera (ID: 662793)
+[2025-12-09T13:23:49.049Z]    Username: arelys
+[2025-12-09T13:23:49.064Z]    Indicador: ezequielguima
+[2025-12-09T13:23:49.072Z]    Senha: RSN6DPcM
+[2025-12-09T13:23:49.082Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:49.179Z]    ❌ Erro: undefined
+[2025-12-09T13:23:49.399Z] 
+[154/379] Processando: Felipe Pereira Sousa (ID: 6994692)
+[2025-12-09T13:23:49.522Z]    Username: fiii
+[2025-12-09T13:23:49.613Z]    Indicador: emclaro
+[2025-12-09T13:23:49.629Z]    Senha: RSBtFNZd
+[2025-12-09T13:23:49.635Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:49.671Z]    ❌ Erro: undefined
+[2025-12-09T13:23:49.917Z] 
+[155/379] Processando: Wild Halama (ID: 2412340)
+[2025-12-09T13:23:49.979Z]    Username: Halama1111111111
+[2025-12-09T13:23:50.024Z]    Indicador: patrike
+[2025-12-09T13:23:50.044Z]    Senha: RSyT4Enk
+[2025-12-09T13:23:50.055Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:50.059Z]    ❌ Erro: undefined
+[2025-12-09T13:23:50.279Z] 
+[156/379] Processando: Solange Kuhn (ID: 9691030)
+[2025-12-09T13:23:50.307Z]    Username: solangekuhn123
+[2025-12-09T13:23:50.331Z]    Indicador: marisane123
+[2025-12-09T13:23:50.337Z]    Senha: RS3zMaXU
+[2025-12-09T13:23:50.358Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:50.365Z]    ❌ Erro: undefined
+[2025-12-09T13:23:50.580Z] 
+[157/379] Processando: Viviane Cristina da silva (ID: 2637492)
+[2025-12-09T13:23:50.689Z]    Username: vivi10
+[2025-12-09T13:23:50.736Z]    Indicador: alaor
+[2025-12-09T13:23:50.753Z]    Senha: RS2arFjn
+[2025-12-09T13:23:50.760Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:50.774Z]    ❌ Erro: undefined
+[2025-12-09T13:23:51.002Z] 
+[158/379] Processando: Vera Lucia Aparecida Machado de Ramos (ID: 8148133)
+[2025-12-09T13:23:51.134Z]    Username: vera
+[2025-12-09T13:23:51.176Z]    Indicador: cleuci
+[2025-12-09T13:23:51.216Z]    Senha: RSFQa7RD
+[2025-12-09T13:23:51.228Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:51.233Z]    ❌ Erro: undefined
+[2025-12-09T13:23:51.471Z] 
+[159/379] Processando: Maria Garcia Guerreiro (ID: 1716620)
+[2025-12-09T13:23:51.570Z]    Username: mariagarcia
+[2025-12-09T13:23:51.578Z]    Indicador: davi
+[2025-12-09T13:23:51.589Z]    Senha: RSCNpD4q
+[2025-12-09T13:23:51.595Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:51.613Z]    ❌ Erro: undefined
+[2025-12-09T13:23:51.861Z] 
+[160/379] Processando: José risso luiz (ID: 5279317)
+[2025-12-09T13:23:52.019Z]    Username: risso
+[2025-12-09T13:23:52.068Z]    Indicador: jose
+[2025-12-09T13:23:52.081Z]    Senha: RStdjNsL
+[2025-12-09T13:23:52.087Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:52.098Z]    ❌ Erro: undefined
+[2025-12-09T13:23:52.321Z] 
+[161/379] Processando: Valdo Nunes de Brito (ID: 8324807)
+[2025-12-09T13:23:52.434Z]    Username: valdo
+[2025-12-09T13:23:52.522Z]    Indicador: jose
+[2025-12-09T13:23:52.534Z]    Senha: RSt8Ma2G
+[2025-12-09T13:23:52.545Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:52.548Z]    ❌ Erro: undefined
+[2025-12-09T13:23:52.769Z] 
+[162/379] Processando: Francine Dias da Conceição Labres de Oliveira (ID: 93208)
+[2025-12-09T13:23:52.775Z]    Username: frandjalo
+[2025-12-09T13:23:52.785Z]    Indicador: maxwel
+[2025-12-09T13:23:52.791Z]    Senha: RS6xEPtr
+[2025-12-09T13:23:52.795Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:52.799Z]    ❌ Erro: undefined
+[2025-12-09T13:23:53.051Z] 
+[163/379] Processando: Alessandra dos Santos Gobatto (ID: 4087214)
+[2025-12-09T13:23:53.069Z]    Username: alessandra
+[2025-12-09T13:23:53.073Z]    Indicador: carmiele
+[2025-12-09T13:23:53.110Z]    Senha: RSETuVbJ
+[2025-12-09T13:23:53.243Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:53.308Z]    ❌ Erro: undefined
+[2025-12-09T13:23:53.556Z] 
+[164/379] Processando: Pedro Flávio Almeida Silva (ID: 4549644)
+[2025-12-09T13:23:53.575Z]    Username: pedroflavio
+[2025-12-09T13:23:53.585Z]    Indicador: ewerton
+[2025-12-09T13:23:53.588Z]    Senha: RSnh3XPu
+[2025-12-09T13:23:53.606Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:53.713Z]    ❌ Erro: undefined
+[2025-12-09T13:23:53.943Z] 
+[165/379] Processando: Wesley Henrrique (ID: 964320)
+[2025-12-09T13:23:54.088Z]    Username: wesley007
+[2025-12-09T13:23:54.138Z]    Indicador: israel
+[2025-12-09T13:23:54.164Z]    Senha: RSRwSEnE
+[2025-12-09T13:23:54.184Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:54.190Z]    ❌ Erro: undefined
+[2025-12-09T13:23:54.415Z] 
+[166/379] Processando: Geraldo Carvalho Costa (ID: 8918423)
+[2025-12-09T13:23:54.440Z]    Username: geraldo
+[2025-12-09T13:23:54.448Z]    Indicador: rsprolipsi
+[2025-12-09T13:23:54.456Z]    Senha: RSseyn2m
+[2025-12-09T13:23:54.460Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:54.475Z]    ❌ Erro: undefined
+[2025-12-09T13:23:54.686Z] 
+[167/379] Processando: Maria Almeida (ID: 3336809)
+[2025-12-09T13:23:54.830Z]    Username: 123maria
+[2025-12-09T13:23:54.850Z]    Indicador: pedroflavio
+[2025-12-09T13:23:54.872Z]    Senha: RSDy9v93
+[2025-12-09T13:23:54.892Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:54.907Z]    ❌ Erro: undefined
+[2025-12-09T13:23:55.110Z] 
+[168/379] Processando: Paulo Kayto de Souza Morgado (ID: 1078961)
+[2025-12-09T13:23:55.178Z]    Username: paulokayto
+[2025-12-09T13:23:55.191Z]    Indicador: patrike
+[2025-12-09T13:23:55.206Z]    Senha: RSMt3M6b
+[2025-12-09T13:23:55.254Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:55.295Z]    ❌ Erro: undefined
+[2025-12-09T13:23:55.508Z] 
+[169/379] Processando: Anthony Nessias Borges Luiz (ID: 4302276)
+[2025-12-09T13:23:55.556Z]    Username: anthony
+[2025-12-09T13:23:55.573Z]    Indicador: jeanhenrique
+[2025-12-09T13:23:55.651Z]    Senha: RSrJE85k
+[2025-12-09T13:23:55.761Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:55.781Z]    ❌ Erro: undefined
+[2025-12-09T13:23:56.076Z] 
+[170/379] Processando: Dalva de Lima Andrade (ID: 6542661)
+[2025-12-09T13:23:56.190Z]    Username: dalva
+[2025-12-09T13:23:56.241Z]    Indicador: anthony
+[2025-12-09T13:23:56.255Z]    Senha: RSHgX4q4
+[2025-12-09T13:23:56.261Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:56.275Z]    ❌ Erro: undefined
+[2025-12-09T13:23:56.507Z] 
+[171/379] Processando: Luiza Gerei Szymonek (ID: 8980469)
+[2025-12-09T13:23:56.639Z]    Username: luiza
+[2025-12-09T13:23:56.687Z]    Indicador: anthony
+[2025-12-09T13:23:56.730Z]    Senha: RS3ytH65
+[2025-12-09T13:23:56.811Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:56.906Z]    ❌ Erro: undefined
+[2025-12-09T13:23:57.247Z] 
+[172/379] Processando: Diego Rogerio da Silva Alves (ID: 8956291)
+[2025-12-09T13:23:57.409Z]    Username: diego
+[2025-12-09T13:23:57.429Z]    Indicador: jeanhenrique
+[2025-12-09T13:23:57.458Z]    Senha: RSYUUy74
+[2025-12-09T13:23:57.493Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:57.503Z]    ❌ Erro: undefined
+[2025-12-09T13:23:57.714Z] 
+[173/379] Processando: claudemir dos santos gomes (ID: 2221813)
+[2025-12-09T13:23:57.720Z]    Username: claudemir
+[2025-12-09T13:23:57.758Z]    Indicador: zequinha
+[2025-12-09T13:23:57.768Z]    Senha: RSumQywu
+[2025-12-09T13:23:57.811Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:57.814Z]    ❌ Erro: undefined
+[2025-12-09T13:23:58.020Z] 
+[174/379] Processando: Jonas Pereira (ID: 7279016)
+[2025-12-09T13:23:58.040Z]    Username: jonas
+[2025-12-09T13:23:58.089Z]    Indicador: cleuci
+[2025-12-09T13:23:58.110Z]    Senha: RSWtdcBp
+[2025-12-09T13:23:58.125Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:58.131Z]    ❌ Erro: undefined
+[2025-12-09T13:23:58.389Z] 
+[175/379] Processando: rosilda dias ferreira (ID: 8102137)
+[2025-12-09T13:23:58.421Z]    Username: rosildadias
+[2025-12-09T13:23:58.425Z]    Indicador: odete
+[2025-12-09T13:23:58.428Z]    Senha: RSwVR2H6
+[2025-12-09T13:23:58.434Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:58.445Z]    ❌ Erro: undefined
+[2025-12-09T13:23:58.661Z] 
+[176/379] Processando: Neide maria Da Silva Oliveira (ID: 2658301)
+[2025-12-09T13:23:58.674Z]    Username: neide
+[2025-12-09T13:23:58.676Z]    Indicador: michael
+[2025-12-09T13:23:58.682Z]    Senha: RSDTsenQ
+[2025-12-09T13:23:58.693Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:58.700Z]    ❌ Erro: undefined
+[2025-12-09T13:23:58.933Z] 
+[177/379] Processando: Vera Lucia Rosa dos Santos (ID: 5403999)
+[2025-12-09T13:23:58.949Z]    Username: verarosa
+[2025-12-09T13:23:58.952Z]    Indicador: nice
+[2025-12-09T13:23:58.960Z]    Senha: RSbHFKpK
+[2025-12-09T13:23:58.969Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:58.980Z]    ❌ Erro: undefined
+[2025-12-09T13:23:59.193Z] 
+[178/379] Processando: Maria de lurdes gonçalves katcharowski (ID: 1524515)
+[2025-12-09T13:23:59.203Z]    Username: mariadelurdes
+[2025-12-09T13:23:59.216Z]    Indicador: miranda
+[2025-12-09T13:23:59.221Z]    Senha: RSsJ6hSs
+[2025-12-09T13:23:59.337Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:59.356Z]    ❌ Erro: undefined
+[2025-12-09T13:23:59.575Z] 
+[179/379] Processando: joeli barbosa de almeida (ID: 3100693)
+[2025-12-09T13:23:59.594Z]    Username: joeli
+[2025-12-09T13:23:59.609Z]    Indicador: nice
+[2025-12-09T13:23:59.611Z]    Senha: RSEXyeBc
+[2025-12-09T13:23:59.616Z] ❌ Erro na requisição: 
+[2025-12-09T13:23:59.746Z]    ❌ Erro: undefined
+[2025-12-09T13:23:59.995Z] 
+[180/379] Processando: leia dos santos (ID: 8446830)
+[2025-12-09T13:24:00.109Z]    Username: leia
+[2025-12-09T13:24:00.195Z]    Indicador: jose
+[2025-12-09T13:24:00.215Z]    Senha: RSatZbXv
+[2025-12-09T13:24:00.219Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:00.230Z]    ❌ Erro: undefined
+[2025-12-09T13:24:00.465Z] 
+[181/379] Processando: Carmem Almeida (ID: 7029894)
+[2025-12-09T13:24:00.610Z]    Username: carmem
+[2025-12-09T13:24:00.613Z]    Indicador: pedroflavio
+[2025-12-09T13:24:00.619Z]    Senha: RSCweSYt
+[2025-12-09T13:24:00.624Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:00.626Z]    ❌ Erro: undefined
+[2025-12-09T13:24:00.832Z] 
+[182/379] Processando: Manoel Domingos Bruno da Silva (ID: 1051468)
+[2025-12-09T13:24:00.956Z]    Username: domingossp
+[2025-12-09T13:24:00.967Z]    Indicador: emclaro
+[2025-12-09T13:24:00.971Z]    Senha: RSYExZz6
+[2025-12-09T13:24:00.976Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:00.980Z]    ❌ Erro: undefined
+[2025-12-09T13:24:01.193Z] 
+[183/379] Processando: karolina Cordeiro dos Santos (ID: 9024915)
+[2025-12-09T13:24:01.321Z]    Username: karoina
+[2025-12-09T13:24:01.324Z]    Indicador: rosilda
+[2025-12-09T13:24:01.326Z]    Senha: RSNQUK7A
+[2025-12-09T13:24:01.331Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:01.333Z]    ❌ Erro: undefined
+[2025-12-09T13:24:01.536Z] 
+[184/379] Processando: Kaue Moreira (ID: 3009043)
+[2025-12-09T13:24:01.655Z]    Username: kauemoreira
+[2025-12-09T13:24:01.657Z]    Indicador: rsprolipsi
+[2025-12-09T13:24:01.660Z]    Senha: RSbaa3Bn
+[2025-12-09T13:24:01.664Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:01.668Z]    ❌ Erro: undefined
+[2025-12-09T13:24:01.878Z] 
+[185/379] Processando: Edinelson Manoel Dos Santos (ID: 886874)
+[2025-12-09T13:24:01.999Z]    Username: gatomiau
+[2025-12-09T13:24:02.003Z]    Indicador: rsprolipsi
+[2025-12-09T13:24:02.006Z]    Senha: RSdaPCgu
+[2025-12-09T13:24:02.010Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:02.012Z]    ❌ Erro: undefined
+[2025-12-09T13:24:02.221Z] 
+[186/379] Processando: Laércio Montesso Gonçalves (ID: 4368770)
+[2025-12-09T13:24:02.314Z]    Username: montesso
+[2025-12-09T13:24:02.318Z]    Indicador: rsprolipsi
+[2025-12-09T13:24:02.321Z]    Senha: RSDhzp3N
+[2025-12-09T13:24:02.327Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:02.331Z]    ❌ Erro: undefined
+[2025-12-09T13:24:02.550Z] 
+[187/379] Processando: alda cordeiro da Rosa dos Santos (ID: 4518847)
+[2025-12-09T13:24:02.649Z]    Username: alda
+[2025-12-09T13:24:02.651Z]    Indicador: rosilda
+[2025-12-09T13:24:02.653Z]    Senha: RSTVuRJP
+[2025-12-09T13:24:02.657Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:02.659Z]    ❌ Erro: undefined
+[2025-12-09T13:24:02.865Z] 
+[188/379] Processando: Roseli Cruz Novais da Silva Novais (ID: 9627808)
+[2025-12-09T13:24:02.900Z]    Username: roseli
+[2025-12-09T13:24:02.903Z]    Indicador: montesso
+[2025-12-09T13:24:02.905Z]    Senha: RSsHSG8V
+[2025-12-09T13:24:02.909Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:02.911Z]    ❌ Erro: undefined
+[2025-12-09T13:24:03.123Z] 
+[189/379] Processando: Maria Fernandes Borges Dias (ID: 229849)
+[2025-12-09T13:24:03.144Z]    Username: donamaria
+[2025-12-09T13:24:03.147Z]    Indicador: adilson
+[2025-12-09T13:24:03.150Z]    Senha: RSPPefVP
+[2025-12-09T13:24:03.154Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:03.157Z]    ❌ Erro: undefined
+[2025-12-09T13:24:03.372Z] 
+[190/379] Processando: Janecir Spancerski (ID: 548167)
+[2025-12-09T13:24:03.375Z]    Username: janecir
+[2025-12-09T13:24:03.378Z]    Indicador: marisane123
+[2025-12-09T13:24:03.381Z]    Senha: RSsRypZF
+[2025-12-09T13:24:03.385Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:03.388Z]    ❌ Erro: undefined
+[2025-12-09T13:24:03.593Z] 
+[191/379] Processando: João Alves Algarrão (ID: 6813693)
+[2025-12-09T13:24:03.622Z]    Username: joaoalgarrao
+[2025-12-09T13:24:03.629Z]    Indicador: montesso
+[2025-12-09T13:24:03.632Z]    Senha: RSSjc3LL
+[2025-12-09T13:24:03.636Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:03.639Z]    ❌ Erro: undefined
+[2025-12-09T13:24:03.846Z] 
+[192/379] Processando: Osmar Pereira silva (ID: 514573)
+[2025-12-09T13:24:03.878Z]    Username: osmar
+[2025-12-09T13:24:03.882Z]    Indicador: montesso
+[2025-12-09T13:24:03.884Z]    Senha: RS9tsSaF
+[2025-12-09T13:24:03.888Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:03.891Z]    ❌ Erro: undefined
+[2025-12-09T13:24:04.108Z] 
+[193/379] Processando: Veralaine Romano da silva (ID: 1832240)
+[2025-12-09T13:24:04.133Z]    Username: veralaine
+[2025-12-09T13:24:04.136Z]    Indicador: osmar
+[2025-12-09T13:24:04.138Z]    Senha: RS2msY5W
+[2025-12-09T13:24:04.144Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:04.146Z]    ❌ Erro: undefined
+[2025-12-09T13:24:04.357Z] 
+[194/379] Processando: Edmilson Aparecido da Conceissão (ID: 3594750)
+[2025-12-09T13:24:04.390Z]    Username: edmilson
+[2025-12-09T13:24:04.393Z]    Indicador: jeanhenrique
+[2025-12-09T13:24:04.395Z]    Senha: RSA7TjWB
+[2025-12-09T13:24:04.399Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:04.401Z]    ❌ Erro: undefined
+[2025-12-09T13:24:04.605Z] 
+[195/379] Processando: Claudinei Oliveira (ID: 791303)
+[2025-12-09T13:24:04.634Z]    Username: shuai-jiao
+[2025-12-09T13:24:04.636Z]    Indicador: montesso
+[2025-12-09T13:24:04.638Z]    Senha: RSdRWux6
+[2025-12-09T13:24:04.643Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:04.645Z]    ❌ Erro: undefined
+[2025-12-09T13:24:04.856Z] 
+[196/379] Processando: Elesandro de Souza Vicente (ID: 1024240)
+[2025-12-09T13:24:04.880Z]    Username: sandrocapa
+[2025-12-09T13:24:04.884Z]    Indicador: patrike
+[2025-12-09T13:24:04.887Z]    Senha: RSLDJhsN
+[2025-12-09T13:24:04.893Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:04.896Z]    ❌ Erro: undefined
+[2025-12-09T13:24:05.108Z] 
+[197/379] Processando: Alexsandro Godinho Hoffmann (ID: 968620)
+[2025-12-09T13:24:05.216Z]    Username: alexsandro
+[2025-12-09T13:24:05.219Z]    Indicador: simone
+[2025-12-09T13:24:05.222Z]    Senha: RSparyGF
+[2025-12-09T13:24:05.226Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:05.229Z]    ❌ Erro: undefined
+[2025-12-09T13:24:05.446Z] 
+[198/379] Processando: Rafael Grando (ID: 6038051)
+[2025-12-09T13:24:05.467Z]    Username: rafaelgrando
+[2025-12-09T13:24:05.470Z]    Indicador: simone
+[2025-12-09T13:24:05.472Z]    Senha: RSzXfUUr
+[2025-12-09T13:24:05.477Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:05.480Z]    ❌ Erro: undefined
+[2025-12-09T13:24:05.695Z] 
+[199/379] Processando: Adriana Vicente Lins (ID: 2013639)
+[2025-12-09T13:24:05.723Z]    Username: adrianalins
+[2025-12-09T13:24:05.726Z]    Indicador: emclaro
+[2025-12-09T13:24:05.729Z]    Senha: RSD7cgKC
+[2025-12-09T13:24:05.734Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:05.737Z]    ❌ Erro: undefined
+[2025-12-09T13:24:05.946Z] 
+[200/379] Processando: Luiz Queiroz (ID: 9349118)
+[2025-12-09T13:24:05.978Z]    Username: vencedortop
+[2025-12-09T13:24:05.981Z]    Indicador: miranda
+[2025-12-09T13:24:05.983Z]    Senha: RSwuTPnw
+[2025-12-09T13:24:05.987Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:05.989Z]    ❌ Erro: undefined
+[2025-12-09T13:24:06.194Z] 
+[201/379] Processando: Lismara Cortez Algarrão (ID: 3555595)
+[2025-12-09T13:24:06.223Z]    Username: lismara
+[2025-12-09T13:24:06.225Z]    Indicador: joaoalgarrao
+[2025-12-09T13:24:06.228Z]    Senha: RS854wfM
+[2025-12-09T13:24:06.232Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:06.234Z]    ❌ Erro: undefined
+[2025-12-09T13:24:06.444Z] 
+[202/379] Processando: Osnir Ceccon (ID: 141129)
+[2025-12-09T13:24:06.467Z]    Username: ocsuplementos
+[2025-12-09T13:24:06.470Z]    Indicador: emclaro
+[2025-12-09T13:24:06.472Z]    Senha: RS6fRRBn
+[2025-12-09T13:24:06.476Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:06.478Z]    ❌ Erro: undefined
+[2025-12-09T13:24:06.693Z] 
+[203/379] Processando: Sergio Alessandro Braga (ID: 973242)
+[2025-12-09T13:24:06.711Z]    Username: alexsandro100
+[2025-12-09T13:24:06.714Z]    Indicador: patrike
+[2025-12-09T13:24:06.717Z]    Senha: RSzSFSrQ
+[2025-12-09T13:24:06.721Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:06.723Z]    ❌ Erro: undefined
+[2025-12-09T13:24:06.927Z] 
+[204/379] Processando: Osmar Pereira silva (ID: 514573)
+[2025-12-09T13:24:06.956Z]    Username: osmar
+[2025-12-09T13:24:06.959Z]    Indicador: montesso
+[2025-12-09T13:24:06.962Z]    Senha: RShzxDmc
+[2025-12-09T13:24:06.966Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:06.970Z]    ❌ Erro: undefined
+[2025-12-09T13:24:07.183Z] 
+[205/379] Processando: Veralaine Romano da silva (ID: 1832240)
+[2025-12-09T13:24:07.212Z]    Username: veralaine
+[2025-12-09T13:24:07.214Z]    Indicador: osmar
+[2025-12-09T13:24:07.217Z]    Senha: RShveFN2
+[2025-12-09T13:24:07.221Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:07.224Z]    ❌ Erro: undefined
+[2025-12-09T13:24:07.434Z] 
+[206/379] Processando: Edmilson Aparecido da Conceissão (ID: 3594750)
+[2025-12-09T13:24:07.457Z]    Username: edmilson
+[2025-12-09T13:24:07.462Z]    Indicador: jeanhenrique
+[2025-12-09T13:24:07.467Z]    Senha: RSdQ7c7Z
+[2025-12-09T13:24:07.472Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:07.474Z]    ❌ Erro: undefined
+[2025-12-09T13:24:07.682Z] 
+[207/379] Processando: Claudinei Oliveira (ID: 791303)
+[2025-12-09T13:24:07.800Z]    Username: shuai-jiao
+[2025-12-09T13:24:07.802Z]    Indicador: montesso
+[2025-12-09T13:24:07.804Z]    Senha: RSgExHDF
+[2025-12-09T13:24:07.808Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:07.811Z]    ❌ Erro: undefined
+[2025-12-09T13:24:08.025Z] 
+[208/379] Processando: Elesandro de Souza Vicente (ID: 1024240)
+[2025-12-09T13:24:08.045Z]    Username: sandrocapa
+[2025-12-09T13:24:08.048Z]    Indicador: patrike
+[2025-12-09T13:24:08.051Z]    Senha: RS6FezLq
+[2025-12-09T13:24:08.056Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:08.058Z]    ❌ Erro: undefined
+[2025-12-09T13:24:08.272Z] 
+[209/379] Processando: Alexsandro Godinho Hoffmann (ID: 968620)
+[2025-12-09T13:24:08.289Z]    Username: alexsandro
+[2025-12-09T13:24:08.292Z]    Indicador: simone
+[2025-12-09T13:24:08.294Z]    Senha: RSj95NsS
+[2025-12-09T13:24:08.298Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:08.300Z]    ❌ Erro: undefined
+[2025-12-09T13:24:08.515Z] 
+[210/379] Processando: Rafael Grando (ID: 6038051)
+[2025-12-09T13:24:08.545Z]    Username: rafaelgrando
+[2025-12-09T13:24:08.547Z]    Indicador: simone
+[2025-12-09T13:24:08.550Z]    Senha: RSUaguHR
+[2025-12-09T13:24:08.554Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:08.556Z]    ❌ Erro: undefined
+[2025-12-09T13:24:08.765Z] 
+[211/379] Processando: Adriana Vicente Lins (ID: 2013639)
+[2025-12-09T13:24:08.790Z]    Username: adrianalins
+[2025-12-09T13:24:08.792Z]    Indicador: emclaro
+[2025-12-09T13:24:08.794Z]    Senha: RSbDKAav
+[2025-12-09T13:24:08.798Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:08.879Z]    ❌ Erro: undefined
+[2025-12-09T13:24:09.088Z] 
+[212/379] Processando: Luiz Queiroz (ID: 9349118)
+[2025-12-09T13:24:09.137Z]    Username: vencedortop
+[2025-12-09T13:24:09.153Z]    Indicador: miranda
+[2025-12-09T13:24:09.204Z]    Senha: RSQQgEJQ
+[2025-12-09T13:24:09.312Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:09.361Z]    ❌ Erro: undefined
+[2025-12-09T13:24:09.711Z] 
+[213/379] Processando: Lismara Cortez Algarrão (ID: 3555595)
+[2025-12-09T13:24:09.841Z]    Username: lismara
+[2025-12-09T13:24:09.973Z]    Indicador: joaoalgarrao
+[2025-12-09T13:24:09.989Z]    Senha: RS3JKXEn
+[2025-12-09T13:24:10.173Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:10.188Z]    ❌ Erro: undefined
+[2025-12-09T13:24:10.421Z] 
+[214/379] Processando: Osnir Ceccon (ID: 141129)
+[2025-12-09T13:24:10.424Z]    Username: ocsuplementos
+[2025-12-09T13:24:10.427Z]    Indicador: emclaro
+[2025-12-09T13:24:10.429Z]    Senha: RSz3mm7e
+[2025-12-09T13:24:10.433Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:10.435Z]    ❌ Erro: undefined
+[2025-12-09T13:24:10.654Z] 
+[215/379] Processando: Sergio Alessandro Braga (ID: 973242)
+[2025-12-09T13:24:10.678Z]    Username: alexsandro100
+[2025-12-09T13:24:10.681Z]    Indicador: patrike
+[2025-12-09T13:24:10.683Z]    Senha: RShceWVv
+[2025-12-09T13:24:10.688Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:10.690Z]    ❌ Erro: undefined
+[2025-12-09T13:24:10.931Z] 
+[216/379] Processando: Marcos Lima Rovaris (ID: 8452617)
+[2025-12-09T13:24:10.984Z]    Username: marcoslr
+[2025-12-09T13:24:10.987Z]    Indicador: ramondutra
+[2025-12-09T13:24:10.989Z]    Senha: RSzxtJ7v
+[2025-12-09T13:24:10.993Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:10.996Z]    ❌ Erro: undefined
+[2025-12-09T13:24:11.211Z] 
+[217/379] Processando: Guilherme Fortuna (ID: 2691209)
+[2025-12-09T13:24:11.214Z]    Username: guilhermefortuna
+[2025-12-09T13:24:11.216Z]    Indicador: ramondutra
+[2025-12-09T13:24:11.220Z]    Senha: RSHvLFdB
+[2025-12-09T13:24:11.225Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:11.227Z]    ❌ Erro: undefined
+[2025-12-09T13:24:11.438Z] 
+[218/379] Processando: Nilzete Andrade (ID: 2351462)
+[2025-12-09T13:24:11.469Z]    Username: nilzete
+[2025-12-09T13:24:11.473Z]    Indicador: michael
+[2025-12-09T13:24:11.476Z]    Senha: RSAwnKur
+[2025-12-09T13:24:11.481Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:11.484Z]    ❌ Erro: undefined
+[2025-12-09T13:24:11.691Z] 
+[219/379] Processando: Edvaldo G da silva (ID: 6483682)
+[2025-12-09T13:24:11.724Z]    Username: vilaparisi
+[2025-12-09T13:24:11.726Z]    Indicador: michael
+[2025-12-09T13:24:11.728Z]    Senha: RSsSTrPN
+[2025-12-09T13:24:11.732Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:11.735Z]    ❌ Erro: undefined
+[2025-12-09T13:24:11.941Z] 
+[220/379] Processando: Paulo Silva (ID: 2927599)
+[2025-12-09T13:24:11.967Z]    Username: paulosilva
+[2025-12-09T13:24:11.970Z]    Indicador: michael
+[2025-12-09T13:24:11.973Z]    Senha: RSX4mMQj
+[2025-12-09T13:24:11.977Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:11.979Z]    ❌ Erro: undefined
+[2025-12-09T13:24:12.192Z] 
+[221/379] Processando: Victor Borges (ID: 6021232)
+[2025-12-09T13:24:12.301Z]    Username: victor
+[2025-12-09T13:24:12.303Z]    Indicador: michael
+[2025-12-09T13:24:12.306Z]    Senha: RSG5GUZJ
+[2025-12-09T13:24:12.310Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:12.313Z]    ❌ Erro: undefined
+[2025-12-09T13:24:12.521Z] 
+[222/379] Processando: Gilvania Maria Da Silva Lima Lima (ID: 5062008)
+[2025-12-09T13:24:12.546Z]    Username: gilvania6905
+[2025-12-09T13:24:12.548Z]    Indicador: michael
+[2025-12-09T13:24:12.551Z]    Senha: RSQ7H9C7
+[2025-12-09T13:24:12.555Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:12.558Z]    ❌ Erro: undefined
+[2025-12-09T13:24:12.771Z] 
+[223/379] Processando: Mayara De Araújo Medeiros Antão (ID: 3615834)
+[2025-12-09T13:24:12.790Z]    Username: mayara
+[2025-12-09T13:24:12.793Z]    Indicador: michael
+[2025-12-09T13:24:12.797Z]    Senha: RSWu8454
+[2025-12-09T13:24:12.800Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:12.803Z]    ❌ Erro: undefined
+[2025-12-09T13:24:13.021Z] 
+[224/379] Processando: Lourinaldo Ernesto Antao (ID: 8693378)
+[2025-12-09T13:24:13.035Z]    Username: lourinaldo
+[2025-12-09T13:24:13.038Z]    Indicador: michael
+[2025-12-09T13:24:13.040Z]    Senha: RSnSbWcb
+[2025-12-09T13:24:13.044Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:13.047Z]    ❌ Erro: undefined
+[2025-12-09T13:24:13.256Z] 
+[225/379] Processando: Thayná Duarte (ID: 628258)
+[2025-12-09T13:24:13.279Z]    Username: thayna
+[2025-12-09T13:24:13.281Z]    Indicador: michael
+[2025-12-09T13:24:13.283Z]    Senha: RSYzEkDP
+[2025-12-09T13:24:13.287Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:13.290Z]    ❌ Erro: undefined
+[2025-12-09T13:24:13.506Z] 
+[226/379] Processando: Luciana Santos (ID: 6308225)
+[2025-12-09T13:24:13.523Z]    Username: lucycelo
+[2025-12-09T13:24:13.526Z]    Indicador: michael
+[2025-12-09T13:24:13.528Z]    Senha: RSMZWK2x
+[2025-12-09T13:24:13.532Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:13.535Z]    ❌ Erro: undefined
+[2025-12-09T13:24:13.740Z] 
+[227/379] Processando: Willams Gonçalves (ID: 1444475)
+[2025-12-09T13:24:13.779Z]    Username: willamsg
+[2025-12-09T13:24:13.781Z]    Indicador: michael
+[2025-12-09T13:24:13.784Z]    Senha: RSx3hgbH
+[2025-12-09T13:24:13.788Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:13.791Z]    ❌ Erro: undefined
+[2025-12-09T13:24:14.005Z] 
+[228/379] Processando: Alessandra Rosa de Araújo (ID: 1461923)
+[2025-12-09T13:24:14.024Z]    Username: alessandrarosa
+[2025-12-09T13:24:14.027Z]    Indicador: michael
+[2025-12-09T13:24:14.030Z]    Senha: RSZVQBeF
+[2025-12-09T13:24:14.034Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:14.040Z]    ❌ Erro: undefined
+[2025-12-09T13:24:14.255Z] 
+[229/379] Processando: Amelia Oliveira Ribeiro (ID: 1020605)
+[2025-12-09T13:24:14.279Z]    Username: ameliaribeiro
+[2025-12-09T13:24:14.282Z]    Indicador: michael
+[2025-12-09T13:24:14.284Z]    Senha: RST5PMCP
+[2025-12-09T13:24:14.290Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:14.293Z]    ❌ Erro: undefined
+[2025-12-09T13:24:14.504Z] 
+[230/379] Processando: Célia Alves Braga Braga (ID: 5270064)
+[2025-12-09T13:24:14.612Z]    Username: celia5883
+[2025-12-09T13:24:14.615Z]    Indicador: gilvania6905
+[2025-12-09T13:24:14.617Z]    Senha: RSSwva8G
+[2025-12-09T13:24:14.623Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:14.626Z]    ❌ Erro: undefined
+[2025-12-09T13:24:14.833Z] 
+[231/379] Processando: Emanoel Souza (ID: 3637700)
+[2025-12-09T13:24:14.868Z]    Username: souza
+[2025-12-09T13:24:14.871Z]    Indicador: alexsandro100
+[2025-12-09T13:24:14.873Z]    Senha: RSwvAgWs
+[2025-12-09T13:24:14.877Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:14.880Z]    ❌ Erro: undefined
+[2025-12-09T13:24:15.083Z] 
+[232/379] Processando: Marcos Abreu (ID: 2332948)
+[2025-12-09T13:24:15.112Z]    Username: magaiver
+[2025-12-09T13:24:15.115Z]    Indicador: rsprolipsi
+[2025-12-09T13:24:15.117Z]    Senha: RS3GzeNg
+[2025-12-09T13:24:15.121Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:15.123Z]    ❌ Erro: undefined
+[2025-12-09T13:24:15.333Z] 
+[233/379] Processando: Stefanie Rodrigues Hildever (ID: 4713475)
+[2025-12-09T13:24:15.368Z]    Username: vitor5000
+[2025-12-09T13:24:15.370Z]    Indicador: alexsandro100
+[2025-12-09T13:24:15.373Z]    Senha: RSjbaJCZ
+[2025-12-09T13:24:15.377Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:15.380Z]    ❌ Erro: undefined
+[2025-12-09T13:24:15.596Z] 
+[234/379] Processando: Maria Goreti Da Rosa (ID: 7679134)
+[2025-12-09T13:24:15.712Z]    Username: goreti1966
+[2025-12-09T13:24:15.714Z]    Indicador: michael
+[2025-12-09T13:24:15.717Z]    Senha: RS5twQ7F
+[2025-12-09T13:24:15.721Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:15.724Z]    ❌ Erro: undefined
+[2025-12-09T13:24:15.939Z] 
+[235/379] Processando: Pedro Henrique (ID: 9303029)
+[2025-12-09T13:24:15.957Z]    Username: rsprolipsibrasil
+[2025-12-09T13:24:15.959Z]    Indicador: rsprolipsi
+[2025-12-09T13:24:15.962Z]    Senha: RSsLDwyE
+[2025-12-09T13:24:15.965Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:15.968Z]    ❌ Erro: undefined
+[2025-12-09T13:24:16.172Z] 
+[236/379] Processando: Aguinaldo Andrade de Araújo (ID: 4922571)
+[2025-12-09T13:24:16.202Z]    Username: aguinaldo
+[2025-12-09T13:24:16.212Z]    Indicador: alessandrarosa
+[2025-12-09T13:24:16.216Z]    Senha: RS2ySytp
+[2025-12-09T13:24:16.220Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:16.223Z]    ❌ Erro: undefined
+[2025-12-09T13:24:16.440Z] 
+[237/379] Processando: giselda fernanda costa arruda (ID: 6966946)
+[2025-12-09T13:24:16.457Z]    Username: giselda
+[2025-12-09T13:24:16.459Z]    Indicador: maxbrasil
+[2025-12-09T13:24:16.462Z]    Senha: RSZkexbA
+[2025-12-09T13:24:16.466Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:16.469Z]    ❌ Erro: undefined
+[2025-12-09T13:24:16.686Z] 
+[238/379] Processando: Kemeli De Melo Ferreira (ID: 6650832)
+[2025-12-09T13:24:16.702Z]    Username: kemeli
+[2025-12-09T13:24:16.706Z]    Indicador: vencedortop
+[2025-12-09T13:24:16.708Z]    Senha: RS6u4Nfn
+[2025-12-09T13:24:16.714Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:16.717Z]    ❌ Erro: undefined
+[2025-12-09T13:24:16.936Z] 
+[239/379] Processando: Manoel Vicente Luiz (ID: 3601772)
+[2025-12-09T13:24:17.001Z]    Username: manoelins
+[2025-12-09T13:24:17.013Z]    Indicador: adrianalins
+[2025-12-09T13:24:17.016Z]    Senha: RSxjkgJY
+[2025-12-09T13:24:17.020Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:17.023Z]    ❌ Erro: undefined
+[2025-12-09T13:24:17.226Z] 
+[240/379] Processando: Nadeje Lins Serafim (ID: 9856198)
+[2025-12-09T13:24:17.257Z]    Username: nadejelins
+[2025-12-09T13:24:17.259Z]    Indicador: manoelins
+[2025-12-09T13:24:17.261Z]    Senha: RSQk3gBz
+[2025-12-09T13:24:17.264Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:17.266Z]    ❌ Erro: undefined
+[2025-12-09T13:24:17.478Z] 
+[241/379] Processando: Saulo Virgilio Barbosa (ID: 6008864)
+[2025-12-09T13:24:17.501Z]    Username: saulao123
+[2025-12-09T13:24:17.503Z]    Indicador: montesso
+[2025-12-09T13:24:17.506Z]    Senha: RSQwHae4
+[2025-12-09T13:24:17.512Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:17.517Z]    ❌ Erro: undefined
+[2025-12-09T13:24:17.720Z] 
+[242/379] Processando: Márcia Souza (ID: 5551879)
+[2025-12-09T13:24:17.745Z]    Username: marciasouza
+[2025-12-09T13:24:17.748Z]    Indicador: alessandrarosa
+[2025-12-09T13:24:17.750Z]    Senha: RS9z7nPq
+[2025-12-09T13:24:17.754Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:17.756Z]    ❌ Erro: undefined
+[2025-12-09T13:24:17.971Z] 
+[243/379] Processando: Rafael Alves Guido (ID: 5980522)
+[2025-12-09T13:24:18.001Z]    Username: multinivel1
+[2025-12-09T13:24:18.005Z]    Indicador: rsprolipsi
+[2025-12-09T13:24:18.007Z]    Senha: RS4UDzZd
+[2025-12-09T13:24:18.012Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:18.014Z]    ❌ Erro: undefined
+[2025-12-09T13:24:18.220Z] 
+[244/379] Processando: Afonso Santos Da Silva (ID: 6524017)
+[2025-12-09T13:24:18.223Z]    Username: afonso
+[2025-12-09T13:24:18.230Z]    Indicador: zequinha
+[2025-12-09T13:24:18.232Z]    Senha: RSJDGssu
+[2025-12-09T13:24:18.237Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:18.240Z]    ❌ Erro: undefined
+[2025-12-09T13:24:18.453Z] 
+[245/379] Processando: Janete Ferreira (ID: 7527227)
+[2025-12-09T13:24:18.479Z]    Username: jane
+[2025-12-09T13:24:18.481Z]    Indicador: nice
+[2025-12-09T13:24:18.484Z]    Senha: RS5SJ2Pt
+[2025-12-09T13:24:18.487Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:18.490Z]    ❌ Erro: undefined
+[2025-12-09T13:24:18.705Z] 
+[246/379] Processando: Silmara Miranda (ID: 7699916)
+[2025-12-09T13:24:18.734Z]    Username: silmara
+[2025-12-09T13:24:18.737Z]    Indicador: michael
+[2025-12-09T13:24:18.739Z]    Senha: RS2WDHky
+[2025-12-09T13:24:18.744Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:18.747Z]    ❌ Erro: undefined
+[2025-12-09T13:24:18.964Z] 
+[247/379] Processando: CICERO RODRIGUES DOS SANTOS (ID: 5167653)
+[2025-12-09T13:24:18.979Z]    Username: lider10
+[2025-12-09T13:24:18.981Z]    Indicador: maxbrasil
+[2025-12-09T13:24:18.984Z]    Senha: RS6BCScF
+[2025-12-09T13:24:18.990Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:18.994Z]    ❌ Erro: undefined
+[2025-12-09T13:24:19.199Z] 
+[248/379] Processando: Audicir Canal (ID: 7066286)
+[2025-12-09T13:24:19.223Z]    Username: audi3007
+[2025-12-09T13:24:19.227Z]    Indicador: emclaro
+[2025-12-09T13:24:19.233Z]    Senha: RSnRAbhs
+[2025-12-09T13:24:19.238Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:19.240Z]    ❌ Erro: undefined
+[2025-12-09T13:24:19.457Z] 
+[249/379] Processando: Rosemario Martins Bernadino (ID: 7135801)
+[2025-12-09T13:24:19.479Z]    Username: rosemario
+[2025-12-09T13:24:19.481Z]    Indicador: edilson
+[2025-12-09T13:24:19.484Z]    Senha: RS7Lxar5
+[2025-12-09T13:24:19.488Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:19.490Z]    ❌ Erro: undefined
+[2025-12-09T13:24:19.706Z] 
+[250/379] Processando: Geziane Nunes de Almeida (ID: 2334633)
+[2025-12-09T13:24:19.740Z]    Username: nany
+[2025-12-09T13:24:19.789Z]    Indicador: cleuci
+[2025-12-09T13:24:19.796Z]    Senha: RSra4d3b
+[2025-12-09T13:24:19.800Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:19.804Z]    ❌ Erro: undefined
+[2025-12-09T13:24:20.022Z] 
+[251/379] Processando: Dilvete Borba Alves (ID: 5223375)
+[2025-12-09T13:24:20.045Z]    Username: dilvete1234
+[2025-12-09T13:24:20.048Z]    Indicador: goreti1966
+[2025-12-09T13:24:20.050Z]    Senha: RSgTayN4
+[2025-12-09T13:24:20.054Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:20.056Z]    ❌ Erro: undefined
+[2025-12-09T13:24:20.271Z] 
+[252/379] Processando: CLAUDINEI MOREIRA (ID: 904693)
+[2025-12-09T13:24:20.390Z]    Username: claudineimoreira
+[2025-12-09T13:24:20.393Z]    Indicador: zequinha
+[2025-12-09T13:24:20.396Z]    Senha: RSrmsp35
+[2025-12-09T13:24:20.400Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:20.402Z]    ❌ Erro: undefined
+[2025-12-09T13:24:20.614Z] 
+[253/379] Processando: Luiz Gustavo Ribeiro] (ID: 4245218)
+[2025-12-09T13:24:20.723Z]    Username: luizribeiro
+[2025-12-09T13:24:20.726Z]    Indicador: jozi
+[2025-12-09T13:24:20.729Z]    Senha: RSC8cZuQ
+[2025-12-09T13:24:20.734Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:20.737Z]    ❌ Erro: undefined
+[2025-12-09T13:24:20.941Z] 
+[254/379] Processando: Adiclandia Vicente Lins Gozzer (ID: 1048130)
+[2025-12-09T13:24:21.078Z]    Username: adiclandialins
+[2025-12-09T13:24:21.080Z]    Indicador: nadejelins
+[2025-12-09T13:24:21.083Z]    Senha: RS6RN2rw
+[2025-12-09T13:24:21.087Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:21.089Z]    ❌ Erro: undefined
+[2025-12-09T13:24:21.300Z] 
+[255/379] Processando: Jacilene Pessoa (ID: 2295392)
+[2025-12-09T13:24:21.400Z]    Username: jacilene
+[2025-12-09T13:24:21.403Z]    Indicador: michael
+[2025-12-09T13:24:21.405Z]    Senha: RSAKQkHB
+[2025-12-09T13:24:21.409Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:21.411Z]    ❌ Erro: undefined
+[2025-12-09T13:24:21.628Z] 
+[256/379] Processando: Rosa Alves de Barros Barros (ID: 2586874)
+[2025-12-09T13:24:21.756Z]    Username: rosaalves
+[2025-12-09T13:24:21.759Z]    Indicador: gilvania6905
+[2025-12-09T13:24:21.761Z]    Senha: RSwmarTr
+[2025-12-09T13:24:21.766Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:21.768Z]    ❌ Erro: undefined
+[2025-12-09T13:24:21.975Z] 
+[257/379] Processando: Enildo Vieira januario (ID: 2865441)
+[2025-12-09T13:24:22.101Z]    Username: nildo12rs
+[2025-12-09T13:24:22.103Z]    Indicador: edilson
+[2025-12-09T13:24:22.105Z]    Senha: RSDFrRda
+[2025-12-09T13:24:22.109Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:22.111Z]    ❌ Erro: undefined
+[2025-12-09T13:24:22.320Z] 
+[258/379] Processando: Roberto Avelino Tomé (ID: 7917812)
+[2025-12-09T13:24:22.445Z]    Username: robertotome
+[2025-12-09T13:24:22.452Z]    Indicador: emclaro
+[2025-12-09T13:24:22.454Z]    Senha: RSAvfNng
+[2025-12-09T13:24:22.459Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:22.461Z]    ❌ Erro: undefined
+[2025-12-09T13:24:22.665Z] 
+[259/379] Processando: Adnilson De Paula (ID: 8224912)
+[2025-12-09T13:24:22.801Z]    Username: adnilsonvendedor
+[2025-12-09T13:24:22.804Z]    Indicador: maxbrasil
+[2025-12-09T13:24:22.807Z]    Senha: RS8XYfBm
+[2025-12-09T13:24:22.811Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:22.814Z]    ❌ Erro: undefined
+[2025-12-09T13:24:23.031Z] 
+[260/379] Processando: Adriano Sousa dos Santos (ID: 8112003)
+[2025-12-09T13:24:23.135Z]    Username: adriano
+[2025-12-09T13:24:23.138Z]    Indicador: alessandrarosa
+[2025-12-09T13:24:23.145Z]    Senha: RS5CsVNc
+[2025-12-09T13:24:23.152Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:23.155Z]    ❌ Erro: undefined
+[2025-12-09T13:24:23.375Z] 
+[261/379] Processando: Teone Quirino Soares (ID: 1267829)
+[2025-12-09T13:24:23.490Z]    Username: teone
+[2025-12-09T13:24:23.492Z]    Indicador: michael
+[2025-12-09T13:24:23.495Z]    Senha: RS6STZyL
+[2025-12-09T13:24:23.499Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:23.502Z]    ❌ Erro: undefined
+[2025-12-09T13:24:23.708Z] 
+[262/379] Processando: altamir alves marquardt (ID: 6390609)
+[2025-12-09T13:24:23.815Z]    Username: altamir
+[2025-12-09T13:24:23.817Z]    Indicador: simone
+[2025-12-09T13:24:23.819Z]    Senha: RSES4LB2
+[2025-12-09T13:24:23.824Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:23.826Z]    ❌ Erro: undefined
+[2025-12-09T13:24:24.035Z] 
+[263/379] Processando: john herbert do avelar (ID: 5737344)
+[2025-12-09T13:24:24.139Z]    Username: john
+[2025-12-09T13:24:24.142Z]    Indicador: robertotome
+[2025-12-09T13:24:24.144Z]    Senha: RSgvX9VF
+[2025-12-09T13:24:24.148Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:24.150Z]    ❌ Erro: undefined
+[2025-12-09T13:24:24.352Z] 
+[264/379] Processando: dalverson wagner correia (ID: 8399852)
+[2025-12-09T13:24:24.467Z]    Username: dalverson
+[2025-12-09T13:24:24.470Z]    Indicador: jhonny
+[2025-12-09T13:24:24.472Z]    Senha: RSKNzxcP
+[2025-12-09T13:24:24.476Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:24.478Z]    ❌ Erro: undefined
+[2025-12-09T13:24:24.683Z] 
+[265/379] Processando: Esolimar Vieira paz (ID: 2806973)
+[2025-12-09T13:24:24.801Z]    Username: esolimar
+[2025-12-09T13:24:24.803Z]    Indicador: alessandrarosa
+[2025-12-09T13:24:24.806Z]    Senha: RSG7j9ag
+[2025-12-09T13:24:24.809Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:24.812Z]    ❌ Erro: undefined
+[2025-12-09T13:24:25.014Z] 
+[266/379] Processando: Tatiana Vasconcelos (ID: 6362034)
+[2025-12-09T13:24:25.146Z]    Username: tatiana
+[2025-12-09T13:24:25.148Z]    Indicador: alessandrarosa
+[2025-12-09T13:24:25.152Z]    Senha: RShzTCEw
+[2025-12-09T13:24:25.156Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:25.159Z]    ❌ Erro: undefined
+[2025-12-09T13:24:25.371Z] 
+[267/379] Processando: marileia rio branco dos santos (ID: 2735381)
+[2025-12-09T13:24:25.467Z]    Username: mari10
+[2025-12-09T13:24:25.470Z]    Indicador: alaor
+[2025-12-09T13:24:25.472Z]    Senha: RSkx5dw5
+[2025-12-09T13:24:25.475Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:25.478Z]    ❌ Erro: undefined
+[2025-12-09T13:24:25.687Z] 
+[268/379] Processando: INES TEREZINHA KOLACHNEK (ID: 8366158)
+[2025-12-09T13:24:25.812Z]    Username: ines10
+[2025-12-09T13:24:25.815Z]    Indicador: alaor
+[2025-12-09T13:24:25.817Z]    Senha: RS3xyNug
+[2025-12-09T13:24:25.821Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:25.824Z]    ❌ Erro: undefined
+[2025-12-09T13:24:26.029Z] 
+[269/379] Processando: Joao Medeiros (ID: 5522084)
+[2025-12-09T13:24:26.146Z]    Username: jotace90
+[2025-12-09T13:24:26.148Z]    Indicador: emclaro
+[2025-12-09T13:24:26.151Z]    Senha: RSfCnKqe
+[2025-12-09T13:24:26.155Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:26.158Z]    ❌ Erro: undefined
+[2025-12-09T13:24:26.374Z] 
+[270/379] Processando: Claudiney Sousa Luna (ID: 6897883)
+[2025-12-09T13:24:26.490Z]    Username: claudiney
+[2025-12-09T13:24:26.493Z]    Indicador: michael
+[2025-12-09T13:24:26.495Z]    Senha: RSmWrtfV
+[2025-12-09T13:24:26.501Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:26.503Z]    ❌ Erro: undefined
+[2025-12-09T13:24:26.717Z] 
+[271/379] Processando: Nadja Alves (ID: 9446885)
+[2025-12-09T13:24:26.823Z]    Username: nadjaalves
+[2025-12-09T13:24:26.826Z]    Indicador: alessandrarosa
+[2025-12-09T13:24:26.828Z]    Senha: RSrydqdP
+[2025-12-09T13:24:26.832Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:26.835Z]    ❌ Erro: undefined
+[2025-12-09T13:24:27.046Z] 
+[272/379] Processando: João Vieira Borges (ID: 6280732)
+[2025-12-09T13:24:27.157Z]    Username: joaovieira
+[2025-12-09T13:24:27.160Z]    Indicador: miranda
+[2025-12-09T13:24:27.163Z]    Senha: RStxgWuX
+[2025-12-09T13:24:27.170Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:27.174Z]    ❌ Erro: undefined
+[2025-12-09T13:24:27.388Z] 
+[273/379] Processando: Josias Arruda Coimbra (ID: 8718708)
+[2025-12-09T13:24:27.502Z]    Username: josiascoimbra123
+[2025-12-09T13:24:27.505Z]    Indicador: jotace90
+[2025-12-09T13:24:27.508Z]    Senha: RSu77MMf
+[2025-12-09T13:24:27.513Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:27.515Z]    ❌ Erro: undefined
+[2025-12-09T13:24:27.730Z] 
+[274/379] Processando: Tiago Santos Miranda (ID: 5912054)
+[2025-12-09T13:24:27.846Z]    Username: esradiamante
+[2025-12-09T13:24:27.850Z]    Indicador: rsprolipsi
+[2025-12-09T13:24:27.853Z]    Senha: RSw7fTWn
+[2025-12-09T13:24:27.858Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:27.861Z]    ❌ Erro: undefined
+[2025-12-09T13:24:28.074Z] 
+[275/379] Processando: Jean Farias (ID: 5969457)
+[2025-12-09T13:24:28.190Z]    Username: jean
+[2025-12-09T13:24:28.194Z]    Indicador: miranda
+[2025-12-09T13:24:28.196Z]    Senha: RSdFbjBg
+[2025-12-09T13:24:28.203Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:28.206Z]    ❌ Erro: undefined
+[2025-12-09T13:24:28.418Z] 
+[276/379] Processando: Antônio Geraldo (ID: 4228446)
+[2025-12-09T13:24:28.535Z]    Username: agb
+[2025-12-09T13:24:28.537Z]    Indicador: emclaro
+[2025-12-09T13:24:28.541Z]    Senha: RSW7CJTK
+[2025-12-09T13:24:28.545Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:28.548Z]    ❌ Erro: undefined
+[2025-12-09T13:24:28.756Z] 
+[277/379] Processando: Pillsr Gama (ID: 4238184)
+[2025-12-09T13:24:28.879Z]    Username: pillar
+[2025-12-09T13:24:28.882Z]    Indicador: michael
+[2025-12-09T13:24:28.885Z]    Senha: RS5bYmDq
+[2025-12-09T13:24:28.890Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:28.893Z]    ❌ Erro: undefined
+[2025-12-09T13:24:29.108Z] 
+[278/379] Processando: José Sebastião aves brito (ID: 5723360)
+[2025-12-09T13:24:29.212Z]    Username: tiao
+[2025-12-09T13:24:29.215Z]    Indicador: fernanda
+[2025-12-09T13:24:29.217Z]    Senha: RSwautu6
+[2025-12-09T13:24:29.221Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:29.224Z]    ❌ Erro: undefined
+[2025-12-09T13:24:29.436Z] 
+[279/379] Processando: Leonel Rodrigues (ID: 2924655)
+[2025-12-09T13:24:29.535Z]    Username: top7
+[2025-12-09T13:24:29.538Z]    Indicador: emclaro
+[2025-12-09T13:24:29.540Z]    Senha: RSDNvLmd
+[2025-12-09T13:24:29.544Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:29.547Z]    ❌ Erro: undefined
+[2025-12-09T13:24:29.763Z] 
+[280/379] Processando: Joel Almeida Lara (ID: 6772420)
+[2025-12-09T13:24:29.879Z]    Username: lara
+[2025-12-09T13:24:29.881Z]    Indicador: jean
+[2025-12-09T13:24:29.884Z]    Senha: RSV3JpDz
+[2025-12-09T13:24:29.888Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:29.891Z]    ❌ Erro: undefined
+[2025-12-09T13:24:30.105Z] 
+[281/379] Processando: Sidney Cunha (ID: 8678750)
+[2025-12-09T13:24:30.214Z]    Username: sidney
+[2025-12-09T13:24:30.217Z]    Indicador: zequinha
+[2025-12-09T13:24:30.221Z]    Senha: RSgyvtc7
+[2025-12-09T13:24:30.229Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:30.233Z]    ❌ Erro: undefined
+[2025-12-09T13:24:30.443Z] 
+[282/379] Processando: Myrna Lorena Celste Wilson (ID: 7370660)
+[2025-12-09T13:24:30.580Z]    Username: mbalikasaudeebemestar
+[2025-12-09T13:24:30.582Z]    Indicador: michael
+[2025-12-09T13:24:30.585Z]    Senha: RSfDHwKV
+[2025-12-09T13:24:30.589Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:30.593Z]    ❌ Erro: undefined
+[2025-12-09T13:24:30.801Z] 
+[283/379] Processando: Oséias Soares pinto (ID: 5725195)
+[2025-12-09T13:24:30.924Z]    Username: oseias3420
+[2025-12-09T13:24:30.928Z]    Indicador: vencedortop
+[2025-12-09T13:24:30.932Z]    Senha: RSxuUqUA
+[2025-12-09T13:24:30.937Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:30.940Z]    ❌ Erro: undefined
+[2025-12-09T13:24:31.158Z] 
+[284/379] Processando: Lucimari Oliveira (ID: 6781757)
+[2025-12-09T13:24:31.268Z]    Username: aguiafenix
+[2025-12-09T13:24:31.271Z]    Indicador: emclaro
+[2025-12-09T13:24:31.275Z]    Senha: RSjama7g
+[2025-12-09T13:24:31.279Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:31.282Z]    ❌ Erro: undefined
+[2025-12-09T13:24:31.487Z] 
+[285/379] Processando: Odair Luna (ID: 4740024)
+[2025-12-09T13:24:31.613Z]    Username: odairluna
+[2025-12-09T13:24:31.615Z]    Indicador: rsprolipsi
+[2025-12-09T13:24:31.617Z]    Senha: RS84LSJN
+[2025-12-09T13:24:31.621Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:31.624Z]    ❌ Erro: undefined
+[2025-12-09T13:24:31.830Z] 
+[286/379] Processando: Geiza Rodrigues santos (ID: 5994738)
+[2025-12-09T13:24:31.938Z]    Username: geizars
+[2025-12-09T13:24:31.941Z]    Indicador: esradiamante
+[2025-12-09T13:24:31.943Z]    Senha: RSfqTJ9v
+[2025-12-09T13:24:31.947Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:31.950Z]    ❌ Erro: undefined
+[2025-12-09T13:24:32.158Z] 
+[287/379] Processando: José Carlos (ID: 8618916)
+[2025-12-09T13:24:32.274Z]    Username: josecarlos
+[2025-12-09T13:24:32.276Z]    Indicador: vicente
+[2025-12-09T13:24:32.278Z]    Senha: RSqbQXDs
+[2025-12-09T13:24:32.284Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:32.289Z]    ❌ Erro: undefined
+[2025-12-09T13:24:32.500Z] 
+[288/379] Processando: Fabiano Guizoni (ID: 1460404)
+[2025-12-09T13:24:32.624Z]    Username: luvi
+[2025-12-09T13:24:32.661Z]    Indicador: aguiafenix
+[2025-12-09T13:24:32.663Z]    Senha: RSqRr57d
+[2025-12-09T13:24:32.668Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:32.671Z]    ❌ Erro: undefined
+[2025-12-09T13:24:32.874Z] 
+[289/379] Processando: Joziel Conceição da silva (ID: 327483)
+[2025-12-09T13:24:32.991Z]    Username: jozielsilva
+[2025-12-09T13:24:32.993Z]    Indicador: michael
+[2025-12-09T13:24:32.996Z]    Senha: RSQGwdNB
+[2025-12-09T13:24:33.000Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:33.004Z]    ❌ Erro: undefined
+[2025-12-09T13:24:33.216Z] 
+[290/379] Processando: Valter dos Santos nascimento (ID: 4215356)
+[2025-12-09T13:24:33.335Z]    Username: lapiduz
+[2025-12-09T13:24:33.338Z]    Indicador: esradiamante
+[2025-12-09T13:24:33.340Z]    Senha: RSHjCxNN
+[2025-12-09T13:24:33.345Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:33.348Z]    ❌ Erro: undefined
+[2025-12-09T13:24:33.562Z] 
+[291/379] Processando: Edner Guimarães de Andrade (ID: 2921457)
+[2025-12-09T13:24:33.680Z]    Username: ednerandrade
+[2025-12-09T13:24:33.683Z]    Indicador: esradiamante
+[2025-12-09T13:24:33.686Z]    Senha: RS3GQWMP
+[2025-12-09T13:24:33.695Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:33.697Z]    ❌ Erro: undefined
+[2025-12-09T13:24:33.906Z] 
+[292/379] Processando: Jorgenei Mendes da Silva (ID: 5775405)
+[2025-12-09T13:24:34.013Z]    Username: viversaude
+[2025-12-09T13:24:34.015Z]    Indicador: esradiamante
+[2025-12-09T13:24:34.017Z]    Senha: RSfZmnzA
+[2025-12-09T13:24:34.021Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:34.024Z]    ❌ Erro: undefined
+[2025-12-09T13:24:34.229Z] 
+[293/379] Processando: Silvia Terezinha de Almeida (ID: 5155032)
+[2025-12-09T13:24:34.369Z]    Username: silvia
+[2025-12-09T13:24:34.371Z]    Indicador: alaor
+[2025-12-09T13:24:34.374Z]    Senha: RSX84Zjd
+[2025-12-09T13:24:34.379Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:34.381Z]    ❌ Erro: undefined
+[2025-12-09T13:24:34.588Z] 
+[294/379] Processando: Denilson Souza de lima (ID: 2432273)
+[2025-12-09T13:24:34.713Z]    Username: denilson
+[2025-12-09T13:24:34.716Z]    Indicador: vencedortop
+[2025-12-09T13:24:34.720Z]    Senha: RSNRwfqu
+[2025-12-09T13:24:34.726Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:34.729Z]    ❌ Erro: undefined
+[2025-12-09T13:24:34.944Z] 
+[295/379] Processando: JORGE HENRIQUE NUNES DE OLIVEIRA (ID: 7987183)
+[2025-12-09T13:24:35.057Z]    Username: sucessofb
+[2025-12-09T13:24:35.094Z]    Indicador: emclaro
+[2025-12-09T13:24:35.151Z]    Senha: RSjPbeXk
+[2025-12-09T13:24:35.155Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:35.157Z]    ❌ Erro: undefined
+[2025-12-09T13:24:35.366Z] 
+[296/379] Processando: CLAUDIA SUZANE BRUM (ID: 6447640)
+[2025-12-09T13:24:35.502Z]    Username: cbrum
+[2025-12-09T13:24:35.527Z]    Indicador: sucessofb
+[2025-12-09T13:24:35.546Z]    Senha: RSEaWQUD
+[2025-12-09T13:24:35.597Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:35.624Z]    ❌ Erro: undefined
+[2025-12-09T13:24:35.836Z] 
+[297/379] Processando: Claudenir Augusto da Silva (ID: 9891921)
+[2025-12-09T13:24:35.947Z]    Username: claudenir01
+[2025-12-09T13:24:35.949Z]    Indicador: josesantos
+[2025-12-09T13:24:35.952Z]    Senha: RSj5QCqN
+[2025-12-09T13:24:35.956Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:35.958Z]    ❌ Erro: undefined
+[2025-12-09T13:24:36.171Z] 
+[298/379] Processando: Hamilton José da Rosa zorzenao (ID: 6315565)
+[2025-12-09T13:24:36.302Z]    Username: hamiltonrosa1
+[2025-12-09T13:24:36.307Z]    Indicador: alaor
+[2025-12-09T13:24:36.314Z]    Senha: RSy5wvu7
+[2025-12-09T13:24:36.321Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:36.324Z]    ❌ Erro: undefined
+[2025-12-09T13:24:36.531Z] 
+[299/379] Processando: Maura Rodrigues da Silva ermelino (ID: 4839474)
+[2025-12-09T13:24:36.647Z]    Username: maura
+[2025-12-09T13:24:36.649Z]    Indicador: josesantos
+[2025-12-09T13:24:36.652Z]    Senha: RSdjuzVz
+[2025-12-09T13:24:36.656Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:36.658Z]    ❌ Erro: undefined
+[2025-12-09T13:24:36.870Z] 
+[300/379] Processando: Firmino Figueiredo dos Santos (ID: 6762842)
+[2025-12-09T13:24:37.004Z]    Username: firmino
+[2025-12-09T13:24:37.027Z]    Indicador: josesantos
+[2025-12-09T13:24:37.106Z]    Senha: RSGg7THE
+[2025-12-09T13:24:37.110Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:37.113Z]    ❌ Erro: undefined
+[2025-12-09T13:24:37.321Z] 
+[301/379] Processando: Cassio Natel (ID: 5689732)
+[2025-12-09T13:24:37.435Z]    Username: cassio
+[2025-12-09T13:24:37.438Z]    Indicador: josesantos
+[2025-12-09T13:24:37.440Z]    Senha: RS37rVWR
+[2025-12-09T13:24:37.444Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:37.447Z]    ❌ Erro: undefined
+[2025-12-09T13:24:37.650Z] 
+[302/379] Processando: Willer Batista (ID: 7987614)
+[2025-12-09T13:24:37.780Z]    Username: willer
+[2025-12-09T13:24:37.783Z]    Indicador: esradiamante
+[2025-12-09T13:24:37.786Z]    Senha: RSEEStVA
+[2025-12-09T13:24:37.791Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:37.795Z]    ❌ Erro: undefined
+[2025-12-09T13:24:38.010Z] 
+[303/379] Processando: Jocelito Carvalho do Prado (ID: 1847928)
+[2025-12-09T13:24:38.136Z]    Username: jocelito1
+[2025-12-09T13:24:38.138Z]    Indicador: hamiltonrosa1
+[2025-12-09T13:24:38.142Z]    Senha: RSruqLUm
+[2025-12-09T13:24:38.146Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:38.148Z]    ❌ Erro: undefined
+[2025-12-09T13:24:38.355Z] 
+[304/379] Processando: ernani lima pereira (ID: 5423761)
+[2025-12-09T13:24:38.469Z]    Username: ernani
+[2025-12-09T13:24:38.472Z]    Indicador: alaor
+[2025-12-09T13:24:38.474Z]    Senha: RSkmLmrX
+[2025-12-09T13:24:38.478Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:38.480Z]    ❌ Erro: undefined
+[2025-12-09T13:24:38.685Z] 
+[305/379] Processando: Aparicio Monteiro (ID: 8116281)
+[2025-12-09T13:24:38.835Z]    Username: monteiro
+[2025-12-09T13:24:38.839Z]    Indicador: ernani
+[2025-12-09T13:24:38.841Z]    Senha: RSx5Fzew
+[2025-12-09T13:24:38.845Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:38.848Z]    ❌ Erro: undefined
+[2025-12-09T13:24:39.058Z] 
+[306/379] Processando: Rubens Solarevicz (ID: 1501765)
+[2025-12-09T13:24:39.180Z]    Username: rubvicz
+[2025-12-09T13:24:39.183Z]    Indicador: ernani
+[2025-12-09T13:24:39.185Z]    Senha: RSnrNrtT
+[2025-12-09T13:24:39.189Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:39.192Z]    ❌ Erro: undefined
+[2025-12-09T13:24:39.405Z] 
+[307/379] Processando: Thais Alves (ID: 3922646)
+[2025-12-09T13:24:39.524Z]    Username: thaisalves
+[2025-12-09T13:24:39.527Z]    Indicador: ingrid
+[2025-12-09T13:24:39.529Z]    Senha: RSHB6ybU
+[2025-12-09T13:24:39.534Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:39.536Z]    ❌ Erro: undefined
+[2025-12-09T13:24:39.747Z] 
+[308/379] Processando: Jose Carlos messias dos santos (ID: 4105529)
+[2025-12-09T13:24:39.814Z]    Username: josemessias
+[2025-12-09T13:24:39.817Z]    Indicador: zequinha
+[2025-12-09T13:24:39.820Z]    Senha: RS83hhJx
+[2025-12-09T13:24:39.825Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:39.828Z]    ❌ Erro: undefined
+[2025-12-09T13:24:40.043Z] 
+[309/379] Processando: pedro paulista prado (ID: 747015)
+[2025-12-09T13:24:40.158Z]    Username: pedrop
+[2025-12-09T13:24:40.161Z]    Indicador: josemessias
+[2025-12-09T13:24:40.162Z]    Senha: RSV9Dj49
+[2025-12-09T13:24:40.167Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:40.170Z]    ❌ Erro: undefined
+[2025-12-09T13:24:40.385Z] 
+[310/379] Processando: Pedro de sousa barros (ID: 9376969)
+[2025-12-09T13:24:40.483Z]    Username: pedrosb
+[2025-12-09T13:24:40.486Z]    Indicador: esradiamante
+[2025-12-09T13:24:40.488Z]    Senha: RSKrramj
+[2025-12-09T13:24:40.493Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:40.495Z]    ❌ Erro: undefined
+[2025-12-09T13:24:40.698Z] 
+[311/379] Processando: Hamilton José da Rosa zorzenao (ID: 6800588)
+[2025-12-09T13:24:40.819Z]    Username: hamiltonrosa
+[2025-12-09T13:24:40.821Z]    Indicador: renato
+[2025-12-09T13:24:40.824Z]    Senha: RSA4c75v
+[2025-12-09T13:24:40.830Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:40.833Z]    ❌ Erro: undefined
+[2025-12-09T13:24:41.041Z] 
+[312/379] Processando: Rogerio Tavares da Veiga (ID: 2194531)
+[2025-12-09T13:24:41.069Z]    Username: rogeriotavares
+[2025-12-09T13:24:41.072Z]    Indicador: hamiltonrosa
+[2025-12-09T13:24:41.074Z]    Senha: RSvKuSze
+[2025-12-09T13:24:41.078Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:41.080Z]    ❌ Erro: undefined
+[2025-12-09T13:24:41.291Z] 
+[313/379] Processando: Alciones luis Rissardi (ID: 9364671)
+[2025-12-09T13:24:41.341Z]    Username: alcionesrissardi
+[2025-12-09T13:24:41.343Z]    Indicador: miranda
+[2025-12-09T13:24:41.346Z]    Senha: RSpqq5Dn
+[2025-12-09T13:24:41.361Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:41.406Z]    ❌ Erro: undefined
+[2025-12-09T13:24:41.618Z] 
+[314/379] Processando: Romualdo Bezerra da Silva (ID: 2687833)
+[2025-12-09T13:24:41.647Z]    Username: ronespz
+[2025-12-09T13:24:41.650Z]    Indicador: mauricio
+[2025-12-09T13:24:41.652Z]    Senha: RSX7bW33
+[2025-12-09T13:24:41.656Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:41.659Z]    ❌ Erro: undefined
+[2025-12-09T13:24:41.866Z] 
+[315/379] Processando: Alirio Moro (ID: 9425156)
+[2025-12-09T13:24:42.002Z]    Username: morospzmt
+[2025-12-09T13:24:42.005Z]    Indicador: ronespz
+[2025-12-09T13:24:42.007Z]    Senha: RSkUfYdL
+[2025-12-09T13:24:42.012Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:42.015Z]    ❌ Erro: undefined
+[2025-12-09T13:24:42.227Z] 
+[316/379] Processando: Manoel Matos Oliveira (ID: 6767246)
+[2025-12-09T13:24:42.248Z]    Username: manoel551
+[2025-12-09T13:24:42.250Z]    Indicador: emclaro
+[2025-12-09T13:24:42.252Z]    Senha: RSERUXmG
+[2025-12-09T13:24:42.257Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:42.261Z]    ❌ Erro: undefined
+[2025-12-09T13:24:42.477Z] 
+[317/379] Processando: Sara Bezerra da Silva (ID: 7727600)
+[2025-12-09T13:24:42.480Z]    Username: silvaspz
+[2025-12-09T13:24:42.482Z]    Indicador: ronespz
+[2025-12-09T13:24:42.484Z]    Senha: RS9CjMRy
+[2025-12-09T13:24:42.489Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:42.492Z]    ❌ Erro: undefined
+[2025-12-09T13:24:42.696Z] 
+[318/379] Processando: José jose Rodrigues (ID: 7967528)
+[2025-12-09T13:24:42.725Z]    Username: jmrodrigues
+[2025-12-09T13:24:42.728Z]    Indicador: willer
+[2025-12-09T13:24:42.730Z]    Senha: RSwcqmWG
+[2025-12-09T13:24:42.734Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:42.737Z]    ❌ Erro: undefined
+[2025-12-09T13:24:42.947Z] 
+[319/379] Processando: Maria José Santos de Ávila (ID: 4727953)
+[2025-12-09T13:24:42.970Z]    Username: mariaspz
+[2025-12-09T13:24:42.972Z]    Indicador: morospzmt
+[2025-12-09T13:24:42.975Z]    Senha: RSC8SGFR
+[2025-12-09T13:24:42.979Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:42.982Z]    ❌ Erro: undefined
+[2025-12-09T13:24:43.195Z] 
+[320/379] Processando: Everton Magnus Cardoso (ID: 5190852)
+[2025-12-09T13:24:43.250Z]    Username: everton
+[2025-12-09T13:24:43.260Z]    Indicador: manoel551
+[2025-12-09T13:24:43.295Z]    Senha: RSVkpPgq
+[2025-12-09T13:24:43.346Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:43.348Z]    ❌ Erro: undefined
+[2025-12-09T13:24:43.561Z] 
+[321/379] Processando: Helida Alves Farias (ID: 7557243)
+[2025-12-09T13:24:43.581Z]    Username: helida
+[2025-12-09T13:24:43.583Z]    Indicador: erica
+[2025-12-09T13:24:43.585Z]    Senha: RSFMT7pq
+[2025-12-09T13:24:43.589Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:43.591Z]    ❌ Erro: undefined
+[2025-12-09T13:24:43.802Z] 
+[322/379] Processando: Luciano Lopes Sena (ID: 7308989)
+[2025-12-09T13:24:43.826Z]    Username: lucianosena
+[2025-12-09T13:24:43.828Z]    Indicador: esradiamante
+[2025-12-09T13:24:43.830Z]    Senha: RSfKRakU
+[2025-12-09T13:24:43.835Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:43.838Z]    ❌ Erro: undefined
+[2025-12-09T13:24:44.051Z] 
+[323/379] Processando: Andreia Pacheco da Silva (ID: 5281789)
+[2025-12-09T13:24:44.082Z]    Username: 5a9h2n9c3
+[2025-12-09T13:24:44.085Z]    Indicador: emclaro
+[2025-12-09T13:24:44.087Z]    Senha: RSeX6EDY
+[2025-12-09T13:24:44.092Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:44.095Z]    ❌ Erro: undefined
+[2025-12-09T13:24:44.300Z] 
+[324/379] Processando: Paola Emanuelle Figueiredo (ID: 264132)
+[2025-12-09T13:24:44.304Z]    Username: paola2205
+[2025-12-09T13:24:44.307Z]    Indicador: miranda
+[2025-12-09T13:24:44.310Z]    Senha: RSWAxx5g
+[2025-12-09T13:24:44.315Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:44.318Z]    ❌ Erro: undefined
+[2025-12-09T13:24:44.534Z] 
+[325/379] Processando: Urbano Barreto (ID: 478629)
+[2025-12-09T13:24:44.559Z]    Username: barreto
+[2025-12-09T13:24:44.562Z]    Indicador: souza
+[2025-12-09T13:24:44.564Z]    Senha: RSWVHDM8
+[2025-12-09T13:24:44.568Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:44.570Z]    ❌ Erro: undefined
+[2025-12-09T13:24:44.783Z] 
+[326/379] Processando: Josué Cabral da Luz (ID: 9316505)
+[2025-12-09T13:24:44.803Z]    Username: cabral
+[2025-12-09T13:24:44.806Z]    Indicador: ernani
+[2025-12-09T13:24:44.808Z]    Senha: RSzN4YKK
+[2025-12-09T13:24:44.812Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:44.815Z]    ❌ Erro: undefined
+[2025-12-09T13:24:45.033Z] 
+[327/379] Processando: Odenir Paulo de Oliveira (ID: 4596438)
+[2025-12-09T13:24:45.048Z]    Username: denisoliveira
+[2025-12-09T13:24:45.050Z]    Indicador: ernani
+[2025-12-09T13:24:45.052Z]    Senha: RSGx6X7s
+[2025-12-09T13:24:45.057Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:45.059Z]    ❌ Erro: undefined
+[2025-12-09T13:24:45.266Z] 
+[328/379] Processando: Marcos Da Silva (ID: 719223)
+[2025-12-09T13:24:45.358Z]    Username: marquin
+[2025-12-09T13:24:45.361Z]    Indicador: miranda
+[2025-12-09T13:24:45.363Z]    Senha: RSRRNXc7
+[2025-12-09T13:24:45.367Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:45.369Z]    ❌ Erro: undefined
+[2025-12-09T13:24:45.584Z] 
+[329/379] Processando: Gledison Roberto (ID: 16527)
+[2025-12-09T13:24:45.603Z]    Username: gledison
+[2025-12-09T13:24:45.606Z]    Indicador: mauricio
+[2025-12-09T13:24:45.609Z]    Senha: RS96FCXj
+[2025-12-09T13:24:45.615Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:45.618Z]    ❌ Erro: undefined
+[2025-12-09T13:24:45.834Z] 
+[330/379] Processando: Ezequiel Alves da Fonseca (ID: 7683321)
+[2025-12-09T13:24:45.859Z]    Username: ezequielfonseca
+[2025-12-09T13:24:45.861Z]    Indicador: michael
+[2025-12-09T13:24:45.864Z]    Senha: RSNbWsru
+[2025-12-09T13:24:45.868Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:45.871Z]    ❌ Erro: undefined
+[2025-12-09T13:24:46.084Z] 
+[331/379] Processando: Chagas pinto (ID: 7877785)
+[2025-12-09T13:24:46.104Z]    Username: chagas.com
+[2025-12-09T13:24:46.106Z]    Indicador: michael
+[2025-12-09T13:24:46.109Z]    Senha: RSxRN9Ws
+[2025-12-09T13:24:46.113Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:46.116Z]    ❌ Erro: undefined
+[2025-12-09T13:24:46.332Z] 
+[332/379] Processando: carlos gomes cavalcante (ID: 5127583)
+[2025-12-09T13:24:46.348Z]    Username: carlos
+[2025-12-09T13:24:46.350Z]    Indicador: joaoalgarrao
+[2025-12-09T13:24:46.353Z]    Senha: RSrjgpan
+[2025-12-09T13:24:46.357Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:46.470Z]    ❌ Erro: undefined
+[2025-12-09T13:24:46.677Z] 
+[333/379] Processando: Jardel Rubem Gaioso Carneiro (ID: 5791006)
+[2025-12-09T13:24:46.703Z]    Username: lojaonline
+[2025-12-09T13:24:46.706Z]    Indicador: esradiamante
+[2025-12-09T13:24:46.708Z]    Senha: RScZVaES
+[2025-12-09T13:24:46.712Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:46.715Z]    ❌ Erro: undefined
+[2025-12-09T13:24:46.976Z] 
+[334/379] Processando: João Nazaré do Socorro Ferreira (ID: 3060979)
+[2025-12-09T13:24:47.004Z]    Username: compreaqui
+[2025-12-09T13:24:47.021Z]    Indicador: lojaonline
+[2025-12-09T13:24:47.025Z]    Senha: RSwcx344
+[2025-12-09T13:24:47.032Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:47.034Z]    ❌ Erro: undefined
+[2025-12-09T13:24:47.243Z] 
+[335/379] Processando: José Rene Lira de Queiroz (ID: 2281656)
+[2025-12-09T13:24:47.270Z]    Username: maissaude
+[2025-12-09T13:24:47.273Z]    Indicador: lojaonline
+[2025-12-09T13:24:47.275Z]    Senha: RSV8krpm
+[2025-12-09T13:24:47.280Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:47.283Z]    ❌ Erro: undefined
+[2025-12-09T13:24:47.492Z] 
+[336/379] Processando: Aldo Silvestre Dos Santos (ID: 8919528)
+[2025-12-09T13:24:47.625Z]    Username: maisvida
+[2025-12-09T13:24:47.627Z]    Indicador: maissaude
+[2025-12-09T13:24:47.630Z]    Senha: RSLJbJyP
+[2025-12-09T13:24:47.634Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:47.637Z]    ❌ Erro: undefined
+[2025-12-09T13:24:47.853Z] 
+[337/379] Processando: Antônio Marcos Costa (ID: 8044065)
+[2025-12-09T13:24:47.981Z]    Username: antoniomarcos
+[2025-12-09T13:24:47.985Z]    Indicador: compreaqui
+[2025-12-09T13:24:47.988Z]    Senha: RS48RM5b
+[2025-12-09T13:24:47.992Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:47.995Z]    ❌ Erro: undefined
+[2025-12-09T13:24:48.208Z] 
+[338/379] Processando: Osmar pererira de godoy (ID: 1977768)
+[2025-12-09T13:24:48.359Z]    Username: godoy
+[2025-12-09T13:24:48.362Z]    Indicador: vicente
+[2025-12-09T13:24:48.365Z]    Senha: RSNjbK4L
+[2025-12-09T13:24:48.369Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:48.372Z]    ❌ Erro: undefined
+[2025-12-09T13:24:48.620Z] 
+[339/379] Processando: Emanuel Davi (ID: 9113238)
+[2025-12-09T13:24:48.771Z]    Username: emanuel
+[2025-12-09T13:24:48.826Z]    Indicador: emclaro
+[2025-12-09T13:24:48.841Z]    Senha: RShCHAmh
+[2025-12-09T13:24:48.851Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:48.855Z]    ❌ Erro: undefined
+[2025-12-09T13:24:49.090Z] 
+[340/379] Processando: Mauro Bellinel (ID: 172896)
+[2025-12-09T13:24:49.250Z]    Username: mauro
+[2025-12-09T13:24:49.256Z]    Indicador: miranda
+[2025-12-09T13:24:49.258Z]    Senha: RSHKxtf6
+[2025-12-09T13:24:49.272Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:49.275Z]    ❌ Erro: undefined
+[2025-12-09T13:24:49.488Z] 
+[341/379] Processando: Lediane Gonçalves santos (ID: 4739150)
+[2025-12-09T13:24:49.615Z]    Username: leydy10
+[2025-12-09T13:24:49.628Z]    Indicador: michael
+[2025-12-09T13:24:49.648Z]    Senha: RSFYQF9d
+[2025-12-09T13:24:49.653Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:49.656Z]    ❌ Erro: undefined
+[2025-12-09T13:24:49.869Z] 
+[342/379] Processando: Izaac Pinheiro da Silva Filho (ID: 9302092)
+[2025-12-09T13:24:50.003Z]    Username: mrpinheiro
+[2025-12-09T13:24:50.005Z]    Indicador: domingossp
+[2025-12-09T13:24:50.008Z]    Senha: RSurRXbE
+[2025-12-09T13:24:50.013Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:50.015Z]    ❌ Erro: undefined
+[2025-12-09T13:24:50.223Z] 
+[343/379] Processando: Luis Fernando Ilário Rodrigues (ID: 9035882)
+[2025-12-09T13:24:50.358Z]    Username: luis
+[2025-12-09T13:24:50.471Z]    Indicador: erica
+[2025-12-09T13:24:50.702Z]    Senha: RS4pRUPr
+[2025-12-09T13:24:50.800Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:50.817Z]    ❌ Erro: undefined
+[2025-12-09T13:24:51.035Z] 
+[344/379] Processando: Wagner Oliveira (ID: 651671)
+[2025-12-09T13:24:51.181Z]    Username: wagner01
+[2025-12-09T13:24:51.191Z]    Indicador: emclaro
+[2025-12-09T13:24:51.193Z]    Senha: RSsy7fZP
+[2025-12-09T13:24:51.198Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:51.200Z]    ❌ Erro: undefined
+[2025-12-09T13:24:51.409Z] 
+[345/379] Processando: Abismael Belo (ID: 7446304)
+[2025-12-09T13:24:51.536Z]    Username: abisamgela
+[2025-12-09T13:24:51.539Z]    Indicador: michael
+[2025-12-09T13:24:51.542Z]    Senha: RSYx4Bq9
+[2025-12-09T13:24:51.552Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:51.555Z]    ❌ Erro: undefined
+[2025-12-09T13:24:51.774Z] 
+[346/379] Processando: José Marcio (ID: 4705288)
+[2025-12-09T13:24:51.915Z]    Username: xtnzjob
+[2025-12-09T13:24:51.919Z]    Indicador: emclaro
+[2025-12-09T13:24:51.921Z]    Senha: RSnBQhvv
+[2025-12-09T13:24:51.925Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:51.928Z]    ❌ Erro: undefined
+[2025-12-09T13:24:52.133Z] 
+[347/379] Processando: Salvador dos Reus (ID: 6961338)
+[2025-12-09T13:24:52.259Z]    Username: reidosul
+[2025-12-09T13:24:52.261Z]    Indicador: rsprolipsi
+[2025-12-09T13:24:52.263Z]    Senha: RSY3vP47
+[2025-12-09T13:24:52.268Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:52.271Z]    ❌ Erro: undefined
+[2025-12-09T13:24:52.477Z] 
+[348/379] Processando: Alisson Breno Ribeiro (ID: 7756586)
+[2025-12-09T13:24:52.615Z]    Username: alisson
+[2025-12-09T13:24:52.618Z]    Indicador: celso
+[2025-12-09T13:24:52.620Z]    Senha: RSAu7FR8
+[2025-12-09T13:24:52.629Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:52.635Z]    ❌ Erro: undefined
+[2025-12-09T13:24:52.849Z] 
+[349/379] Processando: Helenice Moreno de Oliveira (ID: 5470981)
+[2025-12-09T13:24:52.992Z]    Username: segredodasaude
+[2025-12-09T13:24:52.994Z]    Indicador: emclaro
+[2025-12-09T13:24:52.997Z]    Senha: RSUq2A5J
+[2025-12-09T13:24:53.003Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:53.005Z]    ❌ Erro: undefined
+[2025-12-09T13:24:53.223Z] 
+[350/379] Processando: Francisco das chagas Pereira Araujo (ID: 1081172)
+[2025-12-09T13:24:53.337Z]    Username: diamante
+[2025-12-09T13:24:53.345Z]    Indicador: rsprolipsi
+[2025-12-09T13:24:53.352Z]    Senha: RSqd7udW
+[2025-12-09T13:24:53.357Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:53.363Z]    ❌ Erro: undefined
+[2025-12-09T13:24:53.660Z] 
+[351/379] Processando: Mauricio Martins Viana (ID: 5997730)
+[2025-12-09T13:24:53.816Z]    Username: viana
+[2025-12-09T13:24:53.829Z]    Indicador: rubvicz
+[2025-12-09T13:24:53.843Z]    Senha: RSLqrjrQ
+[2025-12-09T13:24:53.847Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:53.850Z]    ❌ Erro: undefined
+[2025-12-09T13:24:54.061Z] 
+[352/379] Processando: Rozangela Bodi Santana (ID: 6386735)
+[2025-12-09T13:24:54.185Z]    Username: rozangela0784
+[2025-12-09T13:24:54.189Z]    Indicador: leonina
+[2025-12-09T13:24:54.191Z]    Senha: RShsdErF
+[2025-12-09T13:24:54.195Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:54.197Z]    ❌ Erro: undefined
+[2025-12-09T13:24:54.412Z] 
+[353/379] Processando: Sonia Maria de Carvalho (ID: 4751043)
+[2025-12-09T13:24:54.520Z]    Username: produtosnaturais
+[2025-12-09T13:24:54.523Z]    Indicador: segredodasaude
+[2025-12-09T13:24:54.525Z]    Senha: RSrkqvyX
+[2025-12-09T13:24:54.529Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:54.532Z]    ❌ Erro: undefined
+[2025-12-09T13:24:54.736Z] 
+[354/379] Processando: Nara Timm Vianna (ID: 1694875)
+[2025-12-09T13:24:54.879Z]    Username: nararejanetimmvianna
+[2025-12-09T13:24:54.888Z]    Indicador: segredodasaude
+[2025-12-09T13:24:54.932Z]    Senha: RSrgU24r
+[2025-12-09T13:24:54.940Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:54.943Z]    ❌ Erro: undefined
+[2025-12-09T13:24:55.158Z] 
+[355/379] Processando: Andréia Bigas de lima (ID: 8571710)
+[2025-12-09T13:24:55.297Z]    Username: deiasaude
+[2025-12-09T13:24:55.386Z]    Indicador: segredodasaude
+[2025-12-09T13:24:55.420Z]    Senha: RSSW5vjJ
+[2025-12-09T13:24:55.432Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:55.441Z]    ❌ Erro: undefined
+[2025-12-09T13:24:55.655Z] 
+[356/379] Processando: Izaías Vieira Costa (ID: 3446858)
+[2025-12-09T13:24:55.671Z]    Username: saudenatural
+[2025-12-09T13:24:55.674Z]    Indicador: segredodasaude
+[2025-12-09T13:24:55.677Z]    Senha: RSWdSY3U
+[2025-12-09T13:24:55.681Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:55.685Z]    ❌ Erro: undefined
+[2025-12-09T13:24:55.890Z] 
+[357/379] Processando: Rosineia Aparecida Rodrigues (ID: 3540357)
+[2025-12-09T13:24:56.004Z]    Username: rosi
+[2025-12-09T13:24:56.006Z]    Indicador: miranda
+[2025-12-09T13:24:56.008Z]    Senha: RS7jtccy
+[2025-12-09T13:24:56.012Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:56.014Z]    ❌ Erro: undefined
+[2025-12-09T13:24:56.227Z] 
+[358/379] Processando: Jose Vidal (ID: 8754330)
+[2025-12-09T13:24:56.348Z]    Username: jose153830
+[2025-12-09T13:24:56.354Z]    Indicador: michael
+[2025-12-09T13:24:56.357Z]    Senha: RSjYWh5V
+[2025-12-09T13:24:56.364Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:56.382Z]    ❌ Erro: undefined
+[2025-12-09T13:24:56.598Z] 
+[359/379] Processando: Nagila Marques Martins de Souza (ID: 6472348)
+[2025-12-09T13:24:56.762Z]    Username: nagilamarques
+[2025-12-09T13:24:56.764Z]    Indicador: segredodasaude
+[2025-12-09T13:24:56.774Z]    Senha: RSKuXPr3
+[2025-12-09T13:24:56.778Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:56.781Z]    ❌ Erro: undefined
+[2025-12-09T13:24:56.992Z] 
+[360/379] Processando: Sergio Filgueiras magalhaes (ID: 9053548)
+[2025-12-09T13:24:57.104Z]    Username: sergio124588
+[2025-12-09T13:24:57.109Z]    Indicador: emclaro
+[2025-12-09T13:24:57.112Z]    Senha: RSdtLDFL
+[2025-12-09T13:24:57.117Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:57.121Z]    ❌ Erro: undefined
+[2025-12-09T13:24:57.337Z] 
+[361/379] Processando: anderson fabre (ID: 5109565)
+[2025-12-09T13:24:57.459Z]    Username: anderson2025
+[2025-12-09T13:24:57.461Z]    Indicador: miranda
+[2025-12-09T13:24:57.463Z]    Senha: RSGzLMRm
+[2025-12-09T13:24:57.467Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:57.469Z]    ❌ Erro: undefined
+[2025-12-09T13:24:57.683Z] 
+[362/379] Processando: Maria Sarmento (ID: 3591780)
+[2025-12-09T13:24:57.817Z]    Username: mariasarmento
+[2025-12-09T13:24:57.919Z]    Indicador: ameliaribeiro
+[2025-12-09T13:24:57.932Z]    Senha: RSxpmXAk
+[2025-12-09T13:24:57.946Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:57.949Z]    ❌ Erro: undefined
+[2025-12-09T13:24:58.334Z] 
+[363/379] Processando: Analia Silvana Marques Martins (ID: 6466954)
+[2025-12-09T13:24:58.473Z]    Username: analiamarques
+[2025-12-09T13:24:59.007Z]    Indicador: nagilamarques
+[2025-12-09T13:24:59.030Z]    Senha: RSy3tJUR
+[2025-12-09T13:24:59.035Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:59.039Z]    ❌ Erro: undefined
+[2025-12-09T13:24:59.286Z] 
+[364/379] Processando: Jaira Marques de Oliveira (ID: 5880433)
+[2025-12-09T13:24:59.393Z]    Username: jaira
+[2025-12-09T13:24:59.650Z]    Indicador: nagilamarques
+[2025-12-09T13:24:59.653Z]    Senha: RSskFxBu
+[2025-12-09T13:24:59.735Z] ❌ Erro na requisição: 
+[2025-12-09T13:24:59.803Z]    ❌ Erro: undefined
+[2025-12-09T13:25:00.013Z] 
+[365/379] Processando: Israel Santana (ID: 8440910)
+[2025-12-09T13:25:00.038Z]    Username: santana93
+[2025-12-09T13:25:00.047Z]    Indicador: michael
+[2025-12-09T13:25:00.049Z]    Senha: RSRmvdaR
+[2025-12-09T13:25:00.053Z] ❌ Erro na requisição: 
+[2025-12-09T13:25:00.057Z]    ❌ Erro: undefined
+[2025-12-09T13:25:00.265Z] 
+[366/379] Processando: Vital érg -- Corporation -- (ID: 8672866)
+[2025-12-09T13:25:00.294Z]    Username: elizeucasella
+[2025-12-09T13:25:00.297Z]    Indicador: miranda
+[2025-12-09T13:25:00.299Z]    Senha: RSrdGQ9n
+[2025-12-09T13:25:00.303Z] ❌ Erro na requisição: 
+[2025-12-09T13:25:00.309Z]    ❌ Erro: undefined
+[2025-12-09T13:25:00.530Z] 
+[367/379] Processando: Murilo Henrique Amaral Vieira (ID: 9683739)
+[2025-12-09T13:25:00.549Z]    Username: murilov
+[2025-12-09T13:25:00.555Z]    Indicador: ewerton
+[2025-12-09T13:25:00.566Z]    Senha: RSkpeHuh
+[2025-12-09T13:25:00.575Z] ❌ Erro na requisição: 
+[2025-12-09T13:25:00.664Z]    ❌ Erro: undefined
+[2025-12-09T13:25:00.885Z] 
+[368/379] Processando: Gilmara dos santos de lima (ID: 2384842)
+[2025-12-09T13:25:01.008Z]    Username: gilmara
+[2025-12-09T13:25:01.014Z]    Indicador: murilov
+[2025-12-09T13:25:01.016Z]    Senha: RStHTyPT
+[2025-12-09T13:25:01.020Z] ❌ Erro na requisição: 
+[2025-12-09T13:25:01.022Z]    ❌ Erro: undefined
+[2025-12-09T13:25:01.245Z] 
+[369/379] Processando: Jhulia Almeida (ID: 4683823)
+[2025-12-09T13:25:01.345Z]    Username: jhulia
+[2025-12-09T13:25:01.348Z]    Indicador: segredodasaude
+[2025-12-09T13:25:01.351Z]    Senha: RSbgu6Sk
+[2025-12-09T13:25:01.355Z] ❌ Erro na requisição: 
+[2025-12-09T13:25:01.359Z]    ❌ Erro: undefined
+[2025-12-09T13:25:01.581Z] 
+[370/379] Processando: Maria Alice Pimentel (ID: 5782294)
+[2025-12-09T13:25:01.687Z]    Username: maria2025
+[2025-12-09T13:25:02.019Z]    Indicador: murilov
+[2025-12-09T13:25:02.046Z]    Senha: RSM3NuTk
+[2025-12-09T13:25:02.051Z] ❌ Erro na requisição: 
+[2025-12-09T13:25:02.081Z]    ❌ Erro: undefined
+[2025-12-09T13:25:02.384Z] 
+[371/379] Processando: Nivaldo Estevão (ID: 8529625)
+[2025-12-09T13:25:02.568Z]    Username: nivaldo123
+[2025-12-09T13:25:02.941Z]    Indicador: segredodasaude
+[2025-12-09T13:25:03.265Z]    Senha: RSPjRp65
+[2025-12-09T13:25:03.301Z] ❌ Erro na requisição: 
+[2025-12-09T13:25:03.821Z]    ❌ Erro: undefined
+[2025-12-09T13:25:04.098Z] 
+[372/379] Processando: Adelir Roberto (ID: 9677719)
+[2025-12-09T13:25:04.170Z]    Username: adelir
+[2025-12-09T13:25:04.171Z]    Indicador: adilson
+[2025-12-09T13:25:04.174Z]    Senha: RSfpHALX
+[2025-12-09T13:25:04.275Z] ❌ Erro na requisição: 
+[2025-12-09T13:25:04.299Z]    ❌ Erro: undefined
+[2025-12-09T13:25:04.570Z] 
+[373/379] Processando: Lilian De Jesus (ID: 2680829)
+[2025-12-09T13:25:04.947Z]    Username: liliandejesus
+[2025-12-09T13:25:05.260Z]    Indicador: ameliaribeiro
+[2025-12-09T13:25:05.549Z]    Senha: RSXwmVpE
+[2025-12-09T13:25:05.590Z] ❌ Erro na requisição: 
+[2025-12-09T13:25:05.601Z]    ❌ Erro: undefined
+[2025-12-09T13:25:05.824Z] 
+[374/379] Processando: pablo douglas (ID: 6063979)
+[2025-12-09T13:25:05.850Z]    Username: pablodejesus
+[2025-12-09T13:25:05.853Z]    Indicador: ameliaribeiro
+[2025-12-09T13:25:05.857Z]    Senha: RSGanQFn
+[2025-12-09T13:25:05.862Z] ❌ Erro na requisição: 
+[2025-12-09T13:25:05.866Z]    ❌ Erro: undefined
+[2025-12-09T13:25:06.073Z] 
+[375/379] Processando: Valdival Ribeiro Braga (ID: 1180209)
+[2025-12-09T13:25:06.082Z]    Username: valdibraga
+[2025-12-09T13:25:06.085Z]    Indicador: ameliaribeiro
+[2025-12-09T13:25:06.087Z]    Senha: RSdpHKuc
+[2025-12-09T13:25:06.093Z] ❌ Erro na requisição: 
+[2025-12-09T13:25:06.110Z]    ❌ Erro: undefined
+[2025-12-09T13:25:06.320Z] 
+[376/379] Processando: Sonia Maria Pantosa (ID: 4897389)
+[2025-12-09T13:25:06.362Z]    Username: sonia123
+[2025-12-09T13:25:06.366Z]    Indicador: segredodasaude
+[2025-12-09T13:25:06.368Z]    Senha: RSgbtfHD
+[2025-12-09T13:25:06.374Z] ❌ Erro na requisição: 
+[2025-12-09T13:25:06.377Z]    ❌ Erro: undefined
+[2025-12-09T13:25:06.587Z] 
+[377/379] Processando: daniel sa (ID: 6347068)
+[2025-12-09T13:25:06.592Z]    Username: danielsa
+[2025-12-09T13:25:06.595Z]    Indicador: miranda
+[2025-12-09T13:25:06.600Z]    Senha: RSrX2wFv
+[2025-12-09T13:25:06.620Z] ❌ Erro na requisição: 
+[2025-12-09T13:25:06.817Z]    ❌ Erro: undefined
+[2025-12-09T13:25:07.043Z] 
+[378/379] Processando: Maria Aparecida da Silva Cordeiro (ID: 2238387)
+[2025-12-09T13:25:07.046Z]    Username: cidams2025
+[2025-12-09T13:25:07.050Z]    Indicador: saudenatural
+[2025-12-09T13:25:07.054Z]    Senha: RSk88B9d
+[2025-12-09T13:25:07.059Z] ❌ Erro na requisição: 
+[2025-12-09T13:25:07.062Z]    ❌ Erro: undefined
+[2025-12-09T13:25:07.280Z] 
+[379/379] Processando: nilza coelho (ID: 1668096)
+[2025-12-09T13:25:07.301Z]    Username: nilza
+[2025-12-09T13:25:07.305Z]    Indicador: cidams2025
+[2025-12-09T13:25:07.308Z]    Senha: RSRC8S6j
+[2025-12-09T13:25:07.318Z] ❌ Erro na requisição: 
+[2025-12-09T13:25:07.321Z]    ❌ Erro: undefined
+[2025-12-09T13:25:07.604Z] 
+========== RESUMO ==========
+[2025-12-09T13:25:07.705Z] ✅ Cadastrados com sucesso: 0
+[2025-12-09T13:25:07.710Z] ⚠️  Já existentes (pulados): 0
+[2025-12-09T13:25:07.712Z] ❌ Erros: 379
+[2025-12-09T13:25:07.719Z] 📊 Total processados: 379
+[2025-12-09T13:25:07.724Z] ===========================
+
+[2025-12-09T13:25:07.727Z] 
+[2025-12-09T13:25:07.730Z] ✅ Processo concluído!
+[2025-12-09T13:25:07.740Z] 📄 Log completo salvo em: G:\Rs  Ecosystem\rs-ecosystem\scripts\cadastro-log.txt

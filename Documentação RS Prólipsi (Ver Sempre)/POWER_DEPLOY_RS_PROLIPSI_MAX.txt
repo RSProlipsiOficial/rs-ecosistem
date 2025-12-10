@@ -1,24 +1,28 @@
-POWER DEPLOY – RS Prólipsi (MAX) – End-to-End
-Versão 1.0 • Gerado em 05/11/2025 12:50
-Guia definitivo para provisionar e manter TODOS os domínios e serviços (site, admin, consultor, marketplace, API, Studio, Wallet, Rota Fácil, Robô Binance, Logos) com design padrão do Painel do Consultor. Contém: usuários/SSH, swap, firewall, Fail2Ban, Nginx+Brotli, Certbot, PM2, Node/NVM, scripts de deploy, blue/green, SSL/HSTS, CSP, CORS, WebSockets, backups, logrotate, healthchecks e troubleshooting.
-1) Domínios e Portas (mapa oficial)
-• rsprolipsi.com.br  —  Site raiz (SPA)  —  porta 5000
-• admin.rsprolipsi.com.br  —  Painel Administrador  —  porta 5001
-• escritorio.rsprolipsi.com.br  —  Painel do Consultor (backoffice)  —  porta 5002
-• marketplace.rsprolipsi.com.br  —  Loja / RS Shopping  —  porta 5003
-• api.rsprolipsi.com.br  —  API gateway (/crm, /shop, /wallet, /studio, /webhooks, /game)  —  porta 5004
-• studio.rsprolipsi.com.br  —  RS.IA Studio  —  porta 5005
-• wallet.payrsprolipsi.com.br  —  WalletPay (Financeiro)  —  porta 5006
-• rotafacil.rsprolipsi.com.br  —  Rota Fácil  —  porta 5008
-• robo.rsprolipsi.com.br ? robobinance  —  Robô de trading (Binance) – SaaS externo  —  porta 5009
-• logos.rsprolipsi.com.br  —  Jogo bíblico – Logos Alpha e Ômega (hub/app)  —  porta 5010
-Observação: **api.rsprolipsi.com.br** (com ponto) é o domínio correto da API.
+POWER DEPLOY ï¿½ RS Prï¿½lipsi (MAX) ï¿½ End-to-End
+Versï¿½o 1.0 ï¿½ Gerado em 05/11/2025 12:50
+Guia definitivo para provisionar e manter TODOS os domï¿½nios e serviï¿½os (site, admin, consultor, marketplace, API, Studio, Wallet, Rota Fï¿½cil, Robï¿½ Binance, Logos) com design padrï¿½o do Painel do Consultor. Contï¿½m: usuï¿½rios/SSH, swap, firewall, Fail2Ban, Nginx+Brotli, Certbot, PM2, Node/NVM, scripts de deploy, blue/green, SSL/HSTS, CSP, CORS, WebSockets, backups, logrotate, healthchecks e troubleshooting.
+1) Domï¿½nios e Portas (mapa oficial)
+ï¿½ rsprolipsi.com.br  ï¿½  Site raiz (SPA)  ï¿½  porta 5000
+ï¿½ admin.rsprolipsi.com.br  ï¿½  Painel Administrador  ï¿½  porta 5001
+ï¿½ escritorio.rsprolipsi.com.br  ï¿½  Painel do Consultor (backoffice)  ï¿½  porta 5002
+ï¿½ marketplace.rsprolipsi.com.br  ï¿½  Loja / RS Shopping  ï¿½  porta 5003
+ï¿½ api.rsprolipsi.com.br  ï¿½  API gateway (/crm, /shop, /wallet, /studio, /webhooks, /game)  ï¿½  porta 5004
+ï¿½ studio.rsprolipsi.com.br  ï¿½  RS.IA Studio  ï¿½  porta 5005
+ï¿½ studio.rsprolipsi.com.br/bot  (Evolution)
+ï¿½ studio.rsprolipsi.com.br/agente (n8n)
+ï¿½ studio.rsprolipsi.com.br/dev    (Bolt)
+ï¿½ walletpay.rsprolipsi.com.br  ï¿½  WalletPay (Financeiro)  ï¿½  porta 5006
+ï¿½ rotafacil.rsprolipsi.com.br  ï¿½  Rota Fï¿½cil  ï¿½  porta 5008
+ï¿½ robo.rsprolipsi.com.br ? robobinance  ï¿½  Robï¿½ de trading (Binance) ï¿½ SaaS externo  ï¿½  porta 5009
+ï¿½ logos.rsprolipsi.com.br  ï¿½  Jogo bï¿½blico ï¿½ Logos Alpha e ï¿½mega (hub/app)  ï¿½  porta 5010
+
+Observaï¿½ï¿½o: **api.rsprolipsi.com.br** (com ponto) ï¿½ o domï¿½nio correto da API.
 2) Provisionamento do Servidor (root)
 
 sudo -i
 adduser deploy && usermod -aG sudo deploy
 mkdir -p /home/deploy/.ssh && chmod 700 /home/deploy/.ssh
-# cole sua chave pública:
+# cole sua chave pï¿½blica:
 nano /home/deploy/.ssh/authorized_keys
 chmod 600 /home/deploy/.ssh/authorized_keys && chown -R deploy:deploy /home/deploy/.ssh
 
@@ -32,14 +36,14 @@ nano /etc/ssh/sshd_config
 # PubkeyAuthentication yes
 systemctl restart ssh
 
-Swap (se memória < 4–8 GB):
+Swap (se memï¿½ria < 4ï¿½8 GB):
 
 fallocate -l 4G /swapfile
 chmod 600 /swapfile && mkswap /swapfile && swapon /swapfile
 echo '/swapfile none swap sw 0 0' >> /etc/fstab
 sysctl vm.swappiness=10 && echo 'vm.swappiness=10' >> /etc/sysctl.conf
 
-Atualizações e básicos:
+Atualizaï¿½ï¿½es e bï¿½sicos:
 
 apt-get update && apt-get upgrade -y
 apt-get install -y curl git ufw fail2ban nginx python3-certbot-nginx brotli
@@ -50,10 +54,10 @@ ufw allow OpenSSH
 ufw allow 'Nginx Full'
 ufw --force enable
 
-# Fail2Ban básico
+# Fail2Ban bï¿½sico
 systemctl enable --now fail2ban
 nano /etc/fail2ban/jail.local
-# Conteúdo:
+# Conteï¿½do:
 # [sshd]
 # enabled = true
 # port = ssh
@@ -64,7 +68,7 @@ systemctl restart fail2ban
 
 4) Node.js (NVM) + PM2 + PNPM (opcional)
 
-# como usuário deploy
+# como usuï¿½rio deploy
 su - deploy
 curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
 source ~/.nvm/nvm.sh
@@ -74,13 +78,13 @@ npm i -g pm2 pnpm
 # PM2 persistence
 pm2 startup systemd   # copie e execute o comando mostrado como root
 
-5) Estrutura de Pastas – monorepo e SPAs
+5) Estrutura de Pastas ï¿½ monorepo e SPAs
 
 sudo -i
 mkdir -p /srv/rsprolipsi/{site,admin,consultor,marketplace,api/{apps/{crm,game-unity,wallet,shop-bff,studio,webhooks},logs},studio,wallet,rotafacil,robo,logos}
 chown -R deploy:deploy /srv/rsprolipsi
 
-6) .env – Modelos por app (editar com nano)
+6) .env ï¿½ Modelos por app (editar com nano)
 Comando (trocar <app>): nano /srv/rsprolipsi/<app>/.env
 
 # SUPABASE
@@ -96,7 +100,7 @@ APP_BASE_URL="https://<subdominio>"
 SESSION_SECRET="troque-por-uma-chave-forte"
 LOG_LEVEL=info
 
-Robô Binance – extras (nano /srv/rsprolipsi/robo/.env):
+Robï¿½ Binance ï¿½ extras (nano /srv/rsprolipsi/robo/.env):
 
 BINANCE_API_KEY="..."
 BINANCE_API_SECRET="..."
@@ -104,7 +108,7 @@ BINANCE_TESTNET=true
 SYMBOLS="BTCUSDT,ETHUSDT"
 STRATEGY="day3"
 
-7) Nginx – Snippet comum (proxy/segurança/compressão)
+7) Nginx ï¿½ Snippet comum (proxy/seguranï¿½a/compressï¿½o)
 nano /etc/nginx/snippets/rs-common.conf
 
 # Proxy headers
@@ -114,23 +118,23 @@ proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
 proxy_set_header X-Forwarded-Proto $scheme;
 proxy_read_timeout 120s;
 
-# Segurança
+# Seguranï¿½a
 add_header X-Content-Type-Options nosniff;
 add_header X-Frame-Options SAMEORIGIN;
 add_header Referrer-Policy strict-origin-when-cross-origin;
 add_header X-XSS-Protection "1; mode=block";
 
-# Conteúdo opcional CSP (ajuste domínios conforme necessidade):
+# Conteï¿½do opcional CSP (ajuste domï¿½nios conforme necessidade):
 # add_header Content-Security-Policy "default-src 'self' https: data: blob:; img-src 'self' https: data:; script-src 'self' 'unsafe-inline' https:; style-src 'self' 'unsafe-inline' https:;" always;
 
-# Brotli (estático servido por Nginx quando aplicável)
-# aptitude install nginx-extras (se necessário)
+# Brotli (estï¿½tico servido por Nginx quando aplicï¿½vel)
+# aptitude install nginx-extras (se necessï¿½rio)
 # gzip preferido no proxy:
 gzip on;
 gzip_types text/plain text/css application/json application/javascript application/xml+rss application/xml image/svg+xml;
 gzip_min_length 1024;
 
-8) Gerador de server blocks Nginx (todos os domínios)
+8) Gerador de server blocks Nginx (todos os domï¿½nios)
 nano /root/gen-rs-nginx.sh
 
 #!/usr/bin/env bash
@@ -165,7 +169,7 @@ server {
   server_name ${domain};
   ssl_certificate /etc/letsencrypt/live/${domain}/fullchain.pem;
   ssl_certificate_key /etc/letsencrypt/live/${domain}/privkey.pem;
-  # HSTS (habilite após emitir certificados):
+  # HSTS (habilite apï¿½s emitir certificados):
   # add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
 
   include /etc/nginx/snippets/rs-common.conf;
@@ -184,7 +188,7 @@ done
 nginx -t && systemctl reload nginx && echo "Nginx aplicou configs. Prossiga com Certbot."
 
 chmod +x /root/gen-rs-nginx.sh && /root/gen-rs-nginx.sh
-9) SSL – emissão em lote (Let's Encrypt)
+9) SSL ï¿½ emissï¿½o em lote (Let's Encrypt)
 
 apt-get update && apt-get install -y certbot python3-certbot-nginx
 certbot --nginx   -d rsprolipsi.com.br   -d admin.rsprolipsi.com.br   -d escritorio.rsprolipsi.com.br   -d marketplace.rsprolipsi.com.br   -d api.rsprolipsi.com.br   -d studio.rsprolipsi.com.br   -d wallet.payrsprolipsi.com.br   -d rotafacil.rsprolipsi.com.br   -d robo.rsprolipsi.com.br   -d logos.rsprolipsi.com.br   --agree-tos -m seu-email@dominio.com --redirect --no-eff-email
@@ -192,7 +196,7 @@ certbot --nginx   -d rsprolipsi.com.br   -d admin.rsprolipsi.com.br   -d escrito
 # depois habilite HSTS nos arquivos em /etc/nginx/sites-available/*.conf (remova o #)
 nginx -t && systemctl reload nginx
 
-10) Builds + PM2 (SPAs e serviços)
+10) Builds + PM2 (SPAs e serviï¿½os)
 
 su - deploy
 
@@ -228,7 +232,7 @@ module.exports = {
 EOF
 pm2 start /srv/rsprolipsi/api/ecosystem.config.js
 
-# Robô (externo)
+# Robï¿½ (externo)
 cd /srv/rsprolipsi/robo && pnpm i || npm ci
 npm run build
 PORT=5009 pm2 start dist/server.js --name rs-robo
@@ -236,7 +240,7 @@ PORT=5009 pm2 start dist/server.js --name rs-robo
 pm2 save
 pm2 startup systemd
 
-11) Recomendações de API (CORS/RateLimit/Logs)
+11) Recomendaï¿½ï¿½es de API (CORS/RateLimit/Logs)
 
 # Fastify (exemplo):
 app.register(require('@fastify/cors'), { origin: true });
@@ -257,7 +261,7 @@ pm2 monit
 # Nginx/Journald
 journalctl -u nginx -f
 
-13) WebSockets (se necessário)
+13) WebSockets (se necessï¿½rio)
 
 # no Nginx (server https):
 proxy_http_version 1.1;
@@ -292,7 +296,7 @@ nano /etc/logrotate.d/rsprolipsi
 
 15) Backups (arquivos e dumps)
 
-# Snapshot Supabase é externo (console). Para arquivos locais:
+# Snapshot Supabase ï¿½ externo (console). Para arquivos locais:
 mkdir -p /backup/rsprolipsi
 tar -czf /backup/rsprolipsi/site-$(date +%F).tgz /srv/rsprolipsi/site/dist
 # agende via cron conforme necessidade.
@@ -311,36 +315,36 @@ mv dist dist_bad && mv dist_prev dist
 pm2 serve ./dist 5001 --name rs-admin --spa
 pm2 save
 
-17) Troubleshooting rápido
+17) Troubleshooting rï¿½pido
 
-• 502 Bad Gateway: app fora do ar ou porta errada ? pm2 ls; pm2 logs.
-• 404 em SPA: garanta '--spa' no pm2 serve.
-• Certbot falhou: checar DNS A/AAAA e portas 80/443 liberadas.
-• SSL ok mas sem cadeado: mixed content em SPA ? usar URLs https absolutas.
-• CORS: habilitar origin true na API e revisar APP_BASE_URL.
-• HSTS causando bloqueios: habilite apenas após SSL estável; não use em homolog se não for necessário.
-• Falhas de build: Node 20, memória/swap, e permissões em /srv/rsprolipsi.
+ï¿½ 502 Bad Gateway: app fora do ar ou porta errada ? pm2 ls; pm2 logs.
+ï¿½ 404 em SPA: garanta '--spa' no pm2 serve.
+ï¿½ Certbot falhou: checar DNS A/AAAA e portas 80/443 liberadas.
+ï¿½ SSL ok mas sem cadeado: mixed content em SPA ? usar URLs https absolutas.
+ï¿½ CORS: habilitar origin true na API e revisar APP_BASE_URL.
+ï¿½ HSTS causando bloqueios: habilite apenas apï¿½s SSL estï¿½vel; nï¿½o use em homolog se nï¿½o for necessï¿½rio.
+ï¿½ Falhas de build: Node 20, memï¿½ria/swap, e permissï¿½es em /srv/rsprolipsi.
 
-18) Índice de arquivos/editáveis (nano)
-• nano /etc/nginx/snippets/rs-common.conf
-• nano /root/gen-rs-nginx.sh
-• nano /etc/nginx/sites-available/api.rsprolipsi.com.br.conf
-• nano /srv/rsprolipsi/api/ecosystem.config.js
-• nano /srv/rsprolipsi/site/.env
-• nano /srv/rsprolipsi/admin/.env
-• nano /srv/rsprolipsi/consultor/.env
-• nano /srv/rsprolipsi/marketplace/.env
-• nano /srv/rsprolipsi/api/apps/crm/.env
-• nano /srv/rsprolipsi/api/apps/game-unity/.env
-• nano /srv/rsprolipsi/api/apps/wallet/.env
-• nano /srv/rsprolipsi/api/apps/shop-bff/.env
-• nano /srv/rsprolipsi/api/apps/studio/.env
-• nano /srv/rsprolipsi/api/apps/webhooks/.env
-• nano /srv/rsprolipsi/studio/.env
-• nano /srv/rsprolipsi/wallet/.env
-• nano /srv/rsprolipsi/rotafacil/.env
-• nano /srv/rsprolipsi/robo/.env
-• nano /srv/rsprolipsi/logos/.env
+18) ï¿½ndice de arquivos/editï¿½veis (nano)
+ï¿½ nano /etc/nginx/snippets/rs-common.conf
+ï¿½ nano /root/gen-rs-nginx.sh
+ï¿½ nano /etc/nginx/sites-available/api.rsprolipsi.com.br.conf
+ï¿½ nano /srv/rsprolipsi/api/ecosystem.config.js
+ï¿½ nano /srv/rsprolipsi/site/.env
+ï¿½ nano /srv/rsprolipsi/admin/.env
+ï¿½ nano /srv/rsprolipsi/consultor/.env
+ï¿½ nano /srv/rsprolipsi/marketplace/.env
+ï¿½ nano /srv/rsprolipsi/api/apps/crm/.env
+ï¿½ nano /srv/rsprolipsi/api/apps/game-unity/.env
+ï¿½ nano /srv/rsprolipsi/api/apps/wallet/.env
+ï¿½ nano /srv/rsprolipsi/api/apps/shop-bff/.env
+ï¿½ nano /srv/rsprolipsi/api/apps/studio/.env
+ï¿½ nano /srv/rsprolipsi/api/apps/webhooks/.env
+ï¿½ nano /srv/rsprolipsi/studio/.env
+ï¿½ nano /srv/rsprolipsi/wallet/.env
+ï¿½ nano /srv/rsprolipsi/rotafacil/.env
+ï¿½ nano /srv/rsprolipsi/robo/.env
+ï¿½ nano /srv/rsprolipsi/logos/.env
 
 ===================================
 Email admin 
@@ -350,7 +354,7 @@ senha para o admin Yannis784512@
 Api Key OpenHunter  RS-IA 
 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
 ==================================================
-## ? Checklist Geral – VPS RSPrólipsi
+## ? Checklist Geral ï¿½ VPS RSPrï¿½lipsi
 
 ### ?? Servidor
 Ubuntu 24.04 LTS
@@ -370,7 +374,7 @@ NEXT_PUBLIC_SUPABASE_URL=https://rptkhrboejbwexseikuo.supabase.co
 
 eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJwdGtocmJvZWpid2V4c2Vpa3VvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcwMTQ4OTEsImV4cCI6MjA3MjU5MDg5MX0.lZdg0Esgxx81g9gO0IDKZ46a_zbyapToRqKSAg5oQ4Y
 
-SUPABASE_SERVICE_ROLE_KEY=chave_service_role # usada só no servidor
+SUPABASE_SERVICE_ROLE_KEY=chave_service_role # usada sï¿½ no servidor
 anonpublic
 eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJwdGtocmJvZWpid2V4c2Vpa3VvIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NzAxNDg5MSwiZXhwIjoyMDcyNTkwODkxfQ.Ka6uusggq9DXkiZ-luAi8hAkwV5LX6GPtnEgSpq7uYo
 
@@ -384,4 +388,4 @@ Senha Yannis784512@
 Eleven Labs API Key
 sk_d2b6db47fbe02c47f49cf8889568ace549ccabb04226ff53
 
-FIM — Use este documento como manual único de instalação e manutenção. Cada seção contém caminhos 'nano' e scripts prontos que você pode colar no SSH.
+FIM ï¿½ Use este documento como manual ï¿½nico de instalaï¿½ï¿½o e manutenï¿½ï¿½o. Cada seï¿½ï¿½o contï¿½m caminhos 'nano' e scripts prontos que vocï¿½ pode colar no SSH.

@@ -1,0 +1,36 @@
+services:
+  rs-robo:
+    image: nginx:alpine
+    container_name: rs-robo
+    volumes:
+      - /home/deploy/dev/rs-robo-kagi-binance/dist:/usr/share/nginx/html:ro
+    ports:
+      - "5009:80"
+    restart: unless-stopped
+
+  rs-admin:
+    image: nginx:alpine
+    container_name: rs-admin
+    volumes:
+      - /home/deploy/dev/rs-admin/dist:/usr/share/nginx/html:ro
+    ports:
+      - "3001:80"
+    restart: unless-stopped
+
+  rs-rotafacil:
+    image: nginx:alpine
+    container_name: rs-rotafacil
+    volumes:
+      - /home/deploy/dev/rs-rotafacil/dist:/usr/share/nginx/html:ro
+    ports:
+      - "3013:80"
+    restart: unless-stopped
+
+  rs-walletpay:
+    image: nginx:alpine
+    container_name: rs-walletpay-static
+    volumes:
+      - /home/deploy/dev/rs-walletpay/dist:/usr/share/nginx/html:ro
+    ports:
+      - "3004:80"
+    restart: unless-stopped

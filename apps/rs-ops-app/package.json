@@ -1,0 +1,42 @@
+{
+  "name": "rs-ops",
+  "version": "1.0.0",
+  "description": "Motor Operacional RS Prólipsi - Cálculo, distribuição de bônus e automação",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "ts-node-dev --respawn src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "start:pm2": "pm2 start ecosystem.config.js",
+    "test": "echo \"TODO: Adicionar testes\" && exit 0",
+    "job:recalc": "ts-node src/jobs/recalcBonuses.ts",
+    "job:ranks": "ts-node src/jobs/updateRanks.ts",
+    "job:cleanup": "ts-node src/jobs/cleanLogs.ts",
+    "job:backup": "ts-node src/jobs/backupWallets.ts",
+    "deploy": "sh src/deploy/postDeploy.sh",
+    "ssl:renew": "sh src/deploy/sslRenew.sh"
+  },
+  "keywords": [
+    "mlm",
+    "matrix",
+    "bonus",
+    "ops",
+    "automation",
+    "cron"
+  ],
+  "author": "Roberto Camargo - RS Prólipsi",
+  "license": "UNLICENSED",
+  "private": true,
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0",
+    "dotenv": "^16.3.1",
+    "node-cron": "^3.0.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@types/node-cron": "^3.0.11",
+    "ts-node": "^10.9.2",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.3.3"
+  }
+}

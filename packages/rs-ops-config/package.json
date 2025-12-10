@@ -1,0 +1,27 @@
+{
+  "name": "rs-ops-config",
+  "version": "1.0.0",
+  "description": "RS Prólipsi - Operational Configuration & Contracts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc -w"
+  },
+  "keywords": [
+    "ops",
+    "config",
+    "contracts",
+    "registry"
+  ],
+  "author": "Roberto Camargo - RS Prólipsi",
+  "license": "UNLICENSED",
+  "private": true,
+  "dependencies": {
+    "rs-config": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3",
+    "@types/node": "^20.10.0"
+  }
+}

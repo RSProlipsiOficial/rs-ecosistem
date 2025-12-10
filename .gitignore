@@ -1,0 +1,34 @@
+# Root ignore for RS Ecosystem
+
+# Node artifacts
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+.turbo/
+**/coverage/
+
+# Node artifacts
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+dist-ssr/
+
+# Local env files (do not commit secrets)
+.env
+.env.*
+!.env.example
+!.env.example
+
+# OS/editor noise
+.DS_Store
+.vscode/
+!.vscode/extensions.json
+.idea/
+*.log
+logs/
+
+# Documentation with credentials (keep out of VCS)
+Documentação RS Prólipsi (Ver Sempre)/
+**/Documentação RS Prólipsi (Ver Sempre)/**

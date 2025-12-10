@@ -1,0 +1,113 @@
+version: '3.8'
+services:
+  rs-site:
+    build:
+      context: .
+      dockerfile: apps/rs-site/Dockerfile
+    container_name: rs-site
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+
+  rs-admin:
+    build:
+      context: .
+      dockerfile: apps/rs-admin/Dockerfile
+    container_name: rs-admin
+    ports:
+      - "3001:3001"
+    restart: unless-stopped
+
+  rs-consultor:
+    build:
+      context: .
+      dockerfile: apps/rs-consultor/Dockerfile
+    container_name: rs-consultor
+    ports:
+      - "3002:3002"
+    restart: unless-stopped
+
+  rs-marketplace:
+    build:
+      context: .
+      dockerfile: apps/rs-marketplace/Dockerfile
+    container_name: rs-marketplace
+    ports:
+      - "3003:3003"
+    restart: unless-stopped
+
+  rs-walletpay:
+    build:
+      context: .
+      dockerfile: apps/rs-walletpay/Dockerfile
+    container_name: rs-walletpay
+    ports:
+      - "3004:3004"
+    restart: unless-stopped
+
+  rs-logistica:
+    build:
+      context: .
+      dockerfile: apps/rs-logistica/Dockerfile
+    container_name: rs-logistica
+    ports:
+      - "3005:3005"
+    restart: unless-stopped
+
+  rs-docs:
+    build:
+      context: .
+      dockerfile: apps/rs-docs/Dockerfile
+    container_name: rs-docs
+    ports:
+      - "3010:3010"
+    restart: unless-stopped
+
+  rs-api:
+    build:
+      context: .
+      dockerfile: apps/rs-api/Dockerfile
+    container_name: rs-api
+    ports:
+      - "4000:4000"
+    environment:
+      SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
+      SUPABASE_SERVICE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
+      INTERNAL_API_TOKEN: ${INTERNAL_API_TOKEN:-dev-token}
+      NODE_ENV: production
+    networks:
+      - rs-network
+    restart: unless-stopped
+
+  rs-core:
+    build:
+      context: .
+      dockerfile: apps/rs-core/Dockerfile
+    container_name: rs-core
+    ports:
+      - "4001:4001"
+    environment:
+      SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
+      SUPABASE_SERVICE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
+      INTERNAL_API_TOKEN: ${INTERNAL_API_TOKEN:-dev-token}
+      NODE_ENV: production
+    networks:
+      - rs-network
+    restart: unless-stopped
+
+  rs-config:
+    build:
+      context: .
+      dockerfile: apps/rs-config/Dockerfile
+    container_name: rs-config
+    ports:
+      - "4002:4002"
+    environment:
+      NODE_ENV: production
+    networks:
+      - rs-network
+    restart: unless-stopped
+
+networks:
+  rs-network:
+    name: rs-network

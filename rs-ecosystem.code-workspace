@@ -1,0 +1,58 @@
+{
+  "folders": [
+    { "path": "." },
+    { "path": "apps/rs-admin" },
+    { "path": "apps/rs-consultor" },
+    { "path": "apps/rs-marketplace" },
+    { "path": "apps/rs-site" },
+    { "path": "apps/rs-walletpay" },
+    { "path": "apps/rs-studio" },
+    { "path": "apps/rs-logistica" },
+    { "path": "apps/rs-config" },
+    { "path": "apps/rs-core" },
+    { "path": "apps/rs-docs" },
+    { "path": "apps/rs-rotafacil" },
+    { "path": "apps/rs-template-game" },
+    { "path": "apps/rs-ops-app" },
+    { "path": "infra" }
+  ],
+  "settings": {
+    "typescript.tsserver.maxTsServerMemory": 4096,
+    "editor.formatOnSave": true,
+    "eslint.validate": ["javascript", "typescript", "typescriptreact"],
+    "files.exclude": {
+      "**/node_modules": true,
+      "**/dist": true,
+      "**/.turbo": true
+    }
+  },
+  "tasks": {
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "docker: up all",
+        "type": "shell",
+        "command": "docker compose up -d",
+        "problemMatcher": []
+      },
+      {
+        "label": "docker: down",
+        "type": "shell",
+        "command": "docker compose down",
+        "problemMatcher": []
+      },
+      {
+        "label": "dev: rs-admin",
+        "type": "shell",
+        "command": "cd apps/rs-admin && pnpm dev",
+        "problemMatcher": []
+      },
+      {
+        "label": "dev: rs-marketplace",
+        "type": "shell",
+        "command": "cd apps/rs-marketplace/Marketplace && pnpm dev",
+        "problemMatcher": []
+      }
+    ]
+  }
+}
