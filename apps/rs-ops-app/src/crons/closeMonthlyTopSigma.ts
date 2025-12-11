@@ -5,7 +5,7 @@
 
 import cron from 'node-cron';
 import { createClient } from '@supabase/supabase-js';
-import topSigmaConfig from '../../../rs-config/src/settings/topSigma.json';
+import topSigmaConfig from '../../../../packages/rs-config/src/settings/topSigma.json';
 import moment from 'moment-timezone';
 
 const supabase = createClient(

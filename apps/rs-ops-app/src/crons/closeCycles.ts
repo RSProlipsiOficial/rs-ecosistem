@@ -5,7 +5,7 @@
 
 import cron from 'node-cron';
 import moment from 'moment-timezone';
-import cyclesConfig from '../../../rs-config/src/settings/cycles.json';
+import cyclesConfig from '../../../../packages/rs-config/src/settings/cycles.json';
 
 // ================================================
 // CONFIGURAÇÕES
@@ -100,7 +100,7 @@ async function closeFidelityPool(): Promise<void> {
     const eligibleConsultores = await getEligibleConsultores(period);
     
     // 4. Distribuir proporcionalmente
-    const distributions = calculateFidelityDistribution(
+    const distributions = await calculateFidelityDistribution(
       eligibleConsultores,
       poolTotal
     );
@@ -153,7 +153,7 @@ async function closeTopSigmaPool(): Promise<void> {
     const ranking = await generateTopSigmaRanking(period);
     
     // 4. Distribuir conforme percentuais
-    const distributions = calculateTopSigmaDistribution(ranking, poolTotal);
+    const distributions = await calculateTopSigmaDistribution(ranking, poolTotal);
     
     // 5. Creditar nas carteiras
     for (const dist of distributions) {
