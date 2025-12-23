@@ -3,17 +3,37 @@ networks:
   rs_network:
     name: rs_network
 services:
-  rs-bolt:
-    container_name: rs-bolt
+  # rs-bolt:
+  #   container_name: rs-bolt
+  #   build:
+  #     context: ../../apps/rs-studio/bolt.diy-main/bolt.diy-main
+  #     dockerfile: Dockerfile
+  #   env_file:
+  #     - ../../apps/rs-studio/.env
+  #     - ../docker/.env.tools
+  #   # no env overrides; Bolt exposes 5173 internally
+  #   ports:
+  #     - "5601:5173"
+  #   networks:
+  #     - rs_network
+  #   restart: unless-stopped
+
+  rs-chef:
+    container_name: rs-chef
     build:
-      context: ../../apps/rs-studio/bolt.diy-main/bolt.diy-main
+      context: ../../apps/rs-studio/chef-main/chef-main
       dockerfile: Dockerfile
+      args:
+        VITE_CONVEX_URL: ${VITE_CONVEX_URL}
     env_file:
       - ../../apps/rs-studio/.env
-      - ../docker/.env.tools
-    # no env overrides; Bolt exposes 5173 internally
+    environment:
+      - PORT=3000
+      - VITE_CONVEX_URL=${VITE_CONVEX_URL}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
     ports:
-      - "5601:5173"
+      - "5601:3000"
     networks:
       - rs_network
     restart: unless-stopped

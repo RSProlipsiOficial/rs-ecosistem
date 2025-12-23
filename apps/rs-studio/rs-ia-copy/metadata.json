@@ -1,0 +1,7 @@
+{
+  "name": "RS-IA-Copy",
+  "description": "Ferramenta premium para criar posts virais no Facebook com IA. Suporta entrada de voz, templates inteligentes e fluxo de trabalho organizado.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
