@@ -39,8 +39,8 @@ interface CheckoutViewProps {
     onRemoveItem: (cartItemId: string) => void;
 }
 
-const CheckoutView: React.FC<CheckoutViewProps> = ({ cartItems, onBack, onFinalizePurchase, currentCustomer, coupons, orderBumpConfig, allProducts, paymentSettings, onUpdateQuantity, onRemoveItem }) => {
-    const subtotal = useMemo(() => cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0), [cartItems]);
+const CheckoutView: React.FC<CheckoutViewProps> = ({ cartItems = [], onBack, onFinalizePurchase, currentCustomer, coupons, orderBumpConfig, allProducts, paymentSettings, onUpdateQuantity, onRemoveItem }) => {
+    const subtotal = useMemo(() => (cartItems || []).reduce((sum, item) => sum + item.price * item.quantity, 0), [cartItems]);
     const TENANT_ID = (import.meta as any).env?.VITE_TENANT_ID || '';
 
     const [activeStep, setActiveStep] = useState(1);
@@ -87,7 +87,7 @@ const CheckoutView: React.FC<CheckoutViewProps> = ({ cartItems, onBack, onFinali
     const shippingCost = selectedShipping?.price ?? 0;
 
     const total = useMemo(() => {
-        const newSubtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+        const newSubtotal = (cartItems || []).reduce((sum, item) => sum + item.price * item.quantity, 0);
         const bump = isBumpAccepted && bumpProduct ? orderBumpConfig.offerPrice : 0;
         const shipping = selectedShipping?.price ?? 0;
 
@@ -420,7 +420,8 @@ const CheckoutView: React.FC<CheckoutViewProps> = ({ cartItems, onBack, onFinali
                     throw new Error('Saldo insuficiente na carteira para concluir a compra.');
                 }
                 try {
-                    const apiUrl = 'https://api.rsprolipsi.com.br/api/wallet/transfer';
+                    const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:4000';
+                    const apiUrl = `${API_URL}/api/wallet/transfer`;
                     const response = await fetch(apiUrl, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token') || ''}` },

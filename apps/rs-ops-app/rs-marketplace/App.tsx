@@ -72,9 +72,9 @@ import AddEditTraining from './components/AddEditTraining';
 import TrainingModuleDetail from './components/TrainingModuleDetail';
 import ManageMarketingAssets from './components/ManageMarketingAssets';
 // Lazy loaded apps to reduce initial bundle size
-const RSCDAdminApp = React.lazy(() => import('./RS-CDS/App'));
+const RSCDAdminApp = React.lazy(() => import('./RS-CDS/AppWrapper'));
 // const CheckoutProApp = React.lazy(() => import('./checkout-pro-rs-prólipsi/App')); // Commented out - folder not found
-// const RSControleDropApp = React.lazy(() => import('./rs-controle-drop/AppWrapper')); // Commented out - folder not found
+const RSControleDropApp = React.lazy(() => import('./rs-controle-drop/AppWrapper'));
 // import { CheckoutProvider } from './checkout-pro-rs-prólipsi/context/CheckoutContext'; // Commented out - folder not found
 import AddEditMarketingAsset from './components/AddEditMarketingAsset';
 import CustomerWishlist from './components/CustomerWishlist';
@@ -395,29 +395,33 @@ const App: React.FC = () => {
             try {
                 if (!navigator.onLine) return;
                 const res = await fetch(`${API_URL}/v1/dashboard-layout/marketplace`);
-                const json = await res.json().catch(() => ({}));
-                if (json && json.success && json.config) {
-                    const cfg = json.config as any;
-                    const srcMap: Record<string, string> = {
-                        bonusCicloGlobal: 'cycleBonus',
-                        bonusTopSigme: 'topSigmeBonus',
-                        bonusPlanoCarreira: 'careerPlanBonus'
-                    };
-                    const mappedCards = Array.isArray(cfg.bonusCards)
-                        ? cfg.bonusCards.map((c: any, idx: number) => ({
-                            id: `card-${idx + 1}`,
-                            title: c.title || 'Bônus',
-                            icon: c.icon || 'IconAward',
-                            dataKey: srcMap[c.source] || 'custom'
-                        }))
-                        : initialDashboardSettings.cards;
+                if (res.ok) {
+                    const json = await res.json().catch(() => ({}));
+                    if (json && json.success && json.config) {
+                        const cfg = json.config as any;
+                        const srcMap: Record<string, string> = {
+                            bonusCicloGlobal: 'cycleBonus',
+                            bonusTopSigme: 'topSigmeBonus',
+                            bonusPlanoCarreira: 'careerPlanBonus'
+                        };
+                        const mappedCards = Array.isArray(cfg.bonusCards)
+                            ? cfg.bonusCards.map((c: any, idx: number) => ({
+                                id: `card-${idx + 1}`,
+                                title: c.title || 'Bônus',
+                                icon: c.icon || 'IconAward',
+                                dataKey: srcMap[c.source] || 'custom'
+                            }))
+                            : initialDashboardSettings.cards;
 
-                    setDashboardSettings(prev => ({
-                        ...prev,
-                        cards: mappedCards
-                    }));
+                        setDashboardSettings(prev => ({
+                            ...prev,
+                            cards: mappedCards
+                        }));
+                    }
                 }
-            } catch { }
+            } catch (error) {
+                console.warn('Dashboard layout fetch failed, using defaults:', error);
+            }
         })();
     }, []);
 
@@ -1095,14 +1099,14 @@ const App: React.FC = () => {
             case 'manageAffiliates': content = <ManageAffiliates affiliates={initialAffiliates} onNavigate={handleNavigate} />; break;
 
             case 'rsCD': content = (
-                <Suspense fallback={<div className="p-8 text-center text-gold-400">Carregando CD...</div>}>
-                    <RSCDAdminApp cdId={selectedCDId || distributors[0]?.id || ''} />
+                <Suspense fallback={<div className="p-8 text-center text-gold-400">Carregando painel CD...</div>}>
+                    <RSCDAdminApp cdId={selectedCDId} onBack={() => handleNavigate('home')} />
                 </Suspense>
             ); break;
             case 'rsControleDrop': content = (
-                <div className="p-8 text-center text-gold-400">
-                    <p>Módulo RS Controle Drop não está disponível no momento.</p>
-                </div>
+                <Suspense fallback={<div className="p-8 text-center text-gold-400">Carregando Drop Market...</div>}>
+                    <RSControleDropApp />
+                </Suspense>
             ); break;
             case 'storeEditor': content = <StorefrontEditor customization={storeCustomization} onUpdate={handleStoreCustomizationChange} onNavigate={handleNavigate} />; break;
             case 'storeBannerEditor': content = <StoreBannerEditor customization={storeCustomization} onUpdate={handleStoreCustomizationChange} />; break;
@@ -1252,16 +1256,16 @@ const App: React.FC = () => {
             <>
                 <style>{storeCustomization.customCss}</style>
                 <CheckoutView
-                    cart={cart}
-                    products={products}
-                    storeCustomization={storeCustomization}
-                    coupons={coupons}
-                    shippingSettings={shippingSettings}
-                    onUpdateCartQuantity={handleUpdateCartQuantity}
-                    onRemoveFromCart={handleRemoveFromCart}
+                    cartItems={cart}
+                    onBack={() => handleNavigate('home')}
                     onFinalizePurchase={handleFinalizePurchase}
-                    onNavigate={handleNavigate}
-                    viewBeforeCheckout={viewBeforeCheckout}
+                    currentCustomer={currentCustomer}
+                    coupons={coupons}
+                    orderBumpConfig={storeCustomization.orderBump}
+                    allProducts={products}
+                    paymentSettings={paymentSettings}
+                    onUpdateQuantity={handleUpdateCartQuantity}
+                    onRemoveItem={handleRemoveFromCart}
                 />
             </>
         )

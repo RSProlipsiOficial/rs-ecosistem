@@ -20,6 +20,10 @@ import { BuildingStorefrontIcon } from './icons/BuildingStorefrontIcon';
 import { LogoutIcon } from './icons/LogoutIcon';
 import { ShoppingBagIcon } from './icons/ShoppingBagIcon';
 const WALLETPAY_URL = (import.meta as any).env?.VITE_WALLETPAY_URL || 'http://localhost:3005';
+const RS_CDS_URL = (import.meta as any).env?.VITE_RS_CDS_URL || 'http://localhost:3203';
+const RS_DROP_URL = (import.meta as any).env?.VITE_RS_DROP_URL || 'http://localhost:3103';
+
+import { distributorsAPI } from '../services/marketplaceAPI';
 
 
 interface AdminLayoutProps {
@@ -70,13 +74,6 @@ const navGroups = [
             { label: 'Pagamentos', view: 'managePayments' as View },
             { label: 'Frete', view: 'manageShipping' as View },
         ]
-    }
-    ,
-    {
-        main: { icon: BuildingStorefrontIcon, label: "CDs (RS-CD)", view: "rsCD" as View }
-    },
-    {
-        main: { icon: ShoppingBagIcon, label: "Market / Drop / Afiliado", view: "rsControleDrop" as View }
     }
 ];
 
@@ -180,13 +177,31 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ title, children, curre
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const isSuperAdmin = (typeof window !== 'undefined' && (localStorage.getItem('rs-role') === 'super_admin' || (localStorage.getItem('rs-user-permissions') || '').includes('super_admin')));
 
+    const [hasCDAccess, setHasCDAccess] = useState(false);
+
     useEffect(() => {
         // Forçar o sidebar aberto por padrão (ignorar valores antigos do localStorage)
         try {
             localStorage.removeItem('rs-mp-sidebar-open');
         } catch { }
         setIsSidebarOpen(true);
+
+        checkCDAccess();
     }, []);
+
+    const checkCDAccess = async () => {
+        try {
+            const userId = localStorage.getItem('rs-user-id');
+            if (userId) {
+                const res = await distributorsAPI.list();
+                const cds = Array.isArray(res.data) ? res.data : (res.data as any)?.data || [];
+                const myCD = cds.find((cd: any) => String(cd.owner_id) === String(userId) && cd.active);
+                setHasCDAccess(!!myCD);
+            }
+        } catch (error) {
+            console.error("Error checking CD access", error);
+        }
+    };
     useEffect(() => {
         localStorage.setItem('rs-mp-sidebar-open', isSidebarOpen ? '1' : '0');
     }, [isSidebarOpen]);
@@ -264,6 +279,22 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ title, children, curre
                             return <NavItem key={index} item={group} isCollapsed={!isSidebarOpen} currentView={currentView} onNavigate={onNavigate} />;
                         }
                     })}
+                    {hasCDAccess && (
+                        <button onClick={() => window.open(RS_CDS_URL, '_blank')} className={`w-full flex items-center justify-between text-left px-3 rounded-md text-sm font-medium transition-all duration-200 h-11 relative group text-[rgb(var(--color-brand-text-dim))] hover:bg-[rgb(var(--color-brand-gray-light))] hover:text-white`}>
+                            <div className="flex items-center gap-4">
+                                <BuildingStorefrontIcon className="h-6 w-6 text-[rgb(var(--color-brand-text-dim))] group-hover:text-[rgb(var(--color-brand-gold))]" />
+                                {!(!isSidebarOpen) && <span className="truncate">CDs (RS-CD)</span>}
+                            </div>
+                            {!(!isSidebarOpen) && <ArrowTopRightOnSquareIcon className="h-4 w-4" />}
+                        </button>
+                    )}
+                    <button onClick={() => window.open(RS_DROP_URL, '_blank')} className={`w-full flex items-center justify-between text-left px-3 rounded-md text-sm font-medium transition-all duration-200 h-11 relative group text-[rgb(var(--color-brand-text-dim))] hover:bg-[rgb(var(--color-brand-gray-light))] hover:text-white`}>
+                        <div className="flex items-center gap-4">
+                            <ShoppingBagIcon className="h-6 w-6 text-[rgb(var(--color-brand-text-dim))] group-hover:text-[rgb(var(--color-brand-gold))]" />
+                            {!(!isSidebarOpen) && <span className="truncate">Market / Drop / Afiliado</span>}
+                        </div>
+                        {!(!isSidebarOpen) && <ArrowTopRightOnSquareIcon className="h-4 w-4" />}
+                    </button>
                     <button onClick={() => window.open(WALLETPAY_URL, '_blank')} className={`w-full flex items-center justify-between text-left px-3 rounded-md text-sm font-medium transition-all duration-200 h-11 relative group text-[rgb(var(--color-brand-text-dim))] hover:bg-[rgb(var(--color-brand-gray-light))] hover:text-white`}>
                         <div className="flex items-center gap-4">
                             <WalletIcon className="h-6 w-6 text-[rgb(var(--color-brand-text-dim))] group-hover:text-[rgb(var(--color-brand-gold))]" />

@@ -3,8 +3,8 @@
  * Service layer para integração completa com backend
  */
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://api.rsprolipsi.com.br';
-const TENANT_ID = import.meta.env.VITE_TENANT_ID;
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+const TENANT_ID = import.meta.env.VITE_TENANT_ID || '';
 
 const apiFetch = async (path: string, options: RequestInit = {}) => {
     const headers = {

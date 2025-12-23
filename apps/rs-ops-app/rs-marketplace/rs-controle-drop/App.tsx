@@ -12,12 +12,12 @@ import { SalesChannelAnalysis } from './components/SalesChannelAnalysis';
 import { PostSaleAnalysis } from './components/PostSaleAnalysis';
 import { SettingsManager } from './components/SettingsManager';
 import { MarketingTools } from './components/MarketingTools';
-import { Breadcrumb } from './components/Breadcrumb'; 
+import { Breadcrumb } from './components/Breadcrumb';
 import { analyzePerformance } from './services/geminiService';
 import { generateAlerts } from './services/alertService';
 import { Order, TrafficSpend, Lead, MonthlySummary, PaymentMethodConfig, Customer, PostSaleEvent, Supplier, ProductSupplier, AppAlert, User, ShippingConfig, TrackingPixel, ShortLink, AuditLog, AuditAction, AuditEntity, AuditChange, MessageTemplate, Ticket, AutomationRule, AutomationLog, RMA, ProductReview, GlobalProduct, Product, DistributionCenter, ProductStockLocation, LandingPage, AovBoostConfig, ProductPageTemplate, Experiment, ExperimentDataPoint, Affiliate, PushNotificationLog, CustomerWithMetrics, Subscription } from './types';
 import { useProducts } from './contexts/ProductContext';
-import { useCartCheckout } from './contexts/CartCheckoutContext'; 
+import { useCartCheckout } from './contexts/CartCheckoutContext';
 import { ToastContainer } from './components/Toast';
 import { FunnelMonitor } from './components/FunnelMonitor';
 import { RecoveryManager } from './components/RecoveryManager';
@@ -115,16 +115,16 @@ interface AppProps {
   setWhatsAppTemplates: (templates: MessageTemplate[]) => void;
 }
 
-const App: React.FC<AppProps> = ({ 
-    currentUser, setCurrentUser, users, auditLogs, logAction, 
-    whatsAppTemplates, setWhatsAppTemplates 
+const App: React.FC<AppProps> = ({
+  currentUser, setCurrentUser, users, auditLogs, logAction,
+  whatsAppTemplates, setWhatsAppTemplates
 }) => {
-  const { products, productSuppliers, addProduct, updateProduct, updateProductStock, stockMovements } = useProducts(); 
-  const { carts, checkouts, abandonmentLogs, updateAbandonmentLog } = useCartCheckout(); 
-  
+  const { products, productSuppliers, addProduct, updateProduct, updateProductStock, stockMovements } = useProducts();
+  const { carts, checkouts, abandonmentLogs, updateAbandonmentLog } = useCartCheckout();
+
   const [activeTab, setActiveTab] = useState<string>('dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  
+
   // States
   const [suppliers, setSuppliers] = useState<Supplier[]>(INITIAL_SUPPLIERS);
   const [orders, setOrders] = useState<Order[]>(INITIAL_ORDERS);
@@ -159,12 +159,12 @@ const App: React.FC<AppProps> = ({
   const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
   const [alerts, setAlerts] = useState<AppAlert[]>([]);
   const [selectedLogistaId, setSelectedLogistaId] = useState<string>('all');
-  
+
   const visibleProducts = useMemo(() => [], []);
   const visibleOrders = useMemo(() => [], []);
-  
-  const monthlySummary = useMemo(() => ({grossRevenue:0, discounts:0, refundsAndChargebacks:0, netSales:0, productCost:0, shippingCost:0, shippingRevenue:0, shippingProfit:0, taxCost:0, otherExpenses:0, grossProfit:0, adSpend:0, netProfit:0, globalRoi:0, profitMargin:0, avgTicket:0, leadConversionRate:0, salesCount:0, ordersCount:0, leadsCount:0, leadsFromTraffic:0}), []);
-  
+
+  const monthlySummary = useMemo(() => ({ grossRevenue: 0, discounts: 0, refundsAndChargebacks: 0, netSales: 0, productCost: 0, shippingCost: 0, shippingRevenue: 0, shippingProfit: 0, taxCost: 0, otherExpenses: 0, grossProfit: 0, adSpend: 0, netProfit: 0, globalRoi: 0, profitMargin: 0, avgTicket: 0, leadConversionRate: 0, salesCount: 0, ordersCount: 0, leadsCount: 0, leadsFromTraffic: 0 }), []);
+
   // --- REAL TRACKING CONFIGURATION ---
   useEffect(() => {
     // Configure the tracking service whenever pixels change
@@ -175,7 +175,7 @@ const App: React.FC<AppProps> = ({
   const prevOrdersCount = useRef(orders.length);
   useEffect(() => {
     if (orders.length > prevOrdersCount.current) {
-      const newOrder = orders[0]; 
+      const newOrder = orders[0];
       notificationService.sendNotification(
         '🚀 Novo Pedido!',
         `Venda de R$ ${newOrder.itemsTotal.toFixed(2)} para ${newOrder.customerName}.`
@@ -195,18 +195,18 @@ const App: React.FC<AppProps> = ({
     }
     prevTicketsCount.current = tickets.length;
   }, [tickets]);
-  
-  const handleUpdateReview = (review: ProductReview) => {};
-  const handleUpdateStockLocations = (productId: string, locations: ProductStockLocation[]) => {};
-  
+
+  const handleUpdateReview = (review: ProductReview) => { };
+  const handleUpdateStockLocations = (productId: string, locations: ProductStockLocation[]) => { };
+
   const handleNavigate = (tab: string, params?: any) => {
     setDeepLinkParams(params || null);
     setActiveTab(tab);
   };
-  
+
   const handleUpdateOrder = (updatedOrder: Order) => {
     setOrders(prev => prev.map(o => o.id === updatedOrder.id ? updatedOrder : o));
-    logAction('UPDATE', 'Order', updatedOrder.id, `Pedido #${updatedOrder.id.slice(0,8)} atualizado.`);
+    logAction('UPDATE', 'Order', updatedOrder.id, `Pedido #${updatedOrder.id.slice(0, 8)} atualizado.`);
   };
 
   const handleAddOrder = (order: Omit<Order, 'id'>) => {
@@ -214,14 +214,14 @@ const App: React.FC<AppProps> = ({
     setOrders(prev => [newOrder, ...prev]);
     // AUDITORIA: Baixa de estoque
     newOrder.items.forEach(item => {
-        updateProductStock(item.productId, -item.quantity, 'VENDA', newOrder.id);
+      updateProductStock(item.productId, -item.quantity, 'VENDA', newOrder.id);
     });
-    logAction('CREATE', 'Order', newOrder.id, `Pedido #${newOrder.id.slice(0,8)} criado.`);
+    logAction('CREATE', 'Order', newOrder.id, `Pedido #${newOrder.id.slice(0, 8)} criado.`);
   };
-  const handleDeleteCustomer = (id: string) => {};
-  const handleDeleteSupplier = (id: string) => {};
+  const handleDeleteCustomer = (id: string) => { };
+  const handleDeleteSupplier = (id: string) => { };
   const handleAddExperimentData = (dataPoints: ExperimentDataPoint[]) => {
-      setExperimentData(prev => [...prev, ...dataPoints]);
+    setExperimentData(prev => [...prev, ...dataPoints]);
   };
   const handleAddSubscription = (sub: Omit<Subscription, 'id' | 'userId'>) => {
     setSubscriptions(prev => [...prev, { ...sub, id: crypto.randomUUID(), userId: currentUser.id }]);
@@ -232,7 +232,7 @@ const App: React.FC<AppProps> = ({
   const handleDeleteSubscription = (id: string) => {
     setSubscriptions(prev => prev.filter(s => s.id !== id));
   };
-  
+
   const customerMetrics: CustomerWithMetrics[] = useMemo(() => [], [customers, orders]);
 
 
@@ -244,21 +244,21 @@ const App: React.FC<AppProps> = ({
           <h1 className="text-2xl font-bold text-rs-gold tracking-tighter">RS <span className="text-white">DROP</span></h1>
           <button onClick={() => setIsSidebarOpen(false)} className="md:hidden text-slate-400"><X size={24} /></button>
         </div>
-        
+
         <div className="p-4 border-b border-white/5 bg-black/20">
-            <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-rs-gold flex items-center justify-center text-rs-black font-bold text-lg">{currentUser.name.charAt(0)}</div>
-                <div>
-                    <div className="text-sm font-bold text-white">{currentUser.name}</div>
-                    <div className="text-xs text-slate-500">{currentUser.role}</div>
-                </div>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-rs-gold flex items-center justify-center text-rs-black font-bold text-lg">{currentUser.name.charAt(0)}</div>
+            <div>
+              <div className="text-sm font-bold text-white">{currentUser.name}</div>
+              <div className="text-xs text-slate-500">{currentUser.role}</div>
             </div>
+          </div>
         </div>
 
         <nav className="p-4 space-y-2 overflow-y-auto h-[calc(100vh-180px)] custom-scrollbar">
           <SidebarItem icon={<LayoutDashboard size={20} />} label="Dashboard" isActive={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} />
           <SidebarItem icon={<Bot size={20} />} label="RS.AI Copiloto" isActive={activeTab === 'ai'} onClick={() => setActiveTab('ai')} />
-          
+
           <div className="pt-4 pb-2 text-xs font-bold text-slate-500 uppercase tracking-wider">Operação</div>
           <SidebarItem icon={<ShoppingCart size={20} />} label="Pedidos" isActive={activeTab === 'orders'} onClick={() => setActiveTab('orders')} />
           <SidebarItem icon={<Package size={20} />} label="Meus Produtos" isActive={activeTab === 'products'} onClick={() => setActiveTab('products')} />
@@ -275,7 +275,7 @@ const App: React.FC<AppProps> = ({
           <SidebarItem icon={<AlertOctagon size={20} />} label="Recuperação" isActive={activeTab === 'recovery'} onClick={() => setActiveTab('recovery')} />
           <SidebarItem icon={<ChevronsRight size={20} />} label="Monitor do Funil" isActive={activeTab === 'funnel-monitor'} onClick={() => setActiveTab('funnel-monitor')} />
           <SidebarItem icon={<Map size={20} />} label="Página de Rastreio" isActive={activeTab === 'tracking'} onClick={() => setActiveTab('tracking')} />
-          
+
           <div className="pt-4 pb-2 text-xs font-bold text-slate-500 uppercase tracking-wider">Marketing & Análise</div>
           <SidebarItem icon={<Tag size={20} />} label="Afiliados" isActive={activeTab === 'affiliates'} onClick={() => setActiveTab('affiliates')} />
           <SidebarItem icon={<ImageIcon size={20} />} label="Landing Pages" isActive={activeTab === 'landing-pages'} onClick={() => setActiveTab('landing-pages')} />
@@ -288,7 +288,7 @@ const App: React.FC<AppProps> = ({
           <SidebarItem icon={<TrendingUp size={20} />} label="Qualidade Produtos" isActive={activeTab === 'product-quality'} onClick={() => setActiveTab('product-quality')} />
           <SidebarItem icon={<BarChart3 size={20} />} label="Tráfego Pago" isActive={activeTab === 'traffic'} onClick={() => setActiveTab('traffic')} />
           <SidebarItem icon={<Users size={20} />} label="Leads" isActive={activeTab === 'leads'} onClick={() => setActiveTab('leads')} />
-          <SidebarItem icon={<Target size={20} />} label="Pixel & Links" isActive={activeTab === 'marketing-tools'} onClick={() => setActiveTab('marketing-tools')} />
+          <SidebarItem icon={<Target size={20} />} label="Ferramentas Mkt" isActive={activeTab === 'marketing-tools'} onClick={() => setActiveTab('marketing-tools')} />
           <SidebarItem icon={<Store size={20} />} label="Canais & UTM" isActive={activeTab === 'channels'} onClick={() => setActiveTab('channels')} />
           <SidebarItem icon={<Wallet size={20} />} label="Pagamentos" isActive={activeTab === 'payments'} onClick={() => setActiveTab('payments')} />
           <SidebarItem icon={<TrendingDown size={20} />} label="Pós-Venda" isActive={activeTab === 'postsale'} onClick={() => setActiveTab('postsale')} />
@@ -301,36 +301,36 @@ const App: React.FC<AppProps> = ({
 
       <div className="flex-1 flex flex-col overflow-hidden bg-gradient-to-br from-rs-black to-rs-dark">
         <header className="md:hidden bg-rs-card border-b border-rs-goldDim/20 p-4 flex justify-between items-center z-40">
-           <h1 className="text-xl font-bold text-rs-gold">RS DROP</h1>
-           <button onClick={() => setIsSidebarOpen(true)} className="text-slate-300"><Menu size={24} /></button>
+          <h1 className="text-xl font-bold text-rs-gold">RS DROP</h1>
+          <button onClick={() => setIsSidebarOpen(true)} className="text-slate-300"><Menu size={24} /></button>
         </header>
 
         <main className="flex-1 overflow-auto p-4 md:p-8 custom-scrollbar">
           <Breadcrumb path={BREADCRUMB_PATHS[activeTab] || [{ label: 'Dashboard' }]} />
-          
-          {activeTab === 'dashboard' && <Dashboard onAnalyze={() => {}} onAlertClick={() => {}} alerts={alerts} summary={monthlySummary} orders={visibleOrders} trafficData={traffic} products={visibleProducts} isAnalyzing={false} aiAnalysis={null} currentMonth={currentMonth} onMonthChange={setCurrentMonth} currentUser={currentUser} users={users} selectedLogistaId={selectedLogistaId} onLogistaChange={setSelectedLogistaId} setActiveTab={setActiveTab} />}
-          {activeTab === 'products' && <ProductManager suppliers={suppliers} currentUser={currentUser} users={users} reviews={reviews} onUpdateReview={() => {}} onAddSupplier={() => {}} onViewOrders={(productName) => handleNavigate('orders', { search: productName })} distributionCenters={distributionCenters} stockLocations={stockLocations} onUpdateStockLocations={()=>{}} productPageTemplates={productPageTemplates} onUpdateProductPageTemplates={()=>{}} experiments={experiments} targetProductId={deepLinkParams?.id} onClearTargetProduct={() => setDeepLinkParams(null)} />}
-          {activeTab === 'orders' && <OrderManager orders={orders} products={products} customers={customers} suppliers={suppliers} productSuppliers={productSuppliers} paymentConfigs={paymentConfigs} onAdd={handleAddOrder} onUpdate={handleUpdateOrder} onDelete={()=>{}} currentUser={currentUser} users={users} shippingConfigs={shippingConfigs} automationLogs={automationLogs} rmas={rmas} onAddRma={()=>{}} distributionCenters={distributionCenters} stockLocations={stockLocations} affiliates={affiliates} initialSearch={deepLinkParams?.search} />}
-          {activeTab === 'customers' && <CustomerManager customers={customers} orders={orders} leads={leads} tickets={tickets} rmas={rmas} onAdd={()=>{}} onUpdate={()=>{}} onDelete={handleDeleteCustomer} currentUser={currentUser} users={users} />}
+
+          {activeTab === 'dashboard' && <Dashboard onAnalyze={() => { }} onAlertClick={() => { }} alerts={alerts} summary={monthlySummary} orders={visibleOrders} trafficData={traffic} products={visibleProducts} isAnalyzing={false} aiAnalysis={null} currentMonth={currentMonth} onMonthChange={setCurrentMonth} currentUser={currentUser} users={users} selectedLogistaId={selectedLogistaId} onLogistaChange={setSelectedLogistaId} setActiveTab={setActiveTab} />}
+          {activeTab === 'products' && <ProductManager suppliers={suppliers} currentUser={currentUser} users={users} reviews={reviews} onUpdateReview={() => { }} onAddSupplier={() => { }} onViewOrders={(productName) => handleNavigate('orders', { search: productName })} distributionCenters={distributionCenters} stockLocations={stockLocations} onUpdateStockLocations={() => { }} productPageTemplates={productPageTemplates} onUpdateProductPageTemplates={() => { }} experiments={experiments} targetProductId={deepLinkParams?.id} onClearTargetProduct={() => setDeepLinkParams(null)} />}
+          {activeTab === 'orders' && <OrderManager orders={orders} products={products} customers={customers} suppliers={suppliers} productSuppliers={productSuppliers} paymentConfigs={paymentConfigs} onAdd={handleAddOrder} onUpdate={handleUpdateOrder} onDelete={() => { }} currentUser={currentUser} users={users} shippingConfigs={shippingConfigs} automationLogs={automationLogs} rmas={rmas} onAddRma={() => { }} distributionCenters={distributionCenters} stockLocations={stockLocations} affiliates={affiliates} initialSearch={deepLinkParams?.search} />}
+          {activeTab === 'customers' && <CustomerManager customers={customers} orders={orders} leads={leads} tickets={tickets} rmas={rmas} onAdd={() => { }} onUpdate={() => { }} onDelete={handleDeleteCustomer} currentUser={currentUser} users={users} />}
           {activeTab === 'crm-clientes' && <CrmManager customers={customers} orders={orders} />}
           {activeTab === 'subscriptions' && <SubscriptionManager subscriptions={subscriptions} customers={customers} products={products} onAdd={handleAddSubscription} onUpdate={handleUpdateSubscription} onDelete={handleDeleteSubscription} />}
-          {activeTab === 'suppliers' && <SupplierManager suppliers={suppliers} orders={orders} onAdd={()=>{}} onUpdate={()=>{}} onDelete={handleDeleteSupplier} currentUser={currentUser} users={users} />}
-          {activeTab === 'traffic' && <TrafficManager trafficData={traffic} leadsData={leads} onAdd={()=>{}} onUpdate={()=>{}} onDelete={()=>{}} currentUser={currentUser} users={users} onImport={()=>{}}/>}
-          {activeTab === 'leads' && <LeadsManager leads={leads} onAdd={()=>{}} onUpdate={()=>{}} onDelete={()=>{}} currentUser={currentUser} users={users} />}
-          {activeTab === 'marketing-tools' && <MarketingTools pixels={trackingPixels} onAddPixel={(p) => setTrackingPixels(prev => [...prev, { ...p, id: crypto.randomUUID(), userId: currentUser.id, createdAt: new Date().toISOString() }])} onUpdatePixel={(p) => setTrackingPixels(prev => prev.map(pix => pix.id === p.id ? p : pix))} onDeletePixel={(id) => setTrackingPixels(prev => prev.filter(p => p.id !== id))} links={shortLinks} onAddLink={()=>{}} onUpdateLink={()=>{}} onDeleteLink={()=>{}} currentUser={currentUser} users={users} orders={orders} leads={leads} onRegisterClick={()=>{}} products={products} affiliates={affiliates} />}
+          {activeTab === 'suppliers' && <SupplierManager suppliers={suppliers} orders={orders} onAdd={() => { }} onUpdate={() => { }} onDelete={handleDeleteSupplier} currentUser={currentUser} users={users} />}
+          {activeTab === 'traffic' && <TrafficManager trafficData={traffic} leadsData={leads} onAdd={() => { }} onUpdate={() => { }} onDelete={() => { }} currentUser={currentUser} users={users} onImport={() => { }} />}
+          {activeTab === 'leads' && <LeadsManager leads={leads} onAdd={() => { }} onUpdate={() => { }} onDelete={() => { }} currentUser={currentUser} users={users} />}
+          {activeTab === 'marketing-tools' && <MarketingTools pixels={trackingPixels} onAddPixel={(p) => setTrackingPixels(prev => [...prev, { ...p, id: crypto.randomUUID(), userId: currentUser.id, createdAt: new Date().toISOString() }])} onUpdatePixel={(p) => setTrackingPixels(prev => prev.map(pix => pix.id === p.id ? p : pix))} onDeletePixel={(id) => setTrackingPixels(prev => prev.filter(p => p.id !== id))} links={shortLinks} onAddLink={() => { }} onUpdateLink={() => { }} onDeleteLink={() => { }} currentUser={currentUser} users={users} orders={orders} leads={leads} onRegisterClick={() => { }} products={products} affiliates={affiliates} />}
           {activeTab === 'payments' && <PaymentAnalysis orders={orders} currentMonth={currentMonth} />}
           {activeTab === 'channels' && <SalesChannelAnalysis orders={orders} currentMonth={currentMonth} />}
           {activeTab === 'postsale' && <PostSaleAnalysis orders={orders} products={products} currentMonth={currentMonth} />}
-          {activeTab === 'settings' && <SettingsManager paymentConfigs={paymentConfigs} onAddPaymentConfig={()=>{}} onUpdatePaymentConfig={()=>{}} onDeletePaymentConfig={()=>{}} shippingConfigs={shippingConfigs} onAddShippingConfig={()=>{}} onUpdateShippingConfig={()=>{}} onDeleteShippingConfig={()=>{}} auditLogs={auditLogs} whatsAppTemplates={whatsAppTemplates} onWhatsAppTemplatesChange={setWhatsAppTemplates} aovBoostConfig={aovBoostConfig} onAovBoostConfigChange={setAovBoostConfig} />}
+          {activeTab === 'settings' && <SettingsManager paymentConfigs={paymentConfigs} onAddPaymentConfig={() => { }} onUpdatePaymentConfig={() => { }} onDeletePaymentConfig={() => { }} shippingConfigs={shippingConfigs} onAddShippingConfig={() => { }} onUpdateShippingConfig={() => { }} onDeleteShippingConfig={() => { }} auditLogs={auditLogs} whatsAppTemplates={whatsAppTemplates} onWhatsAppTemplatesChange={setWhatsAppTemplates} aovBoostConfig={aovBoostConfig} onAovBoostConfigChange={setAovBoostConfig} />}
           {activeTab === 'funnel-monitor' && <FunnelMonitor currentUser={currentUser} users={users} products={products} aovBoostConfig={aovBoostConfig} />}
           {activeTab === 'recovery' && <RecoveryManager currentUser={currentUser} users={users} whatsAppTemplates={whatsAppTemplates} />}
-          {activeTab === 'support' && <SupportManager tickets={tickets} orders={orders} customers={customers} onAdd={()=>{}} onUpdate={()=>{}} onDelete={()=>{}} currentUser={currentUser} users={users} />}
+          {activeTab === 'support' && <SupportManager tickets={tickets} orders={orders} customers={customers} onAdd={() => { }} onUpdate={() => { }} onDelete={() => { }} currentUser={currentUser} users={users} />}
           {activeTab === 'shipping' && <ShippingManager orders={orders} onUpdateOrder={handleUpdateOrder} currentUser={currentUser} users={users} />}
-          {activeTab === 'automations' && <AutomationManager rules={automationRules} templates={whatsAppTemplates} onAdd={()=>{}} onUpdate={()=>{}} onDelete={()=>{}} />}
-          {activeTab === 'rma' && <RmaManager rmas={rmas} orders={orders} customers={customers} onAdd={()=>{}} onUpdate={()=>{}} onDelete={()=>{}} currentUser={currentUser} users={users} />}
+          {activeTab === 'automations' && <AutomationManager rules={automationRules} templates={whatsAppTemplates} onAdd={() => { }} onUpdate={() => { }} onDelete={() => { }} />}
+          {activeTab === 'rma' && <RmaManager rmas={rmas} orders={orders} customers={customers} onAdd={() => { }} onUpdate={() => { }} onDelete={() => { }} currentUser={currentUser} users={users} />}
           {activeTab === 'reviews' && <ReviewManager reviews={reviews} onUpdate={handleUpdateReview} />}
-          {activeTab === 'catalog' && <CatalogManager currentUser={currentUser} globalProducts={globalProducts} products={products} onActivate={()=>{}} onUpdateGlobalProduct={()=>{}} />}
-          {activeTab === 'distribution-centers' && <DistributionCenterManager centers={distributionCenters} onAdd={()=>{}} onUpdate={()=>{}} onDelete={()=>{}} />}
+          {activeTab === 'catalog' && <CatalogManager currentUser={currentUser} globalProducts={globalProducts} products={products} onActivate={() => { }} onUpdateGlobalProduct={() => { }} />}
+          {activeTab === 'distribution-centers' && <DistributionCenterManager centers={distributionCenters} onAdd={() => { }} onUpdate={() => { }} onDelete={() => { }} />}
           {activeTab === 'product-quality' && <ProductQualityDashboard orders={orders} rmas={rmas} tickets={tickets} abandonmentLogs={abandonmentLogs} />}
           {activeTab === 'landing-pages' && <LandingPageManager landingPages={landingPages} products={products} onUpdatePages={setLandingPages} />}
           {activeTab === 'ab-tests' && <AbTestManager experiments={experiments} experimentData={experimentData} products={products} productPageTemplates={productPageTemplates} onUpdateExperiments={setExperiments} onAddExperimentData={handleAddExperimentData} onUpdateProduct={updateProduct} currentUser={currentUser} />}
@@ -342,8 +342,8 @@ const App: React.FC<AppProps> = ({
           {activeTab === 'funnel-analysis' && <FunnelAnalysis checkouts={checkouts} />}
           {activeTab === 'product-reports' && <ProductReports products={products} orders={orders} productSuppliers={productSuppliers} />}
           {activeTab === 'push-notifications' && <PushManager logs={pushLogs} onAddLog={(log) => setPushLogs(prev => [log, ...prev])} customerMetrics={customerMetrics} />}
-          
-          {activeTab === 'ai' && <AICopilot currentUser={currentUser} monthlySummary={monthlySummary} orders={orders} products={products} traffic={traffic} leads={leads} customers={customers} carts={carts} checkouts={checkouts} abandonmentLogs={abandonmentLogs} templates={whatsAppTemplates} suppliers={suppliers} alerts={alerts} productSuppliers={productSuppliers} onNavigate={(tab, params) => setActiveTab(tab)} onUpdateProduct={updateProduct} onUpdateOrder={(o) => {}} onUpdateAbandonmentLog={(id, u) => {}} />}
+
+          {activeTab === 'ai' && <AICopilot currentUser={currentUser} monthlySummary={monthlySummary} orders={orders} products={products} traffic={traffic} leads={leads} customers={customers} carts={carts} checkouts={checkouts} abandonmentLogs={abandonmentLogs} templates={whatsAppTemplates} suppliers={suppliers} alerts={alerts} productSuppliers={productSuppliers} onNavigate={(tab, params) => setActiveTab(tab)} onUpdateProduct={updateProduct} onUpdateOrder={(o) => { }} onUpdateAbandonmentLog={(id, u) => { }} />}
         </main>
       </div>
     </div>
@@ -358,8 +358,8 @@ interface SidebarItemProps {
 }
 
 const SidebarItem: React.FC<SidebarItemProps> = ({ icon, label, isActive, onClick }) => (
-  <button 
-    onClick={onClick} 
+  <button
+    onClick={onClick}
     className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${isActive ? 'bg-rs-gold/10 text-rs-gold shadow-inner' : 'text-slate-400 hover:bg-white/5 hover:text-slate-200'}`}
   >
     {icon}
