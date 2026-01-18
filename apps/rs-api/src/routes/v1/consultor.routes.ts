@@ -10,8 +10,10 @@ import { supabaseAuth, requireRole, ROLES, AuthenticatedRequest } from '../../mi
 
 const router = express.Router();
 
-// GET /v1/consultor/dashboard
-router.get('/dashboard', supabaseAuth, requireRole([ROLES.CONSULTOR, ROLES.MASTER, ROLES.ADMIN]), async (req: AuthenticatedRequest, res) => {
+// GET /v1/consultor/dashboard/overview
+router.get('/dashboard/overview', supabaseAuth, requireRole([ROLES.CONSULTOR, ROLES.MASTER, ROLES.ADMIN]), async (req: AuthenticatedRequest, res) => {
+  // ... existing dashboard logic ...
+  // (Copied the logic from the old /dashboard handler)
   try {
     if (!req.user) {
       return res.status(401).json({
@@ -113,8 +115,9 @@ router.get('/dashboard', supabaseAuth, requireRole([ROLES.CONSULTOR, ROLES.MASTE
   }
 });
 
-// GET /v1/consultor/network
-router.get('/network', supabaseAuth, requireRole([ROLES.CONSULTOR, ROLES.MASTER, ROLES.ADMIN]), async (req: AuthenticatedRequest, res) => {
+// GET /v1/consultor/dashboard/network
+router.get('/dashboard/network', supabaseAuth, requireRole([ROLES.CONSULTOR, ROLES.MASTER, ROLES.ADMIN]), async (req: AuthenticatedRequest, res) => {
+  // Logic from old /network
   try {
     if (!req.user) {
       return res.status(401).json({
@@ -175,48 +178,12 @@ router.get('/network', supabaseAuth, requireRole([ROLES.CONSULTOR, ROLES.MASTER,
   }
 });
 
-// GET /v1/consultor/referral-link
-router.get('/referral-link', supabaseAuth, requireRole([ROLES.CONSULTOR, ROLES.MASTER, ROLES.ADMIN]), async (req: AuthenticatedRequest, res) => {
-  try {
-    if (!req.user) {
-      return res.status(401).json({
-        error: 'Usuário não autenticado',
-        code: 'USER_NOT_AUTHENTICATED'
-      });
-    }
-    const userId = req.user.id;
-    const { data: user } = await supabase.from('consultores').select('login').eq('id', userId).single();
-    const code = user?.login || 'UNKNOWN';
-
-    const referralLink = {
-      url: `https://rsprolipsi.com.br/indicacao/${code}`,
-      code: code,
-      clicks: 0, // TODO: Implementar tracking
-      conversions: 0
-    };
-
-    res.json(referralLink);
-
-  } catch (error) {
-    console.error('Erro no link de indicação:', error);
-    res.status(500).json({
-      error: 'Erro interno do servidor'
-    });
-  }
-});
-
-// GET /v1/consultor/sigma-tree
-router.get('/sigma-tree', supabaseAuth, requireRole([ROLES.CONSULTOR, ROLES.MASTER, ROLES.ADMIN]), async (req, res) => {
-  // Deprecated: Use /v1/sigma/tree
-  res.redirect(307, '/v1/sigma/tree');
-});
-
-// GET /v1/consultor/performance
-router.get('/performance', supabaseAuth, requireRole([ROLES.CONSULTOR, ROLES.MASTER, ROLES.ADMIN]), async (req, res) => {
+// GET /v1/consultor/dashboard/performance
+router.get('/dashboard/performance', supabaseAuth, requireRole([ROLES.CONSULTOR, ROLES.MASTER, ROLES.ADMIN]), async (req, res) => {
+  // Logic from old /performance
   try {
     // TODO: Buscar performance real do consultor
     // Retornando zeros por enquanto para remover dados fictícios
-
     const performanceData = {
       sales: {
         daily: 0.00,

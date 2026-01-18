@@ -54,10 +54,12 @@ export default {
           dark: "hsl(var(--gold-dark))",
         },
         black: {
+          DEFAULT: "#000000",
           primary: "hsl(var(--black-primary))",
           secondary: "hsl(var(--black-secondary))",
           tertiary: "hsl(var(--black-tertiary))",
         },
+        "dark-lighter": "#1a1b23",
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",

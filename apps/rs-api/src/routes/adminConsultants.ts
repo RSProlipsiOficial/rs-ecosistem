@@ -5,8 +5,8 @@ import { getSigmaConfig } from '../services/sigmaConfigService'
 const router = Router()
 
 function sb() {
-  const url = process.env.SUPABASE_URL as string
-  const key = (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY) as string
+  const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL as string
+  const key = (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || process.env.VITE_SUPABASE_ANON_KEY) as string
   return createClient(url, key)
 }
 
@@ -25,7 +25,7 @@ router.get('/admin/consultants', async (_req: Request, res: Response) => {
     const nameByUuid = new Map<string, string>()
     for (const c of (consultores || [])) {
       const uuid = String((c as any).id)
-      const code = String((c as any).codigo_consultor || '')
+      const code = String((c as any).codigo_consultor || (c as any).id || '')
       codeByUuid.set(uuid, code)
       nameByUuid.set(uuid, String((c as any).nome || ''))
     }
@@ -108,7 +108,7 @@ router.get('/admin/consultants', async (_req: Request, res: Response) => {
       const sigmaActive = (buyerMonth?.matrix || 0) >= 60
       if (!sigmaActive) continue
       let total = cyclesByConsultor.get(uuid) || 0
-      const code = String((c as any).codigo_consultor || '')
+      const code = String((c as any).codigo_consultor || (c as any).id || '')
       const teamCodes = teamOfCodes(code)
       for (const memberCode of teamCodes) {
         const memberUuid = [...codeByUuid.entries()].find(([, ccode]) => ccode === memberCode)?.[0]
@@ -122,7 +122,7 @@ router.get('/admin/consultants', async (_req: Request, res: Response) => {
 
     const enriched = (consultores || []).map(c => {
       const uuid = String((c as any).id)
-      const code = String((c as any).codigo_consultor || '')
+      const code = String((c as any).codigo_consultor || (c as any).id || '')
       const buyerMonth = ordersByBuyer.get(uuid) || { total: 0, matrix: 0 }
       const sigmaActive = buyerMonth.matrix >= 60
       const sigmaCyclesMonth = cyclesByConsultor.get(uuid) || 0

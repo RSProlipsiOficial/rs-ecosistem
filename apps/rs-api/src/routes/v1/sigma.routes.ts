@@ -51,26 +51,25 @@ router.get('/stats', supabaseAuth, async (req: any, res) => {
 
         // Let's try to get direct stats first.
         const { count: totalDirects } = await supabase
-            .from('downlines')
+            .from('consultores')
             .select('*', { count: 'exact', head: true })
-            .eq('upline_id', userId);
+            .eq('patrocinador_id', userId);
 
         // Get active directs
-        // We need to join with consultores table
         const { data: directConsultants } = await supabase
-            .from('downlines')
-            .select('consultores:downline_id(status)')
-            .eq('upline_id', userId);
+            .from('consultores')
+            .select('status')
+            .eq('patrocinador_id', userId);
 
-        const activeDirects = directConsultants?.filter((c: any) => c.consultores?.status === 'active').length || 0;
+        const activeDirects = directConsultants?.filter((c: any) => c.status === 'ativo' || c.status === 'Ativo').length || 0;
         const inactiveDirects = (totalDirects || 0) - activeDirects;
 
         res.json({
             data: {
-                totalDownline: totalDirects, // Temporary: showing directs as total for now if recursion is hard
+                totalDownline: totalDirects,
                 activeDirects,
                 inactiveDirects,
-                maxDepth: 0, // Need to calculate
+                maxDepth: 0,
                 downlineWithPurchase: 0,
                 downlineWithoutPurchase: 0,
                 pinSummary: {}
@@ -201,16 +200,16 @@ router.get('/tree', supabaseAuth, async (req: any, res) => {
 
         // 2. Buscar descendentes (Nível 1 da Matriz - Filhos Diretos)
         const { data: directChildren, error: childrenError } = await supabase
-            .from('downlines')
-            .select('downline_id, linha, consultores:downline_id(id, nome, login, pin_atual, status)')
-            .eq('upline_id', userId);
+            .from('consultores')
+            .select('id, nome, email, pin_atual, status')
+            .eq('patrocinador_id', userId);
 
         if (childrenError) throw childrenError;
 
         const rootNode: any = {
             id: userNode.id,
             name: userNode.nome,
-            login: userNode.login,
+            login: userNode.login || userNode.email,
             pin: userNode.pin_atual || 'Iniciante',
             status: userNode.status,
             level: 0,
@@ -221,36 +220,36 @@ router.get('/tree', supabaseAuth, async (req: any, res) => {
         if (directChildren && directChildren.length > 0) {
             // Mapear filhos diretos
             rootNode.children = directChildren.map((c: any) => ({
-                id: c.consultores?.id || c.downline_id,
-                name: c.consultores?.nome || 'Desconhecido',
-                login: c.consultores?.login,
-                pin: c.consultores?.pin_atual || 'Iniciante',
-                status: c.consultores?.status,
+                id: c.id,
+                name: c.nome,
+                login: c.login || c.email,
+                pin: c.pin_atual || 'Iniciante',
+                status: c.status,
                 level: 1,
-                avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(c.consultores?.nome || 'User')}&background=random`,
+                avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(c.nome)}&background=random`,
                 children: []
             }));
 
             // 3. Buscar Netos (Nível 2)
-            const childIds = directChildren.map(c => c.downline_id);
+            const childIds = directChildren.map(c => c.id);
             if (childIds.length > 0) {
                 const { data: grandChildren } = await supabase
-                    .from('downlines')
-                    .select('upline_id, downline_id, linha, consultores:downline_id(id, nome, login, pin_atual, status)')
-                    .in('upline_id', childIds);
+                    .from('consultores')
+                    .select('id, nome, email, pin_atual, status, patrocinador_id')
+                    .in('patrocinador_id', childIds);
 
                 if (grandChildren) {
                     grandChildren.forEach((gc: any) => {
-                        const parent = rootNode.children.find((c: any) => c.id === gc.upline_id);
+                        const parent = rootNode.children.find((c: any) => c.id === gc.patrocinador_id);
                         if (parent) {
                             parent.children.push({
-                                id: gc.consultores?.id || gc.downline_id,
-                                name: gc.consultores?.nome || 'Desconhecido',
-                                login: gc.consultores?.login,
-                                pin: gc.consultores?.pin_atual || 'Iniciante',
-                                status: gc.consultores?.status,
+                                id: gc.id,
+                                name: gc.nome,
+                                login: gc.login || gc.email,
+                                pin: gc.pin_atual || 'Iniciante',
+                                status: gc.status,
                                 level: 2,
-                                avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(gc.consultores?.nome || 'User')}&background=random`,
+                                avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(gc.nome)}&background=random`,
                                 children: []
                             });
                         }

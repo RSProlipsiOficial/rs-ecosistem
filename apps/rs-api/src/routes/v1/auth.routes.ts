@@ -142,12 +142,20 @@ router.get('/profile', supabaseAuth, async (req: AuthenticatedRequest, res) => {
       });
     }
 
+    console.log('🔍 [DEBUG] Buscando perfil para Auth User ID:', req.user.id);
+
     // Buscar perfil completo do usuário
     const { data: profile, error: profileError } = await supabase
       .from('consultores')
       .select('*')
-      .eq('user_id', req.user.id)
+      .eq('id', req.user.id)
       .single();
+
+    if (profile) {
+      console.log('✅ [DEBUG] Perfil encontrado:', profile.nome, 'ID:', profile.id);
+    } else {
+      console.warn('⚠️ [DEBUG] Perfil NÃO encontrado para ID:', req.user.id);
+    }
 
     if (profileError) {
       console.error('Erro ao buscar perfil:', profileError);

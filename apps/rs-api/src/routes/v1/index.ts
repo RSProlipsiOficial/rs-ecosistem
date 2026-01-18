@@ -18,6 +18,8 @@ import consultantsRoutes from './consultants.routes';
 import sigmaRoutes from './sigma.routes';
 import uploadRoutes from './upload.routes';
 
+import networkRoutes from './network.routes';
+
 // Configuração das rotas V1
 // Montagem explícita para garantir compatibilidade com apiUrls.ts e V1_ENDPOINTS
 
@@ -27,6 +29,7 @@ router.use('/wallet', walletRoutes);
 router.use('/admin', adminRoutes);
 router.use('/consultants', consultantsRoutes);
 router.use('/sigma', sigmaRoutes);
+router.use('/network', networkRoutes);
 router.use('/upload', uploadRoutes);
 
 // Health check específico do V1
