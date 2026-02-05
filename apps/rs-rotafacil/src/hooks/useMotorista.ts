@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { ChecklistMotorista } from '@/types/motorista';
 import { useToast } from '@/hooks/use-toast';
 
-export function useMotorista() {
+export function useMotorista(customUserId?: string) {
   const [checklists, setChecklists] = useState<ChecklistMotorista[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
@@ -11,10 +11,21 @@ export function useMotorista() {
   const fetchChecklists = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('checklists_motorista')
+      const { data: { user } } = await supabase.auth.getUser();
+      const targetId = customUserId || user?.id;
+
+      // @ts-ignore
+      let query = supabase
+        .from('checklists_frota')
         .select('*')
-        .order('data', { ascending: false });
+        .order('data_checklist', { ascending: false });
+
+      // Se tivermos um ID alvo (seja do admin vendo outro ou do próprio motorista), filtramos
+      if (targetId) {
+        query = query.eq('motorista_id', targetId);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       setChecklists((data || []) as ChecklistMotorista[]);
@@ -32,13 +43,19 @@ export function useMotorista() {
 
   const createChecklist = async (checklistData: Record<string, any>) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      const userId = user?.id || '00000000-0000-0000-0000-000000000000';
+      const { data: { session } } = await supabase.auth.getSession();
+      const currentUserId = session?.user?.id;
+
+      const userId = customUserId || currentUserId;
+
+      if (!userId) {
+        throw new Error("Usuário não autenticado");
+      }
 
       // Verificar se todos os itens obrigatórios estão preenchidos
       // Isso será validado no frontend, aqui assumimos que está correto
       const status = 'revisado'; // Como chegou até aqui, assume que está revisado
-      
+
       // Verificar se está fora do horário (após 07:00)
       const agora = new Date();
       const horarioLimite = new Date();
@@ -66,22 +83,24 @@ export function useMotorista() {
       }, {} as Record<string, any>);
 
       const insertData = {
-        ...normalizedData,
-        user_id: userId,
-        status,
-        fora_horario: foraHorario,
+        motorista_id: userId,
+        van_id: normalizedData.van_id || null, // Sanitize UUID
+        data_checklist: checklistData.data,
+        items: normalizedData, // Grava tudo no JSONB
+        obs_geral: checklistData.obs_geral || '',
       };
 
+      // @ts-ignore
       const { data, error } = await supabase
-        .from('checklists_motorista')
-        .insert([insertData as any])
+        .from('checklists_frota')
+        .insert([insertData])
         .select()
         .single();
 
       if (error) throw error;
 
       setChecklists(prev => [data as ChecklistMotorista, ...prev]);
-      
+
       toast({
         title: "Sucesso",
         description: `Checklist do dia ${new Date(checklistData.data).toLocaleDateString()} registrado com sucesso!`,
@@ -90,8 +109,8 @@ export function useMotorista() {
       return data;
     } catch (error: any) {
       console.error('Erro ao criar checklist:', error);
-      
-      if (error.code === '23505') {
+
+      if (error?.code === '23505') {
         toast({
           title: "Erro",
           description: "Já existe um checklist para esta van nesta data.",
@@ -100,7 +119,7 @@ export function useMotorista() {
       } else {
         toast({
           title: "Erro",
-          description: "Não foi possível salvar o checklist.",
+          description: error.message || "Não foi possível salvar o checklist.",
           variant: "destructive",
         });
       }
@@ -125,16 +144,17 @@ export function useMotorista() {
         return acc;
       }, {} as Record<string, any>);
 
+      // @ts-ignore
       const { data, error } = await supabase
-        .from('checklists_motorista')
-        .update(normalizedUpdates)
+        .from('checklists_frota')
+        .update({ items: normalizedUpdates }) // Update the JSONB column
         .eq('id', id)
         .select()
         .single();
 
       if (error) throw error;
 
-      setChecklists(prev => prev.map(item => 
+      setChecklists(prev => prev.map(item =>
         item.id === id ? { ...item, ...data } as ChecklistMotorista : item
       ));
 
@@ -157,8 +177,9 @@ export function useMotorista() {
 
   const deleteChecklist = async (id: string) => {
     try {
+      // @ts-ignore
       const { error } = await supabase
-        .from('checklists_motorista')
+        .from('checklists_frota')
         .delete()
         .eq('id', id);
 
@@ -181,7 +202,7 @@ export function useMotorista() {
   };
 
   const getChecklistByDate = (data: string, vanId?: string) => {
-    return checklists.find(checklist => 
+    return checklists.find(checklist =>
       checklist.data === data && (!vanId || checklist.van_id === vanId)
     );
   };
@@ -189,7 +210,7 @@ export function useMotorista() {
   const getResumoChecklists = () => {
     const hoje = new Date().toISOString().split('T')[0];
     const checklistHoje = checklists.find(c => c.data === hoje);
-    
+
     return {
       realizadoHoje: !!checklistHoje,
       statusHoje: checklistHoje?.status || null,
@@ -207,18 +228,21 @@ export function useMotorista() {
 
     let sequencia = 0;
     const hoje = new Date();
-    
+
     for (let i = 0; i < checklistsOrdenados.length; i++) {
-      const dataChecklist = new Date(checklistsOrdenados[i].data);
+      const dataStr = checklistsOrdenados[i].data || (checklistsOrdenados[i] as any).data_checklist;
+      if (!dataStr) continue;
+
+      const dataChecklist = new Date(dataStr);
       const diasDiferenca = Math.floor((hoje.getTime() - dataChecklist.getTime()) / (1000 * 60 * 60 * 24));
-      
+
       if (diasDiferenca === i) {
         sequencia++;
       } else {
         break;
       }
     }
-    
+
     return sequencia;
   };
 

@@ -30,9 +30,13 @@ export function useChecklistItems() {
   const fetchItems = async () => {
     try {
       setLoading(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
       const { data, error } = await supabase
         .from('checklist_items_personalizados')
         .select('*')
+        .eq('user_id', session.user.id)
         .eq('ativo', true)
         .order('ordem');
 
@@ -52,8 +56,11 @@ export function useChecklistItems() {
 
   const createItem = async (itemData: ChecklistItemFormData) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      const userId = user?.id || '00000000-0000-0000-0000-000000000000';
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error("Usuário não autenticado");
+      }
+      const userId = session.user.id;
 
       // Buscar a próxima ordem
       const { data: lastItem } = await supabase
@@ -84,11 +91,11 @@ export function useChecklistItems() {
       });
 
       return data;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao criar item:', error);
       toast({
         title: "Erro",
-        description: "Não foi possível adicionar o item.",
+        description: error.message || "Não foi possível adicionar o item.",
         variant: "destructive",
       });
       throw error;
@@ -106,7 +113,7 @@ export function useChecklistItems() {
 
       if (error) throw error;
 
-      setItems(prev => prev.map(item => 
+      setItems(prev => prev.map(item =>
         item.id === id ? { ...item, ...data } as ChecklistItemPersonalizado : item
       ));
 

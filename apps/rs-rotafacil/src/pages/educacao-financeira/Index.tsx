@@ -6,13 +6,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  GraduationCap, 
-  Calculator, 
-  Video, 
-  Save, 
-  FileDown, 
-  Youtube, 
+import {
+  GraduationCap,
+  Calculator,
+  Video,
+  Save,
+  FileDown,
+  Youtube,
   DollarSign,
   Home,
   Coffee,
@@ -68,14 +68,25 @@ export default function EducacaoFinanceiraIndex() {
   const carregarVideos = async () => {
     try {
       const { data, error } = await supabase
-        .from('videos_educativos')
+        .from('videos_educacao')
         .select('*')
         .eq('ativo', true)
-        .order('created_at', { ascending: true });
+        .order('ordem', { ascending: true });
 
       if (error) throw error;
 
-      if (!data || data.length === 0) {
+      if (data && data.length > 0) {
+        const formattedVideos: VideoEducativo[] = data.map(v => ({
+          id: v.id,
+          titulo: v.titulo,
+          descricao: v.descricao || '',
+          thumbnail: v.thumbnail_url || '/placeholder.svg',
+          youtube_url: v.link_video,
+          categoria: v.categoria || 'Geral',
+          duracao: '' // Não temos essa coluna, pode ficar vazia ou ser adicionada depois
+        }));
+        setVideosEducativos(formattedVideos);
+      } else {
         // Fallback quando não há vídeos no banco
         setVideosEducativos([
           {
@@ -86,87 +97,19 @@ export default function EducacaoFinanceiraIndex() {
             youtube_url: 'https://youtube.com/watch?v=exemplo1',
             categoria: 'Fundamentos',
             duracao: '15 min'
-          },
-          {
-            id: '2',
-            titulo: 'Controle de Gastos Simples',
-            descricao: 'Técnicas práticas para reduzir gastos desnecessários',
-            thumbnail: '/placeholder.svg',
-            youtube_url: 'https://youtube.com/watch?v=exemplo2',
-            categoria: 'Planejamento',
-            duracao: '12 min'
-          },
-          {
-            id: '3',
-            titulo: 'Começando a Investir do Zero',
-            descricao: 'Primeiros passos para fazer seu dinheiro trabalhar para você',
-            thumbnail: '/placeholder.svg',
-            youtube_url: 'https://youtube.com/watch?v=exemplo3',
-            categoria: 'Investimento básico',
-            duracao: '20 min'
-          },
-          {
-            id: '4',
-            titulo: 'Mentalidade de Sucesso Financeiro',
-            descricao: 'Mudança de mindset para alcançar a liberdade financeira',
-            thumbnail: '/placeholder.svg',
-            youtube_url: 'https://youtube.com/watch?v=exemplo4',
-            categoria: 'Mentalidade financeira',
-            duracao: '18 min'
           }
         ]);
-      } else {
-        setVideosEducativos(data);
       }
     } catch (error) {
       console.error('Erro ao carregar vídeos:', error);
-      // Fallback para vídeos estáticos
-      setVideosEducativos([
-        {
-          id: '1',
-          titulo: 'Como dividir seu salário todo mês',
-          descricao: 'Aprenda a organizar sua renda mensal de forma inteligente',
-          thumbnail: '/placeholder.svg',
-          youtube_url: 'https://youtube.com/watch?v=exemplo1',
-          categoria: 'Fundamentos',
-          duracao: '15 min'
-        },
-        {
-          id: '2',
-          titulo: 'Controle de Gastos Simples',
-          descricao: 'Técnicas práticas para reduzir gastos desnecessários',
-          thumbnail: '/placeholder.svg',
-          youtube_url: 'https://youtube.com/watch?v=exemplo2',
-          categoria: 'Planejamento',
-          duracao: '12 min'
-        },
-        {
-          id: '3',
-          titulo: 'Começando a Investir do Zero',
-          descricao: 'Primeiros passos para fazer seu dinheiro trabalhar para você',
-          thumbnail: '/placeholder.svg',
-          youtube_url: 'https://youtube.com/watch?v=exemplo3',
-          categoria: 'Investimento básico',
-          duracao: '20 min'
-        },
-        {
-          id: '4',
-          titulo: 'Mentalidade de Sucesso Financeiro',
-          descricao: 'Mudança de mindset para alcançar a liberdade financeira',
-          thumbnail: '/placeholder.svg',
-          youtube_url: 'https://youtube.com/watch?v=exemplo4',
-          categoria: 'Mentalidade financeira',
-          duracao: '18 min'
-        }
-      ]);
     }
   };
 
   const categorias = ['Todos', 'Fundamentos', 'Planejamento', 'Redução de Gastos', 'Investimento básico', 'Mentalidade financeira'];
   const [categoriaAtiva, setCategoriaAtiva] = useState('Todos');
 
-  const videosFiltrados = categoriaAtiva === 'Todos' 
-    ? videosEducativos 
+  const videosFiltrados = categoriaAtiva === 'Todos'
+    ? videosEducativos
     : videosEducativos.filter(video => video.categoria === categoriaAtiva);
 
   // Cálculo automático da distribuição
@@ -200,7 +143,7 @@ export default function EducacaoFinanceiraIndex() {
     try {
       setLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
-      
+
       if (!user) {
         toast({
           title: "Erro",
@@ -219,9 +162,9 @@ export default function EducacaoFinanceiraIndex() {
       // Usar upsert para inserir ou atualizar
       const { error } = await supabase
         .from('planejamentos_financeiros')
-        .upsert(planejamentoData, { 
+        .upsert(planejamentoData, {
           onConflict: 'user_id',
-          ignoreDuplicates: false 
+          ignoreDuplicates: false
         });
 
       if (error) throw error;
@@ -281,12 +224,12 @@ export default function EducacaoFinanceiraIndex() {
         <div className="bg-gradient-to-r from-slate-900 to-slate-800 rounded-lg p-8 text-white">
           <div className="flex items-center gap-3 mb-4">
             <GraduationCap className="h-8 w-8 text-yellow-400" />
-            <h1 className="text-3xl font-bold">Educação Financeira</h1>
+            <h1 className="text-3xl font-bold">Treinamentos</h1>
           </div>
           <p className="text-slate-300 text-lg mb-6">
             Comece agora a cuidar da sua vida financeira com orientações práticas e simples.
           </p>
-          <Button 
+          <Button
             onClick={() => abrirVideoYoutube('https://youtube.com/watch?v=exemplo-intro')}
             className="bg-yellow-500 hover:bg-yellow-600 text-black font-medium gap-2"
           >
@@ -338,8 +281,8 @@ export default function EducacaoFinanceiraIndex() {
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <h3 className="font-semibold text-lg text-white">Distribuição Recomendada:</h3>
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         size="sm"
                         onClick={() => setEditandoPorcentagens(!editandoPorcentagens)}
                         className="border-yellow-500 text-yellow-400 hover:bg-yellow-500/10"
@@ -347,7 +290,7 @@ export default function EducacaoFinanceiraIndex() {
                         {editandoPorcentagens ? 'Salvar' : 'Editar %'}
                       </Button>
                     </div>
-                    
+
                     <div className="space-y-3">
                       <div className="bg-gradient-to-r from-green-500/20 to-green-600/20 border border-green-500/30 rounded-lg p-4">
                         <div className="flex items-center justify-between">
@@ -365,7 +308,7 @@ export default function EducacaoFinanceiraIndex() {
                               <Input
                                 type="number"
                                 value={porcentagens.gastos_casa}
-                                onChange={(e) => setPorcentagens({...porcentagens, gastos_casa: Number(e.target.value)})}
+                                onChange={(e) => setPorcentagens({ ...porcentagens, gastos_casa: Number(e.target.value) })}
                                 className="w-16 h-8 text-center bg-green-500/10 border-green-500/30"
                                 min="0"
                                 max="100"
@@ -400,7 +343,7 @@ export default function EducacaoFinanceiraIndex() {
                               <Input
                                 type="number"
                                 value={porcentagens.lazer}
-                                onChange={(e) => setPorcentagens({...porcentagens, lazer: Number(e.target.value)})}
+                                onChange={(e) => setPorcentagens({ ...porcentagens, lazer: Number(e.target.value) })}
                                 className="w-16 h-8 text-center bg-blue-500/10 border-blue-500/30"
                                 min="0"
                                 max="100"
@@ -435,7 +378,7 @@ export default function EducacaoFinanceiraIndex() {
                               <Input
                                 type="number"
                                 value={porcentagens.educacao}
-                                onChange={(e) => setPorcentagens({...porcentagens, educacao: Number(e.target.value)})}
+                                onChange={(e) => setPorcentagens({ ...porcentagens, educacao: Number(e.target.value) })}
                                 className="w-16 h-8 text-center bg-purple-500/10 border-purple-500/30"
                                 min="0"
                                 max="100"
@@ -470,7 +413,7 @@ export default function EducacaoFinanceiraIndex() {
                               <Input
                                 type="number"
                                 value={porcentagens.investimentos}
-                                onChange={(e) => setPorcentagens({...porcentagens, investimentos: Number(e.target.value)})}
+                                onChange={(e) => setPorcentagens({ ...porcentagens, investimentos: Number(e.target.value) })}
                                 className="w-16 h-8 text-center bg-yellow-500/10 border-yellow-500/30"
                                 min="0"
                                 max="100"
@@ -505,7 +448,7 @@ export default function EducacaoFinanceiraIndex() {
                               <Input
                                 type="number"
                                 value={porcentagens.dizimos}
-                                onChange={(e) => setPorcentagens({...porcentagens, dizimos: Number(e.target.value)})}
+                                onChange={(e) => setPorcentagens({ ...porcentagens, dizimos: Number(e.target.value) })}
                                 className="w-16 h-8 text-center bg-orange-500/10 border-orange-500/30"
                                 min="0"
                                 max="100"
@@ -561,7 +504,7 @@ export default function EducacaoFinanceiraIndex() {
                             <Input
                               type="number"
                               value={simulacao.valorInicial}
-                              onChange={(e) => setSimulacao({...simulacao, valorInicial: Number(e.target.value)})}
+                              onChange={(e) => setSimulacao({ ...simulacao, valorInicial: Number(e.target.value) })}
                               placeholder="Ex: 1000"
                               className="bg-gray-800 border-gray-600 text-white"
                             />
@@ -571,7 +514,7 @@ export default function EducacaoFinanceiraIndex() {
                             <Input
                               type="number"
                               value={simulacao.taxaAnual}
-                              onChange={(e) => setSimulacao({...simulacao, taxaAnual: Number(e.target.value)})}
+                              onChange={(e) => setSimulacao({ ...simulacao, taxaAnual: Number(e.target.value) })}
                               placeholder="Ex: 12"
                               className="bg-gray-800 border-gray-600 text-white"
                             />
@@ -581,13 +524,13 @@ export default function EducacaoFinanceiraIndex() {
                             <Input
                               type="number"
                               value={simulacao.anos}
-                              onChange={(e) => setSimulacao({...simulacao, anos: Number(e.target.value)})}
+                              onChange={(e) => setSimulacao({ ...simulacao, anos: Number(e.target.value) })}
                               placeholder="Ex: 10"
                               className="bg-gray-800 border-gray-600 text-white"
                             />
                           </div>
                         </div>
-                        
+
                         {simulacao.valorInicial > 0 && (
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
                             <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4">
@@ -605,11 +548,11 @@ export default function EducacaoFinanceiraIndex() {
                           </div>
                         )}
                       </CardContent>
-                     </Card>
+                    </Card>
 
                     {/* Botões de Ação */}
                     <div className="flex gap-3 pt-4">
-                      <Button 
+                      <Button
                         onClick={salvarPlanejamento}
                         disabled={loading}
                         className="gap-2 bg-yellow-500 hover:bg-yellow-600 text-black font-medium"
@@ -654,42 +597,60 @@ export default function EducacaoFinanceiraIndex() {
 
               {/* Grid de Vídeos */}
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {videosFiltrados.map((video) => (
-                  <Card key={video.id} className="hover:shadow-lg transition-shadow">
-                    <CardContent className="p-4">
-                      <div className="space-y-3">
-                        {/* Thumbnail */}
-                        <div className="aspect-video bg-gray-200 rounded-lg flex items-center justify-center">
-                          <Video className="h-12 w-12 text-gray-400" />
-                        </div>
-                        
-                        {/* Informações */}
-                        <div className="space-y-2">
-                          <div className="flex items-start justify-between">
-                            <Badge variant="secondary" className="text-xs">
-                              {video.categoria}
-                            </Badge>
-                            {video.duracao && (
-                              <span className="text-xs text-gray-500">{video.duracao}</span>
+                {videosFiltrados?.length > 0 ? (
+                  videosFiltrados.filter(v => !!v).map((video) => (
+                    <Card key={video.id || Math.random()} className="hover:shadow-lg transition-shadow">
+                      <CardContent className="p-4">
+                        <div className="space-y-3">
+                          {/* Thumbnail */}
+                          <div className="aspect-video bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
+                            {video.thumbnail && video.thumbnail !== '/placeholder.svg' ? (
+                              <img src={video.thumbnail} alt={video.titulo} className="w-full h-full object-cover" onError={(e) => {
+                                (e.target as HTMLImageElement).src = '/placeholder.svg';
+                                (e.target as HTMLImageElement).style.display = 'none';
+                                (e.target as HTMLImageElement).parentElement!.classList.add('flex', 'items-center', 'justify-center');
+                                const icon = document.createElement('div');
+                                icon.innerHTML = '<svg class="h-12 w-12 text-gray-400" ...><path ... /></svg>'; // Simplified
+                              }} />
+                            ) : (
+                              <Video className="h-12 w-12 text-gray-400" />
                             )}
                           </div>
-                          
-                          <h3 className="font-semibold line-clamp-2">{video.titulo}</h3>
-                          <p className="text-sm text-gray-600 line-clamp-2">{video.descricao}</p>
-                        </div>
 
-                        {/* Botão */}
-                        <Button 
-                          onClick={() => abrirVideoYoutube(video.youtube_url)}
-                          className="w-full gap-2 bg-red-600 hover:bg-red-700"
-                        >
-                          <Youtube className="h-4 w-4" />
-                          Assistir no YouTube
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                          {/* Informações */}
+                          <div className="space-y-2">
+                            <div className="flex items-start justify-between gap-2">
+                              <Badge variant="secondary" className="text-xs truncate max-w-[70%]">
+                                {video.categoria || 'Geral'}
+                              </Badge>
+                              {video.duracao && (
+                                <span className="text-xs text-gray-500 whitespace-nowrap">{video.duracao}</span>
+                              )}
+                            </div>
+
+                            <h3 className="font-semibold line-clamp-2" title={video.titulo}>{video.titulo}</h3>
+                            <p className="text-sm text-gray-600 line-clamp-2" title={video.descricao}>{video.descricao}</p>
+                          </div>
+
+                          {/* Botão */}
+                          <Button
+                            onClick={() => video.youtube_url && abrirVideoYoutube(video.youtube_url)}
+                            className="w-full gap-2 bg-red-600 hover:bg-red-700"
+                            disabled={!video.youtube_url}
+                          >
+                            <Youtube className="h-4 w-4" />
+                            Assistir no YouTube
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
+                ) : (
+                  <div className="col-span-full text-center py-12 text-muted-foreground">
+                    <Video className="h-12 w-12 mx-auto mb-4 opacity-20" />
+                    <p>Nenhum vídeo encontrado nesta categoria.</p>
+                  </div>
+                )}
               </div>
             </div>
           </TabsContent>

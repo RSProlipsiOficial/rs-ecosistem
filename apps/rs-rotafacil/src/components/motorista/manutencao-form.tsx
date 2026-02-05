@@ -24,13 +24,13 @@ export function ManutencaoForm({ onSubmit, loading }: ManutencaoFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.van_id || !formData.tipo_problema || !formData.descricao_problema) {
       return;
     }
 
     await onSubmit(formData);
-    
+
     // Reset form after successful submission
     setFormData({
       van_id: '',
@@ -43,31 +43,31 @@ export function ManutencaoForm({ onSubmit, loading }: ManutencaoFormProps) {
   const isFormValid = formData.van_id && formData.tipo_problema && formData.descricao_problema.trim();
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Wrench className="h-5 w-5 text-primary" />
-          Reportar Problema na Van
+    <Card className="border-none shadow-none md:border md:shadow-sm">
+      <CardHeader className="px-0 md:px-6">
+        <CardTitle className="flex items-center gap-2 text-xl md:text-2xl font-black text-white italic uppercase">
+          <Wrench className="h-6 w-6 text-gold" />
+          Reportar Problema
         </CardTitle>
-        <CardDescription>
-          Descreva detalhadamente o problema encontrado para que o responsável possa providenciar o reparo
+        <CardDescription className="text-sm">
+          Descreva detalhadamente o problema encontrado para providenciar o reparo.
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-0 md:px-6">
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Van e Tipo do Problema */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-mobile-gap md:gap-4">
             <div className="space-y-2">
-              <Label htmlFor="van_id">Van *</Label>
+              <Label htmlFor="van_id" className="text-xs font-bold uppercase text-zinc-500">Veículo (Van) *</Label>
               <Select
                 value={formData.van_id}
                 onValueChange={(value) => setFormData(prev => ({ ...prev, van_id: value }))}
                 required
               >
-                <SelectTrigger>
+                <SelectTrigger className="h-11 md:h-12 bg-black-secondary border-sidebar-border">
                   <SelectValue placeholder="Selecione uma van" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-black-secondary border-sidebar-border text-white">
                   {vans.map((van) => (
                     <SelectItem key={van.id} value={van.id}>
                       {van.nome}
@@ -76,18 +76,18 @@ export function ManutencaoForm({ onSubmit, loading }: ManutencaoFormProps) {
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div className="space-y-2">
-              <Label htmlFor="tipo_problema">Tipo do Problema *</Label>
+              <Label htmlFor="tipo_problema" className="text-xs font-bold uppercase text-zinc-500">Tipo do Problema *</Label>
               <Select
                 value={formData.tipo_problema}
                 onValueChange={(value) => setFormData(prev => ({ ...prev, tipo_problema: value }))}
                 required
               >
-                <SelectTrigger>
+                <SelectTrigger className="h-11 md:h-12 bg-black-secondary border-sidebar-border">
                   <SelectValue placeholder="Selecione o tipo" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-black-secondary border-sidebar-border text-white">
                   {TIPOS_PROBLEMA.map((tipo) => (
                     <SelectItem key={tipo.value} value={tipo.value}>
                       {tipo.label}
@@ -100,15 +100,15 @@ export function ManutencaoForm({ onSubmit, loading }: ManutencaoFormProps) {
 
           {/* Prioridade */}
           <div className="space-y-2">
-            <Label htmlFor="prioridade">Prioridade</Label>
+            <Label htmlFor="prioridade" className="text-xs font-bold uppercase text-zinc-500">Prioridade</Label>
             <Select
               value={formData.prioridade}
               onValueChange={(value) => setFormData(prev => ({ ...prev, prioridade: value }))}
             >
-              <SelectTrigger>
+              <SelectTrigger className="h-11 md:h-12 bg-black-secondary border-sidebar-border">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-black-secondary border-sidebar-border text-white">
                 {PRIORIDADES.map((prioridade) => (
                   <SelectItem key={prioridade.value} value={prioridade.value}>
                     <div className="flex items-center gap-2">
@@ -152,7 +152,7 @@ export function ManutencaoForm({ onSubmit, loading }: ManutencaoFormProps) {
             <Button
               type="submit"
               disabled={!isFormValid || loading}
-              className="flex-1"
+              className="flex-1 h-12 md:h-14 bg-gold text-black font-black uppercase tracking-widest hover:bg-gold/90 transition-all"
             >
               {loading ? 'Reportando...' : 'Reportar Problema'}
             </Button>

@@ -1,0 +1,111 @@
+CRM / PRB – MÓDULO LOGÍSTICO (CENTROS DE DISTRIBUIÇÃO RS PRÓLIPSI)
+Documento relacional e operacional do módulo Logístico RS Prólipsi, responsável pelos Centros de Distribuição (CDs). Define todas as relações entre as tabelas, integrações, triggers, relatórios cruzados e indicadores, garantindo rastreabilidade total de pedidos, estoques, repasses e pontuação SIGMA.
+1. Estrutura e Finalidade
+
+O CRM / PRB do módulo Logístico define a relação de dados entre os Centros de Distribuição (CDs) e os demais módulos do ecossistema RS Prólipsi. 
+Ele garante que cada venda, pedido e repasse financeiro seja rastreável, auditável e associado corretamente ao CD responsável.
+
+2. Estrutura Central de Banco de Dados
+
+Tabela | Função | Origem / Módulo | Atualização
+--------|---------|-----------------|--------------
+distribution_centers | Cadastro base dos CDs | Admin | Manual / Automática
+cd_products | Produtos espelhados do Marketplace | Marketplace | Automática (API)
+cd_orders | Pedidos processados por cada CD | Marketplace | Automática
+cd_inventory | Controle de estoque interno | CD / Admin | Tempo real
+cd_wallet | Movimentações financeiras do CD | WalletPay | Webhook
+cd_shipments | Controle de entregas e fretes | CD / Logística | Manual / Automática
+cd_bonuses | Registro de pontos gerados | SIGMA | Automática
+cd_logs | Ações e auditorias do CD | Admin | Automática
+
+3. Relacionamentos Entre Tabelas
+
+Relação | Descrição | Tipo
+----------|------------|------
+distribution_centers.id ? cd_products.cd_id | Cada CD possui seus próprios produtos espelhados | 1:N
+distribution_centers.id ? cd_orders.cd_id | Cada pedido pertence a um CD específico | 1:N
+distribution_centers.id ? cd_inventory.cd_id | Estoque individual por CD | 1:1
+distribution_centers.id ? cd_wallet.cd_id | Relação financeira do CD com WalletPay | 1:1
+cd_orders.id ? cd_shipments.order_id | Entregas vinculadas a pedidos | 1:1
+cd_orders.id ? cd_bonuses.order_id | Cada pedido pode gerar pontos de rede SIGMA | 1:1
+
+4. Campos Sincronizados Entre Módulos
+
+Campo | Origem | Destino | Tipo de Sincronização
+--------|---------|----------|------------------------
+produto_id, preco, descricao, estoque | Marketplace | cd_products | Automática (API)
+pedido_id, status, valor_total | Marketplace | cd_orders | Automática
+saldo, repasses, taxas | WalletPay | cd_wallet | Webhook
+pontos_gerados, bonus_valor | SIGMA | cd_bonuses | Automática
+status_entrega, data_envio, transportadora | CD | cd_shipments | Manual / Automática
+status_cd, tipo_cd, gestor_id | Admin | distribution_centers | Manual
+
+5. Triggers e Processos Automáticos
+
+Trigger | Ação | Módulo Origem | Módulo Destino
+----------|------|----------------|----------------
+AFTER INSERT cd_orders | Cria registro financeiro e logístico | Marketplace | WalletPay / SIGMA
+AFTER UPDATE cd_orders.status | Atualiza status de entrega e pontuação | CD | Admin / SIGMA
+AFTER UPDATE cd_inventory | Atualiza estoque no Admin e Marketplace | CD | Admin / Marketplace
+AFTER INSERT cd_wallet | Gera repasse e notificação financeira | WalletPay | Admin / CD
+AFTER UPDATE cd_shipments | Atualiza relatórios de entrega e auditoria | CD | Admin
+AFTER INSERT cd_bonuses | Credita pontos de rede e volume SIGMA | SIGMA | Admin
+
+6. Relatórios Cruzados e Consultas SQL
+
+Relatório A – Volume de Vendas por CD:
+SELECT dc.nome, SUM(o.valor_total) AS total_vendas
+FROM cd_orders o
+JOIN distribution_centers dc ON dc.id = o.cd_id
+GROUP BY dc.nome;
+
+Relatório B – Estoque Atual por CD:
+SELECT dc.nome, p.nome_produto, i.quantidade
+FROM cd_inventory i
+JOIN cd_products p ON p.produto_id = i.produto_id
+JOIN distribution_centers dc ON dc.id = i.cd_id;
+
+Relatório C – Pontuação Gerada (SIGMA):
+SELECT dc.nome, SUM(b.pontos_gerados) AS total_pontos
+FROM cd_bonuses b
+JOIN distribution_centers dc ON dc.id = b.cd_id
+GROUP BY dc.nome;
+
+7. Fluxo Operacional Completo
+
+1. Admin cadastra o CD e define gestor e região.
+2. Marketplace sincroniza produtos automaticamente.
+3. CD processa pedidos locais e gera registro em cd_orders.
+4. WalletPay cria registro financeiro e efetua repasse ao CD.
+5. SIGMA recebe pontuação correspondente e distribui bônus de rede.
+6. Admin visualiza tudo em tempo real no painel de auditoria.
+
+8. Indicadores e Dashboards
+
+Indicador | Fonte | Descrição
+------------|--------|-----------
+Volume total de vendas | cd_orders | Soma geral de vendas por CD
+Pontuação total gerada | cd_bonuses | Pontos SIGMA atribuídos às vendas
+Repasses efetuados | cd_wallet | Valor total de repasses via WalletPay
+Estoque disponível | cd_inventory | Quantidade atualizada por produto
+Pedidos pendentes | cd_orders | Entregas ainda não concluídas
+CDs ativos | distribution_centers | Total de CDs operacionais
+
+9. Segurança e Controle
+
+- Logs de todas as ações (cd_logs)
+- Controle de acesso por perfil (Gestor CD, Admin, Financeiro)
+- Criptografia AES para dados financeiros
+- Auditoria cruzada entre WalletPay e SIGMA
+- Backup incremental diário no Supabase
+- Conformidade LGPD (dados de clientes e transportes anonimizados)
+
+10. Roadmap de Evolução
+
+Fase | Entrega | Descrição
+------|----------|-----------
+Fase 1 | Estrutura relacional completa | Cadastro e espelhamento de produtos
+Fase 2 | Integração financeira | Repasses automáticos via WalletPay
+Fase 3 | Controle de estoque e relatórios cruzados | Sincronização Admin ? CD ? Marketplace
+Fase 4 | SIGMA integrado | Pontuação e ciclos automáticos por CD
+Fase 5 | RS.IA | Inteligência preditiva de vendas e alertas de estoque

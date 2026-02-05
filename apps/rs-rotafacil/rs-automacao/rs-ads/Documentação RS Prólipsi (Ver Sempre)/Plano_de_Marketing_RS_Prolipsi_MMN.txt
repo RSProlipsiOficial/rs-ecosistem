@@ -1,0 +1,82 @@
+PLANO DE MARKETING – RS PRÓLIPSI (Conforme Painel Administrativo Oficial)
+1. CICLO DA MATRIZ
+
+Valor Total do Ciclo: R$ 360,00
+Payout do Ciclo (Valor): R$ 108,00
+Payout do Ciclo (%): 30,00 %
+Reentrada Automática: Ativada (Kit Ativação Essencial – Entrega em Casa)
+Limite de Reentradas/Mês: 10 vezes
+Derramamento (Spillover): Linha Ascendente
+Pontos para Carreira: 1 ponto
+
+2. BÔNUS DE PROFUNDIDADE (L1–L6)
+Base de Cálculo: 6,81 % sobre R$ 360,00 = R$ 24,52
+Nível	% do Bônus	Valor/Venda (R$)
+L1	7 %	1,716
+L2	8 %	1,961
+L3	10 %	2,452
+L4	15 %	3,677
+L5	25 %	6,129
+L6	35 %	8,581
+TOTAL	100 %	24,516
+Cada vez que um ciclo de R$ 360,00 é fechado em sua rede até a 6ª geração, o sistema paga automaticamente as porcentagens acima sobre o valor total do ciclo.
+3. BÔNUS FIDELIDADE (POOL DE REENTRADAS)
+
+Fonte do Bônus (%): 1,25 %
+Valor Base do Ciclo: R$ 360,00
+Total do Bônus (Pool): R$ 4,50
+
+Gatilho: Pago a cada reentrada ativa na matriz.
+Elegibilidade: Requer que o consultor tenha avançado para a próxima matriz.
+
+Premiação de constância — o consultor recebe bônus de fidelidade somente após abrir a matriz seguinte (ex.: ao abrir a matriz 2, ganha da 1). O cálculo é feito no final do mês, verificando quantos ciclos completos a pessoa realizou.
+Distribuição por Nível:
+Nível	% do Bônus	Valor/Venda (R$)
+L1	7 %	0,315
+L2	8 %	0,360
+L3	10 %	0,450
+L4	15 %	0,675
+L5	25 %	1,125
+L6	35 %	1,575
+TOTAL	100 %	4,50
+4. TOP SIGMA (POOL GLOBAL DE LIDERANÇA)
+Base de Cálculo: 4,5 % sobre R$ 360,00 = R$ 16,20
+Ranking	% do Pool
+1º	2 %
+2º	1,5 %
+3º	1,2 %
+4º	1 %
+5º	0,8 %
+6º	0,7 %
+7º	0,6 %
+8º	0,5 %
+9º	0,4 %
+10º	0,3 %
+TOTAL	9,0 %
+O Top SIGMA distribui 4,5 % do valor global de todos os ciclos (R$ 16,20 por ciclo global), dividido entre os 10 melhores consultores do período, conforme ranking acima.
+5. PLANO DE CARREIRA – 13 PINs OFICIAIS
+
+Valor Base do Ciclo (Fator Bônus): R$ 360,00
+Percentual para Bônus de Carreira: 6,39 %
+Valor Líquido por Ciclo: R$ 23,00
+Período de Apuração: Trimestral
+Reconhecimento do PIN: O PIN é conquistado e permanece válido durante o período de apuração (trimestre).
+Pagamento do Bônus: Pago ao atingir a meta, com valor liberado imediatamente.
+VMEC (Definição): Volume Máximo por Equipe e por Ciclo.
+Pontuação: Cada ciclo ativo na matriz SIGMA gera 1 ponto/ciclo para o plano de carreira.
+
+PIN	Ciclos	Linhas Mín.	VMEC %	Recompensa (R$)
+Bronze	5	0	—	13,50
+Prata	15	1	100 %	40,50
+Ouro	70	1	100 %	189,00
+Safira	150	2	60 / 40	405,00
+Esmeralda	300	2	60 / 40	810,00
+Topázio	500	2	60 / 40	1.350,00
+Rubi	750	3	50 / 30 / 20	2.025,00
+Diamante	1.500	3	50 / 30 / 20	4.050,00
+Duplo Diamante	3.000	4	40 / 30 / 20 / 10	18.450,00
+Triplo Diamante	5.000	5	35 / 25 / 20 / 10 / 10	36.450,00
+Diamante Red	15.000	6	30 / 20 / 18 / 12 / 10 / 10 / 1	67.500,00
+Diamante Blue	25.000	6	30 / 20 / 18 / 12 / 10 / 10 / 1	105.300,00
+Diamante Black	50.000	6	30 / 20 / 18 / 12 / 10 / 10 / 1	135.000,00
+				

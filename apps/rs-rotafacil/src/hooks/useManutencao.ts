@@ -11,10 +11,17 @@ export function useManutencao() {
   const fetchManutencoes = async () => {
     try {
       setLoading(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: userVans } = await supabase.from('vans').select('id').eq('user_id', user.id);
+      const vanIds = userVans?.map(v => v.id) || [];
+
       const { data, error } = await supabase
-        .from('manutencoes_van')
+        .from('manutencoes_frota')
         .select('*')
-        .order('data_relato', { ascending: false });
+        .in('van_id', vanIds)
+        .order('data_manutencao', { ascending: false });
 
       if (error) throw error;
       setManutencoes((data || []) as ManutencaoVan[]);
@@ -32,20 +39,25 @@ export function useManutencao() {
 
   const createManutencao = async (manutencaoData: Record<string, any>) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      const userId = user?.id || '00000000-0000-0000-0000-000000000000';
+      // Basic auth check just to be safe
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error("Usuário não autenticado");
+      }
 
       const insertData = {
-        user_id: userId,
-        data_relato: new Date().toISOString().split('T')[0],
-        van_id: manutencaoData.van_id,
-        tipo_problema: manutencaoData.tipo_problema,
-        descricao_problema: manutencaoData.descricao_problema,
-        prioridade: manutencaoData.prioridade,
+        // user_id: userId, // Table definition doesn't have user_id currently, only motorista for checklists. 
+        // We might want to add created_by if needed, but for now matching the schema I created.
+        data_manutencao: new Date().toISOString().split('T')[0], // Mapped from data_relato
+        van_id: manutencaoData.van_id || null, // Sanitize UUID
+        tipo: manutencaoData.tipo_problema || 'corretiva', // Mapped to tipo
+        descricao: manutencaoData.descricao_problema, // Mapped to descricao
+        status: 'agendado', // Default status
+        // prioridade: manutencaoData.prioridade, // Not in new table
       };
 
       const { data, error } = await supabase
-        .from('manutencoes_van')
+        .from('manutencoes_frota')
         .insert([insertData])
         .select()
         .single();
@@ -53,7 +65,7 @@ export function useManutencao() {
       if (error) throw error;
 
       setManutencoes(prev => [data as ManutencaoVan, ...prev]);
-      
+
       toast({
         title: "Sucesso",
         description: "Problema reportado com sucesso!",
@@ -64,7 +76,7 @@ export function useManutencao() {
       console.error('Erro ao criar manutenção:', error);
       toast({
         title: "Erro",
-        description: "Não foi possível reportar o problema.",
+        description: error.message || "Não foi possível reportar o problema.",
         variant: "destructive",
       });
       throw error;
@@ -74,7 +86,7 @@ export function useManutencao() {
   const updateManutencao = async (id: string, updates: Partial<Record<string, any>>) => {
     try {
       const { data, error } = await supabase
-        .from('manutencoes_van')
+        .from('manutencoes_frota')
         .update(updates)
         .eq('id', id)
         .select()
@@ -82,7 +94,7 @@ export function useManutencao() {
 
       if (error) throw error;
 
-      setManutencoes(prev => prev.map(item => 
+      setManutencoes(prev => prev.map(item =>
         item.id === id ? { ...item, ...data } as ManutencaoVan : item
       ));
 
@@ -106,10 +118,10 @@ export function useManutencao() {
   const markAsCompleted = async (id: string) => {
     try {
       const { data, error } = await supabase
-        .from('manutencoes_van')
-        .update({ 
+        .from('manutencoes_frota')
+        .update({
           status: 'concluido',
-          data_solucao: new Date().toISOString().split('T')[0]
+          // data_solucao: new Date().toISOString().split('T')[0] // Not in table
         })
         .eq('id', id)
         .select()
@@ -117,7 +129,7 @@ export function useManutencao() {
 
       if (error) throw error;
 
-      setManutencoes(prev => prev.map(item => 
+      setManutencoes(prev => prev.map(item =>
         item.id === id ? { ...item, ...data } as ManutencaoVan : item
       ));
 
@@ -141,7 +153,7 @@ export function useManutencao() {
   const deleteManutencao = async (id: string) => {
     try {
       const { error } = await supabase
-        .from('manutencoes_van')
+        .from('manutencoes_frota')
         .delete()
         .eq('id', id);
 

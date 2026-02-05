@@ -5,11 +5,12 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Bus, X } from "lucide-react";
 import { Van } from "@/types/alunos";
+import { formatToPascalCase } from "@/lib/utils";
 
 interface VanFormProps {
   open: boolean;
   onClose: () => void;
-  onSubmit: (data: { nome: string; capacidade_maxima: number }) => Promise<void>;
+  onSubmit: (data: { nome: string; capacidade_maxima: number; whatsapp_group_link?: string }) => Promise<void>;
   editingVan?: Van | null;
 }
 
@@ -17,17 +18,19 @@ export function VanForm({ open, onClose, onSubmit, editingVan }: VanFormProps) {
   const [formData, setFormData] = useState({
     nome: "",
     capacidade_maxima: 20,
+    whatsapp_group_link: "",
   });
-  
+
   // Update form data when editingVan changes
   useEffect(() => {
     if (editingVan) {
       setFormData({
         nome: editingVan.nome,
         capacidade_maxima: editingVan.capacidade_maxima,
+        whatsapp_group_link: (editingVan as any).whatsapp_group_link || "",
       });
     } else {
-      setFormData({ nome: "", capacidade_maxima: 20 });
+      setFormData({ nome: "", capacidade_maxima: 20, whatsapp_group_link: "" });
     }
   }, [editingVan]);
   const [loading, setLoading] = useState(false);
@@ -35,7 +38,7 @@ export function VanForm({ open, onClose, onSubmit, editingVan }: VanFormProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    
+
     try {
       await onSubmit(formData);
       onClose();
@@ -66,6 +69,7 @@ export function VanForm({ open, onClose, onSubmit, editingVan }: VanFormProps) {
               id="nome"
               value={formData.nome}
               onChange={(e) => setFormData(prev => ({ ...prev, nome: e.target.value }))}
+              onBlur={(e) => setFormData(prev => ({ ...prev, nome: formatToPascalCase(e.target.value) }))}
               placeholder="Ex: Van Tio Beto"
               required
             />
@@ -81,6 +85,21 @@ export function VanForm({ open, onClose, onSubmit, editingVan }: VanFormProps) {
               onChange={(e) => setFormData(prev => ({ ...prev, capacidade_maxima: parseInt(e.target.value) || 20 }))}
               required
             />
+          </div>
+
+          <div>
+            <Label htmlFor="whatsapp_group_link">Link do Grupo de WhatsApp (Opcional)</Label>
+            <Input
+              id="whatsapp_group_link"
+              type="url"
+              value={formData.whatsapp_group_link}
+              onChange={(e) => setFormData(prev => ({ ...prev, whatsapp_group_link: e.target.value }))}
+              placeholder="https://chat.whatsapp.com/..."
+              className="border-gold/20 focus:border-gold"
+            />
+            <p className="text-[10px] text-muted-foreground mt-1">
+              Link que será exibido aos pais para entrarem no grupo da van.
+            </p>
           </div>
 
           <div className="flex justify-end gap-3 pt-4">

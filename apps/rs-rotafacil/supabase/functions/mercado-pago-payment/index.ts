@@ -1,4 +1,4 @@
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
+// import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 
@@ -13,20 +13,38 @@ serve(async (req) => {
   }
 
   try {
-    const { planId, userId, origin } = await req.json();
-    const accessToken = Deno.env.get('MERCADO_PAGO_ACCESS_TOKEN');
-    
-    if (!accessToken) {
-      throw new Error('Mercado Pago access token not configured');
-    }
+    const body = await req.json();
+    const { planId, userId, origin = 'https://app.rotafacil.com.br' } = body;
+    console.log('Received request body:', body);
 
-    console.log('Creating payment preference for:', { planId, userId });
-
-    // Criar subscription no Supabase
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
+
+    // Fetch Custom Config for Mercado Pago
+    let accessToken = Deno.env.get('MERCADO_PAGO_ACCESS_TOKEN');
+
+    try {
+      const { data: config } = await supabase
+        .from('app_settings')
+        .select('value')
+        .eq('key', 'mercado_pago')
+        .maybeSingle();
+
+      if (config?.value?.access_token) {
+        accessToken = config.value.access_token;
+      }
+    } catch (e) {
+      console.error("Error fetching app_settings:", e);
+    }
+
+    if (!accessToken) {
+      console.error('ERROR: Mercado Pago access token not configured');
+      throw new Error('Mercado Pago access token not configured (Admin Config or Env)');
+    }
+
+    console.log('Creating payment preference for:', { planId, userId });
 
     // Validação básica de entrada
     const uuidRegex = /^[0-9a-fA-F-]{36}$/;
@@ -45,20 +63,23 @@ serve(async (req) => {
       throw new Error('Plano não encontrado');
     }
 
-    // Criar assinatura pendente
+    // Criar ou atualizar assinatura pendente
     const { data: subscription, error: subError } = await supabase
       .from('user_subscriptions')
-      .insert({
+      .upsert({
         user_id: userId,
         plan_id: plan.id,
         status: 'trial',
-        payment_method: 'mercadopago'
+        payment_method: 'mercadopago',
+        updated_at: new Date().toISOString()
+      }, {
+        onConflict: 'user_id'
       })
       .select()
       .single();
 
     if (subError) {
-      throw new Error(`Failed to create subscription: ${subError.message}`);
+      throw new Error(`Failed to create/update subscription: ${subError.message}`);
     }
 
     const subscriptionId = subscription.id;
@@ -67,23 +88,35 @@ serve(async (req) => {
       items: [
         {
           id: plan.id,
-          title: `RotaFácil - ${plan.name}`,
+          title: `RS Prólipsi - ${plan.name}`,
           currency_id: 'BRL',
           quantity: 1,
           unit_price: Number(plan.price),
         },
       ],
       back_urls: {
-        success: `${origin}/upgrade?success=true`,
-        failure: `${origin}/upgrade?error=payment_failed`,
-        pending: `${origin}/upgrade?status=pending`,
+        success: origin.includes('minisite') ? `${origin}/?payment=success` : `${origin}/upgrade?success=true`,
+        failure: origin.includes('minisite') ? `${origin}/?payment=error` : `${origin}/upgrade?error=payment_failed`,
+        pending: origin.includes('minisite') ? `${origin}/?payment=pending` : `${origin}/upgrade?status=pending`,
       },
-      auto_return: 'approved',
       external_reference: subscriptionId,
       notification_url: `${Deno.env.get('SUPABASE_URL')}/functions/v1/mercado-pago-webhook`,
+      auto_return: 'approved'
     };
 
     console.log('Creating preference with Mercado Pago API');
+
+    // Log Preference Payload to DB for debugging
+    try {
+      const supabase = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      );
+      await supabase.from('debug_logs').insert({
+        message: 'Mercado Pago Preference Payload',
+        details: { preference }
+      });
+    } catch (_) { }
 
     const mpResponse = await fetch('https://api.mercadopago.com/checkout/preferences', {
       method: 'POST',
@@ -97,7 +130,8 @@ serve(async (req) => {
     if (!mpResponse.ok) {
       const errorText = await mpResponse.text();
       console.error('Mercado Pago API error:', errorText);
-      throw new Error(`Mercado Pago API error: ${mpResponse.status} - ${errorText}`);
+      // Return 400 with the upstream error
+      throw new Error(`MP Error: ${errorText}`);
     }
 
     const preferenceData = await mpResponse.json();
@@ -115,11 +149,26 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error in mercado-pago-payment function:', error);
+    console.error('Function catch error:', error);
+
+    // LOG TO DB
+    try {
+      const supabase = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      );
+      await supabase.from('debug_logs').insert({
+        message: 'Mercado Pago Payment Error',
+        details: { error: error instanceof Error ? error.message : error }
+      });
+    } catch (logError) {
+      console.error('Failed to log to DB:', logError);
+    }
+
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Erro interno' }),
+      JSON.stringify({ error: error instanceof Error ? error.message : 'Erro interno', details: error }),
       {
-        status: 500,
+        status: 400, // Returning 400 to allow frontend to read the body
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
     );

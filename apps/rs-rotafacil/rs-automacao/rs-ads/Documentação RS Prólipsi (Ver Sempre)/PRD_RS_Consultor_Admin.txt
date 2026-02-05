@@ -1,0 +1,153 @@
+PRD – MÓDULO CONSULTOR (PAINEL ADMINISTRATIVO RS PRÓLIPSI)
+Documento técnico-funcional referente ao módulo 'Consultor' dentro do Painel Administrativo RS Prólipsi. Este módulo permite ao administrador visualizar, auditar e gerenciar todos os consultores cadastrados, incluindo dados pessoais, estrutura de rede, histórico financeiro, relatórios de vendas e bonificações, e integrações com SIGMA, WalletPay e Marketplace.
+1. Visão Geral
+
+O módulo Consultor (Admin) centraliza o gerenciamento completo dos consultores cadastrados na plataforma RS Prólipsi.
+Ele possibilita o controle total dos dados cadastrais, situação de rede, transações financeiras, bonificações, histórico de vendas e engajamento.
+
+2. Estrutura de Cadastro do Consultor (Ficha Técnica Completa)
+
+Campos de Identificação:
+- ID do Consultor (UUID)
+- Nome completo
+- E-mail
+- CPF ou CNPJ
+- Endereço completo (rua, número, bairro, cidade, estado, CEP)
+- Telefone (WhatsApp integrado)
+- Data de nascimento (opcional)
+- Login / Usuário
+- Senha criptografada
+- Status da Conta (Ativo, Inativo, Pendente, Banido)
+- Tipo de Perfil (Consultor, Logista, Admin Secundário)
+
+Campos de Rede:
+- ID e Nome do Patrocinador
+- Matriz atual (ex: 3x5, 4x5)
+- Nível de Carreira (PIN)
+- Diretos Ativos
+- Ciclo SIGMA Atual
+- Status de Ativação Mensal
+- Data da última reativação
+
+Campos Financeiros (WalletPay):
+- Saldo Atual
+- Chave PIX (criptografada)
+- Histórico de Saques e Transferências
+- Taxas Aplicadas
+- Total de Bônus Recebidos
+- Total de Comissões Recebidas
+
+Campos de Rede (Gerações e Ganhos):
+- Total de pessoas na rede (até 9 gerações)
+- Volume total da rede (em pontos)
+- Ganhos por nível (L1 a L9 com percentuais configuráveis)
+- Bônus total por geração
+
+Campos de Auditoria:
+- Data de criação
+- Último login
+- Última compra
+- Última atualização
+- Usuário responsável por alterações
+
+3. Funcionalidades do Painel Admin (Consultores)
+
+?? Lista de Consultores:
+- Pesquisa por nome, e-mail, CPF ou ID
+- Filtros por status, PIN, matriz e cidade
+- Ordenação por data de cadastro ou volume de rede
+
+?? Ficha Técnica Completa:
+- Painel lateral com dados completos (pessoal, rede, financeiro)
+- Edição de campos individuais
+- Histórico de ações e auditoria
+
+?? Financeiro Integrado:
+- Visualização de saldo, bônus, saques e comissões
+- Link direto com módulo WalletPay
+- Aprovação manual de saques
+- Gráficos de ganhos mensais e anuais
+
+?? Estrutura de Rede:
+- Visualização hierárquica (árvore) até 9 gerações
+- Cálculo de pontos e ganhos por geração
+- Clique em membro para abrir ficha detalhada
+
+??? Relatórios de Vendas:
+- Integração com Marketplace
+- Exibição de produtos vendidos, valores e status
+- Identificação de quem recebeu comissão
+- Exportação de relatórios
+
+?? Relatórios de Bônus SIGMA:
+- Exibe bônus por nível e valor monetário
+- Cálculo automático de pontos e ganhos
+- Exportação por período
+
+?? Painel de Análise Global:
+- Indicadores: total de consultores ativos, faturamento, bônus pagos, média de ganhos, atrasos de ativação
+- Gráficos: crescimento de rede, ganhos mensais, evolução de matrizes
+
+?? Integração com RS Studio:
+- Histórico de mensagens e treinamentos
+- Progresso e certificados
+- Engajamento dos consultores
+
+?? Segurança e Controle:
+- Permissões por cargo
+- Logs de auditoria com IP e timestamp
+- Criptografia de dados sensíveis
+
+4. Integrações do Módulo Consultor
+
+Sistema | Tipo de Integração | Dados Trocados
+---------|--------------------|----------------
+SIGMA | Rede e matrizes | Estrutura, pontos e bônus
+WalletPay | Financeiro | Créditos, débitos, saldos e saques
+Marketplace | Vendas e comissões | Pedidos, produtos e repasses
+RS Studio | Comunicação e IA | Mensagens, treinamentos e notificações
+RS.IA | Inteligência | Suporte e relatórios automáticos
+Admin Central | Auditoria | Logs, acessos e permissões
+
+5. Relatórios Específicos do Consultor
+
+A. Relatório de Pagamentos:
+- Vendas originadas pelo consultor
+- Distribuição de ganhos por níveis (L1-L9)
+- Relação entre pagador e recebedor
+- Número de beneficiados e percentuais
+
+B. Relatório Financeiro:
+- Créditos: bônus, comissões, transferências
+- Débitos: saques, taxas, ajustes
+- Saldo diário e acumulado
+
+C. Relatório de Rede:
+- Crescimento mensal da rede
+- Volume total de pontos
+- Ranking de desempenho
+
+D. Relatório de Engajamento (RS Studio):
+- Conclusão de treinamentos
+- Mensagens lidas e campanhas abertas
+- Interações com IA
+
+6. Design e UX
+
+- Tema dark e dourado (padrão RS)
+- Abas: Ficha, Financeiro, Rede, Vendas, Bônus, Treinamentos
+- Sidebar com ícones e cores dinâmicas
+- Layout responsivo com cards e painéis colapsáveis
+- Gráficos Recharts e exportação CSV/PDF
+
+7. Checklists de Implementação
+
+? Cadastro completo do consultor (dados pessoais, rede e financeiro)
+? Visualização e edição dentro do Admin
+? Relatórios de vendas integrados ao Marketplace
+? Relatórios de bônus integrados ao SIGMA
+? Relatórios financeiros integrados à WalletPay
+? Logs e auditoria de ações
+? Exportação de relatórios (CSV e PDF)
+?? Adicionar painel de engajamento (RS Studio)
+?? Criar gráfico consolidado de crescimento da rede

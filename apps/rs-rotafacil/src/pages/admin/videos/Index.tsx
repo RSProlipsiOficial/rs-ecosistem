@@ -18,6 +18,7 @@ interface VideoEducacao {
   link_video: string;
   ativo: boolean;
   ordem: number | null;
+  categoria: string;
   thumbnail_url?: string | null;
   created_at: string;
 }
@@ -36,7 +37,8 @@ export default function AdminVideosIndex() {
     descricao: "",
     link_video: "",
     ativo: true,
-    ordem: 0
+    ordem: 0,
+    categoria: "Fundamentos"
   });
 
   useEffect(() => {
@@ -74,7 +76,7 @@ export default function AdminVideosIndex() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
       if (editingVideo) {
         const { error } = await supabase
@@ -84,7 +86,8 @@ export default function AdminVideosIndex() {
             descricao: formData.descricao || null,
             link_video: formData.link_video,
             ativo: formData.ativo,
-            ordem: formData.ordem
+            ordem: formData.ordem,
+            categoria: formData.categoria
           })
           .eq('id', editingVideo.id);
 
@@ -102,7 +105,8 @@ export default function AdminVideosIndex() {
             descricao: formData.descricao || null,
             link_video: formData.link_video,
             ativo: formData.ativo,
-            ordem: formData.ordem
+            ordem: formData.ordem,
+            categoria: formData.categoria
           }]);
 
         if (error) throw error;
@@ -120,7 +124,8 @@ export default function AdminVideosIndex() {
         descricao: "",
         link_video: "",
         ativo: true,
-        ordem: 0
+        ordem: 0,
+        categoria: "Fundamentos"
       });
       loadVideos();
     } catch (error) {
@@ -140,7 +145,8 @@ export default function AdminVideosIndex() {
       descricao: video.descricao || "",
       link_video: video.link_video,
       ativo: video.ativo,
-      ordem: video.ordem || 0
+      ordem: video.ordem || 0,
+      categoria: video.categoria || "Fundamentos"
     });
     setIsDialogOpen(true);
   };
@@ -160,7 +166,7 @@ export default function AdminVideosIndex() {
         title: "Sucesso",
         description: "Vídeo excluído com sucesso!",
       });
-      
+
       loadVideos();
     } catch (error) {
       console.error('Erro ao excluir vídeo:', error);
@@ -173,10 +179,15 @@ export default function AdminVideosIndex() {
   };
 
   const getVideoThumbnail = (url: string) => {
+    if (!url) return null;
     // Extract YouTube video ID if it's a YouTube URL
-    const youtubeMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/);
-    if (youtubeMatch) {
-      return `https://img.youtube.com/vi/${youtubeMatch[1]}/mqdefault.jpg`;
+    try {
+      const youtubeMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/);
+      if (youtubeMatch) {
+        return `https://img.youtube.com/vi/${youtubeMatch[1]}/mqdefault.jpg`;
+      }
+    } catch (e) {
+      console.error("Error extracting thumbnail", e);
     }
     return null;
   };
@@ -191,7 +202,7 @@ export default function AdminVideosIndex() {
               Gerencie os vídeos de educação financeira exibidos nos apps - Padrão Profissional
             </p>
           </div>
-          
+
           <Dialog open={isDialogOpen} onOpenChange={(open) => {
             setIsDialogOpen(open);
             if (!open) {
@@ -229,7 +240,7 @@ export default function AdminVideosIndex() {
                       required
                     />
                   </div>
-                  
+
                   <div>
                     <Label htmlFor="ordem">Ordem de Exibição</Label>
                     <Input
@@ -240,8 +251,24 @@ export default function AdminVideosIndex() {
                       placeholder="1, 2, 3..."
                     />
                   </div>
+
+                  <div>
+                    <Label htmlFor="categoria">Categoria</Label>
+                    <select
+                      id="categoria"
+                      value={formData.categoria}
+                      onChange={(e) => setFormData(prev => ({ ...prev, categoria: e.target.value }))}
+                      className="w-full h-10 px-3 py-2 bg-background border border-input rounded-md text-sm"
+                    >
+                      <option value="Fundamentos">Fundamentos</option>
+                      <option value="Planejamento">Planejamento</option>
+                      <option value="Redução de Gastos">Redução de Gastos</option>
+                      <option value="Investimento básico">Investimento básico</option>
+                      <option value="Mentalidade financeira">Mentalidade financeira</option>
+                    </select>
+                  </div>
                 </div>
-                
+
                 <div>
                   <Label htmlFor="link_video">URL do Vídeo (YouTube/Vimeo)</Label>
                   <Input
@@ -256,7 +283,7 @@ export default function AdminVideosIndex() {
                     ⚠️ Verifique se o link não está duplicado na lista atual
                   </p>
                 </div>
-                
+
                 <div>
                   <Label htmlFor="descricao">Descrição Detalhada</Label>
                   <Textarea
@@ -267,7 +294,7 @@ export default function AdminVideosIndex() {
                     className="min-h-[100px]"
                   />
                 </div>
-                
+
                 <div className="flex items-center space-x-2">
                   <Switch
                     id="ativo"
@@ -276,7 +303,7 @@ export default function AdminVideosIndex() {
                   />
                   <Label htmlFor="ativo">Vídeo ativo nos apps</Label>
                 </div>
-                
+
                 <Button type="submit" className="w-full">
                   {editingVideo ? 'Atualizar Vídeo' : 'Criar Vídeo'}
                 </Button>
@@ -320,7 +347,7 @@ export default function AdminVideosIndex() {
               </p>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Vídeos Ativos</CardTitle>
@@ -335,7 +362,7 @@ export default function AdminVideosIndex() {
               </p>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Vídeos Inativos</CardTitle>
@@ -383,8 +410,8 @@ export default function AdminVideosIndex() {
                       {/* Thumbnail */}
                       <div className="flex-shrink-0">
                         {getVideoThumbnail(video.link_video) ? (
-                          <img 
-                            src={getVideoThumbnail(video.link_video)!} 
+                          <img
+                            src={getVideoThumbnail(video.link_video)!}
                             alt={video.titulo}
                             className="w-32 h-24 object-cover rounded-lg border"
                           />
@@ -394,18 +421,17 @@ export default function AdminVideosIndex() {
                           </div>
                         )}
                       </div>
-                      
+
                       {/* Conteúdo */}
                       <div className="flex-1">
                         <div className="flex items-start justify-between">
                           <div className="space-y-2">
                             <div className="flex items-center gap-3">
                               <h3 className="font-semibold text-lg">{video.titulo}</h3>
-                              <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                                video.ativo 
-                                  ? 'bg-green-100 text-green-800 border border-green-200' 
-                                  : 'bg-red-100 text-red-800 border border-red-200'
-                              }`}>
+                              <span className={`px-3 py-1 rounded-full text-xs font-medium ${video.ativo
+                                ? 'bg-green-100 text-green-800 border border-green-200'
+                                : 'bg-red-100 text-red-800 border border-red-200'
+                                }`}>
                                 {video.ativo ? 'Ativo' : 'Inativo'}
                               </span>
                               {video.ordem && (
@@ -413,20 +439,23 @@ export default function AdminVideosIndex() {
                                   Ordem: {video.ordem}
                                 </span>
                               )}
+                              <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded text-xs">
+                                {video.categoria || 'Sem Categoria'}
+                              </span>
                             </div>
-                            
+
                             {video.descricao && (
                               <p className="text-sm text-muted-foreground line-clamp-2">
                                 {video.descricao}
                               </p>
                             )}
-                            
+
                             <div className="flex items-center gap-4 text-xs text-muted-foreground">
                               <span>📅 {new Date(video.created_at).toLocaleDateString('pt-BR')}</span>
                               <span>🔗 {new URL(video.link_video).hostname}</span>
                             </div>
                           </div>
-                          
+
                           {/* Ações */}
                           <div className="flex items-center gap-2">
                             <Button

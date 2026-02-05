@@ -1,0 +1,122 @@
+PRD – RS WALLET PAY (UNIFICADO COM ECOSSISTEMA RS PRÓLIPSI)
+Documento técnico-funcional da RS Wallet Pay integrada ao ecossistema RS Prólipsi. Este documento descreve como a Wallet Pay interage com os módulos Marketplace, SIGMA, Admin e Consultor, mantendo total rastreabilidade financeira e integridade de dados.
+1. Visão Geral da Integração
+
+A RS Wallet Pay é o núcleo financeiro que centraliza todas as transações dentro do ecossistema RS Prólipsi. 
+Ela conecta e automatiza os fluxos de pagamento entre Marketplace, SIGMA e os painéis de Admin, Consultor e Logista.
+
+Funções principais:
+- Receber e processar comissões do Marketplace.
+- Executar pagamentos de bônus do SIGMA (fidelidade, profundidade, top e PINs).
+- Processar saques, transferências e conciliações de valores.
+- Gerar relatórios e auditorias para o painel administrativo.
+
+2. Estrutura de Integração Entre Módulos
+
+Módulo | Integração com Wallet Pay | Tipo de Operação
+--------|----------------------------|-----------------
+Marketplace | Créditos de vendas, comissões, dropshipping | Entrada de valores (commission_shop)
+SIGMA | Pagamento de bônus e fidelidade | Entrada de valores (bonus, fidelidade, top, PINs)
+Admin | Conciliação, ajustes, auditoria, relatórios | Operações manuais e automáticas
+Consultor | Visualização de saldo, extrato, saques, transferências | Operações de usuário final
+Logista | Recebimento de repasses e controle de vendas | Operações de crédito e relatório de repasse
+
+3. Painel de Acesso Unificado
+
+A Wallet Pay está acessível a partir dos painéis principais do ecossistema RS:
+
+1. **Admin** – Controle global e financeiro:
+   - Visualização de saldo consolidado de toda a rede.
+   - Aprovação de saques, ajustes e conciliação PSP.
+   - Configuração de taxas, limites e webhooks.
+   - Acesso total a relatórios e auditoria financeira.
+
+2. **Consultor** – Acesso via Backoffice:
+   - Visualização de saldo individual.
+   - Histórico de ganhos por bônus e vendas.
+   - Saques via PIX e transferências internas.
+   - Exportação de relatórios de ganhos.
+
+3. **Logista** – Acesso via Painel do Marketplace:
+   - Consulta de repasses de vendas.
+   - Saques automáticos por chave PIX.
+   - Relatórios por produto e período.
+
+4. APIs e Conexões
+
+Integrações via API REST (autenticadas com chaves HMAC e tokens JWT):
+
+- POST /credits  ? Recebe créditos de comissões e bônus.
+- POST /debits   ? Registra débitos (saques e taxas).
+- POST /transfers ? Processa transferências internas.
+- GET /balance   ? Retorna saldo atualizado por conta.
+- GET /ledger    ? Retorna extrato detalhado de transações.
+- POST /webhook  ? Registra endpoints externos para callbacks seguros.
+
+Eventos registrados:
+- commission_shop (Marketplace)
+- bonus (SIGMA)
+- withdrawal (Consultor)
+- transfer (interno)
+- fees (Admin)
+
+5. Workflow de Transações
+
+Fluxo operacional entre módulos:
+
+1. **Venda no Marketplace**
+   - Compra confirmada ? Wallet Pay recebe evento ? Cria crédito 'commission_shop' ? Atualiza saldo do consultor e logista.
+
+2. **Fechamento SIGMA**
+   - SIGMA processa ciclo ? Wallet Pay distribui bônus de fidelidade, profundidade e top.
+
+3. **Saque pelo Consultor**
+   - Consultor solicita saque ? Validação KYC ? PSP processa ? Status atualizado em tempo real.
+
+4. **Transferência Interna**
+   - Consultor transfere saldo para outro usuário ? Ledger registra crédito/débito simultâneo.
+
+5. **Admin/Auditoria**
+   - Admin gera relatórios ? Conciliação automática PSP x Ledger x Origem.
+
+6. Relatórios e Auditoria
+
+- Relatórios por módulo (Marketplace, SIGMA, Wallet).
+- Exportação consolidada CSV/PDF.
+- Snapshots diários de ledger e saldo total.
+- Log imutável de ajustes e conciliações.
+- Painel de auditoria integrado ao Admin (com permissões específicas).
+
+7. Segurança e Acesso
+
+- Autenticação via JWT + 2FA + rate limiting.
+- Permissões diferenciadas por tipo de painel.
+- Criptografia de dados sensíveis (PIX, documentos KYC).
+- Webhooks assinados com HMAC e reenvio automático.
+- Auditoria de todas as ações (quem, quando e onde).
+
+8. Design e UX Unificado
+
+- Tema padrão RS (Dark + Gold).
+- Tabelas com filtros e paginação dinâmica.
+- Painel responsivo (mobile-first).
+- Cards de saldo, movimentações e gráficos Recharts.
+- Indicadores de status (verde=crédito, vermelho=débito, amarelo=pendente).
+
+9. Checklists de Integração
+
+? Conexão Marketplace ? Wallet Pay (commission_shop)
+? Conexão SIGMA ? Wallet Pay (bonus, fidelidade, top, PINs)
+? Conexão Consultor ? Wallet Pay (saques, transferências)
+? Conexão Logista ? Wallet Pay (repasses e relatórios)
+? Conexão Admin ? Wallet Pay (auditoria e conciliação)
+? API pública REST com chaves e webhooks ativos
+? Snapshots e trilha de auditoria ativa
+? Ambiente homolog/produção sincronizado
+
+10. Roadmap Operacional
+
+Fase 1 – Integração completa com Marketplace e SIGMA (créditos e bônus).
+Fase 2 – Liberação de painel autônomo e 2FA individual.
+Fase 3 – API pública com chaves escopo-limitadas.
+Fase 4 – Módulo antifraude e sandbox financeiro.

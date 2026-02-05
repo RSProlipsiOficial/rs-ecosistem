@@ -54,9 +54,9 @@ serve(async (req) => {
     const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
     return new Response(
       JSON.stringify({ error: errorMessage }),
-      { 
-        status: 500, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     );
   }
@@ -64,15 +64,15 @@ serve(async (req) => {
 
 async function createInstance(payload: any, authHeader: string) {
   const { user_id, instance_name } = payload;
-  
+
   console.log('Criando instância WhatsApp para user_id:', user_id);
-  
+
   // Test Evolution API connection first
   console.log('=== TESTING EVOLUTION API CONNECTION ===');
   console.log('Evolution API URL:', evolutionApiUrl);
   console.log('Evolution API Key exists:', !!evolutionApiKey);
   console.log('Evolution API Key length:', evolutionApiKey?.length || 0);
-  
+
   try {
     const testResponse = await fetch(evolutionApiUrl, {
       method: 'GET',
@@ -84,7 +84,7 @@ async function createInstance(payload: any, authHeader: string) {
     console.log('Evolution API test response status:', testResponse.status);
     const testText = await testResponse.text();
     console.log('Evolution API test response body:', testText);
-    
+
     if (!testResponse.ok) {
       console.error('Evolution API test failed with status:', testResponse.status);
       throw new Error(`Evolution API não está respondendo (status: ${testResponse.status}). Verifique a URL e chave API.`);
@@ -94,7 +94,7 @@ async function createInstance(payload: any, authHeader: string) {
     throw new Error(`Erro ao conectar com Evolution API: ${testError instanceof Error ? testError.message : 'Erro desconhecido'}`);
   }
   console.log('=== EVOLUTION API CONNECTION OK ===');
-  
+
   // Criar cliente Supabase com token do usuário
   const userSupabase = createClient(supabaseUrl, supabaseAnonKey, {
     global: {
@@ -122,7 +122,7 @@ async function createInstance(payload: any, authHeader: string) {
   console.log('Criando instância na Evolution API...');
   console.log('Evolution API URL:', evolutionApiUrl);
   console.log('Evolution API Key (primeiros 10 chars):', evolutionApiKey?.substring(0, 10));
-  
+
   // Criar instância na Evolution API
   const evolutionResponse = await fetch(`${evolutionApiUrl}/instance/create`, {
     method: 'POST',
@@ -154,7 +154,7 @@ async function createInstance(payload: any, authHeader: string) {
         'apikey': evolutionApiKey
       }
     });
-    
+
     if (qrResponse.ok) {
       const qrData = await qrResponse.json();
       qrCode = qrData.base64 || qrData.qrcode;
@@ -162,7 +162,7 @@ async function createInstance(payload: any, authHeader: string) {
   } catch (qrError) {
     console.error('Erro ao obter QR Code:', qrError);
   }
-  
+
   // Criar instância no banco usando o cliente autenticado
   const { data, error } = await userSupabase
     .from('whatsapp_instances')
@@ -183,8 +183,8 @@ async function createInstance(payload: any, authHeader: string) {
   console.log('Instância criada com sucesso:', data);
 
   return new Response(
-    JSON.stringify({ 
-      success: true, 
+    JSON.stringify({
+      success: true,
       instance: data,
       evolution_data: evolutionData
     }),
@@ -194,7 +194,7 @@ async function createInstance(payload: any, authHeader: string) {
 
 async function sendMessage(payload: any, authHeader: string) {
   const { user_id, instance_id, to_number, context } = payload;
-  
+
   // Criar cliente Supabase com token do usuário
   const userSupabase = createClient(supabaseUrl, supabaseAnonKey, {
     global: {
@@ -203,7 +203,7 @@ async function sendMessage(payload: any, authHeader: string) {
       }
     }
   });
-  
+
   // Verificar se instância existe
   const { data: instance, error: instanceError } = await userSupabase
     .from('whatsapp_instances')
@@ -226,12 +226,15 @@ async function sendMessage(payload: any, authHeader: string) {
     throw new Error('Limite de créditos IA atingido. Faça upgrade do seu plano.');
   }
 
+  // Cliente administrativo para buscar configurações globais se necessário
+  const serviceSupabase = createClient(supabaseUrl, supabaseServiceKey);
+
   // Gerar mensagem com IA
-  const aiMessage = await generateAIMessage(context);
-  
+  const aiMessage = await generateAIMessage(context, user_id, serviceSupabase);
+
   // Enviar mensagem via Evolution API
   console.log(`Enviando mensagem via Evolution API para ${to_number}: ${aiMessage}`);
-  
+
   const sendResponse = await fetch(`${evolutionApiUrl}/message/sendText/${instance.instance_name}`, {
     method: 'POST',
     headers: {
@@ -252,7 +255,7 @@ async function sendMessage(payload: any, authHeader: string) {
 
   const sendData = await sendResponse.json();
   console.log('Mensagem enviada via Evolution API:', sendData);
-  
+
   // Salvar mensagem no banco
   const { data: messageData, error } = await userSupabase
     .from('whatsapp_messages')
@@ -274,8 +277,8 @@ async function sendMessage(payload: any, authHeader: string) {
   console.log('Mensagem WhatsApp salva:', messageData);
 
   return new Response(
-    JSON.stringify({ 
-      success: true, 
+    JSON.stringify({
+      success: true,
       message: messageData,
       evolution_response: sendData,
       credits_consumed: 1
@@ -284,29 +287,45 @@ async function sendMessage(payload: any, authHeader: string) {
   );
 }
 
-async function generateAIMessage(context: any) {
+async function generateAIMessage(context: any, user_id: string, serviceSupabase: any) {
   const { tipo, aluno_nome, valor, dias_vencimento, chave_pix } = context;
-  
-  let prompt = '';
-  
+
+  // Buscar configuração da IA do usuário
+  const { data: config } = await serviceSupabase
+    .from('ai_configuration')
+    .select('*')
+    .eq('user_id', user_id)
+    .maybeSingle();
+
+  const systemPrompt = config?.system_prompt || 'Você é um assistente que gera mensagens profissionais para escolas sobre mensalidades. Seja sempre educado, claro e inclua todas as informações fornecidas.';
+  const aiMemory = config?.ai_memory ? `\n\nInformações Adicionais (Memória da sua IA):\n${config.ai_memory}` : '';
+
+  let userPrompt = '';
+
   switch (tipo) {
     case 'antes_vencimento':
-      prompt = `Gere uma mensagem amigável e profissional para lembrar sobre o pagamento da mensalidade que vence em ${dias_vencimento} dias. 
+      userPrompt = `Gere uma mensagem amigável e profissional para lembrar sobre o pagamento da mensalidade que vence em ${dias_vencimento} dias. 
       Dados: Aluno: ${aluno_nome}, Valor: R$ ${valor}, Chave PIX: ${chave_pix}
       Seja cordial e inclua todas as informações importantes.`;
       break;
     case 'no_vencimento':
-      prompt = `Gere uma mensagem amigável e profissional lembrando que a mensalidade vence hoje.
+      userPrompt = `Gere uma mensagem amigável e profissional lembrando que a mensalidade vence hoje.
       Dados: Aluno: ${aluno_nome}, Valor: R$ ${valor}, Chave PIX: ${chave_pix}
       Seja cordial e inclua todas as informações importantes.`;
       break;
     case 'apos_vencimento':
-      prompt = `Gere uma mensagem profissional mas firme sobre mensalidade em atraso há ${Math.abs(dias_vencimento)} dias.
+      userPrompt = `Gere uma mensagem profissional mas firme sobre mensalidade em atraso há ${Math.abs(dias_vencimento)} dias.
       Dados: Aluno: ${aluno_nome}, Valor: R$ ${valor}, Chave PIX: ${chave_pix}
       Seja respeitoso mas deixe claro que o pagamento está atrasado.`;
       break;
+    case 'saudacao':
+      userPrompt = `Gere uma mensagem curta e simpática de saudação (ex: Bom dia ou Boa tarde) para os pais do aluno ${aluno_nome}.`;
+      break;
+    case 'data_festiva':
+      userPrompt = `Gere uma mensagem curta e carinhosa para uma data festiva ou feriado dedicada aos pais do aluno ${aluno_nome}.`;
+      break;
     default:
-      prompt = `Gere uma mensagem profissional sobre mensalidade escolar.
+      userPrompt = `Gere uma mensagem profissional sobre mensalidade escolar.
       Dados: Aluno: ${aluno_nome}, Valor: R$ ${valor}, Chave PIX: ${chave_pix}`;
   }
 
@@ -319,11 +338,11 @@ async function generateAIMessage(context: any) {
     body: JSON.stringify({
       model: 'openai/gpt-4o-mini',
       messages: [
-        { 
-          role: 'system', 
-          content: 'Você é um assistente que gera mensagens profissionais para escolas sobre mensalidades. Seja sempre educado, claro e inclua todas as informações fornecidas.' 
+        {
+          role: 'system',
+          content: `${systemPrompt}${aiMemory}`
         },
-        { role: 'user', content: prompt }
+        { role: 'user', content: userPrompt }
       ],
       max_tokens: 300,
       temperature: 0.7
@@ -331,12 +350,12 @@ async function generateAIMessage(context: any) {
   });
 
   const data = await response.json();
-  return data.choices[0].message.content;
+  return data.choices?.[0]?.message?.content || 'Desculpe, não consegui gerar a mensagem no momento.';
 }
 
 async function getInstances(payload: any, authHeader: string) {
   const { user_id } = payload;
-  
+
   // Criar cliente Supabase com token do usuário
   const userSupabase = createClient(supabaseUrl, supabaseAnonKey, {
     global: {
@@ -345,7 +364,7 @@ async function getInstances(payload: any, authHeader: string) {
       }
     }
   });
-  
+
   const { data: dbInstances, error } = await userSupabase
     .from('whatsapp_instances')
     .select('*')
@@ -363,20 +382,20 @@ async function getInstances(payload: any, authHeader: string) {
             'apikey': evolutionApiKey
           }
         });
-        
+
         if (statusResponse.ok) {
           const statusData = await statusResponse.json();
-          
+
           // Atualizar status se diferente
           if (statusData.instance?.state && statusData.instance.state !== instance.status) {
             await userSupabase
               .from('whatsapp_instances')
-              .update({ 
+              .update({
                 status: statusData.instance.state,
                 phone_number: statusData.instance.owner || instance.phone_number
               })
               .eq('id', instance.id);
-              
+
             return {
               ...instance,
               status: statusData.instance.state,
@@ -387,7 +406,7 @@ async function getInstances(payload: any, authHeader: string) {
       } catch (err) {
         console.error(`Erro ao verificar status da instância ${instance.id}:`, err);
       }
-      
+
       return instance;
     })
   );
@@ -400,7 +419,7 @@ async function getInstances(payload: any, authHeader: string) {
 
 async function deleteInstance(payload: any, authHeader: string) {
   const { user_id, instance_id } = payload;
-  
+
   // Criar cliente Supabase com token do usuário
   const userSupabase = createClient(supabaseUrl, supabaseAnonKey, {
     global: {
@@ -409,7 +428,7 @@ async function deleteInstance(payload: any, authHeader: string) {
       }
     }
   });
-  
+
   // Obter detalhes da instância antes de deletar
   const { data: instance, error: fetchError } = await userSupabase
     .from('whatsapp_instances')
@@ -430,7 +449,7 @@ async function deleteInstance(payload: any, authHeader: string) {
         'apikey': evolutionApiKey
       }
     });
-    
+
     if (deleteResponse.ok) {
       console.log(`Instância ${instance.instance_name} deletada da Evolution API`);
     } else {
@@ -458,7 +477,7 @@ async function deleteInstance(payload: any, authHeader: string) {
 
 async function updateQRCode(payload: any, authHeader: string) {
   const { user_id, instance_id } = payload;
-  
+
   // Criar cliente Supabase com token do usuário
   const userSupabase = createClient(supabaseUrl, supabaseAnonKey, {
     global: {
@@ -467,7 +486,7 @@ async function updateQRCode(payload: any, authHeader: string) {
       }
     }
   });
-  
+
   // Obter detalhes da instância
   const { data: instance, error: fetchError } = await userSupabase
     .from('whatsapp_instances')
@@ -487,9 +506,9 @@ async function updateQRCode(payload: any, authHeader: string) {
         'apikey': evolutionApiKey
       }
     });
-    
+
     let qrCode = instance.qr_code; // Manter o QR atual se não conseguir atualizar
-    
+
     if (qrResponse.ok) {
       const qrData = await qrResponse.json();
       qrCode = qrData.base64 || qrData.qrcode || instance.qr_code;
@@ -507,9 +526,9 @@ async function updateQRCode(payload: any, authHeader: string) {
     if (updateError) throw updateError;
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
-        instance: updatedInstance 
+      JSON.stringify({
+        success: true,
+        instance: updatedInstance
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

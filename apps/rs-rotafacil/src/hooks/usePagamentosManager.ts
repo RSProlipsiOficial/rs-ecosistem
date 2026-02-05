@@ -16,6 +16,7 @@ export interface AlunoComPagamento {
   data_vencimento?: string;
   data_pagamento?: string;
   pagamento_vencido: boolean;
+  turno?: string;
 }
 
 export function usePagamentosManager(mesAno: string) {
@@ -28,7 +29,10 @@ export function usePagamentosManager(mesAno: string) {
   const fetchAlunos = async () => {
     try {
       setLoading(true);
-      // Buscar todos os alunos ativos
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Buscar todos os alunos ativos do usuário
       const { data: alunosData, error: alunosError } = await supabase
         .from('alunos')
         .select(`
@@ -37,19 +41,22 @@ export function usePagamentosManager(mesAno: string) {
           nome_responsavel,
           whatsapp_responsavel,
           valor_mensalidade,
+          valor_letalidade,
           nome_colegio,
           van_id,
           ativo,
+          turno,
           vans:van_id (nome)
         `)
-        .eq('ativo', true);
+        .eq('user_id', user.id);
 
       if (alunosError) throw alunosError;
 
-      // Buscar pagamentos do mês
+      // Buscar pagamentos do mês do usuário
       const { data: pagamentosData, error: pagamentosError } = await supabase
         .from('pagamentos_mensais')
         .select('*')
+        .eq('user_id', user.id)
         .eq('mes', mes)
         .eq('ano', ano);
 
@@ -67,7 +74,7 @@ export function usePagamentosManager(mesAno: string) {
           nome_completo: aluno.nome_completo,
           nome_responsavel: aluno.nome_responsavel,
           whatsapp_responsavel: aluno.whatsapp_responsavel,
-          valor_mensalidade: aluno.valor_mensalidade,
+          valor_mensalidade: (Number(aluno.valor_mensalidade) || 0) + (Number((aluno as any).valor_letalidade) || 0),
           nome_colegio: aluno.nome_colegio || 'Colégio Não Informado',
           van_nome: aluno.vans?.nome,
           ativo: aluno.ativo,
@@ -75,7 +82,8 @@ export function usePagamentosManager(mesAno: string) {
           status_pagamento: (pagamento?.status as 'pago' | 'nao_pago') || 'nao_pago',
           data_vencimento: pagamento?.data_vencimento,
           data_pagamento: pagamento?.data_pagamento,
-          pagamento_vencido: dataVencimento ? dataVencimento < hoje : false,
+          pagamento_vencido: dataVencimento ? (dataVencimento < hoje && (pagamento?.status) !== 'pago') : false,
+          turno: aluno.turno
         };
       });
 
@@ -114,6 +122,9 @@ export function usePagamentosManager(mesAno: string) {
         const aluno = alunos.find((a) => a.id === alunoId);
         if (!aluno) throw new Error('Aluno não encontrado');
 
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('Usuário não autenticado');
+
         const { data: novoPagamento, error: errorCriar } = await supabase
           .from('pagamentos_mensais')
           .insert({
@@ -123,7 +134,7 @@ export function usePagamentosManager(mesAno: string) {
             valor: aluno.valor_mensalidade,
             status: novoStatus,
             data_pagamento: novoStatus === 'pago' ? hojeStr : null,
-            user_id: '00000000-0000-0000-0000-000000000000',
+            user_id: user.id,
           })
           .select('id')
           .single();
@@ -148,11 +159,11 @@ export function usePagamentosManager(mesAno: string) {
         prev.map((aluno) =>
           aluno.id === alunoId
             ? {
-                ...aluno,
-                pagamento_id: pagamentoId,
-                status_pagamento: novoStatus,
-                data_pagamento: novoStatus === 'pago' ? hojeStr : undefined,
-              }
+              ...aluno,
+              pagamento_id: pagamentoId,
+              status_pagamento: novoStatus,
+              data_pagamento: novoStatus === 'pago' ? hojeStr : undefined,
+            }
             : aluno
         )
       );

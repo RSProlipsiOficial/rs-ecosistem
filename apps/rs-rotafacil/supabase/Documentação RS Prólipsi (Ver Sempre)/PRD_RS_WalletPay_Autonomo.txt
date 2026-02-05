@@ -1,0 +1,109 @@
+PRD – RS WALLET PAY (AUTÔNOMO)
+Documento técnico-funcional completo do sistema financeiro autônomo RS Wallet Pay – carteira digital integrada ao ecossistema RS Prólipsi, com painel próprio, login independente, segurança de dados e integração com os módulos Marketplace, SIGMA, Admin e Consultor.
+1. Visão Geral
+
+O RS Wallet Pay é o módulo de carteira digital da RS Prólipsi. Atua de forma autônoma, permitindo a movimentação financeira de todo o ecossistema – consultores, logistas, administradores e módulos externos.
+Opera com um painel web próprio, autenticação individual e APIs seguras para integração com Marketplace e SIGMA.
+
+2. Arquitetura e Módulos
+
+1. Ledger de dupla entrada com integridade de hash e saldo em tempo real.
+2. Engine de taxas e limites personalizáveis por perfil.
+3. KYC/KYB com verificação de identidade (CPF/CNPJ, documentos, selfie).
+4. Sistema de saques PIX/TED e reconciliação PSP.
+5. Integrações seguras com Marketplace, SIGMA e Admin.
+6. Gestão de disputas, estornos e ajustes financeiros.
+7. Relatórios e BI financeiro com exportação CSV/PDF.
+8. Painel autônomo com login e autenticação 2FA (TOTP/SMS).
+9. Segurança, auditoria e rastreabilidade total de transações.
+
+3. Estrutura de Banco de Dados
+
+Tabelas principais:
+- wallet_accounts (id_usuario, tipo, status, KYC_status)
+- wallet_balances (account_id, current_balance, last_seq)
+- wallet_ledger (seq, tipo, amount, origem, referência, hash, estado, data)
+- wallet_transfers (de_conta, para_conta, valor, taxa, motivo, estado)
+- wallet_withdrawals (conta, valor, pix_key, estado, comprovante)
+- wallet_fees (configuração de taxas por tipo e plano)
+- wallet_limits (limites diários/mensais por perfil)
+- wallet_disputes (referência, motivo, evidências, decisão)
+- wallet_webhooks (endpoint, segredo, escopo, tentativas, dead_letter)
+- wallet_audit (alterações, aprovador, timestamp, hash_anterior)
+- wallet_api_keys (chaves de integração com escopo limitado)
+
+4. Perfis e Permissões
+
+Perfil | Funções
+--------|---------
+Consultor | visualizar saldo, sacar, transferir, baixar extratos
+Logista | visualizar saldo e repasses, relatórios de loja
+Admin Financeiro | aprovar saques, ajustar saldos, conciliar PSP
+Admin Auditor | leitura de todas as transações e logs
+Admin Global | gestão de chaves, limites, taxas e integrações
+Premium | relatórios avançados e taxas reduzidas
+
+5. Fluxos Operacionais
+
+1. Crédito automático (ex: comissão de Marketplace)
+   - API /credits ? registra crédito, atualiza saldo, envia webhook.
+2. Bônus SIGMA/Fidelidade
+   - SIGMA fecha ciclo ? Wallet Pay credita contas correspondentes.
+3. Saque PIX/TED
+   - Usuário solicita ? valida KYC, saldo e limites ? envia PSP ? reconciliação.
+4. Transferência interna
+   - Entre contas Wallet Pay, real-time, sem tarifa (opcional).
+5. Estornos/Chargebacks
+   - Recebidos via PSP/Marketplace ? bloqueio parcial, análise e reversão.
+6. Conciliação automática
+   - CRON diário/mensal compara ledger, PSP e origens (Marketplace/SIGMA).
+
+6. Painel Web Autônomo
+
+- Login individual (usuário/senha) com 2FA opcional.
+- Dashboard: saldo, previstos, últimas transações e KPIs (saques, comissões, bônus).
+- Extrato detalhado com filtros e exportação (CSV/PDF).
+- Operações: saque PIX, transferências, cadastro de chaves.
+- Relatórios por origem (Marketplace, SIGMA, Admin).
+- Disputas e evidências com trilha de auditoria.
+- Admins: aprovações, reconciliação, ajustes e relatórios globais.
+
+7. Integrações e Webhooks
+
+Integrações de entrada:
+- Marketplace (commission_shop)
+- SIGMA (bonus, fidelidade, top)
+- Admin (ajustes manuais, retroativos)
+
+Integrações de saída:
+- Webhooks assinados HMAC para confirmação de crédito/débito.
+- Reenvio automático (retry exponencial) e fila de dead-letter.
+- API pública REST com autenticação por chave e escopo limitado.
+
+8. Segurança e Compliance
+
+- Criptografia AES para dados sensíveis (PIX, documentos).
+- Autenticação JWT + 2FA + rate limiting.
+- Logs imutáveis e trilha de auditoria por hash encadeado.
+- Políticas LGPD: consentimento, anonimização e retenção.
+- Bloqueios automáticos para contas suspeitas (velocity/fraud check).
+- Segregação de funções (quem cria ? quem aprova ? quem audita).
+
+9. Relatórios e BI
+
+- Relatórios por tipo de operação, origem e usuário.
+- Exportação CSV, PDF e gráficos dinâmicos.
+- Snapshots diários para auditoria financeira.
+- Indicadores: volume total, média de saque, chargebacks, saldo global.
+
+10. Observabilidade e SRE
+
+- Métricas: latência de APIs, erros de conciliação, fila de reconciliação, tempo médio de saque.
+- Alertas: falhas de webhook, picos de chargeback, saldo negativo.
+- Dashboards de monitoramento por ambiente (produção/homologação).
+
+11. Roadmap de Implementação
+
+Fase A – Fundação: painel web, ledger dupla entrada, login e 2FA, KYC básico, extrato e saques.
+Fase B – Operação: conciliação PSP, engine de taxas/limites, disputas e relatórios avançados.
+Fase C – Escala: API pública, sandbox, antifraude, observabilidade e otimização de filas.

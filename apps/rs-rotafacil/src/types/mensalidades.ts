@@ -52,6 +52,12 @@ export interface PagamentoComAluno {
     nome_responsavel: string;
     whatsapp_responsavel: string;
     van_id: string;
+    dia_vencimento?: number;
+    ativo?: boolean;
+    turno?: string;
+    vans?: {
+      nome: string;
+    };
   };
 }
 
@@ -67,7 +73,12 @@ export interface MensalidadeFiltros {
   mes: number;
   ano: number;
   van_id?: string;
-  status?: 'todos' | 'pagos' | 'pendentes';
+  status?: string | string[]; // Suporte a multi-seleção de status
+  searchTerm?: string;
+  aluno_id?: string;
+  colegios?: string[];
+  turnos?: string[];
+  showInactive?: boolean;
 }
 
 export interface EnviarMensagemData {

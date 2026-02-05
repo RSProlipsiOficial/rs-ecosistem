@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { UserPlus, X, Loader2 } from "lucide-react";
 import { AlunoFormData, Van, Aluno } from "@/types/alunos";
 import { formatToPascalCase } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
 interface AlunoFormProps {
   open: boolean;
@@ -43,11 +44,68 @@ export function AlunoForm({ open, onClose, onSubmit, vans, selectedVanId, editin
     van_id: editingAluno?.van_id ?? selectedVanId ?? "",
   });
 
+
   const [isCustomSerie, setIsCustomSerie] = useState(false);
   const [isCustomSala, setIsCustomSala] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [isCepLoading, setIsCepLoading] = useState(false);
+
+  // Estados para Colégios Dinâmicos
+  const [colegios, setColegios] = useState<any[]>([]);
+  const [colegiosLoading, setColegiosLoading] = useState(false);
+  const [isCustomColegio, setIsCustomColegio] = useState(false);
+
+  // Atualizar formData quando editingAluno mudar
+  useEffect(() => {
+    if (editingAluno) {
+      setFormData({
+        nome_completo: editingAluno.nome_completo || "",
+        nome_responsavel: editingAluno.nome_responsavel || "",
+        cpf: editingAluno.cpf || "",
+        email: editingAluno.email || "",
+        turno: editingAluno.turno || "manha",
+        serie: editingAluno.serie || "",
+        sala: editingAluno.sala || "",
+        nome_colegio: editingAluno.nome_colegio || "",
+        endereco_rua: editingAluno.endereco_rua || "",
+        endereco_numero: editingAluno.endereco_numero || "",
+        endereco_bairro: editingAluno.endereco_bairro || "",
+        endereco_cidade: editingAluno.endereco_cidade || "",
+        endereco_estado: editingAluno.endereco_estado || "",
+        endereco_cep: editingAluno.endereco_cep || "",
+        tipo_residencia: editingAluno.tipo_residencia || "casa",
+        whatsapp_responsavel: editingAluno.whatsapp_responsavel || "",
+        valor_mensalidade: editingAluno.valor_mensalidade || 0,
+        valor_letalidade: editingAluno.valor_letalidade || 0,
+        dia_vencimento: editingAluno.dia_vencimento || undefined,
+        van_id: editingAluno.van_id || selectedVanId || "",
+      });
+    } else {
+      setFormData({
+        nome_completo: "",
+        nome_responsavel: "",
+        cpf: "",
+        email: "",
+        turno: "manha",
+        serie: "",
+        sala: "",
+        nome_colegio: "",
+        endereco_rua: "",
+        endereco_numero: "",
+        endereco_bairro: "",
+        endereco_cidade: "",
+        endereco_estado: "",
+        endereco_cep: "",
+        tipo_residencia: "casa",
+        whatsapp_responsavel: "",
+        valor_mensalidade: 0,
+        valor_letalidade: 0,
+        dia_vencimento: undefined,
+        van_id: selectedVanId || "",
+      });
+    }
+  }, [editingAluno, selectedVanId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -89,7 +147,76 @@ export function AlunoForm({ open, onClose, onSubmit, vans, selectedVanId, editin
   const handleInputChange = (field: keyof AlunoFormData, value: any) => {
     console.log(`[FormAluno] Mudando ${field} para:`, value);
     setFormData(prev => ({ ...prev, [field]: value }));
+
+    // Se mudar a van, resetar colégio e recarregar lista
+    if (field === 'van_id') {
+      setIsCustomColegio(false);
+      handleInputChange('nome_colegio', '');
+    }
+
+    if (field === 'sala') {
+      setIsCustomSala(value === 'Outra');
+    }
+
+    if (field === 'nome_colegio' && value === 'custom') {
+      // setIsCustomColegio(true); // Desativado a pedido do Roberto
+      // setFormData(prev => ({ ...prev, nome_colegio: '' }));
+    }
   };
+
+  // Carregar colégios da van selecionada
+  useEffect(() => {
+    const fetchColegios = async () => {
+      if (!formData.van_id) {
+        setColegios([]);
+        return;
+      }
+
+      setColegiosLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('van_colegios')
+          .select(`
+            colegio_id,
+            colegios (
+              id,
+              nome
+            )
+          `)
+          .eq('van_id', formData.van_id);
+
+        if (error) throw error;
+
+        const lista = data?.map((item: any) => ({
+          id: item.colegios?.id,
+          nome: item.colegios?.nome
+        })).filter(c => c.id) || [];
+
+        setColegios(lista);
+
+        // Se estiver editando e o colégio atual não estiver na lista da van, 
+        // ou se for um nome digitado manualmente, ativa modo custom
+        if (editingAluno?.nome_colegio && !lista.some((c: any) => c.nome === editingAluno.nome_colegio)) {
+          setIsCustomColegio(true);
+        }
+      } catch (err) {
+        console.error('Erro ao buscar colégios:', err);
+      } finally {
+        setColegiosLoading(false);
+      }
+    };
+
+    fetchColegios();
+  }, [formData.van_id, editingAluno]);
+
+  // Efeito inicial para detectar campos manuais na edição
+  useEffect(() => {
+    if (editingAluno) {
+      if (editingAluno.sala && !['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'].includes(editingAluno.sala)) {
+        setIsCustomSala(true);
+      }
+    }
+  }, [editingAluno]);
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -180,7 +307,7 @@ export function AlunoForm({ open, onClose, onSubmit, vans, selectedVanId, editin
                 <Label htmlFor="turno" className="text-gray-400 font-bold uppercase text-[10px] tracking-widest">Turno *</Label>
                 <select
                   id="turno"
-                  className="flex h-10 w-full items-center justify-between rounded-md border border-white/10 bg-black/40 px-3 py-2 text-sm text-white focus:border-gold/50 focus:outline-none"
+                  className="flex h-10 w-full items-center justify-between rounded-md border border-white/10 bg-[#0a0a0a] px-3 py-2 text-sm text-white focus:border-gold/50 focus:outline-none"
                   value={formData.turno}
                   onChange={(e) => handleInputChange("turno", e.target.value)}
                   required
@@ -195,36 +322,40 @@ export function AlunoForm({ open, onClose, onSubmit, vans, selectedVanId, editin
                 <Label htmlFor="serie" className="text-gray-400 font-bold uppercase text-[10px] tracking-widest">Série *</Label>
                 <select
                   id="serie"
-                  className="flex h-10 w-full items-center justify-between rounded-md border border-gold/30 bg-[#1a1b23] px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-gold focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 text-white font-medium"
+                  className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-dark-lighter px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-gold focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 text-white font-medium"
+                  style={{
+                    background: '#1a1b23',
+                    color: '#ffffff'
+                  }}
                   value={formData.serie}
                   onChange={(e) => handleInputChange("serie", e.target.value)}
                   required
                 >
-                  <option value="" disabled className="bg-[#1a1b23] text-gray-500">Selecione a série</option>
-                  <optgroup label="Educação Infantil" className="bg-[#1a1b23] text-yellow-500 font-bold">
-                    <option value="Berçário" className="bg-[#1a1b23] text-white">Berçário</option>
-                    <option value="Maternal" className="bg-[#1a1b23] text-white">Maternal</option>
-                    <option value="Infantil 2" className="bg-[#1a1b23] text-white">Infantil 2</option>
-                    <option value="Infantil 3" className="bg-[#1a1b23] text-white">Infantil 3</option>
-                    <option value="Infantil 4" className="bg-[#1a1b23] text-white">Infantil 4</option>
-                    <option value="Infantil 5" className="bg-[#1a1b23] text-white">Infantil 5</option>
-                    <option value="Jardim" className="bg-[#1a1b23] text-white">Jardim</option>
+                  <option value="" disabled style={{ background: '#1a1b23', color: '#9ca3af' }}>Selecione a série</option>
+                  <optgroup label="Educação Infantil" style={{ background: '#1a1b23', color: '#fbbf24', fontWeight: 'bold' }}>
+                    <option value="Berçário" style={{ background: '#1a1b23', color: '#ffffff', paddingLeft: '1rem' }}>Berçário</option>
+                    <option value="Maternal" style={{ background: '#1a1b23', color: '#ffffff', paddingLeft: '1rem' }}>Maternal</option>
+                    <option value="Infantil 2" style={{ background: '#1a1b23', color: '#ffffff', paddingLeft: '1rem' }}>Infantil 2</option>
+                    <option value="Infantil 3" style={{ background: '#1a1b23', color: '#ffffff', paddingLeft: '1rem' }}>Infantil 3</option>
+                    <option value="Infantil 4" style={{ background: '#1a1b23', color: '#ffffff', paddingLeft: '1rem' }}>Infantil 4</option>
+                    <option value="Infantil 5" style={{ background: '#1a1b23', color: '#ffffff', paddingLeft: '1rem' }}>Infantil 5</option>
+                    <option value="Jardim" style={{ background: '#1a1b23', color: '#ffffff', paddingLeft: '1rem' }}>Jardim</option>
                   </optgroup>
-                  <optgroup label="Ensino Fundamental" className="bg-[#1a1b23] text-blue-400 font-bold">
-                    <option value="1º Ano" className="bg-[#1a1b23] text-white">1º Ano</option>
-                    <option value="2º Ano" className="bg-[#1a1b23] text-white">2º Ano</option>
-                    <option value="3º Ano" className="bg-[#1a1b23] text-white">3º Ano</option>
-                    <option value="4º Ano" className="bg-[#1a1b23] text-white">4º Ano</option>
-                    <option value="5º Ano" className="bg-[#1a1b23] text-white">5º Ano</option>
-                    <option value="6º Ano" className="bg-[#1a1b23] text-white">6º Ano</option>
-                    <option value="7º Ano" className="bg-[#1a1b23] text-white">7º Ano</option>
-                    <option value="8º Ano" className="bg-[#1a1b23] text-white">8º Ano</option>
-                    <option value="9º Ano" className="bg-[#1a1b23] text-white">9º Ano</option>
+                  <optgroup label="Ensino Fundamental" style={{ background: '#1a1b23', color: '#60a5fa', fontWeight: 'bold' }}>
+                    <option value="1º Ano" style={{ background: '#1a1b23', color: '#ffffff', paddingLeft: '1rem' }}>1º Ano</option>
+                    <option value="2º Ano" style={{ background: '#1a1b23', color: '#ffffff', paddingLeft: '1rem' }}>2º Ano</option>
+                    <option value="3º Ano" style={{ background: '#1a1b23', color: '#ffffff', paddingLeft: '1rem' }}>3º Ano</option>
+                    <option value="4º Ano" style={{ background: '#1a1b23', color: '#ffffff', paddingLeft: '1rem' }}>4º Ano</option>
+                    <option value="5º Ano" style={{ background: '#1a1b23', color: '#ffffff', paddingLeft: '1rem' }}>5º Ano</option>
+                    <option value="6º Ano" style={{ background: '#1a1b23', color: '#ffffff', paddingLeft: '1rem' }}>6º Ano</option>
+                    <option value="7º Ano" style={{ background: '#1a1b23', color: '#ffffff', paddingLeft: '1rem' }}>7º Ano</option>
+                    <option value="8º Ano" style={{ background: '#1a1b23', color: '#ffffff', paddingLeft: '1rem' }}>8º Ano</option>
+                    <option value="9º Ano" style={{ background: '#1a1b23', color: '#ffffff', paddingLeft: '1rem' }}>9º Ano</option>
                   </optgroup>
-                  <optgroup label="Ensino Médio" className="bg-[#1a1b23] text-green-400 font-bold">
-                    <option value="1º Médio" className="bg-[#1a1b23] text-white">1º Médio</option>
-                    <option value="2º Médio" className="bg-[#1a1b23] text-white">2º Médio</option>
-                    <option value="3º Médio" className="bg-[#1a1b23] text-white">3º Médio</option>
+                  <optgroup label="Ensino Médio" style={{ background: '#1a1b23', color: '#34d399', fontWeight: 'bold' }}>
+                    <option value="1º Médio" style={{ background: '#1a1b23', color: '#ffffff', paddingLeft: '1rem' }}>1º Médio</option>
+                    <option value="2º Médio" style={{ background: '#1a1b23', color: '#ffffff', paddingLeft: '1rem' }}>2º Médio</option>
+                    <option value="3º Médio" style={{ background: '#1a1b23', color: '#ffffff', paddingLeft: '1rem' }}>3º Médio</option>
                   </optgroup>
                 </select>
               </div>
@@ -233,7 +364,7 @@ export function AlunoForm({ open, onClose, onSubmit, vans, selectedVanId, editin
                 <Label htmlFor="sala" className="text-gray-400 font-bold uppercase text-[10px] tracking-widest">Sala / Turma *</Label>
                 <select
                   id="sala"
-                  className="flex h-10 w-full items-center justify-between rounded-md border border-white/10 bg-black/40 px-3 py-2 text-sm text-white focus:border-gold/50 focus:outline-none"
+                  className="flex h-10 w-full items-center justify-between rounded-md border border-white/10 bg-[#0a0a0a] px-3 py-2 text-sm text-white focus:border-gold/50 focus:outline-none"
                   value={formData.sala}
                   onChange={(e) => handleInputChange("sala", e.target.value)}
                   required
@@ -244,18 +375,56 @@ export function AlunoForm({ open, onClose, onSubmit, vans, selectedVanId, editin
                   ))}
                   <option value="Outra">Outra / Manual</option>
                 </select>
+                {isCustomSala && (
+                  <Input
+                    id="sala_manual"
+                    placeholder="Digite o número/nome da sala"
+                    value={formData.sala === 'Outra' ? '' : formData.sala}
+                    onChange={(e) => handleInputChange("sala", e.target.value)}
+                    className="mt-2 bg-[#0a0a0a] border-gold/30 text-white focus:border-gold"
+                    required
+                  />
+                )}
               </div>
               <div>
-                <Label htmlFor="nome_colegio" className="text-gray-400 font-bold uppercase text-[10px] tracking-widest">Nome do Colégio *</Label>
-                <Input
-                  id="nome_colegio"
-                  value={formData.nome_colegio}
-                  onChange={(e) => handleInputChange("nome_colegio", e.target.value)}
-                  onBlur={(e) => handleInputChange("nome_colegio", formatToPascalCase(e.target.value))}
-                  placeholder="Ex: Colégio São Lucas, Escola ABC"
-                  required
-                  className="bg-[#0a0a0a] border-white/10 text-white focus:border-gold/50"
-                />
+                <Label htmlFor="nome_colegio" className="text-gray-400 font-bold uppercase text-[10px] tracking-widest">
+                  Nome do Colégio * {colegiosLoading && <Loader2 className="inline w-3 h-3 animate-spin ml-1" />}
+                </Label>
+                {!isCustomColegio ? (
+                  <select
+                    id="nome_colegio_select"
+                    className="flex h-10 w-full items-center justify-between rounded-md border border-white/10 bg-[#0a0a0a] px-3 py-2 text-sm text-white focus:border-gold/50 focus:outline-none"
+                    value={formData.nome_colegio}
+                    onChange={(e) => handleInputChange("nome_colegio", e.target.value)}
+                    required
+                  >
+                    <option value="" disabled>Selecione o colégio</option>
+                    {colegios.map((c) => (
+                      <option key={c.id} value={c.nome}>{c.nome}</option>
+                    ))}
+                    {/* Opção custom removida a pedido do Roberto para manter a integridade dos dados */}
+                  </select>
+                ) : (
+                  <div className="relative">
+                    <Input
+                      id="nome_colegio"
+                      value={formData.nome_colegio}
+                      onChange={(e) => handleInputChange("nome_colegio", e.target.value)}
+                      onBlur={(e) => handleInputChange("nome_colegio", formatToPascalCase(e.target.value))}
+                      placeholder="Digite o nome do colégio"
+                      required
+                      className="bg-[#0a0a0a] border-gold/30 text-white focus:border-gold pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setIsCustomColegio(false)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+                      title="Voltar para lista"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
               </div>
               <div>
                 <Label htmlFor="van_id" className="text-gray-400 font-bold uppercase text-[10px] tracking-widest">Van *</Label>
@@ -418,7 +587,7 @@ export function AlunoForm({ open, onClose, onSubmit, vans, selectedVanId, editin
                   onChange={(e) => handleInputChange("whatsapp_responsavel", e.target.value)}
                   placeholder="(11) 99999-9999"
                   required
-                  className="bg-black/40 border-white/10 text-white focus:border-gold/50"
+                  className="bg-[#0a0a0a] border-white/10 text-white focus:border-gold/50"
                 />
               </div>
               <div>
@@ -427,7 +596,7 @@ export function AlunoForm({ open, onClose, onSubmit, vans, selectedVanId, editin
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">R$</span>
                   <Input
                     id="valor_mensalidade"
-                    className="pl-9 bg-black/40 border-white/10 text-white focus:border-gold/50"
+                    className="pl-9 bg-[#0a0a0a] border-white/10 text-white focus:border-gold/50"
                     value={formData.valor_mensalidade.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     onChange={(e) => {
                       const value = e.target.value.replace(/\D/g, "");
@@ -449,7 +618,7 @@ export function AlunoForm({ open, onClose, onSubmit, vans, selectedVanId, editin
                   onChange={(e) => handleInputChange("dia_vencimento", parseInt(e.target.value) || 0)}
                   placeholder="Dia (1-31)"
                   required
-                  className="bg-black/40 border-white/10 text-white focus:border-gold/50"
+                  className="bg-[#0a0a0a] border-white/10 text-white focus:border-gold/50"
                 />
                 <p className="text-[10px] text-gray-500 uppercase font-bold mt-1">Dia do mês para vencimento da fatura</p>
               </div>
@@ -459,7 +628,7 @@ export function AlunoForm({ open, onClose, onSubmit, vans, selectedVanId, editin
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">R$</span>
                   <Input
                     id="valor_letalidade"
-                    className="pl-9 bg-black/40 border-white/10 text-white focus:border-gold/50"
+                    className="pl-9 bg-[#0a0a0a] border-white/10 text-white focus:border-gold/50"
                     value={formData.valor_letalidade.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     onChange={(e) => {
                       const value = e.target.value.replace(/\D/g, "");

@@ -2,9 +2,9 @@ import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Clock, 
-  Crown, 
+import {
+  Clock,
+  Crown,
   Zap,
   X
 } from "lucide-react";
@@ -44,7 +44,7 @@ export function TrialCountdownBanner() {
     const checkUserSubscription = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
-        
+
         if (!user) {
           setLoading(false);
           return;
@@ -68,15 +68,30 @@ export function TrialCountdownBanner() {
           return;
         }
 
-        if (subscription && subscription.status === 'trial') {
+        if (!subscription) {
+          setIsTrialUser(false);
+          setLoading(false);
+          return;
+        }
+
+        const planData = subscription.plan as any;
+        const planType = planData?.plan_type as string;
+
+        // Metadata override
+        const meta = user.user_metadata;
+        const isMetaUnlimited = meta?.plan === 'Ilimitado' || meta?.plan === 'Rota Fácil Ilimitado' || meta?.tier === 'unlimited';
+
+        if (isMetaUnlimited) {
+          setIsTrialUser(false);
+          setLoading(false);
+          return;
+        }
+
+        if (subscription.status === 'trial' || planType === 'gratis' || planType === 'free') {
           setIsTrialUser(true);
-          
-          // Calcular data de fim do trial baseado na data de criação da assinatura
           const createdAt = new Date(subscription.created_at);
-          const features = subscription.plan?.features as any;
-          const trialDays = features?.trial_days || 7;
+          const trialDays = planData?.limitations?.trial_days || 7;
           const endDate = new Date(createdAt.getTime() + trialDays * 24 * 60 * 60 * 1000);
-          
           setTrialEndDate(endDate);
         } else {
           setIsTrialUser(false);
@@ -132,38 +147,45 @@ export function TrialCountdownBanner() {
     return null;
   }
 
-  // Não mostrar se ainda tem mais de 3 dias
-  if (timeLeft.days > 3) {
-    return null;
-  }
+  /* Exibição contínua conforme solicitado */
+
 
   const isUrgent = timeLeft.days <= 1;
   const isExpired = timeLeft.days === 0 && timeLeft.hours === 0 && timeLeft.minutes === 0 && timeLeft.seconds === 0;
 
   return (
-    <div className={`w-full ${
-      isUrgent ? 
-        'bg-gradient-to-r from-red-600 via-red-500 to-orange-500' : 
-        'bg-gradient-to-r from-amber-500 via-orange-500 to-red-500'
-    } text-white shadow-lg relative overflow-hidden`}>
+    <div className={`w-full ${isUrgent ?
+      'bg-gradient-to-r from-black-primary via-black-secondary to-gold/20' :
+      'bg-gradient-to-r from-black-primary via-black-secondary to-gold/10'
+      } text-gold shadow-lg relative overflow-hidden border-b border-gold/20`}>
+      <style>
+        {`
+          @keyframes pulse-gentle {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.85; }
+          }
+          .animate-pulse-gentle {
+            animation: pulse-gentle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+          }
+        `}
+      </style>
       {/* Animação de fundo */}
       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-pulse"></div>
-      
+
       <div className="relative z-10 max-w-7xl mx-auto px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4 flex-1">
             <div className="flex items-center gap-2">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                isUrgent ? 'bg-red-700' : 'bg-orange-600'
-              }`}>
-                <Clock className="w-4 h-4 text-white animate-pulse" />
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${isUrgent ? 'bg-gold/20' : 'bg-gold/10'
+                }`}>
+                <Clock className="w-4 h-4 text-gold animate-pulse" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="font-bold text-sm">
+                  <span className="font-bold text-sm text-foreground">
                     {isExpired ? "PERÍODO GRATUITO EXPIRADO!" : "SEU PERÍODO GRATUITO EXPIRA EM:"}
                   </span>
-                  <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
+                  <Badge variant="secondary" className="bg-gold text-black-primary border-none font-black">
                     GRÁTIS
                   </Badge>
                 </div>
@@ -176,37 +198,37 @@ export function TrialCountdownBanner() {
                 <div className="flex items-center gap-2">
                   {timeLeft.days > 0 && (
                     <div className="text-center">
-                      <div className="text-xl font-bold">{timeLeft.days}</div>
-                      <div className="text-xs opacity-90">DIAS</div>
+                      <div className="text-xl font-bold text-gold">{timeLeft.days}</div>
+                      <div className="text-xs text-muted-foreground">DIAS</div>
                     </div>
                   )}
-                  
+
                   <div className="text-center">
-                    <div className="text-xl font-bold">{timeLeft.hours.toString().padStart(2, '0')}</div>
-                    <div className="text-xs opacity-90">HORAS</div>
+                    <div className="text-xl font-bold text-gold">{timeLeft.hours.toString().padStart(2, '0')}</div>
+                    <div className="text-xs text-muted-foreground">HORAS</div>
                   </div>
-                  
-                  <div className="text-lg font-bold opacity-60">:</div>
-                  
+
+                  <div className="text-lg font-bold text-gold/50">:</div>
+
                   <div className="text-center">
-                    <div className="text-xl font-bold">{timeLeft.minutes.toString().padStart(2, '0')}</div>
-                    <div className="text-xs opacity-90">MIN</div>
+                    <div className="text-xl font-bold text-gold">{timeLeft.minutes.toString().padStart(2, '0')}</div>
+                    <div className="text-xs text-muted-foreground">MIN</div>
                   </div>
-                  
-                  <div className="text-lg font-bold opacity-60">:</div>
-                  
+
+                  <div className="text-lg font-bold text-gold/50">:</div>
+
                   <div className="text-center">
-                    <div className="text-xl font-bold animate-pulse">{timeLeft.seconds.toString().padStart(2, '0')}</div>
-                    <div className="text-xs opacity-90">SEG</div>
+                    <div className="text-xl font-bold text-gold animate-pulse">{timeLeft.seconds.toString().padStart(2, '0')}</div>
+                    <div className="text-xs text-muted-foreground">SEG</div>
                   </div>
                 </div>
 
                 {/* Texto motivacional */}
                 <div className="hidden md:block">
                   <p className="text-sm font-medium">
-                    {isUrgent ? 
-                      "⚠️ ÚLTIMO DIA! Não perca o acesso!" : 
-                      "🚀 Aproveite 50% OFF no upgrade!"
+                    {isUrgent ?
+                      "⚠️ ÚLTIMO DIA! Não perca o acesso!" :
+                      "🚀 Aproveite ATÉ 2 MESES GRÁTIS no plano anual!"
                     }
                   </p>
                 </div>
@@ -224,13 +246,9 @@ export function TrialCountdownBanner() {
 
           {/* Botões de ação */}
           <div className="flex items-center gap-3">
-            <Button 
+            <Button
               onClick={handleUpgrade}
-              className={`font-bold px-6 py-2 rounded-lg transition-all duration-200 hover:scale-105 ${
-                isUrgent ? 
-                  'bg-white text-red-600 hover:bg-red-50' : 
-                  'bg-white text-orange-600 hover:bg-orange-50'
-              }`}
+              className="font-black px-8 py-2 rounded-lg transition-all duration-300 hover:scale-105 bg-gold text-black-primary hover:bg-gold/90 shadow-gold border-none uppercase tracking-tighter"
             >
               <Crown className="w-4 h-4 mr-2" />
               {isExpired ? "REATIVAR AGORA" : "FAZER UPGRADE"}
@@ -253,12 +271,11 @@ export function TrialCountdownBanner() {
         {!isExpired && (
           <div className="mt-2">
             <div className="w-full bg-white/20 rounded-full h-1.5">
-              <div 
-                className={`h-1.5 rounded-full transition-all duration-300 ${
-                  isUrgent ? 'bg-red-300' : 'bg-yellow-300'
-                }`}
-                style={{ 
-                  width: `${Math.max(10, (timeLeft.days * 24 + timeLeft.hours) / (7 * 24) * 100)}%` 
+              <div
+                className={`h-1.5 rounded-full transition-all duration-300 ${isUrgent ? 'bg-red-300' : 'bg-yellow-300'
+                  }`}
+                style={{
+                  width: `${Math.max(10, (timeLeft.days * 24 + timeLeft.hours) / (7 * 24) * 100)}%`
                 }}
               />
             </div>

@@ -5,13 +5,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { 
-  Brain, 
-  Plus, 
-  Edit3, 
-  Trash2, 
-  Save, 
-  X, 
+import {
+  Brain,
+  Plus,
+  Edit3,
+  Trash2,
+  Save,
+  X,
   CreditCard,
   Clock,
   Star,
@@ -23,13 +23,14 @@ import { AdminLayout } from "@/components/layout/admin-layout";
 
 interface CreditPack {
   id: string;
-  nome: string;
-  descricao: string;
-  creditos: number;
-  preco: number;
-  validade_dias: number;
-  popular: boolean;
-  ativo: boolean;
+  name: string;
+  description: string;
+  credits: number;
+  price: number;
+  validity_days: number;
+  billing_cycle: 'monthly' | 'annual';
+  is_popular: boolean;
+  active: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -48,6 +49,7 @@ export default function AdminCreditosIAIndex() {
     creditos: 100,
     preco: 9.90,
     validade_dias: 30,
+    billing_cycle: 'monthly' as 'monthly' | 'annual',
     popular: false,
     ativo: true
   });
@@ -58,8 +60,13 @@ export default function AdminCreditosIAIndex() {
 
   const loadPacks = async () => {
     try {
-      // Load packs from database would go here
-      setPacks([]);
+      const { data, error } = await supabase
+        .from('ai_credit_packs')
+        .select('*')
+        .order('price', { ascending: true });
+
+      if (error) throw error;
+      setPacks((data as any) || []);
     } catch (error) {
       console.error('Erro ao carregar packs:', error);
       toast({
@@ -75,37 +82,31 @@ export default function AdminCreditosIAIndex() {
   const handleSave = async () => {
     setSaving(true);
     try {
+      const packData = {
+        name: formData.nome,
+        description: formData.descricao,
+        credits: formData.creditos,
+        price: formData.preco,
+        validity_days: formData.validade_dias,
+        billing_cycle: formData.billing_cycle,
+        is_popular: formData.popular,
+        active: formData.ativo,
+        updated_at: new Date().toISOString()
+      };
+
       if (editingPack) {
-        // Atualizar pack existente
-        const updatedPack = {
-          ...editingPack,
-          nome: formData.nome,
-          descricao: formData.descricao,
-          creditos: formData.creditos,
-          preco: formData.preco,
-          validade_dias: formData.validade_dias,
-          popular: formData.popular,
-          ativo: formData.ativo,
-          updated_at: new Date().toISOString()
-        };
-        
-        setPacks(prev => prev.map(p => p.id === editingPack.id ? updatedPack : p));
+        const { error } = await supabase
+          .from('ai_credit_packs')
+          .update(packData)
+          .eq('id', editingPack.id);
+
+        if (error) throw error;
       } else {
-        // Criar novo pack
-        const newPackData: CreditPack = {
-          id: Date.now().toString(),
-          nome: formData.nome,
-          descricao: formData.descricao,
-          creditos: formData.creditos,
-          preco: formData.preco,
-          validade_dias: formData.validade_dias,
-          popular: formData.popular,
-          ativo: formData.ativo,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        };
-        
-        setPacks(prev => [...prev, newPackData]);
+        const { error } = await supabase
+          .from('ai_credit_packs')
+          .insert([packData]);
+
+        if (error) throw error;
       }
 
       toast({
@@ -113,6 +114,7 @@ export default function AdminCreditosIAIndex() {
         description: "Pack de créditos salvo com sucesso!",
       });
 
+      loadPacks();
       resetForm();
     } catch (error) {
       console.error('Erro ao salvar pack:', error);
@@ -129,26 +131,34 @@ export default function AdminCreditosIAIndex() {
   const handleEdit = (pack: CreditPack) => {
     setEditingPack(pack);
     setFormData({
-      nome: pack.nome,
-      descricao: pack.descricao,
-      creditos: pack.creditos,
-      preco: pack.preco,
-      validade_dias: pack.validade_dias,
-      popular: pack.popular,
-      ativo: pack.ativo
+      nome: pack.name,
+      descricao: pack.description,
+      creditos: pack.credits,
+      preco: pack.price,
+      validade_dias: pack.validity_days,
+      billing_cycle: pack.billing_cycle || 'monthly',
+      popular: pack.is_popular,
+      ativo: pack.active
     });
     setNewPack(true);
   };
 
   const handleDelete = async (packId: string) => {
     if (!confirm('Tem certeza que deseja excluir este pack de créditos?')) return;
-    
+
     try {
-      setPacks(prev => prev.filter(p => p.id !== packId));
+      const { error } = await supabase
+        .from('ai_credit_packs')
+        .delete()
+        .eq('id', packId);
+
+      if (error) throw error;
+
       toast({
         title: "Sucesso",
         description: "Pack de créditos excluído com sucesso!",
       });
+      loadPacks();
     } catch (error) {
       console.error('Erro ao excluir pack:', error);
       toast({
@@ -196,7 +206,7 @@ export default function AdminCreditosIAIndex() {
               Configure os packs de créditos para recompra via Mercado Pago
             </p>
           </div>
-          
+
           <Button onClick={() => setNewPack(true)}>
             <Plus className="w-4 h-4 mr-2" />
             Novo Pack
@@ -224,7 +234,7 @@ export default function AdminCreditosIAIndex() {
                     className="w-full"
                   />
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label htmlFor="preco" className="text-sm font-medium">Preço (R$)</Label>
                   <Input
@@ -277,6 +287,19 @@ export default function AdminCreditosIAIndex() {
                 </div>
 
                 <div className="space-y-2">
+                  <Label htmlFor="cycle" className="text-sm font-medium">Ciclo de Cobrança</Label>
+                  <select
+                    id="cycle"
+                    value={formData.billing_cycle}
+                    onChange={(e) => setFormData(prev => ({ ...prev, billing_cycle: e.target.value as any }))}
+                    className="w-full h-10 px-3 py-2 bg-background border border-input rounded-md text-sm ring-offset-background"
+                  >
+                    <option value="monthly">Mensal</option>
+                    <option value="annual">Anual</option>
+                  </select>
+                </div>
+
+                <div className="space-y-2">
                   <Label className="text-sm font-medium">Configurações</Label>
                   <div className="flex flex-col gap-3 pt-2">
                     <div className="flex items-center space-x-3">
@@ -320,38 +343,37 @@ export default function AdminCreditosIAIndex() {
         {/* Lista de Packs */}
         <div className="grid gap-6">
           {packs.map((pack) => (
-            <Card key={pack.id} className={pack.popular ? "border-primary bg-primary/5" : ""}>
+            <Card key={pack.id} className={pack.is_popular ? "border-primary bg-primary/5" : ""}>
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                      pack.popular ? "bg-primary text-primary-foreground" : "bg-secondary"
-                    }`}>
-                      {pack.popular ? <Star className="w-6 h-6" /> : <Zap className="w-6 h-6" />}
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center ${pack.is_popular ? "bg-primary text-primary-foreground" : "bg-secondary"
+                      }`}>
+                      {pack.is_popular ? <Star className="w-6 h-6" /> : <Zap className="w-6 h-6" />}
                     </div>
                     <div>
                       <h4 className="font-semibold flex items-center gap-2">
-                        {pack.nome}
-                        {pack.popular && (
+                        {pack.name}
+                        {pack.is_popular && (
                           <Badge className="bg-primary text-primary-foreground">
                             MAIS POPULAR
                           </Badge>
                         )}
-                        <Badge variant={pack.ativo ? "default" : "secondary"}>
-                          {pack.ativo ? "Ativo" : "Inativo"}
+                        <Badge variant={pack.active ? "default" : "secondary"}>
+                          {pack.active ? "Ativo" : "Inativo"}
                         </Badge>
                       </h4>
-                      <p className="text-sm text-muted-foreground">{pack.descricao}</p>
+                      <p className="text-sm text-muted-foreground">{pack.description}</p>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center gap-4">
                     <div className="text-right">
                       <span className="text-2xl font-bold text-primary">
-                        R$ {pack.preco.toFixed(2).replace('.', ',')}
+                        R$ {pack.price.toFixed(2).replace('.', ',')}
                       </span>
                       <p className="text-sm text-muted-foreground">
-                        {pack.creditos} créditos
+                        {pack.credits} créditos
                       </p>
                     </div>
                     <div className="flex gap-2">
@@ -369,12 +391,12 @@ export default function AdminCreditosIAIndex() {
                 <div className="grid grid-cols-3 gap-4">
                   <div className="text-center">
                     <Brain className="w-6 h-6 mx-auto mb-1 text-primary" />
-                    <p className="text-sm font-medium">{pack.creditos} Créditos</p>
+                    <p className="text-sm font-medium">{pack.credits} Créditos</p>
                     <p className="text-xs text-muted-foreground">IA Tokens</p>
                   </div>
                   <div className="text-center">
                     <Clock className="w-6 h-6 mx-auto mb-1 text-blue-500" />
-                    <p className="text-sm font-medium">{pack.validade_dias} dias</p>
+                    <p className="text-sm font-medium">{pack.validity_days} dias</p>
                     <p className="text-xs text-muted-foreground">Validade</p>
                   </div>
                   <div className="text-center">
@@ -383,9 +405,12 @@ export default function AdminCreditosIAIndex() {
                     <p className="text-xs text-muted-foreground">Pagamento</p>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center justify-between mt-4 pt-4 border-t border-border text-xs text-muted-foreground">
-                  <span>Valor por crédito: R$ {(pack.preco / pack.creditos).toFixed(4).replace('.', ',')}</span>
+                  <div className="flex gap-4 font-medium">
+                    <span>Valor/Crédito: R$ {(pack.price / pack.credits).toFixed(4).replace('.', ',')}</span>
+                    <span className="capitalize">Ciclo: {pack.billing_cycle === 'annual' ? 'Anual' : 'Mensal'}</span>
+                  </div>
                   <span>Atualizado: {new Date(pack.updated_at).toLocaleString('pt-BR')}</span>
                 </div>
               </CardContent>

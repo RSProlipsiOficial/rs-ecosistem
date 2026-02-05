@@ -5,13 +5,22 @@ import { Header } from "@/components/ui/header";
 import { AdminSidebar } from "@/components/layout/admin-sidebar";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
 }
 
 export function AdminLayout({ children }: AdminLayoutProps) {
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    const saved = localStorage.getItem('sidebar_collapsed_admin');
+    return saved === 'true';
+  });
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    localStorage.setItem('sidebar_collapsed_admin', sidebarCollapsed.toString());
+  }, [sidebarCollapsed]);
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -27,7 +36,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         const { data: adminEmails, error } = await supabase
           .from('admin_emails')
           .select('email')
-          .eq('email', session.user.email);
+          .ilike('email', session.user.email);
 
         if (error) {
           console.error('Erro ao verificar status de admin:', error);
@@ -97,7 +106,11 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   }, [navigate, toast]);
 
   const toggleSidebar = () => {
-    setSidebarCollapsed(!sidebarCollapsed);
+    if (window.innerWidth < 768) {
+      setMobileMenuOpen(!mobileMenuOpen);
+    } else {
+      setSidebarCollapsed(!sidebarCollapsed);
+    }
   };
 
   if (isLoading) {
@@ -116,14 +129,36 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   }
 
   return (
-    <div className="min-h-screen bg-background flex">
-      <AdminSidebar collapsed={sidebarCollapsed} onToggle={toggleSidebar} />
-      
-      <div className="flex-1 flex flex-col">
-        <Header />
-        
-        <main className="flex-1 p-6 overflow-auto">
-          <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-background flex flex-col md:flex-row overflow-x-hidden max-w-full">
+      {/* Sidebar Desktop */}
+      <div className="hidden md:block h-screen sticky top-0 shrink-0">
+        <AdminSidebar collapsed={sidebarCollapsed} onToggle={toggleSidebar} />
+      </div>
+
+      {/* Sidebar Mobile Overlay (Drawer) */}
+      <div
+        className={cn(
+          "fixed inset-0 bg-black/60 z-[60] md:hidden transition-opacity duration-300",
+          mobileMenuOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+        )}
+        onClick={() => setMobileMenuOpen(false)}
+      />
+      <div className={cn(
+        "fixed inset-y-0 left-0 z-[70] w-[280px] max-w-[85vw] md:hidden transition-transform duration-300 transform shadow-elegant",
+        mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+      )}>
+        <AdminSidebar collapsed={false} onToggle={() => setMobileMenuOpen(false)} />
+      </div>
+
+      <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
+        {/* Header Fixo / Sticky */}
+        <div className="sticky top-0 z-50 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
+          <Header onMenuClick={() => setMobileMenuOpen(true)} />
+        </div>
+
+        {/* Conteúdo Principal com Scroll Próprio */}
+        <main className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar scroll-smooth">
+          <div className="p-2 md:p-10 max-w-7xl mx-auto w-full space-y-4 md:space-y-6 pb-32">
             {children}
           </div>
         </main>

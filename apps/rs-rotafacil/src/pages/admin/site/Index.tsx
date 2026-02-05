@@ -86,7 +86,7 @@ export default function AdminSiteIndex() {
         .maybeSingle();
 
       if (error) throw error;
-      
+
       if (data) {
         setConfig(data);
         setFormData({
@@ -138,7 +138,7 @@ export default function AdminSiteIndex() {
 
   const handleSave = async () => {
     setSaving(true);
-    
+
     try {
       const dataToSave = {
         site_url: formData.site_url || "",
@@ -197,12 +197,12 @@ export default function AdminSiteIndex() {
         });
 
       if (error) throw error;
-      
+
       toast({
         title: "Sucesso",
         description: "Conteúdo atualizado!",
       });
-      
+
       loadLandingContent();
     } catch (error) {
       console.error('Erro ao atualizar conteúdo:', error);
@@ -233,7 +233,7 @@ export default function AdminSiteIndex() {
         }]);
 
       if (error) throw error;
-      
+
       setNewBanner({
         title: "",
         description: "",
@@ -241,12 +241,12 @@ export default function AdminSiteIndex() {
         link_url: "",
         active: true
       });
-      
+
       toast({
         title: "Sucesso",
         description: "Banner adicionado!",
       });
-      
+
       loadBanners();
     } catch (error) {
       console.error('Erro ao adicionar banner:', error);
@@ -266,12 +266,12 @@ export default function AdminSiteIndex() {
         .eq('id', id);
 
       if (error) throw error;
-      
+
       toast({
         title: "Sucesso",
         description: "Banner removido!",
       });
-      
+
       loadBanners();
     } catch (error) {
       console.error('Erro ao remover banner:', error);
@@ -301,36 +301,37 @@ export default function AdminSiteIndex() {
   return (
     <AdminLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Gerenciar Landing Page</h1>
-            <p className="text-muted-foreground">
-              Edite completamente a página inicial do seu site
-            </p>
-          </div>
+        <div className="flex flex-col gap-1">
+          <h1 className="text-xl md:text-3xl font-black tracking-tight text-white flex items-center gap-2 uppercase italic">
+            <Globe className="h-6 w-6 md:h-8 md:w-8 text-gold animate-pulse" />
+            Gerenciar Landing Page
+          </h1>
+          <p className="text-[10px] md:text-base text-muted-foreground font-bold uppercase tracking-widest mt-1">
+            Edite e publique o conteúdo do seu site principal
+          </p>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="config">
-              <Globe className="w-4 h-4 mr-2" />
+          <TabsList className="flex w-full overflow-x-auto bg-black-lighter border border-gold/40 p-1 mb-8 custom-scrollbar">
+            <TabsTrigger value="config" className="flex-1 min-w-[100px] data-[state=active]:bg-gold data-[state=active]:text-black text-white font-black uppercase text-[9px] md:text-xs tracking-widest gap-1.5 h-10">
+              <Globe className="w-3.5 h-3.5" />
               Config Site
             </TabsTrigger>
-            <TabsTrigger value="content">
-              <Type className="w-4 h-4 mr-2" />
-              Textos
+            <TabsTrigger value="content" className="flex-1 min-w-[100px] data-[state=active]:bg-gold data-[state=active]:text-black text-white font-black uppercase text-[9px] md:text-xs tracking-widest gap-1.5 h-10">
+              <Type className="w-3.5 h-3.5" />
+              Conteúdo
             </TabsTrigger>
-            <TabsTrigger value="banners">
-              <Image className="w-4 h-4 mr-2" />
+            <TabsTrigger value="banners" className="flex-1 min-w-[100px] data-[state=active]:bg-gold data-[state=active]:text-black text-white font-black uppercase text-[9px] md:text-xs tracking-widest gap-1.5 h-10">
+              <Image className="w-3.5 h-3.5" />
               Banners
             </TabsTrigger>
-            <TabsTrigger value="appearance">
-              <Palette className="w-4 h-4 mr-2" />
-              Aparência
+            <TabsTrigger value="appearance" className="flex-1 min-w-[100px] data-[state=active]:bg-gold data-[state=active]:text-black text-white font-black uppercase text-[9px] md:text-xs tracking-widest gap-1.5 h-10">
+              <Palette className="w-3.5 h-3.5" />
+              Estilo
             </TabsTrigger>
-            <TabsTrigger value="preview">
-              <ExternalLink className="w-4 h-4 mr-2" />
-              Preview
+            <TabsTrigger value="preview" className="flex-1 min-w-[100px] data-[state=active]:bg-gold data-[state=active]:text-black text-white font-black uppercase text-[9px] md:text-xs tracking-widest gap-1.5 h-10">
+              <ExternalLink className="w-3.5 h-3.5" />
+              Ver Site
             </TabsTrigger>
           </TabsList>
 
@@ -384,7 +385,7 @@ export default function AdminSiteIndex() {
                           placeholder="https://www.seusite.com.br"
                         />
                       </div>
-                      
+
                       <div>
                         <Label htmlFor="descricao">Descrição</Label>
                         <Textarea
@@ -395,7 +396,7 @@ export default function AdminSiteIndex() {
                           rows={3}
                         />
                       </div>
-                      
+
                       <div className="flex items-center space-x-2">
                         <Switch
                           id="ativo"
@@ -426,14 +427,14 @@ export default function AdminSiteIndex() {
                   <CardContent>
                     <div className="p-6 bg-muted rounded-lg">
                       <h3 className="font-semibold mb-2">Como aparecerá nos apps:</h3>
-                      
+
                       <div className="bg-background border rounded-lg p-4 max-w-md">
                         <div className="flex items-center justify-between">
                           <div>
                             <h4 className="font-medium">Site Oficial</h4>
                             <p className="text-sm text-muted-foreground">
-                              {(editing ? formData.descricao : config?.descricao) || 
-                               (editing ? formData.site_url : config?.site_url)}
+                              {(editing ? formData.descricao : config?.descricao) ||
+                                (editing ? formData.site_url : config?.site_url)}
                             </p>
                             <p className="text-xs text-muted-foreground mt-1">
                               {editing ? formData.site_url : config?.site_url}
@@ -615,29 +616,31 @@ export default function AdminSiteIndex() {
                   ) : (
                     <div className="grid gap-4">
                       {banners.map((banner) => (
-                        <Card key={banner.id}>
-                          <CardContent className="p-4">
-                            <div className="flex items-center gap-4">
-                              <img 
-                                src={banner.image_url} 
+                        <Card key={banner.id} className="bg-black/40 border-gold/10 overflow-hidden">
+                          <CardContent className="p-3 md:p-4">
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                              <img
+                                src={banner.image_url}
                                 alt={banner.title}
-                                className="w-20 h-20 object-cover rounded"
+                                className="w-full sm:w-24 h-32 sm:h-20 object-cover rounded-lg border border-gold/20"
                               />
-                              <div className="flex-1">
-                                <h4 className="font-medium">{banner.title}</h4>
+                              <div className="flex-1 space-y-1">
+                                <h4 className="font-black text-white text-xs md:text-sm uppercase tracking-widest">{banner.title}</h4>
                                 {banner.description && (
-                                  <p className="text-sm text-muted-foreground">{banner.description}</p>
+                                  <p className="text-[10px] md:text-xs text-muted-foreground font-medium">{banner.description}</p>
                                 )}
                                 {banner.link_url && (
-                                  <p className="text-xs text-blue-600">{banner.link_url}</p>
+                                  <p className="text-[9px] text-gold font-mono truncate max-w-[200px]">{banner.link_url}</p>
                                 )}
                               </div>
                               <Button
                                 variant="destructive"
                                 size="sm"
+                                className="w-full sm:w-auto h-8 px-2 border-red-500/30 text-red-400 hover:bg-red-500/10"
                                 onClick={() => deleteBanner(banner.id)}
                               >
-                                <Trash2 className="w-4 h-4" />
+                                <Trash2 className="w-4 h-4 mr-2 sm:mr-0" />
+                                <span className="sm:hidden text-[10px] font-black uppercase">Excluir Banner</span>
                               </Button>
                             </div>
                           </CardContent>
@@ -683,7 +686,7 @@ export default function AdminSiteIndex() {
                   <h3 className="text-lg font-semibold">Tipografia</h3>
                   <div>
                     <Label>Fonte Principal</Label>
-                    <Select 
+                    <Select
                       value={getContentValue('appearance', 'font_family', 'Inter')}
                       onValueChange={(value) => updateContent('appearance', 'font_family', value)}
                     >
@@ -715,7 +718,7 @@ export default function AdminSiteIndex() {
               </CardHeader>
               <CardContent>
                 <div className="text-center">
-                  <Button 
+                  <Button
                     onClick={() => window.open('/landing', '_blank')}
                     size="lg"
                   >

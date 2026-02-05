@@ -11,11 +11,26 @@ export function useVans() {
   const fetchVans = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const vanId = user?.user_metadata?.van_id;
+
+      let query = supabase
         .from('vans')
         .select('*')
-        .eq('ativo', true)
-        .order('nome');
+        .eq('ativo', true);
+
+      // Se o usuário tiver uma van vinculada no metadata (motorista/monitora), filtra apenas ela
+      if (vanId) {
+        query = query.eq('id', vanId);
+      } else {
+        // Caso contrário, filtra pelo user_id do proprietário
+        query = query.eq('user_id', user.id);
+      }
+
+      const { data, error } = await query.order('nome');
 
       if (error) throw error;
       setVans(data || []);
@@ -33,13 +48,14 @@ export function useVans() {
 
   const createVan = async (vanData: { nome: string; capacidade_maxima: number }) => {
     try {
-      // For testing without authentication, use a placeholder user_id
-      const { data: { user } } = await supabase.auth.getUser();
-      const userId = user?.id || '00000000-0000-0000-0000-000000000000';
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error("Usuário não autenticado");
+      }
 
       const { data, error } = await supabase
         .from('vans')
-        .insert([{ ...vanData, user_id: userId }])
+        .insert([{ ...vanData, user_id: session.user.id }])
         .select()
         .single();
 
@@ -51,11 +67,11 @@ export function useVans() {
         description: "Van criada com sucesso!",
       });
       return data;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao criar van:', error);
       toast({
         title: "Erro",
-        description: "Não foi possível criar a van.",
+        description: error.message || "Não foi possível criar a van.",
         variant: "destructive",
       });
       throw error;

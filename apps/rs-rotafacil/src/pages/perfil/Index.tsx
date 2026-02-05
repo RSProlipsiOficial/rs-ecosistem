@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { MainLayout } from '@/components/layout/main-layout';
+import { DynamicLayout } from '@/components/layout/dynamic-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,13 +8,14 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { 
-  User, 
-  Mail, 
-  Phone, 
-  MapPin, 
-  Calendar, 
-  Shield, 
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import {
+  User,
+  Mail,
+  Phone,
+  MapPin,
+  Calendar,
+  Shield,
   Save,
   CheckCircle,
   AlertCircle,
@@ -22,10 +23,20 @@ import {
   Camera,
   Upload,
   Key,
-  RefreshCw
+  RefreshCw,
+  Copy,
+  Share2,
+  Scale,
+  MessageSquare,
+  Brain,
+  Sparkles,
+  Bell,
+  CreditCard,
+  Bus
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { formatToPascalCase } from '@/lib/utils';
 
 interface UserProfile {
   id?: string;
@@ -42,6 +53,22 @@ interface UserProfile {
   telefone: string;
   avatar_url?: string;
   perfil_completo: boolean;
+  mercadopago_access_token?: string;
+  mercadopago_public_key?: string;
+  juros_tipo?: 'valor' | 'percentual';
+  juros_valor_multa?: number;
+  juros_valor_dia?: number;
+  juros_percentual_multa?: number;
+  juros_percentual_mes?: number;
+  sponsor_id?: string;
+  mmn_id?: string;
+  mmn_active?: boolean;
+  slug?: string;
+  pix_key?: string;
+  pix_type?: string;
+  salario_base?: number;
+  contract_template?: string;
+  empresa?: string;
 }
 
 interface UserSubscription {
@@ -65,7 +92,17 @@ export default function PerfilIndex() {
     endereco_cep: '',
     telefone: '',
     avatar_url: '',
-    perfil_completo: false
+    perfil_completo: false,
+    mercadopago_access_token: '',
+    mercadopago_public_key: '',
+    sponsor_id: '',
+    mmn_id: '',
+    mmn_active: false,
+    slug: '',
+    pix_key: '',
+    pix_type: '',
+    salario_base: 0,
+    empresa: ''
   });
   const [userEmail, setUserEmail] = useState('');
   const [subscription, setSubscription] = useState<UserSubscription | null>(null);
@@ -77,12 +114,26 @@ export default function PerfilIndex() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [changingPassword, setChangingPassword] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [vans, setVans] = useState<{ id: string; nome: string }[]>([]);
+  const [vanId, setVanId] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
+  useEffect(() => {
+    const checkRole = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setUserRole(session?.user?.user_metadata?.tipo_usuario || session?.user?.user_metadata?.user_type || 'usuario');
+    };
+    checkRole();
+  }, []);
+
+  const isTeam = userRole === 'motorista' || userRole === 'monitora';
+
+
   const estados = [
-    'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 
-    'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 
+    'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO',
+    'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI',
     'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'
   ];
 
@@ -102,10 +153,55 @@ export default function PerfilIndex() {
 
       if (profileData) {
         setProfile(profileData);
+
+        // Se for motorista ou monitora, carregar a van e salário
+        const userType = user.user_metadata?.tipo_usuario || user.user_metadata?.user_type;
+        if (userType === 'motorista' || userType === 'monitora') {
+          const vanIdFromMetadata = user.user_metadata?.van_id;
+          if (vanIdFromMetadata) {
+            setVanId(vanIdFromMetadata);
+          }
+
+          // Carregar salário do metadata
+          const salarioFromMetadata = user.user_metadata?.salario;
+          if (salarioFromMetadata) {
+            setProfile(prev => ({ ...prev, salario_base: Number(salarioFromMetadata) }));
+          }
+        }
+
+        // Buscar username da tabela consultores
+        const { data: consultorData } = await (supabase as any)
+          .from('consultores')
+          .select('username')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (consultorData?.username) {
+          setProfile(prev => ({ ...prev, mmn_id: consultorData.username }));
+        } else {
+          // AUTO-CORREÇÃO (Self-healing): Se não existe registro em consultores, criar um
+          console.log("Self-healing: Criando registro em consultores para o usuário", user.id);
+          const autoUsername = (user.email?.split('@')[0] || 'user').toLowerCase().replace(/[^a-z0-9]/g, '') + Math.floor(Math.random() * 100);
+
+          const { error: insertError } = await (supabase as any)
+            .from('consultores')
+            .insert({
+              user_id: user.id,
+              username: autoUsername,
+              email: user.email,
+              nome: profileData.nome_completo || user.email?.split('@')[0],
+              status: 'ativo'
+            } as any);
+
+          if (!insertError) {
+            setProfile(prev => ({ ...prev, mmn_id: autoUsername }));
+          }
+        }
       } else {
         // Criar perfil vazio
         setProfile(prev => ({ ...prev, user_id: user.id }));
       }
+
 
       // Carregar assinatura
       const { data: subscriptionData } = await supabase
@@ -135,9 +231,51 @@ export default function PerfilIndex() {
     }
   };
 
-  const validateCPF = (cpf: string) => {
-    const cleaned = cpf.replace(/\D/g, '');
-    return cleaned.length === 11;
+  const loadVans = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const userType = user.user_metadata?.tipo_usuario || user.user_metadata?.user_type;
+      const isTeam = userType === 'motorista' || userType === 'monitora';
+
+      // Se for equipe, buscar vans do patrão (boss_id ou sponsor_id)
+      // Se for dono, buscar suas próprias vans
+      const ownerId = isTeam
+        ? (user.user_metadata?.boss_id || user.user_metadata?.sponsor_id)
+        : user.id;
+
+      console.log("loadVans: Buscando vans para ownerId:", ownerId);
+
+      const query = supabase
+        .from('vans')
+        .select('id, nome')
+        .order('nome');
+
+      // Se tivermos um ownerId claro, filtramos por ele. 
+      // Caso contrário (equipe sem vínculo claro), mostramos todas (RLS permite)
+      if (ownerId) {
+        query.eq('user_id', ownerId);
+      }
+
+      // Se for equipe e tiver van específica vinculada, filtrar para mostrar apenas ela
+      const vanIdFromMetadata = user.user_metadata?.van_id;
+      if (isTeam && vanIdFromMetadata) {
+        query.eq('id', vanIdFromMetadata);
+      }
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+      setVans(data || []);
+    } catch (error) {
+      console.error("Erro ao carregar vans:", error);
+    }
+  };
+
+  const validateDocumento = (doc: string) => {
+    const cleaned = doc.replace(/\D/g, '');
+    return cleaned.length === 11 || cleaned.length === 14;
   };
 
   const validateCEP = (cep: string) => {
@@ -147,15 +285,15 @@ export default function PerfilIndex() {
 
   const isProfileComplete = () => {
     const requiredFields = [
-      'nome_completo', 'cpf', 'data_nascimento', 'endereco_rua', 
-      'endereco_numero', 'endereco_bairro', 'endereco_cidade', 
+      'nome_completo', 'cpf', 'data_nascimento', 'endereco_rua',
+      'endereco_numero', 'endereco_bairro', 'endereco_cidade',
       'endereco_estado', 'endereco_cep', 'telefone'
     ];
-    
+
     return requiredFields.every(field => {
       const value = profile[field as keyof UserProfile];
       return value && value.toString().trim() !== '';
-    }) && validateCPF(profile.cpf || '') && validateCEP(profile.endereco_cep || '');
+    }) && validateDocumento(profile.cpf || '') && validateCEP(profile.endereco_cep || '');
   };
 
   const saveProfile = async () => {
@@ -164,39 +302,84 @@ export default function PerfilIndex() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      if (!isProfileComplete()) {
-        toast({
-          title: "Dados incompletos",
-          description: "Preencha todos os campos obrigatórios corretamente.",
-          variant: "destructive",
-        });
-        return;
-      }
+      const complete = isProfileComplete();
 
-      const profileData = {
-        ...profile,
+      // Limpar e preparar os dados para o banco
+      const profileToSave = {
         user_id: user.id,
-        perfil_completo: true
+        nome_completo: profile.nome_completo || null,
+        cpf: profile.cpf || null,
+        data_nascimento: profile.data_nascimento === '' ? null : profile.data_nascimento,
+        endereco_rua: profile.endereco_rua || null,
+        endereco_numero: profile.endereco_numero || null,
+        endereco_bairro: profile.endereco_bairro || null,
+        endereco_cidade: profile.endereco_cidade || null,
+        endereco_estado: profile.endereco_estado || null,
+        endereco_cep: profile.endereco_cep || null,
+        telefone: profile.telefone || null,
+        avatar_url: profile.avatar_url || null,
+        perfil_completo: complete,
+        mercadopago_access_token: profile.mercadopago_access_token || null,
+        mercadopago_public_key: profile.mercadopago_public_key || null,
+        juros_tipo: profile.juros_tipo || 'valor',
+        juros_valor_multa: profile.juros_valor_multa || 10,
+        juros_valor_dia: profile.juros_valor_dia || 2,
+        juros_percentual_multa: profile.juros_percentual_multa || 2,
+        juros_percentual_mes: profile.juros_percentual_mes || 1,
+        sponsor_id: profile.sponsor_id || null,
+        mmn_id: profile.mmn_id || null,
+        mmn_active: profile.mmn_active || false,
+        slug: profile.slug || null,
+        pix_key: profile.pix_key || null,
+        pix_type: profile.pix_type || null,
+        empresa: profile.empresa || null
       };
 
       const { error } = await supabase
         .from('user_profiles')
-        .upsert(profileData, { onConflict: 'user_id' });
+        .upsert(profileToSave, { onConflict: 'user_id' });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
 
-      setProfile(prev => ({ ...prev, perfil_completo: true }));
+      // 📝 ATUALIZAÇÃO SÊNIOR: Sincronizar Tudo com Metadados do Usuário
+      const metadataToUpdate: any = {
+        name: profile.nome_completo,
+        nome: profile.nome_completo,
+        full_name: profile.nome_completo,
+        nome_completo: profile.nome_completo,
+        phone: profile.telefone,
+        telefone: profile.telefone,
+        whatsapp: profile.telefone,
+        cpf: profile.cpf,
+        data_nascimento: profile.data_nascimento
+      };
+
+      if (isTeam && vanId) {
+        metadataToUpdate.van_id = vanId;
+      }
+
+      await supabase.auth.updateUser({
+        data: metadataToUpdate
+      });
+      console.log("✅ Metadados do usuário sincronizados:", metadataToUpdate);
+
+      setProfile(prev => ({ ...prev, perfil_completo: complete }));
 
       toast({
         title: "Sucesso!",
-        description: "Seu perfil foi salvo com sucesso.",
+        description: complete
+          ? "Seu perfil foi todo atualizado com sucesso."
+          : "Dados salvos e sincronizados com sucesso!",
       });
 
     } catch (error) {
       console.error('Erro ao salvar perfil:', error);
       toast({
         title: "Erro",
-        description: "Não foi possível salvar o perfil. Tente novamente.",
+        description: "Não foi possível salvar o perfil. Verifique os dados e tente novamente.",
         variant: "destructive",
       });
     } finally {
@@ -210,18 +393,18 @@ export default function PerfilIndex() {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d')!;
       const img = new Image();
-      
+
       img.onload = () => {
         const { width, height } = img;
         const ratio = Math.min(maxSize / width, maxSize / height);
-        
+
         canvas.width = width * ratio;
         canvas.height = height * ratio;
-        
+
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
         canvas.toBlob((blob) => resolve(blob!), 'image/jpeg', 0.8);
       };
-      
+
       img.src = URL.createObjectURL(file);
     });
   };
@@ -307,7 +490,7 @@ export default function PerfilIndex() {
 
     if (newPassword !== confirmPassword) {
       toast({
-        title: "Erro", 
+        title: "Erro",
         description: "As senhas não coincidem.",
         variant: "destructive",
       });
@@ -374,7 +557,7 @@ export default function PerfilIndex() {
   const handlePasswordReset = async () => {
     try {
       setResettingPassword(true);
-      
+
       const { error } = await supabase.auth.resetPasswordForEmail(userEmail, {
         redirectTo: `${window.location.origin}/auth`,
       });
@@ -398,10 +581,14 @@ export default function PerfilIndex() {
     }
   };
 
-  const formatCPF = (value: string) => {
+  const formatDocumento = (value: string) => {
     const cleaned = value.replace(/\D/g, '');
-    const formatted = cleaned.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
-    return formatted;
+    if (cleaned.length <= 11) {
+      return cleaned.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+    } else if (cleaned.length <= 14) {
+      return cleaned.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
+    }
+    return cleaned.substring(0, 14);
   };
 
   const formatCEP = (value: string) => {
@@ -418,109 +605,144 @@ export default function PerfilIndex() {
 
   useEffect(() => {
     loadProfile();
-  }, []);
+    if (isTeam) {
+      loadVans();
+    }
+  }, [isTeam]);
 
   if (loading) {
     return (
-      <MainLayout>
+      <DynamicLayout>
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-500 mx-auto mb-4"></div>
             <p className="text-gray-600">Carregando perfil...</p>
           </div>
         </div>
-      </MainLayout>
+      </DynamicLayout>
     );
   }
 
   return (
-    <MainLayout>
+    <DynamicLayout>
       <div className="space-y-6">
+        {/* Alerta de Perfil Incompleto */}
+        {!profile.perfil_completo && (
+          <Alert className="bg-amber-500/10 border-amber-500/50 text-amber-200 animate-pulse">
+            <AlertCircle className="h-5 w-5 text-amber-500" />
+            <AlertDescription className="font-bold uppercase text-xs tracking-widest ml-2">
+              Atenção: Seu cadastro está incompleto. Por favor, preencha todos os campos obrigatórios (*) para liberar o acesso total ao seu Escritório Virtual.
+            </AlertDescription>
+          </Alert>
+        )}
+
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg p-8 text-white">
-          <div className="flex items-center gap-3 mb-4">
-            <User className="h-8 w-8" />
-            <h1 className="text-3xl font-bold">Meu Perfil</h1>
-          </div>
-          <p className="text-blue-100 text-lg mb-4">
-            Gerencie seus dados pessoais, avatar e configurações de segurança.
-          </p>
-          
-          {/* Status Cards */}
-          <div className="grid gap-4 md:grid-cols-2">
-            {/* Status do Perfil */}
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20 cursor-pointer hover:bg-white/15 transition-colors">
-              <Link to="/upgrade" className="flex items-center gap-3">
-                {profile.perfil_completo ? (
-                  <CheckCircle className="h-5 w-5 text-green-300" />
-                ) : (
-                  <AlertCircle className="h-5 w-5 text-yellow-300" />
-                )}
-                <div>
-                  <p className="font-medium">
-                    {profile.perfil_completo ? 'Perfil Completo' : 'Perfil Incompleto'}
-                  </p>
-                  <p className="text-sm text-blue-200">
-                    {profile.perfil_completo 
-                      ? 'Todos os dados foram preenchidos' 
-                      : 'Complete para fazer upgrade de plano'}
-                  </p>
-                </div>
-              </Link>
+        {/* Header - Simplified for Team */}
+        <div className="bg-black-secondary border border-sidebar-border shadow-elegant rounded-xl overflow-hidden relative group">
+          <div className="absolute inset-0 bg-gradient-gold opacity-[0.03] group-hover:opacity-[0.05] transition-opacity" />
+          <div className="p-5 md:p-8 relative z-10">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 md:p-3 bg-gold/10 rounded-xl border border-gold/20">
+                <User className="h-6 w-6 md:h-8 md:w-8 text-gold" />
+              </div>
+              <div>
+                <h1 className="text-xl md:text-3xl font-black text-gold uppercase tracking-tight italic">Meu Perfil</h1>
+                <p className="text-muted-foreground font-black uppercase text-[9px] md:text-[10px] tracking-widest mt-1">
+                  {isTeam ? "Identidade e Acesso" : "Gestão de Dados e Segurança IA"}
+                </p>
+              </div>
             </div>
 
-            {/* Status da Assinatura */}
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20 cursor-pointer hover:bg-white/15 transition-colors">
-              <Link to="/upgrade" className="flex items-center gap-3">
-                {subscription?.plan?.plan_type === 'premium' ? (
-                  <Crown className="h-5 w-5 text-yellow-300" />
-                ) : (
-                  <Shield className="h-5 w-5 text-blue-300" />
-                )}
-                <div>
-                  <p className="font-medium">
-                    {subscription?.plan?.name || 'Plano Básico'}
-                  </p>
-                  <p className="text-sm text-blue-200">
-                    Status: {subscription?.status === 'trial' ? 'Teste' : 
-                             subscription?.status === 'active' ? 'Ativo' : 'Básico'}
-                  </p>
+            {!isTeam && (
+              <div className="grid gap-4 md:grid-cols-2 mt-6">
+                <div className="bg-black-primary/50 backdrop-blur-sm rounded-xl p-5 border border-sidebar-border hover:border-gold/30 transition-all group">
+                  <Link to="/upgrade" className="flex items-center gap-4">
+                    <div className={`p-2 rounded-lg ${profile.perfil_completo ? 'bg-green-500/10' : 'bg-gold/10'}`}>
+                      {profile.perfil_completo ? (
+                        <CheckCircle className="h-5 w-5 text-green-500" />
+                      ) : (
+                        <AlertCircle className="h-5 w-5 text-gold" />
+                      )}
+                    </div>
+                    <div>
+                      <p className="font-bold text-sm text-foreground uppercase tracking-tight">
+                        {profile.perfil_completo ? 'Perfil Verificado' : 'Perfil Pendente'}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest">
+                        {profile.perfil_completo
+                          ? 'Identificação padrão ouro'
+                          : 'Complete para novos recursos'}
+                      </p>
+                    </div>
+                  </Link>
                 </div>
-              </Link>
-            </div>
+
+                <div className="bg-black-primary/50 backdrop-blur-sm rounded-xl p-4 md:p-5 border border-sidebar-border hover:border-gold/30 transition-all group">
+                  <Link to="/upgrade" className="flex items-center gap-3">
+                    <div className="p-1.5 md:p-2 bg-gold/10 rounded-lg">
+                      {subscription?.plan?.plan_type === 'premium' ? (
+                        <Crown className="h-4 w-4 md:h-5 md:w-5 text-gold" />
+                      ) : (
+                        <Shield className="h-4 w-4 md:h-5 md:w-5 text-gold/60" />
+                      )}
+                    </div>
+                    <div>
+                      <p className="font-black text-xs md:text-sm text-gold uppercase tracking-tight">
+                        {subscription?.plan?.name || 'Standard'}
+                      </p>
+                      <p className="text-[8px] md:text-[10px] text-muted-foreground uppercase font-black tracking-widest">
+                        Assinatura IA
+                      </p>
+                    </div>
+                  </Link>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
         {/* Abas do Perfil */}
         <Tabs defaultValue="perfil" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="perfil" className="gap-2">
-              <User className="h-4 w-4" />
-              Dados Pessoais
+          <TabsList className="bg-black-lighter border border-gold/40 p-1 flex gap-1 overflow-x-auto custom-scrollbar mb-8">
+            <TabsTrigger value="perfil" className="flex-1 min-w-[90px] data-[state=active]:bg-gold data-[state=active]:text-black text-white font-black uppercase text-[9px] md:text-xs tracking-widest gap-1.5 py-2.5">
+              <User className="h-3.5 w-3.5" />
+              Identidade
             </TabsTrigger>
-            <TabsTrigger value="avatar" className="gap-2">
-              <Camera className="h-4 w-4" />
-              Foto do Perfil
+            <TabsTrigger value="avatar" className="flex-1 min-w-[90px] data-[state=active]:bg-gold data-[state=active]:text-black text-white font-black uppercase text-[9px] md:text-xs tracking-widest gap-1.5 py-2.5">
+              <Camera className="h-3.5 w-3.5" />
+              Avatar
             </TabsTrigger>
-            <TabsTrigger value="senha" className="gap-2">
-              <Key className="h-4 w-4" />
+            {isTeam && (
+              <TabsTrigger value="financeiro" className="flex-1 min-w-[90px] data-[state=active]:bg-gold data-[state=active]:text-black text-white font-black uppercase text-[9px] md:text-xs tracking-widest gap-1.5 py-2.5">
+                <CreditCard className="h-3.5 w-3.5" />
+                Financeiro
+              </TabsTrigger>
+            )}
+            {!isTeam && (
+              <TabsTrigger value="integracao" className="flex-1 min-w-[90px] data-[state=active]:bg-gold data-[state=active]:text-black text-white font-black uppercase text-[9px] md:text-xs tracking-widest gap-1.5 py-2.5">
+                <RefreshCw className="h-3.5 w-3.5" />
+                Integração
+              </TabsTrigger>
+            )}
+            <TabsTrigger value="senha" className="flex-1 min-w-[90px] data-[state=active]:bg-gold data-[state=active]:text-black text-white font-black uppercase text-[9px] md:text-xs tracking-widest gap-1.5 py-2.5">
+              <Key className="h-3.5 w-3.5" />
               Segurança
             </TabsTrigger>
           </TabsList>
 
           {/* Aba: Dados Pessoais */}
           <TabsContent value="perfil">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <User className="h-5 w-5 text-blue-500" />
-                  Dados Pessoais
+            <Card className="bg-black-secondary border-sidebar-border shadow-elegant">
+              <CardHeader className="border-b border-sidebar-border/50">
+                <CardTitle className="flex items-center gap-2 text-gold uppercase tracking-tight italic font-black">
+                  <User className="h-5 w-5" />
+                  Identificação do Usuário
                 </CardTitle>
-                <CardDescription>
-                  Mantenha suas informações atualizadas para uma melhor experiência
+                <CardDescription className="text-muted-foreground font-medium uppercase text-[10px] tracking-widest">
+                  Gestão de informações fundamentais do perfil
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-8 p-8">
+              <CardContent className="space-y-6 md:space-y-8 p-4 md:p-8">
                 {/* Dados de Login */}
                 <div className="bg-gray-800/20 dark:bg-gray-900/40 rounded-xl p-6 border border-gray-600/30 dark:border-gray-700/50 shadow-sm backdrop-blur-sm">
                   <h3 className="font-semibold text-gray-200 dark:text-gray-100 text-lg mb-6 flex items-center gap-2">
@@ -532,9 +754,9 @@ export default function PerfilIndex() {
                       <Label className="text-sm font-medium text-gray-300 dark:text-gray-200">
                         E-mail de Login
                       </Label>
-                      <Input 
-                        value={userEmail} 
-                        disabled 
+                      <Input
+                        value={userEmail}
+                        disabled
                         className="bg-gray-700/30 dark:bg-gray-800/50 border-gray-500/40 dark:border-gray-600/50 text-gray-200 dark:text-gray-100 h-11 cursor-not-allowed"
                       />
                     </div>
@@ -543,15 +765,14 @@ export default function PerfilIndex() {
                         Status da Conta
                       </Label>
                       <div className="flex items-center gap-3 h-11">
-                        <Badge 
-                          variant={profile.perfil_completo ? "default" : "secondary"}
-                          className={`px-4 py-2 text-sm font-medium ${
-                            profile.perfil_completo 
-                              ? 'bg-green-900/40 text-green-300 border-green-600/50' 
-                              : 'bg-yellow-900/40 text-yellow-300 border-yellow-600/50'
-                          }`}
+                        <Badge
+                          variant={isTeam || profile.perfil_completo ? "default" : "secondary"}
+                          className={`px-4 py-2 text-sm font-medium ${isTeam || profile.perfil_completo
+                            ? 'bg-green-900/40 text-green-300 border-green-600/50'
+                            : 'bg-yellow-900/40 text-yellow-300 border-yellow-600/50'
+                            }`}
                         >
-                          {profile.perfil_completo ? 'Verificada' : 'Pendente'}
+                          {isTeam || profile.perfil_completo ? 'Verificada' : 'Pendente'}
                         </Badge>
                       </div>
                     </div>
@@ -573,25 +794,40 @@ export default function PerfilIndex() {
                         id="nome_completo"
                         value={profile.nome_completo}
                         onChange={(e) => setProfile(prev => ({ ...prev, nome_completo: e.target.value }))}
+                        onBlur={(e) => setProfile({ ...profile, nome_completo: formatToPascalCase(e.target.value) })}
                         placeholder="Seu nome completo"
                         className="h-11 border-gray-300 dark:border-gray-600 focus:border-primary focus:ring-1 focus:ring-primary transition-all"
                       />
                     </div>
-                    
+
                     <div className="space-y-3">
-                      <Label htmlFor="cpf" className="text-sm font-medium text-foreground">
+                      <Label htmlFor="empresa" className="text-sm font-medium text-foreground">
+                        Nome da Empresa (Nome Fantasia)
+                      </Label>
+                      <Input
+                        id="empresa"
+                        value={profile.empresa || ''}
+                        onChange={(e) => setProfile(prev => ({ ...prev, empresa: e.target.value }))}
+                        onBlur={(e) => setProfile({ ...profile, empresa: formatToPascalCase(e.target.value) })}
+                        placeholder="Ex: Rota Fácil Transportes"
+                        className="h-11 border-gold/30 focus:border-gold focus:ring-1 focus:ring-gold transition-all"
+                      />
+                    </div>
+                    {/* Campos habilitados para todos (incluindo equipe) */}
+                    <div className="space-y-3">
+                      <Label htmlFor="documento" className="text-sm font-medium text-foreground">
                         CPF *
                       </Label>
                       <Input
-                        id="cpf"
+                        id="documento"
                         value={profile.cpf}
-                        onChange={(e) => setProfile(prev => ({ ...prev, cpf: formatCPF(e.target.value) }))}
+                        onChange={(e) => setProfile(prev => ({ ...prev, cpf: formatDocumento(e.target.value) }))}
                         placeholder="000.000.000-00"
-                        maxLength={14}
+                        maxLength={18}
                         className="h-11 border-gray-300 dark:border-gray-600 focus:border-primary focus:ring-1 focus:ring-primary transition-all"
                       />
                     </div>
-                    
+
                     <div className="space-y-3">
                       <Label htmlFor="data_nascimento" className="text-sm font-medium text-foreground">
                         Data de Nascimento *
@@ -604,10 +840,10 @@ export default function PerfilIndex() {
                         className="h-11 border-gray-300 dark:border-gray-600 focus:border-primary focus:ring-1 focus:ring-primary transition-all"
                       />
                     </div>
-                    
+
                     <div className="space-y-3">
                       <Label htmlFor="telefone" className="text-sm font-medium text-foreground">
-                        Telefone *
+                        Telefone / WhatsApp *
                       </Label>
                       <Input
                         id="telefone"
@@ -618,11 +854,37 @@ export default function PerfilIndex() {
                         className="h-11 border-gray-300 dark:border-gray-600 focus:border-primary focus:ring-1 focus:ring-primary transition-all"
                       />
                     </div>
+
                   </div>
                 </div>
 
-                {/* Endereço */}
-                <div className="space-y-6">
+                {/* Seção Van - Apenas para Motoristas e Monitoras */}
+                {isTeam && (
+                  <div className="space-y-6 pt-4 border-t">
+                    <h3 className="font-semibold text-foreground text-lg flex items-center gap-2">
+                      <Bus className="h-5 w-5 text-primary" />
+                      Van Vinculada
+                    </h3>
+                    <div className="space-y-3">
+                      <Label htmlFor="van_id" className="text-sm font-medium text-foreground">
+                        Selecione sua Van
+                      </Label>
+                      <select
+                        id="van_id"
+                        value={vanId}
+                        onChange={(e) => setVanId(e.target.value)}
+                        className="w-full h-11 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-background text-foreground focus:border-primary focus:ring-1 focus:ring-primary transition-all"
+                      >
+                        <option value="">Nenhuma van</option>
+                        {vans.map(van => (
+                          <option key={van.id} value={van.id}>{van.nome}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                )}
+
+                <div className="space-y-6 pt-4 border-t">
                   <h3 className="font-semibold text-foreground text-lg flex items-center gap-2">
                     <MapPin className="h-5 w-5 text-primary" />
                     Endereço Completo
@@ -636,13 +898,33 @@ export default function PerfilIndex() {
                         <Input
                           id="endereco_cep"
                           value={profile.endereco_cep}
-                          onChange={(e) => setProfile(prev => ({ ...prev, endereco_cep: formatCEP(e.target.value) }))}
+                          onChange={(e) => setProfile({ ...profile, endereco_cep: e.target.value })}
+                          onBlur={async (e) => {
+                            const cep = e.target.value.replace(/\D/g, '');
+                            if (cep.length === 8) {
+                              try {
+                                const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+                                const data = await response.json();
+                                if (!data.erro) {
+                                  setProfile(prev => ({
+                                    ...prev,
+                                    endereco_rua: data.logradouro,
+                                    endereco_bairro: data.bairro,
+                                    endereco_cidade: data.localidade,
+                                    endereco_estado: data.uf
+                                  }));
+                                }
+                              } catch (error) {
+                                console.error('Erro ao buscar CEP:', error);
+                              }
+                            }
+                          }}
                           placeholder="00000-000"
                           maxLength={9}
                           className="h-11 border-gray-300 dark:border-gray-600 focus:border-primary focus:ring-1 focus:ring-primary transition-all"
                         />
                       </div>
-                      
+
                       <div className="space-y-3 md:col-span-2">
                         <Label htmlFor="endereco_rua" className="text-sm font-medium text-foreground">
                           Rua/Logradouro *
@@ -651,12 +933,13 @@ export default function PerfilIndex() {
                           id="endereco_rua"
                           value={profile.endereco_rua}
                           onChange={(e) => setProfile(prev => ({ ...prev, endereco_rua: e.target.value }))}
+                          onBlur={(e) => setProfile({ ...profile, endereco_rua: formatToPascalCase(e.target.value) })}
                           placeholder="Nome da rua"
                           className="h-11 border-gray-300 dark:border-gray-600 focus:border-primary focus:ring-1 focus:ring-primary transition-all"
                         />
                       </div>
                     </div>
-                    
+
                     <div className="grid gap-6 md:grid-cols-4">
                       <div className="space-y-3">
                         <Label htmlFor="endereco_numero" className="text-sm font-medium text-foreground">
@@ -665,12 +948,12 @@ export default function PerfilIndex() {
                         <Input
                           id="endereco_numero"
                           value={profile.endereco_numero}
-                          onChange={(e) => setProfile(prev => ({ ...prev, endereco_numero: e.target.value }))}
-                          placeholder="123"
+                          onChange={(e) => setProfile({ ...profile, endereco_numero: e.target.value })}
+                          placeholder="Nº"
                           className="h-11 border-gray-300 dark:border-gray-600 focus:border-primary focus:ring-1 focus:ring-primary transition-all"
                         />
                       </div>
-                      
+
                       <div className="space-y-3">
                         <Label htmlFor="endereco_bairro" className="text-sm font-medium text-foreground">
                           Bairro *
@@ -679,11 +962,12 @@ export default function PerfilIndex() {
                           id="endereco_bairro"
                           value={profile.endereco_bairro}
                           onChange={(e) => setProfile(prev => ({ ...prev, endereco_bairro: e.target.value }))}
+                          onBlur={(e) => setProfile({ ...profile, endereco_bairro: formatToPascalCase(e.target.value) })}
                           placeholder="Nome do bairro"
                           className="h-11 border-gray-300 dark:border-gray-600 focus:border-primary focus:ring-1 focus:ring-primary transition-all"
                         />
                       </div>
-                      
+
                       <div className="space-y-3">
                         <Label htmlFor="endereco_cidade" className="text-sm font-medium text-foreground">
                           Cidade *
@@ -692,11 +976,12 @@ export default function PerfilIndex() {
                           id="endereco_cidade"
                           value={profile.endereco_cidade}
                           onChange={(e) => setProfile(prev => ({ ...prev, endereco_cidade: e.target.value }))}
+                          onBlur={(e) => setProfile({ ...profile, endereco_cidade: formatToPascalCase(e.target.value) })}
                           placeholder="Nome da cidade"
                           className="h-11 border-gray-300 dark:border-gray-600 focus:border-primary focus:ring-1 focus:ring-primary transition-all"
                         />
                       </div>
-                      
+
                       <div className="space-y-3">
                         <Label htmlFor="endereco_estado" className="text-sm font-medium text-foreground">
                           Estado *
@@ -717,15 +1002,56 @@ export default function PerfilIndex() {
                   </div>
                 </div>
 
+                {/* Rede e Afiliação */}
+                {!isTeam && (
+                  <div className="space-y-6 pt-4 border-t">
+                    <h3 className="font-semibold text-foreground text-lg mb-4 flex items-center gap-2">
+                      <Shield className="h-5 w-5 text-primary" />
+                      Rede e Afiliação
+                    </h3>
+                    <div className="grid gap-6 md:grid-cols-2">
+                      <div className="space-y-3">
+                        <Label htmlFor="mmn_id" className="text-sm font-medium text-foreground">
+                          Seu ID na Rede (MMN ID) *
+                        </Label>
+                        <Input
+                          id="mmn_id"
+                          value={profile.mmn_id || ''}
+                          onChange={(e) => {
+                            const val = e.target.value.toLowerCase().replace(/[^a-z0-9]/g, '');
+                            setProfile(prev => ({ ...prev, mmn_id: val }));
+                          }}
+                          placeholder="Seu código único"
+                          className="h-11 border-gold/30 focus:border-gold transition-all"
+                          required
+                        />
+                      </div>
+
+                      <div className="space-y-3">
+                        <Label htmlFor="sponsor_id" className="text-sm font-medium text-foreground opacity-50">
+                          ID do Patrocinador (Sponsor ID)
+                        </Label>
+                        <Input
+                          id="sponsor_id"
+                          value={profile.sponsor_id || ''}
+                          disabled
+                          placeholder="Patrocinador vinculado"
+                          className="h-11 border-gray-300 dark:border-gray-600 opacity-50 cursor-not-allowed"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Botão Salvar */}
-                <div className="flex justify-end pt-8 border-t border-gray-200 dark:border-gray-700">
-                  <Button 
+                <div className="flex justify-end pt-8 border-t border-gold/20">
+                  <Button
                     onClick={saveProfile}
                     disabled={saving}
-                    className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-3 h-12 text-base font-medium rounded-lg shadow-lg hover:shadow-xl transition-all duration-200"
+                    className="w-full md:w-auto gap-2 bg-gold hover:bg-gold/90 text-black px-10 py-4 h-auto text-sm md:text-lg font-black shadow-gold hover:scale-[1.02] active:scale-95 transition-all uppercase tracking-widest"
                   >
                     <Save className="h-5 w-5" />
-                    {saving ? 'Salvando...' : 'Salvar Perfil'}
+                    {saving ? 'Gravando...' : 'Salvar Perfil'}
                   </Button>
                 </div>
 
@@ -741,8 +1067,8 @@ export default function PerfilIndex() {
                           Complete seu perfil para desbloquear recursos
                         </h4>
                         <p className="text-yellow-700 dark:text-yellow-300 leading-relaxed">
-                          Preencha todos os campos obrigatórios (*) para ter acesso completo ao RotaFácil, 
-                          incluindo a possibilidade de fazer <Link to="/upgrade" className="underline font-medium hover:text-yellow-600 dark:hover:text-yellow-200">upgrade para o plano premium</Link> e desbloquear 
+                          Preencha todos os campos obrigatórios (*) para ter acesso completo ao RotaFácil,
+                          incluindo a possibilidade de fazer <Link to="/upgrade" className="underline font-medium hover:text-yellow-600 dark:hover:text-yellow-200">upgrade para o plano premium</Link> e desbloquear
                           todas as funcionalidades avançadas.
                         </p>
                       </div>
@@ -775,7 +1101,7 @@ export default function PerfilIndex() {
                         {profile.nome_completo?.split(' ').map(n => n[0]).join('').toUpperCase() || 'U'}
                       </AvatarFallback>
                     </Avatar>
-                    
+
                     {/* Indicador de upload */}
                     {uploadingAvatar && (
                       <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center">
@@ -850,7 +1176,343 @@ export default function PerfilIndex() {
             </Card>
           </TabsContent>
 
-          {/* Aba: Segurança */}
+          {/* Aba: Integração */}
+          <TabsContent value="integracao">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <RefreshCw className="h-5 w-5 text-blue-500" />
+                  Integração Pagamentos
+                </CardTitle>
+                <CardDescription>
+                  Configure suas chaves de API para receber pagamentos diretamente em sua conta
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-8">
+                <div className="space-y-6">
+                  <div className="bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-400 p-4 rounded-lg mb-6">
+                    <div className="flex items-center gap-3">
+                      <AlertCircle className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
+                      <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                        <strong>Importante:</strong> Ao configurar sua chave do MercadoPago, todos os Pix gerados para seus alunos cairão diretamente na sua conta bancária vinculada.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label htmlFor="mp_public_key">MercadoPago Public Key</Label>
+                        <div className="relative">
+                          <Input
+                            id="mp_public_key"
+                            value={profile.mercadopago_public_key || ''}
+                            onChange={(e) => setProfile(prev => ({ ...prev, mercadopago_public_key: e.target.value }))}
+                            placeholder="APP_USR-..."
+                            className="pr-10"
+                          />
+                          <Key className="absolute right-3 top-2.5 h-5 w-5 text-muted-foreground pointer-events-none" />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="mp_token">MercadoPago Access Token</Label>
+                        <div className="relative">
+                          <Input
+                            id="mp_token"
+                            type="password"
+                            value={profile.mercadopago_access_token || ''}
+                            onChange={(e) => setProfile(prev => ({ ...prev, mercadopago_access_token: e.target.value }))}
+                            placeholder="APP_USR-..."
+                            className="pr-10"
+                          />
+                          <Key className="absolute right-3 top-2.5 h-5 w-5 text-muted-foreground pointer-events-none" />
+                        </div>
+                      </div>
+                    </div>
+
+                    <p className="text-xs text-muted-foreground">
+                      Obtenha suas chaves no portal <a href="https://www.mercadopago.com.br/developers/panel" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">MercadoPago Developers</a>.
+                    </p>
+
+                    <div className="flex flex-wrap gap-4 pt-4">
+                      <Button
+                        onClick={saveProfile}
+                        disabled={saving}
+                        className="gap-2"
+                      >
+                        <Save className="h-4 w-4" />
+                        Salvar Chaves
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        onClick={async () => {
+                          if (!profile.mercadopago_access_token) {
+                            toast({
+                              title: "Atenção",
+                              description: "Informe o Access Token para testar.",
+                              variant: "destructive"
+                            });
+                            return;
+                          }
+
+                          setSaving(true);
+                          try {
+                            const { data, error } = await supabase.functions.invoke('mercado-pago-test', {
+                              body: { accessToken: profile.mercadopago_access_token }
+                            });
+
+                            if (error) throw error;
+
+                            if (data.success) {
+                              toast({
+                                title: "✅ Conexão Ativa!",
+                                description: `Conta: ${data.user.email} (${data.user.site_id}). Pix: ${data.pix.available ? 'Disponível' : 'Indisponível'}`,
+                              });
+                            } else {
+                              toast({
+                                title: "❌ Erro na Conexão",
+                                description: `${data.error} (Passo: ${data.step})`,
+                                variant: "destructive"
+                              });
+                            }
+                          } catch (err: any) {
+                            toast({
+                              title: "Erro ao testar",
+                              description: err.message,
+                              variant: "destructive"
+                            });
+                          } finally {
+                            setSaving(false);
+                          }
+                        }}
+                        disabled={saving}
+                        className="gap-2 bg-blue-500 hover:bg-blue-600 text-white"
+                      >
+                        <RefreshCw className={`h-4 w-4 ${saving ? 'animate-spin' : ''}`} />
+                        Testar Conexão
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="mt-8 pt-6 border-t border-dashed">
+                    <h4 className="font-semibold mb-4 flex items-center gap-2">
+                      <Scale className="h-5 w-5 text-blue-500" />
+                      Configuração de Juros por Atraso
+                    </h4>
+
+                    <div className="space-y-6">
+                      <div className="space-y-2">
+                        <Label>Tipo de Cobrança de Juros</Label>
+                        <div className="flex gap-4 p-1 bg-muted rounded-lg w-fit">
+                          <Button
+                            variant={profile.juros_tipo === 'valor' ? 'default' : 'ghost'}
+                            size="sm"
+                            type="button"
+                            onClick={() => setProfile(prev => ({ ...prev, juros_tipo: 'valor' }))}
+                            className="px-6"
+                          >
+                            Valor Fixo (R$)
+                          </Button>
+                          <Button
+                            variant={profile.juros_tipo === 'percentual' ? 'default' : 'ghost'}
+                            size="sm"
+                            type="button"
+                            onClick={() => setProfile(prev => ({ ...prev, juros_tipo: 'percentual' }))}
+                            className="px-6"
+                          >
+                            Percentual (%)
+                          </Button>
+                        </div>
+                      </div>
+
+                      {profile.juros_tipo === 'valor' ? (
+                        <div className="grid gap-4 md:grid-cols-2 bg-blue-50/50 dark:bg-blue-900/10 p-4 rounded-xl border border-blue-100 dark:border-blue-800">
+                          <div className="space-y-2">
+                            <Label htmlFor="multa_fixa">Multa Fixa (R$)</Label>
+                            <div className="relative">
+                              <span className="absolute left-3 top-2.5 text-muted-foreground">R$</span>
+                              <Input
+                                id="multa_fixa"
+                                type="number"
+                                value={profile.juros_valor_multa || ''}
+                                onChange={(e) => setProfile(prev => ({ ...prev, juros_valor_multa: Number(e.target.value) }))}
+                                className="pl-9"
+                                placeholder="10.00"
+                              />
+                            </div>
+                            <p className="text-xs text-muted-foreground">Valor cobrado uma única vez após o vencimento.</p>
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="juros_dia">Juros por Dia (R$)</Label>
+                            <div className="relative">
+                              <span className="absolute left-3 top-2.5 text-muted-foreground">R$</span>
+                              <Input
+                                id="juros_dia"
+                                type="number"
+                                value={profile.juros_valor_dia || ''}
+                                onChange={(e) => setProfile(prev => ({ ...prev, juros_valor_dia: Number(e.target.value) }))}
+                                className="pl-9"
+                                placeholder="2.00"
+                              />
+                            </div>
+                            <p className="text-xs text-muted-foreground">Valor somado diariamente após o vencimento.</p>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="grid gap-4 md:grid-cols-2 bg-purple-50/50 dark:bg-purple-900/10 p-4 rounded-xl border border-purple-100 dark:border-purple-800">
+                          <div className="space-y-2">
+                            <Label htmlFor="multa_perc">Multa (%)</Label>
+                            <div className="relative">
+                              <Input
+                                id="multa_perc"
+                                type="number"
+                                value={profile.juros_percentual_multa || ''}
+                                onChange={(e) => setProfile(prev => ({ ...prev, juros_percentual_multa: Number(e.target.value) }))}
+                                className="pr-9"
+                                placeholder="2.00"
+                              />
+                              <span className="absolute right-3 top-2.5 text-muted-foreground">%</span>
+                            </div>
+                            <p className="text-xs text-muted-foreground">Percentual sobre o valor total (limitado por lei).</p>
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="juros_mes">Juros ao Mês (%)</Label>
+                            <div className="relative">
+                              <Input
+                                id="juros_mes"
+                                type="number"
+                                value={profile.juros_percentual_mes || ''}
+                                onChange={(e) => setProfile(prev => ({ ...prev, juros_percentual_mes: Number(e.target.value) }))}
+                                className="pr-9"
+                                placeholder="1.00"
+                              />
+                              <span className="absolute right-3 top-2.5 text-muted-foreground">%</span>
+                            </div>
+                            <p className="text-xs text-muted-foreground">Percentual de juros mora simples ao mês.</p>
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="bg-muted/50 p-4 rounded-lg flex items-start gap-3">
+                        <AlertCircle className="h-5 w-5 text-muted-foreground mt-0.5" />
+                        <div className="text-sm text-muted-foreground">
+                          <strong>Dica Legal:</strong> Segundo o Código de Defesa do Consumidor, a multa por atraso é limitada a <strong>2%</strong>. Os juros de mora costumam ser de <strong>1% ao mês</strong>. Verifique a legislação vigente.
+                        </div>
+                      </div>
+
+                      <Button
+                        onClick={saveProfile}
+                        disabled={saving}
+                        className="gap-2 w-full md:w-auto mt-2"
+                      >
+                        <Save className="h-4 w-4" />
+                        {saving ? 'Salvando...' : 'Salvar Configurações'}
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="mt-8 border-t pt-6">
+                    <h4 className="font-semibold mb-4">Como obter sua chave:</h4>
+                    <ol className="list-decimal list-inside text-sm text-muted-foreground space-y-2">
+                      <li>Acesse o <a href="https://www.mercadopago.com.br/developers/panel" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">Painel do Desenvolvedor</a> do MercadoPago.</li>
+                      <li>Vá em <strong>Suas Aplicações</strong> e selecione sua aplicação (ou crie uma nova).</li>
+                      <li>No menu lateral, clique em <strong>Credenciais de Produção</strong>.</li>
+                      <li>Copie o campo <strong>Access Token</strong> e cole aqui.</li>
+                    </ol>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="financeiro">
+            <Card className="bg-black-secondary border-sidebar-border shadow-elegant">
+              <CardHeader className="border-b border-sidebar-border/50">
+                <CardTitle className="flex items-center gap-2 text-gold uppercase tracking-tight italic font-black">
+                  <CreditCard className="h-5 w-5" />
+                  Portal Financeiro da Equipe
+                </CardTitle>
+                <CardDescription className="text-muted-foreground font-medium uppercase text-[10px] tracking-widest">
+                  Gestão de recebimentos, PIX e histórico de pagamentos
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6 md:space-y-8 p-4 md:p-8">
+                {/* Dados Bancários */}
+                <div className="bg-gray-800/20 rounded-xl p-6 border border-gold/10">
+                  <h3 className="font-semibold text-gold text-lg mb-6 flex items-center gap-2">
+                    <Sparkles className="h-5 w-5" />
+                    Dados para Recebimento (PIX)
+                  </h3>
+                  <div className="grid gap-6 md:grid-cols-2">
+                    <div className="space-y-3">
+                      <Label className="text-sm font-medium text-gray-300">Tipo de Chave PIX</Label>
+                      <select
+                        value={profile.pix_type}
+                        onChange={(e) => setProfile(prev => ({ ...prev, pix_type: e.target.value }))}
+                        className="w-full bg-black-primary border-sidebar-border text-white h-11 rounded-md px-3 border border-gold/20 focus:border-gold transition-all"
+                      >
+                        <option value="">Selecione...</option>
+                        <option value="cpf">CPF</option>
+                        <option value="cnpj">CNPJ</option>
+                        <option value="email">E-mail</option>
+                        <option value="celular">Celular</option>
+                        <option value="aleatoria">Chave Aleatória</option>
+                      </select>
+                    </div>
+                    <div className="space-y-3">
+                      <Label className="text-sm font-medium text-gray-300">Chave PIX</Label>
+                      <Input
+                        value={profile.pix_key}
+                        onChange={(e) => setProfile(prev => ({ ...prev, pix_key: e.target.value }))}
+                        placeholder="Insira sua chave PIX aqui"
+                        className="bg-black-primary border-gold/20 text-white h-11"
+                      />
+                    </div>
+                  </div>
+                  <div className="mt-6 p-4 bg-gold/5 rounded-lg border border-gold/10">
+                    <div className="flex items-center gap-3">
+                      <Scale className="h-5 w-5 text-gold" />
+                      <div>
+                        <p className="text-sm font-bold text-gold uppercase tracking-tight text-xs">Salário Base Cadastrado</p>
+                        <p className="text-xl font-black text-white italic">
+                          {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(profile.salario_base || 0)}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Histórico de Pagamentos */}
+                <div className="space-y-4">
+                  <h3 className="font-semibold text-foreground text-lg mb-2 flex items-center gap-2">
+                    <Calendar className="h-5 w-5 text-primary" />
+                    Histórico de Pagamentos
+                  </h3>
+                  <div className="border border-gold/10 rounded-xl overflow-x-auto custom-scrollbar">
+                    <table className="w-full text-left min-w-[500px]">
+                      <thead className="bg-black-lighter text-[9px] uppercase font-black tracking-widest text-gold/60 border-b border-gold/10">
+                        <tr>
+                          <th className="px-4 py-3">Mês/Ano</th>
+                          <th className="px-4 py-3">Valor</th>
+                          <th className="px-4 py-3">Data Pagto</th>
+                          <th className="px-4 py-3 text-right">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr className="border-b border-gold/5 italic">
+                          <td colSpan={4} className="px-4 py-10 text-center text-muted-foreground uppercase text-[10px] font-bold">
+                            Nenhum pagamento registrado ainda.
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           <TabsContent value="senha">
             <Card>
               <CardHeader>
@@ -875,9 +1537,9 @@ export default function PerfilIndex() {
                         <Label className="text-sm font-medium text-gray-300 dark:text-gray-200">
                           E-mail de Login
                         </Label>
-                        <Input 
-                          value={userEmail} 
-                          disabled 
+                        <Input
+                          value={userEmail}
+                          disabled
                           className="bg-gray-700/30 dark:bg-gray-800/50 border-gray-500/40 dark:border-gray-600/50 text-gray-200 dark:text-gray-100 h-11 cursor-not-allowed"
                         />
                       </div>
@@ -886,7 +1548,7 @@ export default function PerfilIndex() {
                           Status da Conta
                         </Label>
                         <div className="flex items-center gap-3 h-11">
-                          <Badge 
+                          <Badge
                             variant="secondary"
                             className="px-4 py-2 text-sm font-medium bg-green-900/40 text-green-300 border-green-600/50"
                           >
@@ -918,7 +1580,7 @@ export default function PerfilIndex() {
                             className="bg-gray-700/30 dark:bg-gray-800/50 border-gray-500/40 dark:border-gray-600/50 text-gray-200 dark:text-gray-100 h-11"
                           />
                         </div>
-                        
+
                         <div className="grid gap-6 md:grid-cols-2">
                           <div className="space-y-3">
                             <Label htmlFor="new-password" className="text-sm font-medium text-gray-300 dark:text-gray-200">
@@ -933,7 +1595,7 @@ export default function PerfilIndex() {
                               className="bg-gray-700/30 dark:bg-gray-800/50 border-gray-500/40 dark:border-gray-600/50 text-gray-200 dark:text-gray-100 h-11"
                             />
                           </div>
-                          
+
                           <div className="space-y-3">
                             <Label htmlFor="confirm-password" className="text-sm font-medium text-gray-300 dark:text-gray-200">
                               Confirmar Nova Senha *
@@ -952,10 +1614,10 @@ export default function PerfilIndex() {
                         <Button
                           onClick={handlePasswordChange}
                           disabled={changingPassword}
-                          className="gap-2 w-full md:w-auto"
+                          className="w-full md:w-auto gap-2 bg-gold hover:bg-gold/90 text-black px-10 py-4 h-auto text-sm md:text-lg font-black shadow-gold hover:scale-[1.02] active:scale-95 transition-all uppercase tracking-widest"
                         >
-                          <Shield className="h-4 w-4" />
-                          {changingPassword ? 'Alterando...' : 'Alterar Senha'}
+                          <Shield className="h-5 w-5" />
+                          {changingPassword ? 'Gravando...' : 'Alterar Senha'}
                         </Button>
                       </div>
                     </div>
@@ -1014,6 +1676,6 @@ export default function PerfilIndex() {
           </TabsContent>
         </Tabs>
       </div>
-    </MainLayout>
+    </DynamicLayout>
   );
 }

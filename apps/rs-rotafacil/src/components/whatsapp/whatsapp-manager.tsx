@@ -11,16 +11,16 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useWhatsAppBaileys } from '@/hooks/useWhatsAppBaileys';
 import { supabase } from '@/integrations/supabase/client';
 export const WhatsAppManager = () => {
-  const { 
-    instances, 
-    credits, 
-    loading, 
-    createInstance, 
+  const {
+    instances,
+    credits,
+    loading,
+    createInstance,
     deleteInstance,
     fetchInstances,
-    updateQRCode 
+    updateQRCode
   } = useWhatsAppBaileys();
-  
+
   const [instanceName, setInstanceName] = useState('');
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [qrModalId, setQrModalId] = useState<string | null>(null);
@@ -28,7 +28,7 @@ export const WhatsAppManager = () => {
   const [qrError, setQrError] = useState<string | null>(null);
   const handleCreateInstance = async () => {
     if (!instanceName.trim()) return;
-    
+
     const instance = await createInstance(instanceName);
     if (instance) {
       setInstanceName('');
@@ -110,11 +110,11 @@ export const WhatsAppManager = () => {
                 <span>Usados: {credits.creditos_usados}</span>
                 <span>Limite: {credits.limite_mensal === -1 ? 'Ilimitado' : credits.limite_mensal}</span>
               </div>
-              
+
               {credits.limite_mensal !== -1 && (
                 <Progress value={creditsPercentage} className="h-2" />
               )}
-              
+
               {creditsPercentage > 80 && credits.limite_mensal !== -1 && (
                 <Alert>
                   <AlertCircle className="h-4 w-4" />
@@ -136,11 +136,11 @@ export const WhatsAppManager = () => {
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Smartphone className="h-5 w-5" />
+            <CardTitle className="flex items-center gap-2 text-sm md:text-lg font-black uppercase tracking-tight text-white">
+              <Smartphone className="h-4 w-4 md:h-5 md:w-5 text-gold" />
               Instâncias WhatsApp
             </CardTitle>
-            
+
             <Dialog open={createModalOpen} onOpenChange={setCreateModalOpen}>
               <DialogTrigger asChild>
                 <Button>
@@ -162,15 +162,15 @@ export const WhatsAppManager = () => {
                       placeholder="Ex: Escola Principal"
                     />
                   </div>
-                  
+
                   <div className="flex justify-end gap-2">
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       onClick={() => setCreateModalOpen(false)}
                     >
                       Cancelar
                     </Button>
-                    <Button 
+                    <Button
                       onClick={handleCreateInstance}
                       disabled={loading || !instanceName.trim()}
                     >
@@ -193,20 +193,20 @@ export const WhatsAppManager = () => {
             <div className="grid gap-4">
               {instances.map((instance) => (
                 <div key={instance.id} className="border rounded-lg p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <div className="flex items-center gap-2">
-                        <div className={`w-3 h-3 rounded-full ${getStatusColor(instance.status)}`} />
-                        <span className="font-medium">{instance.instance_name}</span>
+                        <div className={`w-2.5 h-2.5 rounded-full ${getStatusColor(instance.status)}`} />
+                        <span className="font-black text-xs md:text-sm uppercase tracking-tight text-white">{instance.instance_name}</span>
                       </div>
-                      <Badge variant="outline">
+                      <Badge variant="outline" className="text-[9px] h-5 border-gold/30 text-gold/80">
                         {getStatusText(instance.status)}
                       </Badge>
                     </div>
-                    
-                    <div className="flex items-center gap-2">
+
+                    <div className="flex items-center gap-1.5 ml-auto sm:ml-0">
                       {instance.status === 'awaiting_scan' && (
-                      <Dialog open={qrModalId === instance.id} onOpenChange={(open) => {
+                        <Dialog open={qrModalId === instance.id} onOpenChange={(open) => {
                           setQrModalId(open ? instance.id : null);
                           if (open) pollUpdateQr(instance.id);
                         }}>
@@ -214,19 +214,20 @@ export const WhatsAppManager = () => {
                             <Button
                               variant="outline"
                               size="sm"
+                              className="h-8 px-2 text-[10px] font-bold border-gold/30 text-gold hover:bg-gold/10 uppercase tracking-widest"
                               onClick={() => {
                                 setQrModalId(instance.id);
                                 pollUpdateQr(instance.id);
                               }}
                             >
-                              <QrCode className="h-4 w-4 mr-2" />
+                              <QrCode className="h-3 w-3 mr-1.5" />
                               QR Code
                             </Button>
                           </DialogTrigger>
-                          <DialogContent>
+                          <DialogContent className="max-w-[95vw] sm:max-w-md">
                             <DialogHeader>
-                              <DialogTitle>Escaneie o QR Code</DialogTitle>
-                              <DialogDescription>
+                              <DialogTitle className="text-gold italic uppercase">Escaneie o QR Code</DialogTitle>
+                              <DialogDescription className="text-[10px] uppercase font-bold text-muted-foreground">
                                 Abra o WhatsApp no seu telefone e escaneie o código abaixo
                               </DialogDescription>
                             </DialogHeader>
@@ -237,48 +238,42 @@ export const WhatsAppManager = () => {
                                   alt="QR Code WhatsApp"
                                   width={256}
                                   height={256}
-                                  className="rounded-md"
+                                  className="rounded-md w-full max-w-[200px] h-auto"
                                 />
                               ) : (
-                                <div className="text-sm text-muted-foreground">
-                                  {qrLoading ? 'Carregando QR Code...' : 'QR ainda não disponível. Clique em atualizar.'}
+                                <div className="text-[10px] font-bold text-muted-foreground uppercase">
+                                  {qrLoading ? 'Gerando QR...' : 'QR indisponível'}
                                 </div>
                               )}
 
                               {qrError && (
-                                <Alert>
-                                  <AlertCircle className="h-4 w-4" />
-                                  <AlertDescription>{qrError}</AlertDescription>
+                                <Alert className="py-2">
+                                  <AlertCircle className="h-3.5 w-3.5" />
+                                  <AlertDescription className="text-[9px] uppercase">{qrError}</AlertDescription>
                                 </Alert>
                               )}
 
-                              <div className="flex gap-2">
-                                {instance.qr_code && (
-                                  <Button asChild variant="outline" size="sm">
-                                    <a href={instance.qr_code} download={`whatsapp-qr-${instance.id}.svg`}>
-                                      Baixar QR
-                                    </a>
-                                  </Button>
-                                )}
-                                <Button variant="outline" size="sm" onClick={() => pollUpdateQr(instance.id)} disabled={qrLoading}>
-                                  {qrLoading ? 'Atualizando...' : 'Atualizar QR'}
+                              <div className="flex gap-2 w-full">
+                                <Button variant="outline" size="sm" onClick={() => pollUpdateQr(instance.id)} disabled={qrLoading} className="flex-1 text-[10px] font-bold uppercase">
+                                  {qrLoading ? 'Aguarde...' : 'Atualizar'}
                                 </Button>
                               </div>
                             </div>
                           </DialogContent>
                         </Dialog>
                       )}
-                      
+
                       <Button
                         variant="outline"
                         size="sm"
+                        className="h-8 px-2 border-red-500/30 text-red-400 hover:bg-red-500/10"
                         onClick={() => deleteInstance(instance.id)}
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="h-3.5 w-3.5" />
                       </Button>
                     </div>
                   </div>
-                  
+
                   {instance.phone_number && (
                     <p className="text-sm text-muted-foreground mt-2">
                       Telefone: {instance.phone_number}

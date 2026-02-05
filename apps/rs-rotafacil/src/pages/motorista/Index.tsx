@@ -1,203 +1,206 @@
-import { useState } from 'react';
-import { MainLayout } from '@/components/layout/main-layout';
+
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { DynamicLayout } from "@/components/layout/dynamic-layout";
 import { ChecklistForm } from '@/components/motorista/checklist-form';
 import { ChecklistHistorico } from '@/components/motorista/checklist-historico';
-import { ChecklistTable } from '@/components/motorista/checklist-table';
-import { ChecklistDetalhesModal } from '@/components/motorista/checklist-detalhes-modal';
 import { ChecklistResumo } from '@/components/motorista/checklist-resumo';
-import { ChecklistItemsConfig } from '@/components/motorista/checklist-items-config';
+import { useMotorista } from '@/hooks/useMotorista';
+import { usePresenca } from '@/hooks/usePresenca';
+import { useManutencao } from '@/hooks/useManutencao';
+import { ChecklistMotorista } from '@/types/motorista';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { supabase } from '@/integrations/supabase/client';
+import { ChecklistDetalhesModal } from '@/components/motorista/checklist-detalhes-modal';
 import { ManutencaoForm } from '@/components/motorista/manutencao-form';
 import { ManutencaoHistorico } from '@/components/motorista/manutencao-historico';
-import { ManutencaoDetalhesModal } from '@/components/motorista/manutencao-detalhes-modal';
 import { ManutencaoResumo } from '@/components/motorista/manutencao-resumo';
+import { ManutencaoDetalhesModal } from '@/components/motorista/manutencao-detalhes-modal';
+import { ChecklistItemsConfig } from '@/components/motorista/checklist-items-config';
 import { ListaPresenca } from '@/components/monitora/lista-presenca';
-import { useMotorista } from '@/hooks/useMotorista';
-import { useManutencao } from '@/hooks/useManutencao';
-import { usePresenca } from '@/hooks/usePresenca';
-import { ChecklistMotorista } from '@/types/motorista';
-import { ManutencaoVan } from '@/types/manutencao';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { CheckCircle, History, BarChart3, Settings, Wrench, Users } from 'lucide-react';
+import {
+  CheckCircle,
+  History,
+  BarChart3,
+  Users,
+  Wrench,
+  Settings,
+  ClipboardList
+} from 'lucide-react';
 
-export default function MotoristaIndex() {
+interface MotoristaIndexProps {
+  customUserId?: string;
+}
+
+export default function MotoristaIndex({ customUserId }: MotoristaIndexProps = {}) {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabFromUrl = searchParams.get('tab') || 'checklist';
   const {
     checklists,
-    loading,
     createChecklist,
     getResumoChecklists,
-  } = useMotorista();
+  } = useMotorista(customUserId);
 
   const {
     manutencoes,
-    loading: manutencaoLoading,
     createManutencao,
-    markAsCompleted,
     getResumoManutencoes,
-  } = useManutencao();
+  } = useManutencao(customUserId);
 
   const {
     alunosComPresenca,
     loading: loadingPresenca,
+    marcarPresenca,
     refetch: refetchPresenca,
-  } = usePresenca();
+  } = usePresenca(customUserId);
 
   const [selectedChecklist, setSelectedChecklist] = useState<ChecklistMotorista | null>(null);
-  const [selectedManutencao, setSelectedManutencao] = useState<ManutencaoVan | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedManutencao, setSelectedManutencao] = useState<any | null>(null);
+  const [isSubmittingChecklist, setIsSubmittingChecklist] = useState(false);
+  const [isSubmittingManutencao, setIsSubmittingManutencao] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
-  const handleSubmit = async (data: Record<string, any>) => {
+  useEffect(() => {
+    const checkRole = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setUserRole(session?.user?.user_metadata?.tipo_usuario || session?.user?.user_metadata?.user_type || 'usuario');
+    };
+    checkRole();
+  }, []);
+
+  const isTeam = userRole === 'motorista' || userRole === 'monitora';
+
+
+  const handleMarcarPresenca = async (alunoId: string, status: 'presente' | 'ausente') => {
     try {
-      setIsSubmitting(true);
+      await marcarPresenca(alunoId, status);
+      await refetchPresenca();
+    } catch (error) {
+      console.error('Erro ao marcar presença:', error);
+    }
+  };
+
+
+  const handleChecklistSubmit = async (data: Record<string, any>) => {
+    try {
+      setIsSubmittingChecklist(true);
       await createChecklist(data);
     } finally {
-      setIsSubmitting(false);
+      setIsSubmittingChecklist(false);
     }
   };
 
   const handleManutencaoSubmit = async (data: Record<string, any>) => {
     try {
-      setIsSubmitting(true);
+      setIsSubmittingManutencao(true);
       await createManutencao(data);
     } finally {
-      setIsSubmitting(false);
+      setIsSubmittingManutencao(false);
     }
   };
 
-  const handleViewDetails = (checklist: ChecklistMotorista) => {
-    setSelectedChecklist(checklist);
-  };
-
-  const handleMarkCompleted = async (id: string) => {
-    try {
-      setIsSubmitting(true);
-      await markAsCompleted(id);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleViewManutencaoDetails = (manutencao: ManutencaoVan) => {
-    setSelectedManutencao(manutencao);
-  };
-
-  const resumo = getResumoChecklists();
+  const resumoChecklist = getResumoChecklists();
   const resumoManutencao = getResumoManutencoes();
 
   return (
-    <MainLayout>
-      <div className="space-y-6">
+    <DynamicLayout>
+      <div className="space-y-mobile-gap md:space-y-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Motorista</h1>
-          <p className="text-muted-foreground">
-            Gerenciamento de checklists diários de segurança do veículo
-          </p>
+          <h1 className="text-2xl md:text-3xl font-black tracking-tight text-white italic uppercase leading-tight">Portal do Motorista</h1>
+          <p className="text-muted-foreground text-sm md:text-base">Controle de vistorias, manutenção e rota</p>
         </div>
 
-        <Tabs defaultValue="resumo" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="resumo" className="gap-2">
+        <Tabs
+          value={tabFromUrl}
+          onValueChange={(value) => {
+            setSearchParams({ tab: value });
+          }}
+          className="space-y-6"
+        >
+          <TabsList className="grid grid-cols-2 md:grid-cols-5 gap-2 bg-black-secondary border border-sidebar-border p-1 h-auto min-h-12 w-full">
+            <TabsTrigger value="checklist" className="flex items-center justify-center gap-2 py-3 data-[state=active]:bg-gold data-[state=active]:text-black-primary transition-all">
+              <CheckCircle className="h-4 w-4" />
+              <span className="font-bold uppercase text-[10px]">Vistoria</span>
+            </TabsTrigger>
+            <TabsTrigger value="resumo" className="flex items-center justify-center gap-2 py-3 data-[state=active]:bg-gold data-[state=active]:text-black-primary transition-all">
               <BarChart3 className="h-4 w-4" />
-              Resumo
+              <span className="font-bold uppercase text-[10px]">Status Diário</span>
             </TabsTrigger>
-            <TabsTrigger value="checklist" className="gap-2">
-              <CheckCircle className="h-4 w-4" />
-              Novo Checklist
-            </TabsTrigger>
-            <TabsTrigger value="manutencao" className="gap-2">
-              <Wrench className="h-4 w-4" />
-              Manutenção do Veículo
-            </TabsTrigger>
-            <TabsTrigger value="lista-monitora" className="gap-2">
-              <Users className="h-4 w-4" />
-              Lista da Monitora
-            </TabsTrigger>
-            <TabsTrigger value="historico-checklists" className="gap-2">
-              <CheckCircle className="h-4 w-4" />
-              Checklists (Tabela)
-            </TabsTrigger>
-            <TabsTrigger value="historico-lista" className="gap-2">
+            <TabsTrigger value="historico" className="flex items-center justify-center gap-2 py-3 data-[state=active]:bg-gold data-[state=active]:text-black-primary transition-all">
               <History className="h-4 w-4" />
-              Checklists (Lista)
+              <span className="font-bold uppercase text-[10px]">Histórico</span>
             </TabsTrigger>
-            <TabsTrigger value="historico-manutencao" className="gap-2">
+            <TabsTrigger value="manutencao" className="flex items-center justify-center gap-2 py-3 data-[state=active]:bg-gold data-[state=active]:text-black-primary transition-all">
               <Wrench className="h-4 w-4" />
-              Manutenção
+              <span className="font-bold uppercase text-[10px]">Manutenção</span>
             </TabsTrigger>
-            <TabsTrigger value="configuracoes" className="gap-2">
-              <Settings className="h-4 w-4" />
-              Configurações
+            <TabsTrigger value="rota" className="flex items-center justify-center gap-2 py-3 data-[state=active]:bg-gold data-[state=active]:text-black-primary transition-all">
+              <Users className="h-4 w-4" />
+              <span className="font-bold uppercase text-[10px]">Rota</span>
             </TabsTrigger>
+            {!isTeam && (
+              <TabsTrigger value="config" className="flex items-center justify-center gap-2 py-3 data-[state=active]:bg-gold data-[state=active]:text-black-primary transition-all">
+                <Settings className="h-4 w-4" />
+                <span className="font-bold uppercase text-[10px]">Configurações</span>
+              </TabsTrigger>
+            )}
           </TabsList>
 
-          <TabsContent value="resumo" className="space-y-6">
-            <ChecklistResumo resumo={resumo} />
-            <ManutencaoResumo resumo={resumoManutencao} />
-            
-            {checklists.length > 0 && (
+          <TabsContent value="checklist" className="animate-in fade-in slide-in-from-bottom-2 duration-400">
+            <ChecklistForm
+              onSubmit={handleChecklistSubmit}
+              loading={isSubmittingChecklist}
+            />
+          </TabsContent>
+
+          <TabsContent value="resumo" className="animate-in fade-in duration-400 space-y-8">
+            {resumoChecklist && <ChecklistResumo resumo={resumoChecklist} />}
+            {resumoManutencao && <ManutencaoResumo resumo={resumoManutencao} />}
+          </TabsContent>
+
+          <TabsContent value="historico" className="animate-in fade-in duration-400">
+            {checklists && (
               <ChecklistHistorico
-                checklists={checklists.slice(0, 5)} // Mostrar apenas os 5 mais recentes
-                onViewDetails={handleViewDetails}
+                checklists={checklists}
+                onViewDetails={setSelectedChecklist}
               />
             )}
           </TabsContent>
 
-          <TabsContent value="checklist" className="space-y-6">
-            <ChecklistForm
-              onSubmit={handleSubmit}
-              loading={isSubmitting}
-            />
-          </TabsContent>
-
-          <TabsContent value="manutencao" className="space-y-6">
+          <TabsContent value="manutencao" className="animate-in fade-in duration-400 space-y-6">
             <ManutencaoForm
               onSubmit={handleManutencaoSubmit}
-              loading={isSubmitting}
+              loading={isSubmittingManutencao}
             />
+            {manutencoes && (
+              <ManutencaoHistorico
+                manutencoes={manutencoes}
+                onViewDetails={setSelectedManutencao}
+              />
+            )}
           </TabsContent>
 
-          <TabsContent value="historico-checklists" className="space-y-6">
-            <ChecklistTable
-              checklists={checklists}
-              onViewDetails={handleViewDetails}
-              loading={loading}
-            />
-          </TabsContent>
-
-          <TabsContent value="historico-lista" className="space-y-6">
-            <ChecklistHistorico
-              checklists={checklists}
-              onViewDetails={handleViewDetails}
-            />
-          </TabsContent>
-
-          <TabsContent value="lista-monitora" className="space-y-6">
-            <div className="mb-4">
-              <h3 className="text-lg font-semibold mb-2">Lista da Monitora (Visualização)</h3>
-              <p className="text-sm text-muted-foreground">
-                Visualização da lista de presença dos alunos marcada pela monitora
-              </p>
+          <TabsContent value="rota" className="animate-in fade-in duration-400">
+            <div className="space-y-4">
+              <div className="bg-gold/10 border border-gold/20 p-4 rounded-xl">
+                <p className="text-sm text-gold font-bold">Acompanhamento em Tempo Real</p>
+                <p className="text-xs text-muted-foreground">Visualize os alunos escalados para a rota hoje.</p>
+              </div>
+              {alunosComPresenca && (
+                <ListaPresenca
+                  alunos={alunosComPresenca}
+                  loading={loadingPresenca}
+                  onMarcarPresenca={handleMarcarPresenca}
+                  onAtualizarLista={refetchPresenca}
+                  dataSelected={new Date().toISOString().split('T')[0]}
+                  onDataChange={() => { }}
+                  readOnly={false}
+                />
+              )}
             </div>
-            <ListaPresenca
-              alunos={alunosComPresenca}
-              loading={loadingPresenca}
-              onMarcarPresenca={() => {}} // Motorista não pode marcar presença
-              onAtualizarLista={refetchPresenca}
-              dataSelected={new Date().toISOString().split('T')[0]}
-              onDataChange={() => {}} // Motorista não pode alterar data
-              readOnly={true}
-            />
           </TabsContent>
 
-          <TabsContent value="historico-manutencao" className="space-y-6">
-            <ManutencaoHistorico
-              manutencoes={manutencoes}
-              onViewDetails={handleViewManutencaoDetails}
-              onMarkCompleted={handleMarkCompleted}
-              loading={isSubmitting}
-            />
-          </TabsContent>
-          
-          <TabsContent value="configuracoes" className="space-y-6">
+          <TabsContent value="config" className="animate-in fade-in duration-400">
             <ChecklistItemsConfig />
           </TabsContent>
         </Tabs>
@@ -214,6 +217,6 @@ export default function MotoristaIndex() {
           onOpenChange={(open) => !open && setSelectedManutencao(null)}
         />
       </div>
-    </MainLayout>
+    </DynamicLayout>
   );
 }

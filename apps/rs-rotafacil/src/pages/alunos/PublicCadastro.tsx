@@ -72,6 +72,9 @@ export default function PublicCadastro() {
 
     const [isCustomSerie, setIsCustomSerie] = useState(false);
     const [isCustomSala, setIsCustomSala] = useState(false);
+    const [isCustomColegio, setIsCustomColegio] = useState(false);
+    const [colegios, setColegios] = useState<any[]>([]);
+    const [colegiosLoading, setColegiosLoading] = useState(false);
 
     const [branding, setBranding] = useState<{ logo_url?: string; company_name: string }>(() => {
         const cached = localStorage.getItem('app_branding');
@@ -133,6 +136,56 @@ export default function PublicCadastro() {
 
         loadRegistrationData();
     }, [identifier]);
+
+    // Carregar colégios quando a van mudar
+    useEffect(() => {
+        async function loadColegios() {
+            if (!formData.van_id) {
+                setColegios([]);
+                return;
+            }
+
+            try {
+                setColegiosLoading(true);
+                // Buscar colégios vinculados a esta van
+                const { data, error } = await supabase
+                    .from('van_colegios')
+                    .select(`
+                        colegio_id,
+                        colegios (
+                            id,
+                            nome
+                        )
+                    `)
+                    .eq('van_id', formData.van_id);
+
+                if (error) throw error;
+
+                const schools = (data || [])
+                    .map((item: any) => item.colegios)
+                    .filter(Boolean);
+
+                setColegios(schools);
+
+                // Se só tiver um colégio, já seleciona
+                if (schools.length === 1) {
+                    setFormData(prev => ({ ...prev, nome_colegio: schools[0].nome }));
+                    // setIsCustomColegio(false);
+                } else {
+                    // Limpa se trocar de van e o colégio atual não for custom
+                    // if (!isCustomColegio) {
+                    setFormData(prev => ({ ...prev, nome_colegio: "" }));
+                    // }
+                }
+            } catch (err) {
+                console.error("Erro ao carregar colégios:", err);
+            } finally {
+                setColegiosLoading(false);
+            }
+        }
+
+        loadColegios();
+    }, [formData.van_id]);
 
     // Carregar e processar contrato
     useEffect(() => {
@@ -293,8 +346,8 @@ CONTRATADA: {{EMPRESA_NOME}}`;
             if (data && (data as any).success) {
                 setCreatedAlunoId((data as any).aluno_id || "ID Pendente");
 
-                // Gerar senha e criar conta do responsável
-                const password = Math.random().toString(36).slice(-8);
+                // Definir senha padrão 123456
+                const password = "123456";
                 setGeneratedPassword(password);
 
                 try {
@@ -359,10 +412,10 @@ CONTRATADA: {{EMPRESA_NOME}}`;
                             {error || "O link que você seguiu pode estar incorreto ou não existe mais."}
                         </p>
                         <Button
-                            onClick={() => window.location.reload()}
-                            className="w-full bg-red-500 hover:bg-red-600 font-semibold"
+                            onClick={() => navigate('/familia/login')}
+                            className="w-full bg-gold text-black-primary font-bold uppercase transition-all duration-300 h-14 rounded-2xl"
                         >
-                            Tentar Novamente
+                            Fazer Login Agora
                         </Button>
                     </CardContent>
                 </Card>
@@ -437,7 +490,7 @@ CONTRATADA: {{EMPRESA_NOME}}`;
 
                         {/* Botão Acessar Escritório Virtual */}
                         <Button
-                            onClick={() => window.location.href = "/responsavel/login"}
+                            onClick={() => window.location.href = "/familia/login"}
                             className="w-full h-14 bg-black-secondary border-2 border-gold text-gold hover:bg-gold hover:text-black font-black text-lg transition-all shadow-xl shadow-gold/10"
                         >
                             <Bus className="w-6 h-6 mr-3" />
@@ -586,448 +639,481 @@ CONTRATADA: {{EMPRESA_NOME}}`;
                             <div className="p-2 bg-black/10 rounded-lg">
                                 <User className="w-6 h-6 text-black" />
                             </div>
-                            Selecione seu Motorista *
-                        </Label>
-
-                        {registrationData.vans.length > 0 ? (
-                            <div className="relative">
-                                <select
-                                    id="van_id"
-                                    required
-                                    className="flex h-12 w-full items-center justify-between rounded-xl border-2 border-gold/30 bg-[#1a1b23] px-4 py-2 text-lg ring-offset-background focus:outline-none focus:ring-2 focus:ring-gold focus:border-gold disabled:cursor-not-allowed disabled:opacity-50 text-white font-bold shadow-lg transition-all appearance-none"
-                                    value={formData.van_id}
-                                    onChange={(e) => setFormData({ ...formData, van_id: e.target.value })}
-                                >
-                                    <option value="" disabled className="bg-[#1a1b23] text-gray-500">Selecione uma van</option>
-                                    {registrationData.vans.map(van => (
-                                        <option key={van.id} value={van.id} className="bg-[#1a1b23] text-white">
-                                            {van.nome}
-                                        </option>
-                                    ))}
-                                </select>
-                                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gold">
-                                    <Bus className="w-5 h-5" />
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="p-6 rounded-2xl border-2 border-dashed border-red-500/30 bg-red-500/5 flex flex-col items-center gap-3 text-center animate-in fade-in">
-                                <AlertCircle className="w-8 h-8 text-red-500" />
-                                <div>
-                                    <p className="text-red-500 font-bold uppercase text-xs tracking-widest">Atenção</p>
-                                    <p className="text-muted-foreground text-sm">Nenhum veículo disponível para cadastro no momento.</p>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="p-8 space-y-8">
-                        <div className="space-y-6">
-                            {/* Seção 1: Dados do Aluno */}
-                            <div className="space-y-4">
-                                <h3 className="text-lg font-semibold text-foreground flex items-center gap-2 border-l-4 border-gold pl-3">
-                                    <User className="w-4 h-4 text-gold" /> Dados do Aluno
-                                </h3>
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="nome_completo">Nome Completo do Aluno *</Label>
-                                        <Input
-                                            id="nome_completo"
-                                            required
-                                            value={formData.nome_completo}
-                                            onChange={(e) => setFormData({ ...formData, nome_completo: e.target.value })}
-                                            onBlur={(e) => setFormData({ ...formData, nome_completo: formatToPascalCase(e.target.value) })}
-                                            className="bg-background/50 border-gold/30 focus:border-gold"
-                                        />
+                            Matrícula Escolar Online
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                        <form onSubmit={handleSubmit} className="divide-y divide-border/30">
+                            {/* Seleção de Van */}
+                            <div className="p-8 space-y-4 bg-gold/5 border-b border-gold/10">
+                                <Label htmlFor="van_id" className="text-xl font-black text-gold flex items-center gap-3 uppercase tracking-tighter">
+                                    <div className="w-10 h-10 bg-gold/20 rounded-xl flex items-center justify-center">
+                                        <Bus className="w-6 h-6 text-gold" />
                                     </div>
+                                    Selecione seu Motorista *
+                                </Label>
 
-                                    <div className="space-y-2">
-                                        <Label htmlFor="serie">Série *</Label>
-                                        {!isCustomSerie ? (
-                                            <div className="relative">
-                                                <select
-                                                    id="serie"
+                                {registrationData.vans.length > 0 ? (
+                                    <select
+                                        id="van_id"
+                                        required
+                                        className="flex h-12 w-full items-center justify-between rounded-xl border-2 border-gold/30 bg-black-secondary px-4 py-2 text-lg ring-offset-background focus:outline-none focus:ring-2 focus:ring-gold focus:border-gold disabled:cursor-not-allowed disabled:opacity-50 text-white font-bold shadow-lg transition-all"
+                                        value={formData.van_id}
+                                        onChange={(e) => setFormData({ ...formData, van_id: e.target.value })}
+                                        style={{
+                                            background: '#1a1b23',
+                                            color: '#ffffff',
+                                            appearance: 'auto'
+                                        }}
+                                    >
+                                        <option value="" disabled style={{ background: '#1a1b23', color: '#9ca3af' }}>Selecione uma van</option>
+                                        {registrationData.vans.map(van => (
+                                            <option key={van.id} value={van.id} style={{ background: '#1a1b23', color: '#ffffff' }}>
+                                                {van.nome}
+                                            </option>
+                                        ))}
+                                    </select>
+                                ) : (
+                                    <div className="p-6 rounded-2xl border-2 border-dashed border-red-500/30 bg-red-500/5 flex flex-col items-center gap-3 text-center animate-in fade-in">
+                                        <AlertCircle className="w-8 h-8 text-red-500" />
+                                        <div>
+                                            <p className="text-red-500 font-bold uppercase text-xs tracking-widest">Atenção</p>
+                                            <p className="text-muted-foreground text-sm">Nenhum veículo disponível para cadastro no momento.</p>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="p-8 space-y-8">
+                                <div className="space-y-6">
+                                    {/* Seção 1: Dados do Aluno */}
+                                    <div className="space-y-4">
+                                        <h3 className="text-lg font-semibold text-foreground flex items-center gap-2 border-l-4 border-gold pl-3">
+                                            <User className="w-4 h-4 text-gold" /> Dados do Aluno
+                                        </h3>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div className="space-y-2">
+                                                <Label htmlFor="nome_completo">Nome Completo do Aluno *</Label>
+                                                <Input
+                                                    id="nome_completo"
                                                     required
-                                                    className="flex h-10 w-full items-center justify-between rounded-md border border-gold/30 bg-[#1a1b23] px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-gold focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 text-white font-medium appearance-none"
-                                                    value={formData.serie}
-                                                    onChange={(e) => {
-                                                        if (e.target.value === "custom") {
-                                                            setIsCustomSerie(true);
-                                                            setFormData({ ...formData, serie: "" });
-                                                        } else {
-                                                            setFormData({ ...formData, serie: e.target.value });
-                                                        }
+                                                    value={formData.nome_completo}
+                                                    onChange={(e) => setFormData({ ...formData, nome_completo: e.target.value })}
+                                                    onBlur={(e) => setFormData({ ...formData, nome_completo: formatToPascalCase(e.target.value) })}
+                                                    className="bg-background/50 border-gold/30 focus:border-gold"
+                                                />
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <Label htmlFor="serie">Série *</Label>
+                                                {!isCustomSerie ? (
+                                                    <select
+                                                        id="serie"
+                                                        required
+                                                        className="flex h-10 w-full items-center justify-between rounded-md border border-gold/30 bg-dark-lighter px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-gold focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 text-white font-medium"
+                                                        style={{
+                                                            background: '#1a1b23',
+                                                            color: '#ffffff'
+                                                        }}
+                                                        value={formData.serie}
+                                                        onChange={(e) => {
+                                                            if (e.target.value === "custom") {
+                                                                setIsCustomSerie(true);
+                                                                setFormData({ ...formData, serie: "" });
+                                                            } else {
+                                                                setFormData({ ...formData, serie: e.target.value });
+                                                            }
+                                                        }}
+                                                    >
+                                                        <option value="" disabled style={{ background: '#1a1b23', color: '#9ca3af' }}>Selecione a série</option>
+                                                        <optgroup label="Educação Infantil" style={{ background: '#1a1b23', color: '#fbbf24', fontWeight: 'bold' }}>
+                                                            <option value="Berçário" style={{ background: '#1a1b23', color: '#ffffff', paddingLeft: '1rem' }}>Berçário</option>
+                                                            <option value="Maternal" style={{ background: '#1a1b23', color: '#ffffff', paddingLeft: '1rem' }}>Maternal</option>
+                                                            <option value="Infantil 2" style={{ background: '#1a1b23', color: '#ffffff', paddingLeft: '1rem' }}>Infantil 2</option>
+                                                            <option value="Infantil 3" style={{ background: '#1a1b23', color: '#ffffff', paddingLeft: '1rem' }}>Infantil 3</option>
+                                                            <option value="Infantil 4" style={{ background: '#1a1b23', color: '#ffffff', paddingLeft: '1rem' }}>Infantil 4</option>
+                                                            <option value="Infantil 5" style={{ background: '#1a1b23', color: '#ffffff', paddingLeft: '1rem' }}>Infantil 5</option>
+                                                            <option value="Jardim" style={{ background: '#1a1b23', color: '#ffffff', paddingLeft: '1rem' }}>Jardim</option>
+                                                        </optgroup>
+                                                        <optgroup label="Ensino Fundamental" style={{ background: '#1a1b23', color: '#60a5fa', fontWeight: 'bold' }}>
+                                                            <option value="1º Ano" style={{ background: '#1a1b23', color: '#ffffff', paddingLeft: '1rem' }}>1º Ano</option>
+                                                            <option value="2º Ano" style={{ background: '#1a1b23', color: '#ffffff', paddingLeft: '1rem' }}>2º Ano</option>
+                                                            <option value="3º Ano" style={{ background: '#1a1b23', color: '#ffffff', paddingLeft: '1rem' }}>3º Ano</option>
+                                                            <option value="4º Ano" style={{ background: '#1a1b23', color: '#ffffff', paddingLeft: '1rem' }}>4º Ano</option>
+                                                            <option value="5º Ano" style={{ background: '#1a1b23', color: '#ffffff', paddingLeft: '1rem' }}>5º Ano</option>
+                                                            <option value="6º Ano" style={{ background: '#1a1b23', color: '#ffffff', paddingLeft: '1rem' }}>6º Ano</option>
+                                                            <option value="7º Ano" style={{ background: '#1a1b23', color: '#ffffff', paddingLeft: '1rem' }}>7º Ano</option>
+                                                            <option value="8º Ano" style={{ background: '#1a1b23', color: '#ffffff', paddingLeft: '1rem' }}>8º Ano</option>
+                                                            <option value="9º Ano" style={{ background: '#1a1b23', color: '#ffffff', paddingLeft: '1rem' }}>9º Ano</option>
+                                                        </optgroup>
+                                                        <optgroup label="Ensino Médio" style={{ background: '#1a1b23', color: '#34d399', fontWeight: 'bold' }}>
+                                                            <option value="1º Médio" style={{ background: '#1a1b23', color: '#ffffff', paddingLeft: '1rem' }}>1º Médio</option>
+                                                            <option value="2º Médio" style={{ background: '#1a1b23', color: '#ffffff', paddingLeft: '1rem' }}>2º Médio</option>
+                                                            <option value="3º Médio" style={{ background: '#1a1b23', color: '#ffffff', paddingLeft: '1rem' }}>3º Médio</option>
+                                                        </optgroup>
+                                                        <option value="custom" style={{ background: '#1a1b23', color: '#gold', fontWeight: 'bold' }}>➕ Outra (Digitar)</option>
+                                                    </select>
+                                                ) : (
+                                                    <div className="flex gap-2">
+                                                        <Input
+                                                            placeholder="Digite a série..."
+                                                            value={formData.serie}
+                                                            onChange={(e) => setFormData({ ...formData, serie: e.target.value })}
+                                                            className="bg-background/50 border-gold focus:border-gold animate-in fade-in slide-in-from-left-2"
+                                                            autoFocus
+                                                        />
+                                                        <Button
+                                                            type="button"
+                                                            variant="ghost"
+                                                            onClick={() => {
+                                                                setIsCustomSerie(false);
+                                                                setFormData({ ...formData, serie: "" });
+                                                            }}
+                                                            className="text-gold hover:bg-gold/10"
+                                                        >
+                                                            <X className="w-4 h-4" />
+                                                        </Button>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <Label htmlFor="sala">Sala / Turma *</Label>
+                                                {!isCustomSala ? (
+                                                    <select
+                                                        id="sala"
+                                                        required
+                                                        className="flex h-10 w-full items-center justify-between rounded-md border border-gold/30 bg-dark-lighter px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-gold focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 text-white font-medium shadow-sm transition-all"
+                                                        style={{
+                                                            background: '#1a1b23',
+                                                            color: '#ffffff'
+                                                        }}
+                                                        value={formData.sala}
+                                                        onChange={(e) => {
+                                                            if (e.target.value === "custom") {
+                                                                setIsCustomSala(true);
+                                                                setFormData({ ...formData, sala: "" });
+                                                            } else {
+                                                                setFormData({ ...formData, sala: e.target.value });
+                                                            }
+                                                        }}
+                                                    >
+                                                        <option value="" disabled style={{ background: '#1a1b23', color: '#9ca3af' }}>Selecione a sala</option>
+                                                        {['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'].map(letra => (
+                                                            <option key={letra} value={letra} style={{ background: '#1a1b23', color: '#ffffff' }}>Sala {letra}</option>
+                                                        ))}
+                                                        <option value="custom" style={{ background: '#1a1b23', color: '#gold', fontWeight: 'bold' }}>➕ Digitar Sala</option>
+                                                    </select>
+                                                ) : (
+                                                    <div className="flex gap-2">
+                                                        <Input
+                                                            placeholder="Ex: Sala 202, Turma B4..."
+                                                            value={formData.sala}
+                                                            onChange={(e) => setFormData({ ...formData, sala: e.target.value })}
+                                                            className="bg-background/50 border-gold focus:border-gold animate-in fade-in slide-in-from-left-2"
+                                                            autoFocus
+                                                        />
+                                                        <Button
+                                                            type="button"
+                                                            variant="ghost"
+                                                            onClick={() => {
+                                                                setIsCustomSala(false);
+                                                                setFormData({ ...formData, sala: "" });
+                                                            }}
+                                                            className="text-gold hover:bg-gold/10"
+                                                        >
+                                                            <X className="w-4 h-4" />
+                                                        </Button>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <Label htmlFor="nome_colegio">Colégio *</Label>
+                                                <div className="relative">
+                                                    <select
+                                                        id="nome_colegio"
+                                                        required
+                                                        className="flex h-10 w-full items-center justify-between rounded-md border border-gold/30 bg-dark-lighter px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-gold focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 text-white font-medium shadow-sm transition-all"
+                                                        style={{
+                                                            background: '#1a1b23',
+                                                            color: '#ffffff',
+                                                            appearance: 'auto'
+                                                        }}
+                                                        value={formData.nome_colegio}
+                                                        onChange={(e) => setFormData({ ...formData, nome_colegio: e.target.value })}
+                                                        disabled={!formData.van_id || colegiosLoading}
+                                                    >
+                                                        <option value="" disabled style={{ background: '#1a1b23', color: '#9ca3af' }}>
+                                                            {colegiosLoading ? "Carregando..." : !formData.van_id ? "Selecione uma van primeiro" : "Selecione o colégio"}
+                                                        </option>
+                                                        {colegios.map(school => (
+                                                            <option key={school.id} value={school.nome} style={{ background: '#1a1b23', color: '#ffffff' }}>
+                                                                {school.nome}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                    {colegiosLoading && (
+                                                        <div className="absolute right-8 top-1/2 -translate-y-1/2">
+                                                            <div className="w-4 h-4 border-2 border-gold border-t-transparent rounded-full animate-spin" />
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <Label htmlFor="turno">Turno *</Label>
+                                                <select
+                                                    id="turno"
+                                                    className="flex h-10 w-full items-center justify-between rounded-md border border-gold/30 bg-dark-lighter px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-gold focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 text-white font-medium"
+                                                    style={{
+                                                        background: '#1a1b23',
+                                                        color: '#ffffff'
                                                     }}
+                                                    value={formData.turno}
+                                                    onChange={(e) => setFormData({ ...formData, turno: e.target.value })}
+                                                    required
                                                 >
-                                                    <option value="" disabled className="bg-[#1a1b23] text-gray-500">Selecione a série</option>
-                                                    <optgroup label="Educação Infantil" className="bg-[#1a1b23] text-yellow-500 font-bold">
-                                                        <option value="Berçário" className="bg-[#1a1b23] text-white">Berçário</option>
-                                                        <option value="Maternal" className="bg-[#1a1b23] text-white">Maternal</option>
-                                                        <option value="Infantil 2" className="bg-[#1a1b23] text-white">Infantil 2</option>
-                                                        <option value="Infantil 3" className="bg-[#1a1b23] text-white">Infantil 3</option>
-                                                        <option value="Infantil 4" className="bg-[#1a1b23] text-white">Infantil 4</option>
-                                                        <option value="Infantil 5" className="bg-[#1a1b23] text-white">Infantil 5</option>
-                                                        <option value="Jardim" className="bg-[#1a1b23] text-white">Jardim</option>
-                                                    </optgroup>
-                                                    <optgroup label="Ensino Fundamental" className="bg-[#1a1b23] text-blue-400 font-bold">
-                                                        <option value="1º Ano" className="bg-[#1a1b23] text-white">1º Ano</option>
-                                                        <option value="2º Ano" className="bg-[#1a1b23] text-white">2º Ano</option>
-                                                        <option value="3º Ano" className="bg-[#1a1b23] text-white">3º Ano</option>
-                                                        <option value="4º Ano" className="bg-[#1a1b23] text-white">4º Ano</option>
-                                                        <option value="5º Ano" className="bg-[#1a1b23] text-white">5º Ano</option>
-                                                        <option value="6º Ano" className="bg-[#1a1b23] text-white">6º Ano</option>
-                                                        <option value="7º Ano" className="bg-[#1a1b23] text-white">7º Ano</option>
-                                                        <option value="8º Ano" className="bg-[#1a1b23] text-white">8º Ano</option>
-                                                        <option value="9º Ano" className="bg-[#1a1b23] text-white">9º Ano</option>
-                                                    </optgroup>
-                                                    <optgroup label="Ensino Médio" className="bg-[#1a1b23] text-green-400 font-bold">
-                                                        <option value="1º Médio" className="bg-[#1a1b23] text-white">1º Médio</option>
-                                                        <option value="2º Médio" className="bg-[#1a1b23] text-white">2º Médio</option>
-                                                        <option value="3º Médio" className="bg-[#1a1b23] text-white">3º Médio</option>
-                                                    </optgroup>
-                                                    <option value="custom" className="bg-[#1a1b23] text-gold font-bold">➕ Outra (Digitar)</option>
+                                                    <option value="manha" style={{ background: '#1a1b23', color: '#ffffff' }}>Manhã</option>
+                                                    <option value="tarde" style={{ background: '#1a1b23', color: '#ffffff' }}>Tarde</option>
+                                                    <option value="integral" style={{ background: '#1a1b23', color: '#ffffff' }}>Integral</option>
+                                                    <option value="noite" style={{ background: '#1a1b23', color: '#ffffff' }}>Noite</option>
                                                 </select>
                                             </div>
-                                        ) : (
-                                            <div className="flex gap-2">
-                                                <Input
-                                                    placeholder="Digite a série..."
-                                                    value={formData.serie}
-                                                    onChange={(e) => setFormData({ ...formData, serie: e.target.value })}
-                                                    className="bg-background/50 border-gold focus:border-gold animate-in fade-in slide-in-from-left-2"
-                                                    autoFocus
-                                                />
-                                                <Button
-                                                    type="button"
-                                                    variant="ghost"
-                                                    onClick={() => {
-                                                        setIsCustomSerie(false);
-                                                        setFormData({ ...formData, serie: "" });
-                                                    }}
-                                                    className="text-gold hover:bg-gold/10"
-                                                >
-                                                    <X className="w-4 h-4" />
-                                                </Button>
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <Label htmlFor="sala">Sala / Turma *</Label>
-                                        {!isCustomSala ? (
-                                            <select
-                                                id="sala"
-                                                required
-                                                className="flex h-10 w-full items-center justify-between rounded-md border border-gold/30 bg-dark-lighter px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-gold focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 text-white font-medium shadow-sm transition-all"
-                                                style={{
-                                                    background: '#1a1b23',
-                                                    color: '#ffffff'
-                                                }}
-                                                value={formData.sala}
-                                                onChange={(e) => {
-                                                    if (e.target.value === "custom") {
-                                                        setIsCustomSala(true);
-                                                        setFormData({ ...formData, sala: "" });
-                                                    } else {
-                                                        setFormData({ ...formData, sala: e.target.value });
-                                                    }
-                                                }}
-                                            >
-                                                <option value="" disabled style={{ background: '#1a1b23', color: '#9ca3af' }}>Selecione a sala</option>
-                                                {['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'].map(letra => (
-                                                    <option key={letra} value={letra} style={{ background: '#1a1b23', color: '#ffffff' }}>Sala {letra}</option>
-                                                ))}
-                                                <option value="custom" style={{ background: '#1a1b23', color: '#gold', fontWeight: 'bold' }}>➕ Digitar Sala</option>
-                                            </select>
-                                        ) : (
-                                            <div className="flex gap-2">
-                                                <Input
-                                                    placeholder="Ex: Sala 202, Turma B4..."
-                                                    value={formData.sala}
-                                                    onChange={(e) => setFormData({ ...formData, sala: e.target.value })}
-                                                    className="bg-background/50 border-gold focus:border-gold animate-in fade-in slide-in-from-left-2"
-                                                    autoFocus
-                                                />
-                                                <Button
-                                                    type="button"
-                                                    variant="ghost"
-                                                    onClick={() => {
-                                                        setIsCustomSala(false);
-                                                        setFormData({ ...formData, sala: "" });
-                                                    }}
-                                                    className="text-gold hover:bg-gold/10"
-                                                >
-                                                    <X className="w-4 h-4" />
-                                                </Button>
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <Label htmlFor="nome_colegio">Nome do Colégio *</Label>
-                                        <Input
-                                            id="nome_colegio"
-                                            required
-                                            placeholder="Ex: Colégio São Lucas, Escola ABC"
-                                            value={formData.nome_colegio}
-                                            onChange={(e) => setFormData({ ...formData, nome_colegio: e.target.value })}
-                                            onBlur={(e) => setFormData({ ...formData, nome_colegio: formatToPascalCase(e.target.value) })}
-                                            className="bg-background/50 border-gold/30 focus:border-gold"
-                                        />
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <Label htmlFor="turno">Turno *</Label>
-                                        <select
-                                            id="turno"
-                                            className="flex h-10 w-full items-center justify-between rounded-md border border-gold/30 bg-dark-lighter px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-gold focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 text-white font-medium"
-                                            style={{
-                                                background: '#1a1b23',
-                                                color: '#ffffff'
-                                            }}
-                                            value={formData.turno}
-                                            onChange={(e) => setFormData({ ...formData, turno: e.target.value })}
-                                            required
-                                        >
-                                            <option value="manha" style={{ background: '#1a1b23', color: '#ffffff' }}>Manhã</option>
-                                            <option value="tarde" style={{ background: '#1a1b23', color: '#ffffff' }}>Tarde</option>
-                                            <option value="integral" style={{ background: '#1a1b23', color: '#ffffff' }}>Integral</option>
-                                            <option value="noite" style={{ background: '#1a1b23', color: '#ffffff' }}>Noite</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Seção 2: Endereço */}
-                            <div className="space-y-4 pt-4 border-t border-border/50">
-                                <h3 className="text-lg font-semibold text-foreground flex items-center gap-2 border-l-4 border-gold pl-3">
-                                    <MapPin className="w-4 h-4 text-gold" /> Endereço Residencial
-                                </h3>
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                    <div className="md:col-span-2">
-                                        <Label htmlFor="rua">Rua *</Label>
-                                        <Input
-                                            id="rua"
-                                            required
-                                            value={formData.endereco_rua}
-                                            onChange={(e) => setFormData({ ...formData, endereco_rua: e.target.value })}
-                                            onBlur={(e) => setFormData({ ...formData, endereco_rua: formatToPascalCase(e.target.value) })}
-                                            className="bg-background/50 border-gold/30 focus:border-gold"
-                                        />
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <Label htmlFor="numero">Número *</Label>
-                                        <Input
-                                            id="numero"
-                                            required
-                                            value={formData.endereco_numero}
-                                            onChange={(e) => setFormData({ ...formData, endereco_numero: e.target.value })}
-                                            className="bg-background/50 border-gold/30 focus:border-gold"
-                                        />
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <Label htmlFor="bairro">Bairro *</Label>
-                                        <Input
-                                            id="bairro"
-                                            required
-                                            value={formData.endereco_bairro}
-                                            onChange={(e) => setFormData({ ...formData, endereco_bairro: e.target.value })}
-                                            onBlur={(e) => setFormData({ ...formData, endereco_bairro: formatToPascalCase(e.target.value) })}
-                                            className="bg-background/50 border-gold/30 focus:border-gold"
-                                        />
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <Label htmlFor="cidade">Cidade *</Label>
-                                        <Input
-                                            id="cidade"
-                                            required
-                                            value={formData.endereco_cidade}
-                                            onChange={(e) => setFormData({ ...formData, endereco_cidade: e.target.value })}
-                                            onBlur={(e) => setFormData({ ...formData, endereco_cidade: formatToPascalCase(e.target.value) })}
-                                            className="bg-background/50 border-gold/30 focus:border-gold"
-                                        />
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <Label htmlFor="estado">Estado *</Label>
-                                        <Input
-                                            id="estado"
-                                            required
-                                            placeholder="Ex: SP, RJ, MG"
-                                            value={formData.endereco_estado}
-                                            onChange={(e) => setFormData({ ...formData, endereco_estado: e.target.value })}
-                                            onBlur={(e) => setFormData({ ...formData, endereco_estado: e.target.value.toUpperCase() })}
-                                            className="bg-background/50 border-gold/30 focus:border-gold"
-                                        />
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <Label htmlFor="cep">CEP *</Label>
-                                        <div className="relative">
-                                            <Input
-                                                id="cep"
-                                                required
-                                                placeholder="00000-000"
-                                                value={formData.endereco_cep}
-                                                onChange={(e) => {
-                                                    const value = e.target.value.replace(/\D/g, "");
-                                                    const formatted = value.replace(/^(\d{5})(\d{3})/, "$1-$2");
-                                                    setFormData({ ...formData, endereco_cep: formatted });
-                                                }}
-                                                onBlur={handleCepBlur}
-                                                maxLength={9}
-                                                className={cn("bg-background/50 border-gold/30 focus:border-gold", cepLoading && "opacity-50")}
-                                            />
-                                            {cepLoading && <div className="absolute right-3 top-2.5 w-4 h-4 border-2 border-gold border-t-transparent rounded-full animate-spin" />}
                                         </div>
                                     </div>
 
-                                    <div className="space-y-2">
-                                        <Label htmlFor="tipo_residencia">Tipo de Residência</Label>
-                                        <select
-                                            id="tipo_residencia"
-                                            className="flex h-10 w-full items-center justify-between rounded-md border border-gold/30 bg-background/50 px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 text-foreground"
-                                            value={formData.tipo_residencia}
-                                            onChange={(e) => setFormData({ ...formData, tipo_residencia: e.target.value })}
-                                        >
-                                            <option value="casa">Casa</option>
-                                            <option value="apartamento">Apartamento</option>
-                                            <option value="outro">Outro</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
+                                    {/* Seção 2: Endereço */}
+                                    <div className="space-y-4 pt-4 border-t border-border/50">
+                                        <h3 className="text-lg font-semibold text-foreground flex items-center gap-2 border-l-4 border-gold pl-3">
+                                            <MapPin className="w-4 h-4 text-gold" /> Endereço Residencial
+                                        </h3>
 
-                            {/* Seção 3: Responsável */}
-                            <div className="space-y-4 pt-4 border-t border-border/50">
-                                <h3 className="text-lg font-semibold text-foreground flex items-center gap-2 border-l-4 border-gold pl-3">
-                                    <Phone className="w-4 h-4 text-gold" /> Dados do Responsável
-                                </h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="nome_responsavel">Nome do Responsável *</Label>
-                                        <Input
-                                            id="nome_responsavel"
-                                            required
-                                            value={formData.nome_responsavel}
-                                            onChange={(e) => setFormData({ ...formData, nome_responsavel: e.target.value })}
-                                            onBlur={(e) => setFormData({ ...formData, nome_responsavel: formatToPascalCase(e.target.value) })}
-                                            className="bg-background/50 border-gold/30 focus:border-gold"
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="cpf">CPF do Responsável *</Label>
-                                        <Input
-                                            id="cpf"
-                                            required
-                                            placeholder="000.000.000-00"
-                                            value={formData.cpf}
-                                            onChange={(e) => {
-                                                const value = e.target.value.replace(/\D/g, "");
-                                                const formatted = value.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
-                                                setFormData({ ...formData, cpf: formatted });
-                                            }}
-                                            maxLength={14}
-                                            className="bg-background/50 border-gold/30 focus:border-gold"
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="email">Email do Responsável *</Label>
-                                        <Input
-                                            id="email"
-                                            type="email"
-                                            placeholder="exemplo@email.com"
-                                            required
-                                            value={formData.email}
-                                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                            className="bg-background/50 border-gold/30 focus:border-gold"
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="whatsapp">WhatsApp do Responsável *</Label>
-                                        <Input
-                                            id="whatsapp"
-                                            required
-                                            type="tel"
-                                            placeholder="(00) 00000-0000"
-                                            value={formData.whatsapp_responsavel}
-                                            onChange={(e) => setFormData({ ...formData, whatsapp_responsavel: e.target.value })}
-                                            className="bg-background/50 border-gold/30 focus:border-gold"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                            <div className="md:col-span-2">
+                                                <Label htmlFor="rua">Rua *</Label>
+                                                <Input
+                                                    id="rua"
+                                                    required
+                                                    value={formData.endereco_rua}
+                                                    onChange={(e) => setFormData({ ...formData, endereco_rua: e.target.value })}
+                                                    onBlur={(e) => setFormData({ ...formData, endereco_rua: formatToPascalCase(e.target.value) })}
+                                                    className="bg-background/50 border-gold/30 focus:border-gold"
+                                                />
+                                            </div>
 
-                            {/* Seção 4: Financeiro */}
-                            <div className="space-y-4 pt-4 border-t border-border/50">
-                                <h3 className="text-lg font-semibold text-foreground flex items-center gap-2 border-l-4 border-gold pl-3">
-                                    <CreditCard className="w-4 h-4 text-gold" /> Contato e Financeiro
-                                </h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="valor_mensalidade">Valor da Mensalidade *</Label>
-                                        <div className="relative">
-                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">R$</span>
-                                            <Input
-                                                id="valor_mensalidade"
-                                                className="pl-9 bg-background/50 border-gold/30 focus:border-gold"
-                                                value={formData.valor_mensalidade.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                                                onChange={(e) => {
-                                                    const value = e.target.value.replace(/\D/g, "");
-                                                    const numberValue = parseFloat(value) / 100;
-                                                    setFormData({ ...formData, valor_mensalidade: numberValue });
-                                                }}
-                                                required
-                                            />
+                                            <div className="space-y-2">
+                                                <Label htmlFor="numero">Número *</Label>
+                                                <Input
+                                                    id="numero"
+                                                    required
+                                                    value={formData.endereco_numero}
+                                                    onChange={(e) => setFormData({ ...formData, endereco_numero: e.target.value })}
+                                                    className="bg-background/50 border-gold/30 focus:border-gold"
+                                                />
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <Label htmlFor="bairro">Bairro *</Label>
+                                                <Input
+                                                    id="bairro"
+                                                    required
+                                                    value={formData.endereco_bairro}
+                                                    onChange={(e) => setFormData({ ...formData, endereco_bairro: e.target.value })}
+                                                    onBlur={(e) => setFormData({ ...formData, endereco_bairro: formatToPascalCase(e.target.value) })}
+                                                    className="bg-background/50 border-gold/30 focus:border-gold"
+                                                />
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <Label htmlFor="cidade">Cidade *</Label>
+                                                <Input
+                                                    id="cidade"
+                                                    required
+                                                    value={formData.endereco_cidade}
+                                                    onChange={(e) => setFormData({ ...formData, endereco_cidade: e.target.value })}
+                                                    onBlur={(e) => setFormData({ ...formData, endereco_cidade: formatToPascalCase(e.target.value) })}
+                                                    className="bg-background/50 border-gold/30 focus:border-gold"
+                                                />
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <Label htmlFor="estado">Estado *</Label>
+                                                <Input
+                                                    id="estado"
+                                                    required
+                                                    placeholder="Ex: SP, RJ, MG"
+                                                    value={formData.endereco_estado}
+                                                    onChange={(e) => setFormData({ ...formData, endereco_estado: e.target.value })}
+                                                    onBlur={(e) => setFormData({ ...formData, endereco_estado: e.target.value.toUpperCase() })}
+                                                    className="bg-background/50 border-gold/30 focus:border-gold"
+                                                />
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <Label htmlFor="cep">CEP *</Label>
+                                                <div className="relative">
+                                                    <Input
+                                                        id="cep"
+                                                        required
+                                                        placeholder="00000-000"
+                                                        value={formData.endereco_cep}
+                                                        onChange={(e) => {
+                                                            const value = e.target.value.replace(/\D/g, "");
+                                                            const formatted = value.replace(/^(\d{5})(\d{3})/, "$1-$2");
+                                                            setFormData({ ...formData, endereco_cep: formatted });
+                                                        }}
+                                                        onBlur={handleCepBlur}
+                                                        maxLength={9}
+                                                        className={cn("bg-background/50 border-gold/30 focus:border-gold", cepLoading && "opacity-50")}
+                                                    />
+                                                    {cepLoading && <div className="absolute right-3 top-2.5 w-4 h-4 border-2 border-gold border-t-transparent rounded-full animate-spin" />}
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <Label htmlFor="tipo_residencia">Tipo de Residência</Label>
+                                                <select
+                                                    id="tipo_residencia"
+                                                    className="flex h-10 w-full items-center justify-between rounded-md border border-gold/30 bg-background/50 px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 text-foreground"
+                                                    value={formData.tipo_residencia}
+                                                    onChange={(e) => setFormData({ ...formData, tipo_residencia: e.target.value })}
+                                                >
+                                                    <option value="casa">Casa</option>
+                                                    <option value="apartamento">Apartamento</option>
+                                                    <option value="outro">Outro</option>
+                                                </select>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="dia_vencimento">Dia de Vencimento *</Label>
-                                        <Input
-                                            id="dia_vencimento"
-                                            type="number"
-                                            min="1"
-                                            max="31"
-                                            value={formData.dia_vencimento || ""}
-                                            onChange={(e) => setFormData({ ...formData, dia_vencimento: parseInt(e.target.value) || 0 })}
-                                            placeholder="Dia (1-31)"
-                                            required
-                                            className="bg-background/50 border-gold/30 focus:border-gold"
-                                        />
-                                        <p className="text-xs text-muted-foreground mt-1">Dia do mês para vencimento da fatura</p>
+
+                                    {/* Seção 3: Responsável */}
+                                    <div className="space-y-4 pt-4 border-t border-border/50">
+                                        <h3 className="text-lg font-semibold text-foreground flex items-center gap-2 border-l-4 border-gold pl-3">
+                                            <Phone className="w-4 h-4 text-gold" /> Dados do Responsável
+                                        </h3>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div className="space-y-2">
+                                                <Label htmlFor="nome_responsavel">Nome do Responsável *</Label>
+                                                <Input
+                                                    id="nome_responsavel"
+                                                    required
+                                                    value={formData.nome_responsavel}
+                                                    onChange={(e) => setFormData({ ...formData, nome_responsavel: e.target.value })}
+                                                    onBlur={(e) => setFormData({ ...formData, nome_responsavel: formatToPascalCase(e.target.value) })}
+                                                    className="bg-background/50 border-gold/30 focus:border-gold"
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label htmlFor="cpf">CPF do Responsável *</Label>
+                                                <Input
+                                                    id="cpf"
+                                                    required
+                                                    placeholder="000.000.000-00"
+                                                    value={formData.cpf}
+                                                    onChange={(e) => {
+                                                        const value = e.target.value.replace(/\D/g, "");
+                                                        const formatted = value.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+                                                        setFormData({ ...formData, cpf: formatted });
+                                                    }}
+                                                    maxLength={14}
+                                                    className="bg-background/50 border-gold/30 focus:border-gold"
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label htmlFor="email">Email do Responsável *</Label>
+                                                <Input
+                                                    id="email"
+                                                    type="email"
+                                                    placeholder="exemplo@email.com"
+                                                    required
+                                                    value={formData.email}
+                                                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                                    className="bg-background/50 border-gold/30 focus:border-gold"
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label htmlFor="whatsapp">WhatsApp do Responsável *</Label>
+                                                <Input
+                                                    id="whatsapp"
+                                                    required
+                                                    type="tel"
+                                                    placeholder="(00) 00000-0000"
+                                                    value={formData.whatsapp_responsavel}
+                                                    onChange={(e) => setFormData({ ...formData, whatsapp_responsavel: e.target.value })}
+                                                    className="bg-background/50 border-gold/30 focus:border-gold"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Seção 4: Financeiro */}
+                                    <div className="space-y-4 pt-4 border-t border-border/50">
+                                        <h3 className="text-lg font-semibold text-foreground flex items-center gap-2 border-l-4 border-gold pl-3">
+                                            <CreditCard className="w-4 h-4 text-gold" /> Contato e Financeiro
+                                        </h3>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div className="space-y-2">
+                                                <Label htmlFor="valor_mensalidade">Valor da Mensalidade *</Label>
+                                                <div className="relative">
+                                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">R$</span>
+                                                    <Input
+                                                        id="valor_mensalidade"
+                                                        className="pl-9 bg-background/50 border-gold/30 focus:border-gold"
+                                                        value={formData.valor_mensalidade.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                                        onChange={(e) => {
+                                                            const value = e.target.value.replace(/\D/g, "");
+                                                            const numberValue = parseFloat(value) / 100;
+                                                            setFormData({ ...formData, valor_mensalidade: numberValue });
+                                                        }}
+                                                        required
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label htmlFor="dia_vencimento">Dia de Vencimento *</Label>
+                                                <Input
+                                                    id="dia_vencimento"
+                                                    type="number"
+                                                    min="1"
+                                                    max="31"
+                                                    value={formData.dia_vencimento || ""}
+                                                    onChange={(e) => setFormData({ ...formData, dia_vencimento: parseInt(e.target.value) || 0 })}
+                                                    placeholder="Dia (1-31)"
+                                                    required
+                                                    className="bg-background/50 border-gold/30 focus:border-gold"
+                                                />
+                                                <p className="text-xs text-muted-foreground mt-1">Dia do mês para vencimento da fatura</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="pt-6">
+                                        <Button
+                                            type="submit"
+                                            className="w-full h-12 text-lg bg-gradient-gold text-black-primary font-bold hover:opacity-90 transition-all shadow-lg hover:shadow-gold/20"
+                                            disabled={loading}
+                                        >
+                                            {loading ? (
+                                                <span className="flex items-center gap-2">
+                                                    <div className="w-5 h-5 border-2 border-black/30 border-t-black rounded-full animate-spin" />
+                                                    Processando Cadastro...
+                                                </span>
+                                            ) : (
+                                                "Confirmar Cadastro"
+                                            )}
+                                        </Button>
+                                        <p className="text-center text-xs text-muted-foreground mt-4">
+                                            Ao confirmar, você concorda com o envio destes dados para o responsável pelo transporte escolar.
+                                        </p>
                                     </div>
                                 </div>
                             </div>
-
-                            <div className="pt-6">
-                                <Button
-                                    type="submit"
-                                    className="w-full h-12 text-lg bg-gradient-gold text-black-primary font-bold hover:opacity-90 transition-all shadow-lg hover:shadow-gold/20"
-                                    disabled={loading}
-                                >
-                                    {loading ? (
-                                        <span className="flex items-center gap-2">
-                                            <div className="w-5 h-5 border-2 border-black/30 border-t-black rounded-full animate-spin" />
-                                            Processando Cadastro...
-                                        </span>
-                                    ) : (
-                                        "Confirmar Cadastro"
-                                    )}
-                                </Button>
-                                <p className="text-center text-xs text-muted-foreground mt-4">
-                                    Ao confirmar, você concorda com o envio destes dados para o responsável pelo transporte escolar.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </form>
-            </CardContent>
-        </Card>
-            </div >
-        </div >
+                        </form>
+                    </CardContent>
+                </Card>
+            </div>
+        </div>
     );
 }

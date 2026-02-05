@@ -12,6 +12,23 @@ dist
 dist-ssr
 *.local
 
+# Arquivos grandes e temporários
+OBS-Studio-*.exe
+*.jpeg.webp
+Preta.jpeg.webp
+facesend_*.exe
+check_footer_data.mjs
+
+# Environment variables
+.env
+.env.local
+.env.production
+
+# Sensitive data
+# supabase/Documentação*
+# # **/Credenciais*
+external/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

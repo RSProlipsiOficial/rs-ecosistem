@@ -13,12 +13,12 @@ import { AdminLayout } from "@/components/layout/admin-layout";
 
 interface Pack {
   id: string;
-  nome: string;
-  descricao: string;
-  preco: number;
-  funcionalidades: string[];
-  ativo: boolean;
-  tipo: string;
+  name: string;
+  description: string;
+  price: number;
+  features: string[];
+  active: boolean;
+  plan_type: string;
   created_at: string;
   updated_at: string;
 }
@@ -37,7 +37,12 @@ export default function AdminPacksIndex() {
     preco: 0,
     funcionalidades: "",
     ativo: true,
-    tipo: "basico"
+    tipo: "inicial",
+    max_vans: 1,
+    max_alunos: 60,
+    max_expenses: 0,
+    trial_days: 7,
+    multiuser: false
   });
 
   useEffect(() => {
@@ -46,8 +51,14 @@ export default function AdminPacksIndex() {
 
   const loadPacks = async () => {
     try {
-      // Load packs from database would go here
-      setPacks([]);
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('subscription_plans')
+        .select('*')
+        .order('price', { ascending: true });
+
+      if (error) throw error;
+      setPacks((data as any) || []);
     } catch (error) {
       console.error('Erro ao carregar packs:', error);
       toast({
@@ -61,39 +72,51 @@ export default function AdminPacksIndex() {
   };
 
   const handleSave = async () => {
+    if (!formData.nome) {
+      toast({ title: "Erro", description: "Nome é obrigatório", variant: "destructive" });
+      return;
+    }
+
     setSaving(true);
     try {
       const funcionalidadesArray = formData.funcionalidades.split('\n').filter(f => f.trim());
-      
+
+      const packData = {
+        name: formData.nome,
+        description: formData.descricao,
+        price: Number(formData.preco),
+        features: funcionalidadesArray,
+        active: formData.ativo,
+        plan_type: formData.tipo,
+        limitations: {
+          max_vans: Number(formData.max_vans),
+          max_alunos: Number(formData.max_alunos),
+          max_expenses: formData.max_expenses ? Number(formData.max_expenses) : null,
+          trial_days: Number(formData.trial_days),
+          multiuser: Boolean(formData.multiuser)
+        },
+        updated_at: new Date().toISOString()
+      };
+
       if (editingPack) {
-        // Atualizar pack existente
-        const updatedPack = {
-          ...editingPack,
-          nome: formData.nome,
-          descricao: formData.descricao,
-          preco: formData.preco,
-          funcionalidades: funcionalidadesArray,
-          ativo: formData.ativo,
-          tipo: formData.tipo,
-          updated_at: new Date().toISOString()
-        };
-        
-        setPacks(prev => prev.map(p => p.id === editingPack.id ? updatedPack : p));
+        const { error } = await supabase
+          .from('subscription_plans')
+          .update(packData)
+          .eq('id', editingPack.id);
+
+        if (error) {
+          console.error('Supabase update error:', error);
+          throw error;
+        }
       } else {
-        // Criar novo pack
-        const newPackData: Pack = {
-          id: Date.now().toString(),
-          nome: formData.nome,
-          descricao: formData.descricao,
-          preco: formData.preco,
-          funcionalidades: funcionalidadesArray,
-          ativo: formData.ativo,
-          tipo: formData.tipo,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        };
-        
-        setPacks(prev => [...prev, newPackData]);
+        const { error } = await supabase
+          .from('subscription_plans')
+          .insert([packData]);
+
+        if (error) {
+          console.error('Supabase insert error:', error);
+          throw error;
+        }
       }
 
       toast({
@@ -101,12 +124,13 @@ export default function AdminPacksIndex() {
         description: "Pack salvo com sucesso!",
       });
 
+      loadPacks();
       resetForm();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao salvar pack:', error);
       toast({
-        title: "Erro",
-        description: "Não foi possível salvar o pack.",
+        title: "Erro ao salvar",
+        description: error.message || "Não foi possível salvar o pack.",
         variant: "destructive",
       });
     } finally {
@@ -116,31 +140,47 @@ export default function AdminPacksIndex() {
 
   const handleEdit = (pack: Pack) => {
     setEditingPack(pack);
+    const packFeatures = Array.isArray(pack.features)
+      ? pack.features
+      : (typeof pack.features === 'string' ? JSON.parse(pack.features) : []);
+
     setFormData({
-      nome: pack.nome,
-      descricao: pack.descricao,
-      preco: pack.preco,
-      funcionalidades: pack.funcionalidades.join('\n'),
-      ativo: pack.ativo,
-      tipo: pack.tipo
+      nome: pack.name,
+      descricao: pack.description,
+      preco: Number(pack.price),
+      funcionalidades: packFeatures.join('\n'),
+      ativo: pack.active,
+      tipo: pack.plan_type,
+      max_vans: Number((pack as any).limitations?.max_vans || 1),
+      max_alunos: Number((pack as any).limitations?.max_alunos || 0),
+      max_expenses: Number((pack as any).limitations?.max_expenses || 0),
+      trial_days: Number((pack as any).limitations?.trial_days || 7),
+      multiuser: Boolean((pack as any).limitations?.multiuser || false)
     });
     setNewPack(true);
   };
 
   const handleDelete = async (packId: string) => {
-    if (!confirm('Tem certeza que deseja excluir este pack?')) return;
-    
+    if (!confirm('Tem certeza que deseja excluir este pack? Todos os usuários vinculados a este plano perderão o acesso aos limites específicos. Deseja prosseguir?')) return;
+
     try {
-      setPacks(prev => prev.filter(p => p.id !== packId));
+      const { error } = await supabase
+        .from('subscription_plans')
+        .delete()
+        .eq('id', packId);
+
+      if (error) throw error;
+
       toast({
         title: "Sucesso",
-        description: "Pack excluído com sucesso!",
+        description: "Pack removido permanentemente!",
       });
-    } catch (error) {
+      loadPacks();
+    } catch (error: any) {
       console.error('Erro ao excluir pack:', error);
       toast({
-        title: "Erro",
-        description: "Não foi possível excluir o pack.",
+        title: "Erro ao excluir",
+        description: error.message || "Não foi possível excluir o pack.",
         variant: "destructive",
       });
     }
@@ -153,7 +193,12 @@ export default function AdminPacksIndex() {
       preco: 0,
       funcionalidades: "",
       ativo: true,
-      tipo: "basico"
+      tipo: "basico",
+      max_vans: 1,
+      max_alunos: 60,
+      max_expenses: 0,
+      trial_days: 7,
+      multiuser: false
     });
     setEditingPack(null);
     setNewPack(false);
@@ -179,7 +224,7 @@ export default function AdminPacksIndex() {
               Configure os packs e funcionalidades disponíveis
             </p>
           </div>
-          
+
           <Button onClick={() => setNewPack(true)}>
             <Plus className="w-4 h-4 mr-2" />
             Novo Pack
@@ -207,7 +252,7 @@ export default function AdminPacksIndex() {
                     className="w-full"
                   />
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label htmlFor="preco" className="text-sm font-medium">Preço (R$)</Label>
                   <Input
@@ -246,6 +291,45 @@ export default function AdminPacksIndex() {
                 />
               </div>
 
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="max_vans" className="text-sm font-medium">Max Vans</Label>
+                  <Input
+                    id="max_vans"
+                    type="number"
+                    value={formData.max_vans}
+                    onChange={(e) => setFormData(prev => ({ ...prev, max_vans: Number(e.target.value) }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="max_alunos" className="text-sm font-medium">Max Alunos</Label>
+                  <Input
+                    id="max_alunos"
+                    type="number"
+                    value={formData.max_alunos}
+                    onChange={(e) => setFormData(prev => ({ ...prev, max_alunos: Number(e.target.value) }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="max_expenses" className="text-sm font-medium">Gastos/Mês (0=ILIM)</Label>
+                  <Input
+                    id="max_expenses"
+                    type="number"
+                    value={formData.max_expenses}
+                    onChange={(e) => setFormData(prev => ({ ...prev, max_expenses: Number(e.target.value) }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="trial_days" className="text-sm font-medium">Dias Trial</Label>
+                  <Input
+                    id="trial_days"
+                    type="number"
+                    value={formData.trial_days}
+                    onChange={(e) => setFormData(prev => ({ ...prev, trial_days: Number(e.target.value) }))}
+                  />
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label htmlFor="tipo" className="text-sm font-medium">Tipo do Pack</Label>
@@ -255,17 +339,17 @@ export default function AdminPacksIndex() {
                     </SelectTrigger>
                     <SelectContent className="bg-popover border-border z-50">
                       <SelectItem value="gratis">Grátis</SelectItem>
-                      <SelectItem value="basico">Básico</SelectItem>
-                      <SelectItem value="premium">Premium</SelectItem>
+                      <SelectItem value="inicial">Inicial</SelectItem>
+                      <SelectItem value="crescimento">Crescimento</SelectItem>
                       <SelectItem value="profissional">Profissional</SelectItem>
                       <SelectItem value="ilimitado">Ilimitado</SelectItem>
+                      <SelectItem value="personalizado">Personalizado</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium">Status</Label>
-                  <div className="flex items-center space-x-3 pt-2">
+                <div className="flex items-center gap-6 pt-2">
+                  <div className="flex items-center space-x-3">
                     <input
                       type="checkbox"
                       id="ativo"
@@ -273,7 +357,17 @@ export default function AdminPacksIndex() {
                       onChange={(e) => setFormData(prev => ({ ...prev, ativo: e.target.checked }))}
                       className="w-4 h-4 rounded border-border"
                     />
-                    <Label htmlFor="ativo" className="text-sm">Pack ativo e disponível</Label>
+                    <Label htmlFor="ativo" className="text-sm">Ativo</Label>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <input
+                      type="checkbox"
+                      id="multiuser"
+                      checked={formData.multiuser}
+                      onChange={(e) => setFormData(prev => ({ ...prev, multiuser: e.target.checked }))}
+                      className="w-4 h-4 rounded border-border"
+                    />
+                    <Label htmlFor="multiuser" className="text-sm">Multiusuário</Label>
                   </div>
                 </div>
               </div>
@@ -302,23 +396,23 @@ export default function AdminPacksIndex() {
                     <Package className="w-5 h-5" />
                     <div>
                       <h4 className="font-medium">
-                        {pack.nome}
-                        {pack.tipo === "premium" && <span className="ml-2 text-xs bg-blue-500 text-white px-2 py-1 rounded-full">MAIS POPULAR</span>}
-                        {pack.tipo === "profissional" && <span className="ml-2 text-xs bg-green-500 text-white px-2 py-1 rounded-full">RECOMENDADO</span>}
-                        {pack.tipo === "gratis" && <span className="ml-2 text-xs bg-gray-500 text-white px-2 py-1 rounded-full">GRÁTIS</span>}
-                        <Badge variant={pack.ativo ? "default" : "secondary"} className="ml-2">
-                          {pack.ativo ? "Ativo" : "Inativo"}
+                        {pack.name}
+                        {pack.plan_type === "premium" && <span className="ml-2 text-xs bg-blue-500 text-white px-2 py-1 rounded-full">MAIS POPULAR</span>}
+                        {pack.plan_type === "profissional" && <span className="ml-2 text-xs bg-green-500 text-white px-2 py-1 rounded-full">RECOMENDADO</span>}
+                        {pack.plan_type === "gratis" && <span className="ml-2 text-xs bg-gray-500 text-white px-2 py-1 rounded-full">GRÁTIS</span>}
+                        <Badge variant={pack.active ? "default" : "secondary"} className="ml-2">
+                          {pack.active ? "Ativo" : "Inativo"}
                         </Badge>
                       </h4>
-                      <p className="text-sm text-muted-foreground">{pack.descricao}</p>
+                      <p className="text-sm text-muted-foreground">{pack.description}</p>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center gap-2">
                     <span className="text-2xl font-bold text-primary">
-                      {pack.preco === 0 ? "GRÁTIS" : `R$ ${pack.preco.toFixed(2).replace('.', ',')}`}
+                      {(!pack.price || pack.price === 0) ? "GRÁTIS" : `R$ ${Number(pack.price).toFixed(2).replace('.', ',')}`}
                     </span>
-                    {pack.preco > 0 && <span className="text-sm text-muted-foreground">/mês</span>}
+                    {pack.price > 0 && <span className="text-sm text-muted-foreground">/mês</span>}
                     <Button size="sm" variant="outline" onClick={() => handleEdit(pack)}>
                       <Edit3 className="w-4 h-4" />
                     </Button>
@@ -332,7 +426,7 @@ export default function AdminPacksIndex() {
                 <div>
                   <h4 className="font-medium mb-2">Funcionalidades:</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                    {pack.funcionalidades.map((func, index) => (
+                    {pack.features.map((func, index) => (
                       <div key={index} className="flex items-center gap-2">
                         <div className="w-2 h-2 bg-primary rounded-full"></div>
                         <span className="text-sm">{func}</span>
@@ -340,9 +434,9 @@ export default function AdminPacksIndex() {
                     ))}
                   </div>
                 </div>
-                
+
                 <div className="flex items-center justify-between mt-4 pt-4 border-t text-xs text-muted-foreground">
-                  <span>Tipo: {pack.tipo}</span>
+                  <span>Tipo: {pack.plan_type}</span>
                   <span>Atualizado: {new Date(pack.updated_at).toLocaleString('pt-BR')}</span>
                 </div>
               </CardContent>

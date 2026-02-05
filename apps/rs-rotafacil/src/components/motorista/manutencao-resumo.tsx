@@ -16,88 +16,99 @@ interface ManutencaoResumoProps {
 
 export function ManutencaoResumo({ resumo }: ManutencaoResumoProps) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-      {/* Total de Manutenções */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Total de Manutenções</CardTitle>
-          <Wrench className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{resumo.total}</div>
-          <p className="text-xs text-muted-foreground">
-            Problemas reportados
-          </p>
-        </CardContent>
-      </Card>
+    <div className="space-y-4">
+      <div className="flex items-center gap-2 mb-2">
+        <Wrench className="w-5 h-5 text-gold" />
+        <h2 className="text-xl font-black text-gold uppercase tracking-tight">Manutenção</h2>
+      </div>
 
-      {/* Pendentes */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Pendentes</CardTitle>
-          <Clock className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold text-orange-600">{resumo.pendentes}</div>
-          <p className="text-xs text-muted-foreground">
-            Aguardando reparo
-          </p>
-        </CardContent>
-      </Card>
-
-      {/* Em Andamento */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Em Andamento</CardTitle>
-          <Wrench className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold text-blue-600">{resumo.emAndamento}</div>
-          <p className="text-xs text-muted-foreground">
-            Sendo reparadas
-          </p>
-        </CardContent>
-      </Card>
-
-      {/* Concluídas */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Concluídas</CardTitle>
-          <CheckCircle className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold text-green-600">{resumo.concluidas}</div>
-          <p className="text-xs text-muted-foreground">
-            Problemas resolvidos
-          </p>
-        </CardContent>
-      </Card>
-
-      {/* Alerta de Urgentes */}
-      {resumo.urgentes > 0 && (
-        <Card className="md:col-span-2 lg:col-span-4 border-red-200 bg-red-50">
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2 text-red-600">
-              <AlertTriangle className="h-5 w-5" />
-              Atenção: Problemas Urgentes
-            </CardTitle>
-            <CardDescription>
-              Existem problemas com prioridade urgente que precisam de atenção imediata
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-2">
-              <Badge variant="destructive" className="gap-1">
-                <AlertTriangle className="h-3 w-3" />
-                {resumo.urgentes} problema{resumo.urgentes > 1 ? 's' : ''} urgente{resumo.urgentes > 1 ? 's' : ''}
-              </Badge>
-              <span className="text-sm text-red-700">
-                Podem comprometer a segurança ou operação das vans
-              </span>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* Total de Manutenções */}
+        <Card className="bg-black-secondary border-sidebar-border hover:border-gold/30 transition-all duration-300 rounded-[24px] overflow-hidden group">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-xs font-black uppercase text-zinc-500 tracking-widest">Total</CardTitle>
+            <div className="p-2 bg-zinc-800 rounded-xl">
+              <Wrench className="h-5 w-5 text-zinc-400" />
             </div>
+          </CardHeader>
+          <CardContent className="pt-4">
+            <div className="text-4xl font-black text-white mb-1">{resumo.total}</div>
+            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+              Reportados
+            </p>
           </CardContent>
         </Card>
-      )}
+
+        {/* Pendentes */}
+        <Card className="bg-black-secondary border-sidebar-border hover:border-gold/30 transition-all duration-300 rounded-[24px] overflow-hidden group">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-xs font-black uppercase text-zinc-500 tracking-widest">Aguardando</CardTitle>
+            <div className="p-2 bg-orange-500/10 rounded-xl text-orange-500">
+              <Clock className="h-5 w-5" />
+            </div>
+          </CardHeader>
+          <CardContent className="pt-4">
+            <div className="text-4xl font-black text-orange-500 mb-1">{resumo.pendentes}</div>
+            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+              Em fila
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Em Andamento */}
+        <Card className="bg-black-secondary border-sidebar-border hover:border-gold/30 transition-all duration-300 rounded-[24px] overflow-hidden group">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-xs font-black uppercase text-zinc-500 tracking-widest">Ativos</CardTitle>
+            <div className="p-2 bg-blue-500/10 rounded-xl text-blue-500">
+              <Wrench className="h-5 w-5" />
+            </div>
+          </CardHeader>
+          <CardContent className="pt-4">
+            <div className="text-4xl font-black text-blue-500 mb-1">{resumo.emAndamento}</div>
+            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+              Sendo reparados
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Concluídas */}
+        <Card className="bg-black-secondary border-sidebar-border hover:border-gold/30 transition-all duration-300 rounded-[24px] overflow-hidden group">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-xs font-black uppercase text-zinc-500 tracking-widest">Resolvidos</CardTitle>
+            <div className="p-2 bg-green-500/10 rounded-xl text-green-500">
+              <CheckCircle className="h-5 w-5" />
+            </div>
+          </CardHeader>
+          <CardContent className="pt-4">
+            <div className="text-4xl font-black text-green-500 mb-1">{resumo.concluidas}</div>
+            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+              Total solucionado
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Alerta de Urgentes */}
+        {resumo.urgentes > 0 && (
+          <Card className="sm:col-span-2 lg:col-span-4 bg-red-500/5 border-red-500/20 rounded-[28px] overflow-hidden">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg font-black flex items-center gap-2 text-red-500 uppercase tracking-tighter">
+                <AlertTriangle className="h-6 w-6" />
+                Atenção: Problemas Urgentes
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                <Badge variant="destructive" className="bg-red-500 text-white font-black px-4 py-1.5 rounded-xl shadow-lg shadow-red-500/20">
+                  {resumo.urgentes} ALERTA{resumo.urgentes > 1 ? 'S' : ''} ATIVO{resumo.urgentes > 1 ? 'S' : ''}
+                </Badge>
+                <span className="text-sm font-bold text-red-300/80 leading-snug">
+                  Existem itens que podem comprometer a segurança da operação. Verifique imediatamente.
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </div>
   );
 }

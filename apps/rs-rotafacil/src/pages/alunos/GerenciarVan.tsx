@@ -66,10 +66,10 @@ const GerenciarVan = () => {
   const handleSendWhatsApp = (whatsapp: string) => {
     // Remove todos os caracteres não numéricos
     const cleanNumber = whatsapp.replace(/\D/g, '');
-    
+
     // Adiciona o código do país se não estiver presente
     const formattedNumber = cleanNumber.startsWith('55') ? cleanNumber : `55${cleanNumber}`;
-    
+
     const whatsappUrl = `https://wa.me/${formattedNumber}`;
     window.open(whatsappUrl, '_blank');
   };
@@ -210,6 +210,7 @@ const GerenciarVan = () => {
 
         {/* Forms */}
         <AlunoForm
+          key={editingAluno?.id || "new"}
           open={showAlunoForm}
           onClose={() => {
             setShowAlunoForm(false);

@@ -9,15 +9,16 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { CreditWarningCard } from '@/components/ia/credit-warning-card';
-import { 
-  Send, 
-  Plus, 
-  MessageSquare, 
-  Bot, 
-  User, 
+import {
+  Send,
+  Plus,
+  MessageSquare,
+  Bot,
+  User,
   Trash2,
-  Settings
+  Edit3
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface Message {
   id: string;
@@ -46,8 +47,9 @@ interface AIModel {
 
 const ChatIA = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  
+
   const [messages, setMessages] = useState<Message[]>([]);
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [models, setModels] = useState<AIModel[]>([]);
@@ -56,6 +58,7 @@ const ChatIA = () => {
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [aiConfig, setAiConfig] = useState<any>(null);
 
   // Check authentication
   useEffect(() => {
@@ -79,36 +82,52 @@ const ChatIA = () => {
         .from('ai_models')
         .select('*')
         .order('provider, display_name');
-      
+
       if (error) {
         console.error('Erro ao carregar modelos:', error);
         return;
       }
-      
+
       setModels(data || []);
     };
-    
+
     loadModels();
+  }, []);
+
+  // Load AI Config
+  useEffect(() => {
+    const loadAiConfig = async () => {
+      const { data } = await supabase
+        .from('app_settings')
+        .select('value')
+        .eq('key', 'support_config')
+        .maybeSingle();
+
+      if (data?.value) {
+        setAiConfig(data.value);
+      }
+    };
+    loadAiConfig();
   }, []);
 
   // Load sessions
   useEffect(() => {
     if (!user) return;
-    
+
     const loadSessions = async () => {
       const { data, error } = await supabase
         .from('chat_sessions')
         .select('*')
         .order('updated_at', { ascending: false });
-      
+
       if (error) {
         console.error('Erro ao carregar sessões:', error);
         return;
       }
-      
+
       setSessions(data || []);
     };
-    
+
     loadSessions();
   }, [user]);
 
@@ -119,19 +138,19 @@ const ChatIA = () => {
       setMessages([]);
       return;
     }
-    
+
     const loadMessages = async () => {
       const { data, error } = await supabase
         .from('chat_messages')
         .select('*')
         .eq('session_id', currentSession)
         .order('created_at', { ascending: true });
-      
+
       if (error) {
         console.error('Erro ao carregar mensagens:', error);
         return;
       }
-      
+
       setMessages((data || []).map(msg => ({
         id: msg.id,
         role: msg.role as 'user' | 'assistant',
@@ -140,7 +159,7 @@ const ChatIA = () => {
         created_at: msg.created_at
       })));
     };
-    
+
     loadMessages();
   }, [currentSession]);
 
@@ -151,7 +170,7 @@ const ChatIA = () => {
 
   const createNewSession = async () => {
     if (!user) return;
-    
+
     const { data, error } = await supabase
       .from('chat_sessions')
       .insert({
@@ -160,7 +179,7 @@ const ChatIA = () => {
       })
       .select()
       .single();
-    
+
     if (error) {
       toast({
         title: 'Erro',
@@ -169,7 +188,7 @@ const ChatIA = () => {
       });
       return;
     }
-    
+
     setCurrentSession(data.id);
     setSessions(prev => [data, ...prev]);
     setMessages([]);
@@ -180,7 +199,7 @@ const ChatIA = () => {
       .from('chat_sessions')
       .delete()
       .eq('id', sessionId);
-    
+
     if (error) {
       toast({
         title: 'Erro',
@@ -189,13 +208,13 @@ const ChatIA = () => {
       });
       return;
     }
-    
+
     setSessions(prev => prev.filter(s => s.id !== sessionId));
     if (currentSession === sessionId) {
       setCurrentSession(null);
       setMessages([]);
     }
-    
+
     toast({
       title: 'Sucesso',
       description: 'Sessão excluída com sucesso'
@@ -215,7 +234,7 @@ const ChatIA = () => {
     if (!inputMessage.trim() || isLoading || !user) return;
 
     let sessionId = currentSession;
-    
+
     // Create new session if none exists
     if (!sessionId) {
       const { data, error } = await supabase
@@ -226,7 +245,7 @@ const ChatIA = () => {
         })
         .select()
         .single();
-      
+
       if (error) {
         toast({
           title: 'Erro',
@@ -235,7 +254,7 @@ const ChatIA = () => {
         });
         return;
       }
-      
+
       sessionId = data.id;
       setCurrentSession(sessionId);
       setSessions(prev => [data, ...prev]);
@@ -271,7 +290,7 @@ const ChatIA = () => {
       }
 
       const { data } = response;
-      
+
       if (!data.success) {
         throw new Error(data.error || 'Erro desconhecido');
       }
@@ -293,7 +312,7 @@ const ChatIA = () => {
         description: error instanceof Error ? error.message : 'Erro ao enviar mensagem',
         variant: 'destructive'
       });
-      
+
       // Remove user message on error
       setMessages(prev => prev.filter(msg => msg.id !== userMessage.id));
     } finally {
@@ -330,23 +349,22 @@ const ChatIA = () => {
       {/* Sidebar */}
       <div className="w-80 bg-card border-r flex flex-col">
         <div className="p-4 border-b">
-          <Button 
-            onClick={createNewSession} 
+          <Button
+            onClick={createNewSession}
             className="w-full justify-start gap-3 h-12 bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 hover:from-amber-500 hover:via-yellow-500 hover:to-amber-600 text-slate-800 font-semibold shadow-lg border border-amber-300 rounded-xl transition-all duration-200 hover:shadow-xl"
           >
             <Plus className="h-5 w-5 text-slate-700" />
             <span className="text-base">Nova conversa</span>
           </Button>
         </div>
-        
+
         <ScrollArea className="flex-1 p-4">
           <div className="space-y-2">
             {sessions.map((session) => (
               <Card
                 key={session.id}
-                className={`p-3 cursor-pointer transition-colors hover:bg-accent group ${
-                  currentSession === session.id ? 'bg-accent' : ''
-                }`}
+                className={`p-3 cursor-pointer transition-colors hover:bg-accent group ${currentSession === session.id ? 'bg-accent' : ''
+                  }`}
                 onClick={() => setCurrentSession(session.id)}
               >
                 <div className="flex items-center justify-between">
@@ -373,15 +391,18 @@ const ChatIA = () => {
             ))}
           </div>
         </ScrollArea>
-        
+
         <div className="p-4 border-t bg-card">
           <div className="space-y-4">
             {/* Card de Aviso de Créditos */}
             <CreditWarningCard />
-            
-            <div className="flex items-center gap-2 mb-3">
-              <Settings className="h-5 w-5 text-primary" />
-              <span className="text-base font-bold text-foreground">Configurações</span>
+
+            <div
+              className="flex items-center gap-2 mb-3 cursor-pointer hover:bg-accent p-2 rounded-lg transition-colors"
+              onClick={() => navigate('/ia/configuracao')}
+            >
+              <Edit3 className="h-5 w-5 text-primary" />
+              <span className="text-base font-bold text-foreground">Configurar IA</span>
             </div>
           </div>
         </div>
@@ -393,6 +414,16 @@ const ChatIA = () => {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-xl font-semibold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">RS-IA</h1>
+              <div className="flex gap-2 mt-1">
+                <Badge variant="outline" className="text-[10px] uppercase font-bold">
+                  Memória Ativa
+                </Badge>
+                {aiConfig?.ai_prompt && (
+                  <Badge variant="secondary" className="text-[10px] uppercase font-bold bg-purple-100 text-purple-800">
+                    Prompt Customizado
+                  </Badge>
+                )}
+              </div>
             </div>
             <div className="flex items-center gap-4">
               <div className="min-w-[200px]">
@@ -405,7 +436,7 @@ const ChatIA = () => {
                       <SelectItem key={model.id} value={model.model_id} className="cursor-pointer hover:bg-accent focus:bg-accent">
                         <div className="flex flex-col py-2 w-full">
                           <div className="flex items-center justify-between w-full mb-1">
-                            <span className="font-semibold text-foreground text-sm">{model.display_name}</span>
+                            <span className="font-semibold text-foreground text-sm">{model.display_name || 'Modelo'}</span>
                             {model.supports_vision && (
                               <Badge variant="secondary" className="ml-2 text-xs bg-blue-100 text-blue-800">
                                 Visão
@@ -414,10 +445,10 @@ const ChatIA = () => {
                           </div>
                           <div className="flex items-center gap-2 mb-1">
                             <Badge variant="outline" className="text-xs">
-                              {model.provider}
+                              {model.provider || 'AI'}
                             </Badge>
                             <span className="text-xs text-muted-foreground">
-                              {model.max_tokens.toLocaleString()} tokens
+                              {model.max_tokens ? model.max_tokens.toLocaleString() : 'N/A'} tokens
                             </span>
                           </div>
                         </div>
@@ -505,7 +536,7 @@ const ChatIA = () => {
               disabled={isLoading}
               className="flex-1"
             />
-            <Button 
+            <Button
               onClick={sendMessage}
               disabled={!inputMessage.trim() || isLoading}
               size="icon"

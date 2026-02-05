@@ -18,7 +18,7 @@ interface Tutorial {
   link_tutorial: string;
   ativo: boolean;
   ordem: number | null;
-  tipo: string;
+  categoria: string;
   created_at: string;
 }
 
@@ -36,7 +36,8 @@ export default function AdminTutoriaisIndex() {
     descricao: "",
     link_tutorial: "",
     ativo: true,
-    ordem: 0
+    ordem: 0,
+    categoria: "Alunos e Vans"
   });
 
   useEffect(() => {
@@ -74,7 +75,7 @@ export default function AdminTutoriaisIndex() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
       if (editingTutorial) {
         const { error } = await supabase
@@ -84,7 +85,8 @@ export default function AdminTutoriaisIndex() {
             descricao: formData.descricao || null,
             link_tutorial: formData.link_tutorial,
             ativo: formData.ativo,
-            ordem: formData.ordem
+            ordem: formData.ordem,
+            categoria: formData.categoria
           })
           .eq('id', editingTutorial.id);
 
@@ -102,7 +104,8 @@ export default function AdminTutoriaisIndex() {
             descricao: formData.descricao || null,
             link_tutorial: formData.link_tutorial,
             ativo: formData.ativo,
-            ordem: formData.ordem
+            ordem: formData.ordem,
+            categoria: formData.categoria
           }]);
 
         if (error) throw error;
@@ -120,7 +123,8 @@ export default function AdminTutoriaisIndex() {
         descricao: "",
         link_tutorial: "",
         ativo: true,
-        ordem: 0
+        ordem: 0,
+        categoria: "Alunos e Vans"
       });
       loadTutoriais();
     } catch (error) {
@@ -140,7 +144,8 @@ export default function AdminTutoriaisIndex() {
       descricao: tutorial.descricao || "",
       link_tutorial: tutorial.link_tutorial,
       ativo: tutorial.ativo,
-      ordem: tutorial.ordem || 0
+      ordem: tutorial.ordem || 0,
+      categoria: tutorial.categoria || "Alunos e Vans"
     });
     setIsDialogOpen(true);
   };
@@ -160,7 +165,7 @@ export default function AdminTutoriaisIndex() {
         title: "Sucesso",
         description: "Tutorial excluído com sucesso!",
       });
-      
+
       loadTutoriais();
     } catch (error) {
       console.error('Erro ao excluir tutorial:', error);
@@ -182,7 +187,7 @@ export default function AdminTutoriaisIndex() {
               Gerencie os tutoriais e vídeos de suporte exibidos nos apps - Padrão Profissional
             </p>
           </div>
-          
+
           <Dialog open={isDialogOpen} onOpenChange={(open) => {
             setIsDialogOpen(open);
             if (!open) {
@@ -220,7 +225,7 @@ export default function AdminTutoriaisIndex() {
                       required
                     />
                   </div>
-                  
+
                   <div>
                     <Label htmlFor="ordem">Ordem de Exibição</Label>
                     <Input
@@ -231,8 +236,26 @@ export default function AdminTutoriaisIndex() {
                       placeholder="1, 2, 3..."
                     />
                   </div>
+
+                  <div>
+                    <Label htmlFor="categoria">Categoria</Label>
+                    <select
+                      id="categoria"
+                      value={formData.categoria}
+                      onChange={(e) => setFormData(prev => ({ ...prev, categoria: e.target.value }))}
+                      className="w-full h-10 px-3 py-2 bg-background border border-input rounded-md text-sm"
+                    >
+                      <option value="Alunos e Vans">Alunos e Vans</option>
+                      <option value="RS-IA">RS-IA</option>
+                      <option value="Financeiro">Financeiro</option>
+                      <option value="Mensalidades">Mensalidades</option>
+                      <option value="Motorista">Motorista</option>
+                      <option value="Monitora">Monitora</option>
+                      <option value="Educação Financeira">Educação Financeira</option>
+                    </select>
+                  </div>
                 </div>
-                
+
                 <div>
                   <Label htmlFor="link_tutorial">URL do Vídeo (YouTube/Vimeo)</Label>
                   <Input
@@ -244,7 +267,7 @@ export default function AdminTutoriaisIndex() {
                     required
                   />
                 </div>
-                
+
                 <div>
                   <Label htmlFor="descricao">Descrição</Label>
                   <Textarea
@@ -254,7 +277,7 @@ export default function AdminTutoriaisIndex() {
                     placeholder="Descrição do tutorial..."
                   />
                 </div>
-                
+
                 <div>
                   <Label htmlFor="ordem">Ordem de Exibição</Label>
                   <Input
@@ -264,7 +287,7 @@ export default function AdminTutoriaisIndex() {
                     onChange={(e) => setFormData(prev => ({ ...prev, ordem: parseInt(e.target.value) || 0 }))}
                   />
                 </div>
-                
+
                 <div className="flex items-center space-x-2">
                   <Switch
                     id="ativo"
@@ -273,7 +296,7 @@ export default function AdminTutoriaisIndex() {
                   />
                   <Label htmlFor="ativo">Tutorial ativo</Label>
                 </div>
-                
+
                 <Button type="submit" className="w-full">
                   {editingTutorial ? 'Atualizar Tutorial' : 'Criar Tutorial'}
                 </Button>
@@ -304,7 +327,7 @@ export default function AdminTutoriaisIndex() {
               <div className="text-2xl font-bold">{tutoriais.length}</div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Tutoriais Ativos</CardTitle>
@@ -315,7 +338,7 @@ export default function AdminTutoriaisIndex() {
               </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Tutoriais Inativos</CardTitle>
@@ -353,25 +376,27 @@ export default function AdminTutoriaisIndex() {
                       <div className="flex items-center gap-2">
                         <BookOpen className="w-4 h-4 text-muted-foreground" />
                         <h3 className="font-medium">{tutorial.titulo}</h3>
-                        <span className={`px-2 py-1 rounded-full text-xs ${
-                          tutorial.ativo ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                        }`}>
+                        <span className={`px-2 py-1 rounded-full text-xs ${tutorial.ativo ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                          }`}>
                           {tutorial.ativo ? 'Ativo' : 'Inativo'}
                         </span>
+                        <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded text-xs">
+                          {tutorial.categoria || 'Sem Categoria'}
+                        </span>
                       </div>
-                      
+
                       {tutorial.descricao && (
                         <p className="text-sm text-muted-foreground">
                           {tutorial.descricao}
                         </p>
                       )}
-                      
+
                       <div className="flex items-center gap-4 text-xs text-muted-foreground">
                         <span>Ordem: {tutorial.ordem || 0}</span>
                         <span>Criado em: {new Date(tutorial.created_at).toLocaleDateString('pt-BR')}</span>
                       </div>
                     </div>
-                    
+
                     {/* Ações */}
                     <div className="flex items-center gap-2">
                       <Button
