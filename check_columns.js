@@ -1,0 +1,21 @@
+
+import { createClient } from '@supabase/supabase-js';
+
+const SUPABASE_URL = 'https://rptkhrboejbwexseikuo.supabase.co';
+const SUPABASE_SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJwdGtocmJvZWpid2V4c2Vpa3VvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcwMTQ4OTEsImV4cCI6MjA3MjU5MDg5MX0.lZdg0Esgxx81g9gO0IDKZ46a_zbyapToRqKSAg5oQ4Y';
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+
+async function check() {
+    console.log("Checking columns of minisite_setts...");
+    const { data, error } = await supabase.from('minisite_setts').select('*').limit(1);
+    if (error) {
+        console.error('Error:', error.message);
+    } else if (data && data.length > 0) {
+        console.log('Columns found:', Object.keys(data[0]));
+    } else {
+        console.log('Table is empty.');
+    }
+}
+
+check();

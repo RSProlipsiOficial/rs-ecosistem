@@ -1,0 +1,20 @@
+[
+  {
+    "name": "RS Prólipsi ",
+    "id": "89c000c0-7a39-4e1e-8dee-5978d846fa89",
+    "directs": 6,
+    "sponsor": null
+  },
+  {
+    "name": "Rota Fácil Teste",
+    "id": "56334782-424e-4554-9b44-69b0eb454203",
+    "directs": 0,
+    "sponsor": "7720eac9-2d47-4730-86bc-8ce3fd38e886"
+  },
+  {
+    "name": "Rota Fácil Oficial",
+    "id": "d107da4e-e266-41b0-947a-0c66b2f2b9ef",
+    "directs": 0,
+    "sponsor": "179d44cd-3351-4cdb-ad1e-78ac274108c2"
+  }
+]

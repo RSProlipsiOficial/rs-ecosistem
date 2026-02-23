@@ -1,23 +1,43 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { authAPI } from '../src/services/api';
+import { supabase } from '../src/lib/supabaseClient';
+
+import { Eye, EyeOff } from 'lucide-react';
 
 const InputField: React.FC<{ name: string, label: string, type?: string, placeholder?: string, required?: boolean, value: string, onChange: (e: React.ChangeEvent<HTMLInputElement>) => void }> =
- ({ name, label, type = 'text', placeholder, required = false, value, onChange }) => (
-    <div>
-        <label htmlFor={name} className="block text-sm font-medium text-text-body mb-2">{label}</label>
-        <input
-            type={type}
-            id={name}
-            name={name}
-            value={value}
-            onChange={onChange}
-            placeholder={placeholder}
-            required={required}
-            className="w-full px-4 py-3 rounded-lg bg-surface border border-border focus:outline-none focus:ring-2 focus:ring-gold/25 focus:border-transparent transition-all"
-        />
-    </div>
-);
+    ({ name, label, type = 'text', placeholder, required = false, value, onChange }) => {
+        const [showPassword, setShowPassword] = useState(false);
+        const isPassword = type === 'password';
+
+        return (
+            <div>
+                <label htmlFor={name} className="block text-sm font-medium text-text-body mb-2">{label}</label>
+                <div className="relative">
+                    <input
+                        type={isPassword ? (showPassword ? 'text' : 'password') : type}
+                        id={name}
+                        name={name}
+                        value={value}
+                        onChange={onChange}
+                        placeholder={placeholder}
+                        required={required}
+                        className={`w-full px-4 py-3 rounded-lg bg-surface border border-border focus:outline-none focus:ring-2 focus:ring-gold/25 focus:border-transparent transition-all ${isPassword ? 'pr-12' : ''}`}
+                    />
+                    {isPassword && (
+                        <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-text-body hover:text-gold transition-colors p-1"
+                            tabIndex={-1}
+                        >
+                            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                        </button>
+                    )}
+                </div>
+            </div>
+        );
+    };
 
 const Login: React.FC = () => {
     const [email, setEmail] = useState('');
@@ -46,10 +66,10 @@ const Login: React.FC = () => {
         if (token) {
             try {
                 const authData = JSON.parse(atob(token));
-                
+
                 if (authData.autoLogin === true) {
                     console.log('🔓 Auto-login detectado:', authData.source);
-                    
+
                     // Salvar dados no localStorage (modo demo)
                     localStorage.setItem('token', token);
                     localStorage.setItem('userId', authData.userId || 'auto-' + Date.now());
@@ -57,7 +77,7 @@ const Login: React.FC = () => {
                     localStorage.setItem('userEmail', authData.email || 'consultor@rsprolipsi.com.br');
                     localStorage.setItem('autoLogin', 'true');
                     localStorage.setItem('loginSource', authData.source);
-                    
+
                     // Redirecionar para dashboard
                     navigate('/app/dashboard', { replace: true });
                 }
@@ -67,39 +87,61 @@ const Login: React.FC = () => {
         }
     }, [navigate]);
 
+    const handleForgotPassword = async (e: React.MouseEvent) => {
+        e.preventDefault();
+        if (!email) {
+            setError('Por favor, digite seu email primeiro para recuperar a senha');
+            return;
+        }
+
+        try {
+            setLoading(true);
+            await authAPI.forgotPassword(email);
+            alert('Email de recuperação enviado! Verifique sua caixa de entrada.');
+            setError('');
+        } catch (err: any) {
+            setError(err.response?.data?.error || 'Erro ao enviar email de recuperação');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
         setLoading(true);
 
         try {
-            // Tentar login real
-            const response = await authAPI.login(email, password);
-            
-            if (response.data.success) {
+            // LOGIN DIRETO VIA SUPABASE (Mais robusto que via API Proxy)
+            const { data, error } = await supabase.auth.signInWithPassword({
+                email,
+                password
+            });
+
+            if (error) throw error;
+
+            if (data.session) {
                 // Salvar token e dados do usuário
-                localStorage.setItem('token', response.data.token);
-                localStorage.setItem('userId', response.data.user.id);
-                localStorage.setItem('userName', response.data.user.nome);
-                localStorage.setItem('userEmail', response.data.user.email);
-                
+                localStorage.setItem('token', data.session.access_token);
+                localStorage.setItem('userId', data.user.id);
+                localStorage.setItem('userName', data.user.user_metadata?.nome || 'Consultor');
+                localStorage.setItem('userEmail', data.user.email || '');
+
                 // Navegar para dashboard
                 navigate('/app/dashboard');
             } else {
-                setError(response.data.error || 'Erro ao fazer login');
+                throw new Error('Sessão não criada');
             }
         } catch (err: any) {
             console.error('Erro no login:', err);
-            
-            // Se a API não estiver disponível, permitir acesso demo
-            if (err.code === 'ERR_NETWORK' || err.message.includes('Network Error')) {
-                console.log('API não disponível, usando modo demo');
-                localStorage.setItem('userId', 'demo-user');
-                localStorage.setItem('userName', email.split('@')[0]);
-                localStorage.setItem('userEmail', email);
-                navigate('/app/dashboard');
+
+            // Tratamento de erros específicos do Supabase
+            if (err.message.includes('Invalid login')) {
+                setError('Email ou senha incorretos.');
+            } else if (err.message.includes('Email not confirmed')) {
+                setError('Por favor, confirme seu email antes de entrar.');
             } else {
-                setError('Email ou senha incorretos');
+                setError(err.message || 'Erro ao fazer login');
             }
         } finally {
             setLoading(false);
@@ -121,23 +163,23 @@ const Login: React.FC = () => {
                         </div>
                     )}
                     <form onSubmit={handleLogin} className="space-y-6">
-                        <InputField 
-                            name="email" 
-                            label="ID de Consultor ou Email" 
+                        <InputField
+                            name="email"
+                            label="ID de Consultor ou Email"
                             type="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            placeholder="seu.email@exemplo.com" 
-                            required 
+                            placeholder="seu.email@exemplo.com"
+                            required
                         />
-                        <InputField 
-                            name="password" 
-                            label="Senha" 
+                        <InputField
+                            name="password"
+                            label="Senha"
                             type="password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            placeholder="********" 
-                            required 
+                            placeholder="********"
+                            required
                         />
                         <div className="flex items-center justify-between">
                             <div className="flex items-center">
@@ -147,13 +189,17 @@ const Login: React.FC = () => {
                                 </label>
                             </div>
                             <div className="text-sm">
-                                <a href="#" className="font-medium text-gold hover:text-gold-hover">
+                                <button
+                                    type="button"
+                                    onClick={handleForgotPassword}
+                                    className="font-medium text-gold hover:text-gold-hover bg-transparent border-none p-0 cursor-pointer"
+                                >
                                     Esqueceu a senha?
-                                </a>
+                                </button>
                             </div>
                         </div>
-                        <button 
-                            type="submit" 
+                        <button
+                            type="submit"
                             disabled={loading}
                             className="w-full text-center py-3 px-6 bg-gold text-lg text-card hover:bg-gold-hover font-semibold rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                         >

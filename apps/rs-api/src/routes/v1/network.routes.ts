@@ -19,11 +19,23 @@ router.get('/tree', supabaseAuth, async (req: any, res) => {
         }
 
         const userId = req.user.id;
+        const OFFICIAL_EMAIL = 'rsprolipsioficial@gmail.com';
+
+        // Buscar consultor atual para ver o email
+        const { data: userData } = await supabase.from('consultores').select('id, email').eq('id', userId).single();
+        const userEmail = userData?.email?.toLowerCase().trim();
+        const isOfficial = userEmail === OFFICIAL_EMAIL;
+
+        let startIds = [userId];
+        if (isOfficial) {
+            const { data: officials } = await supabase.from('consultores').select('id').eq('email', OFFICIAL_EMAIL);
+            startIds = officials?.map(o => o.id) || [userId];
+        }
 
         // 1. Buscar o próprio usuário (Root da visualização)
         const { data: userNode, error: userError } = await supabase
             .from('consultores')
-            .select('id, nome, login, email, pin_atual, status')
+            .select('id, nome, username, email, pin_atual, status')
             .eq('id', userId)
             .single();
 
@@ -32,15 +44,15 @@ router.get('/tree', supabaseAuth, async (req: any, res) => {
         // 2. Buscar descendentes (Nível 1 da Matriz - Filhos Diretos)
         const { data: directChildren, error: childrenError } = await supabase
             .from('consultores')
-            .select('id, nome, email, pin_atual, status')
-            .eq('patrocinador_id', userId);
+            .select('id, nome, email, username, pin_atual, status')
+            .in('patrocinador_id', startIds);
 
         if (childrenError) throw childrenError;
 
         const rootNode: any = {
             id: userNode.id,
             name: userNode.nome,
-            login: userNode.login || userNode.email,
+            login: userNode.username || userNode.email,
             pin: userNode.pin_atual || 'Iniciante',
             status: userNode.status,
             level: 0,
@@ -53,7 +65,7 @@ router.get('/tree', supabaseAuth, async (req: any, res) => {
             rootNode.children = directChildren.map((c: any) => ({
                 id: c.id,
                 name: c.nome,
-                login: c.login || c.email,
+                login: c.username || c.email,
                 pin: c.pin_atual || 'Iniciante',
                 status: c.status,
                 level: 1,
@@ -66,7 +78,7 @@ router.get('/tree', supabaseAuth, async (req: any, res) => {
             if (childIds.length > 0) {
                 const { data: grandChildren } = await supabase
                     .from('consultores')
-                    .select('id, nome, email, pin_atual, status, patrocinador_id')
+                    .select('id, nome, email, username, pin_atual, status, patrocinador_id')
                     .in('patrocinador_id', childIds);
 
                 if (grandChildren) {
@@ -76,7 +88,7 @@ router.get('/tree', supabaseAuth, async (req: any, res) => {
                             parent.children.push({
                                 id: gc.id,
                                 name: gc.nome,
-                                login: gc.login || gc.email,
+                                login: gc.username || gc.email,
                                 pin: gc.pin_atual || 'Iniciante',
                                 status: gc.status,
                                 level: 2,
@@ -93,6 +105,8 @@ router.get('/tree', supabaseAuth, async (req: any, res) => {
         // O Frontend às vezes espera { tree: ... } ou direto ...
         // Em `sigma.routes.ts` retornava { tree: rootNode }.
         // Vamos manter consistência.
+        // Se for root consolidado, o rootNode.id deve ser o do usuário logado, 
+        // mas os filhos vêm do ABSOLUTE_ROOT_ID.
         res.json({ tree: rootNode });
 
     } catch (error: any) {

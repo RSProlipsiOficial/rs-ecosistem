@@ -41,6 +41,16 @@ export interface Incentive {
   icon: string;
 }
 
+export interface PromoBannerConfig {
+  id: string;
+  preTitle: string;
+  title: string;
+  price: number;
+  imageUrl: string;
+  imageDataUrl?: string;
+  ctaText: string;
+}
+
 export interface DashboardConfig {
   progressBar: ProgressBarConfig;
   userInfoFields: UserInfoField[];
@@ -48,4 +58,6 @@ export interface DashboardConfig {
   bonusCards: DashboardBonusCard[];
   selectedIncentives: string[];
   pinLogos: Record<string, string>;
+  promoBanners?: PromoBannerConfig[];
 }
+

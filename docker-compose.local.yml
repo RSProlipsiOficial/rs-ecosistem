@@ -9,6 +9,15 @@ services:
       - "3000:3000"
     restart: unless-stopped
 
+  rs-store:
+    build:
+      context: ./apps/rs-ops-app/rs-marketplace
+      dockerfile: Dockerfile
+    container_name: rs-store
+    ports:
+      - "3003:3003"
+    restart: unless-stopped
+
   rs-admin:
     build:
       context: .
@@ -30,10 +39,10 @@ services:
   rs-marketplace:
     build:
       context: .
-      dockerfile: apps/rs-marketplace/Dockerfile
+      dockerfile: apps/rs-marketplace/Marketplace/RS-CDS.-Oficial/Dockerfile
     container_name: rs-marketplace
     ports:
-      - "3003:3003"
+      - "3006:3006"
     restart: unless-stopped
 
   rs-walletpay:

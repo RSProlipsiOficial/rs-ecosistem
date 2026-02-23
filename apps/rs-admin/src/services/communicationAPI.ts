@@ -85,6 +85,7 @@ const createAPIHandlers = (resourcePath: string) => ({
 const announcementsAPI = createAPIHandlers('/v1/communications/announcements');
 export const agendaAPI = createAPIHandlers('/v1/communications/agenda');
 export const trainingsAPI = createAPIHandlers('/v1/communications/trainings');
+export const lessonsAPI = createAPIHandlers('/v1/communications/lessons'); // New API for lessons
 export const catalogsAPI = createAPIHandlers('/v1/communications/catalogs');
 export const materialsAPI = createAPIHandlers('/v1/communications/materials');
 
@@ -108,6 +109,7 @@ export default {
     announcements: announcementsAPI,
     agenda: agendaAPI,
     trainings: trainingsAPI,
+    lessons: lessonsAPI,
     catalogs: catalogsAPI,
     materials: materialsAPI,
     search: searchAPI,

@@ -1,40 +1,48 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Robô Kagi + Fibo (Binance Scanner)</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="manifest" href="/manifest.json" />
-    <meta name="theme-color" content="#09090b" />
-    <link rel="apple-touch-icon" href="/logo192.png">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Robô Kagi">
-    <style>
-      /* Custom Scrollbar for Webkit-based browsers (Chrome, Safari) */
-      ::-webkit-scrollbar {
-        width: 6px;
-        height: 6px;
-      }
-      ::-webkit-scrollbar-track {
-        background: transparent;
-      }
-      ::-webkit-scrollbar-thumb {
-        background-color: #52525b; /* zinc-600 */
-        border-radius: 3px;
-        border: 2px solid transparent;
-        background-clip: content-box;
-      }
-      ::-webkit-scrollbar-thumb:hover {
-        background-color: #71717a; /* zinc-500 */
-      }
-      /* Custom Scrollbar for Firefox */
-      * {
-        scrollbar-width: thin;
-        scrollbar-color: #52525b #18181b; /* thumb color track color (zinc-600 zinc-900) */
-      }
-    </style>
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RS Robo Kagi Binance</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#09090b" />
+  <link rel="apple-touch-icon" href="/logo192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="RS Robo Kagi">
+  <style>
+    /* Custom Scrollbar for Webkit-based browsers (Chrome, Safari) */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background-color: #52525b;
+      /* zinc-600 */
+      border-radius: 3px;
+      border: 2px solid transparent;
+      background-clip: content-box;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background-color: #71717a;
+      /* zinc-500 */
+    }
+
+    /* Custom Scrollbar for Firefox */
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: #52525b #18181b;
+      /* thumb color track color (zinc-600 zinc-900) */
+    }
+  </style>
   <script type="importmap">
 {
   "imports": {
@@ -42,7 +50,6 @@
     "react-dom/": "https://aistudiocdn.com/react-dom@^18.3.1/",
     "react/": "https://aistudiocdn.com/react@^18.3.1/",
     "lightweight-charts": "https://aistudiocdn.com/lightweight-charts@^4.2.0",
-    "@google/genai": "https://aistudiocdn.com/@google/genai@^0.19.1",
     "vite": "https://aistudiocdn.com/vite@^7.1.11",
     "@vitejs/plugin-react": "https://aistudiocdn.com/@vitejs/plugin-react@^5.0.4",
     "tailwindcss": "https://aistudiocdn.com/tailwindcss@^4.1.15",
@@ -50,10 +57,12 @@
   }
 }
 </script>
-<link rel="stylesheet" href="/index.css">
+  <link rel="stylesheet" href="/index.css">
 </head>
-  <body class="bg-zinc-950 text-zinc-200">
-    <div id="root"></div>
-    <script type="module" src="/index.tsx"></script>
-  </body>
+
+<body class="bg-zinc-950 text-zinc-200">
+  <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+
 </html>

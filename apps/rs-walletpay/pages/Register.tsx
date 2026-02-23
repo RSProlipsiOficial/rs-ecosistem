@@ -1,7 +1,10 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import Modal from '../components/Modal';
+import { supabase } from '../src/lib/supabaseClient';
+import { syncService } from '../src/services/syncService';
+
 
 interface FormData {
     sponsorId: string;
@@ -33,6 +36,8 @@ const PlaceholderAvatar = () => (
 
 const Register: React.FC = () => {
     const [searchParams] = useSearchParams();
+    const navigate = useNavigate();
+    const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState<FormData>({
         sponsorId: '', sponsorName: 'Carregando...', fullName: '', email: '', whatsapp: '',
         cpf: '', birthDate: '', cep: '', street: '', number: '', complement: '',
@@ -58,7 +63,7 @@ const Register: React.FC = () => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
     };
-    
+
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
@@ -100,38 +105,142 @@ const Register: React.FC = () => {
         }
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSyncPlatformData = async () => {
+        const identifier = formData.email || formData.cpf;
+        if (!identifier) {
+            alert('Por favor, informe seu E-mail ou CPF para sincronizar os dados.');
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const result = await syncService.pullFromPlatform(identifier);
+            if (result.success && result.data) {
+                setFormData(prev => ({
+                    ...prev,
+                    fullName: result.data.fullName || prev.fullName,
+                    email: result.data.email || prev.email,
+                    whatsapp: result.data.whatsapp || prev.whatsapp,
+                    cpf: result.data.cpf || prev.cpf,
+                }));
+                alert('Dados encontrados e preenchidos com sucesso!');
+            } else {
+                alert(result.message);
+            }
+        } catch (error) {
+            console.error('Erro ao sincronizar dados:', error);
+            alert('Erro ao conectar com a plataforma central.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+
         e.preventDefault();
         if (formData.password !== formData.confirmPassword) {
             alert('As senhas não conferem.');
             return;
         }
-        // Mock registration success
-        const newId = `RS${Math.floor(100000 + Math.random() * 900000)}`;
-        const newLink = `${window.location.origin}/#/register?sponsor=${newId}`;
-        setNewUser({ id: newId, link: newLink });
-        setIsRegistered(true);
+
+        setLoading(true);
+        try {
+            // 1. Criar conta no Supabase Auth
+            const { data: authData, error: signUpError } = await supabase.auth.signUp({
+                email: formData.email,
+                password: formData.password,
+                options: {
+                    data: {
+                        name: formData.fullName,
+                        full_name: formData.fullName,
+                        whatsapp: formData.whatsapp,
+                    },
+                },
+            });
+
+            if (signUpError) throw signUpError;
+            if (!authData.user) throw new Error("Erro ao criar conta");
+
+            const userId = authData.user.id;
+
+            // 2. Criar perfil e registro de consultor (Sincronizado com RS RotaFácil)
+            const fallbackUsername = formData.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '') + Math.floor(Math.random() * 1000);
+
+            // Buscar sponsor_id real
+            const { data: sponsorData } = await supabase
+                .from('consultores')
+                .select('id')
+                .eq('username', formData.sponsorId || 'rsprolipsi')
+                .maybeSingle();
+
+            const sponsorUidValue = sponsorData?.id || null;
+
+            const [profileRes, consultorRes, walletRes] = await Promise.all([
+                supabase.from('user_profiles').upsert({
+                    user_id: userId,
+                    nome_completo: formData.fullName,
+                    cpf: formData.cpf.replace(/\D/g, ''),
+                    perfil_completo: true,
+                    sponsor_id: sponsorUid
+                }),
+                supabase.from('consultores').insert({
+                    uid: userId,
+                    nome: formData.fullName,
+                    email: formData.email,
+                    whatsapp: formData.whatsapp,
+                    cpf: formData.cpf.replace(/\D/g, ''),
+                    username: fallbackUsername,
+                    status: 'ativo',
+                    patrocinador_uid: sponsorUid
+                }),
+                supabase.from('wallet_accounts').insert({
+                    id_usuario: userId,
+                    tipo: 'consultor',
+                    status: 'active',
+                    KYC_status: 'pending'
+                })
+            ]);
+
+            if (profileRes.error) console.error("Erro perfil:", profileRes.error);
+            if (consultorRes.error) console.error("Erro consultor:", consultorRes.error);
+            if (walletRes.error) console.error("Erro wallet:", walletRes.error);
+
+            // 3. Criar saldo inicial
+            await supabase.from('wallet_balances').insert({
+                account_id: userId,
+                current_balance: 0,
+                last_seq: 0
+            });
+
+            setNewUser({ id: fallbackUsername, link: `${window.location.origin}/#/register?sponsor=${fallbackUsername}` });
+            setIsRegistered(true);
+        } catch (error: any) {
+            console.error("Erro no cadastro:", error);
+            alert(error.message || "Erro inesperado ao realizar cadastro.");
+        } finally {
+            setLoading(false);
+        }
     };
 
     const InputField: React.FC<{ name: keyof FormData, label: string, type?: string, placeholder?: string, required?: boolean, disabled?: boolean }> =
-     ({ name, label, type = 'text', placeholder, required = false, disabled = false }) => (
-        <div>
-            <label htmlFor={name} className="block text-sm font-medium text-text-body mb-2">{label}</label>
-            <input
-                type={type}
-                id={name}
-                name={name}
-                value={formData[name]}
-                onChange={handleChange}
-                onBlur={name === 'cep' ? handleCepBlur : undefined}
-                placeholder={placeholder}
-                required={required}
-                disabled={disabled}
-                className="w-full px-4 py-3 rounded-lg bg-surface border border-border focus:outline-none focus:ring-2 focus:ring-gold/25 focus:border-transparent transition-all disabled:opacity-50"
-            />
-        </div>
-    );
-    
+        ({ name, label, type = 'text', placeholder, required = false, disabled = false }) => (
+            <div>
+                <label htmlFor={name} className="block text-sm font-medium text-text-body mb-2">{label}</label>
+                <input
+                    type={type}
+                    id={name}
+                    name={name}
+                    value={formData[name]}
+                    onChange={handleChange}
+                    onBlur={name === 'cep' ? handleCepBlur : undefined}
+                    placeholder={placeholder}
+                    required={required}
+                    disabled={disabled}
+                    className="w-full px-4 py-3 rounded-lg bg-surface border border-border focus:outline-none focus:ring-2 focus:ring-gold/25 focus:border-transparent transition-all disabled:opacity-50"
+                />
+            </div>
+        );
+
     return (
         <div className="bg-base min-h-screen flex items-center justify-center p-4 sm:p-6 lg:p-8">
             <div className="w-full max-w-4xl mx-auto">
@@ -139,13 +248,13 @@ const Register: React.FC = () => {
                     <h1 className="text-4xl font-bold text-gold">RS WalletPay</h1>
                     <p className="text-text-body mt-2">Crie sua conta de consultor</p>
                 </div>
-                
+
                 <form onSubmit={handleSubmit} className="space-y-8">
                     {/* Sponsor Data */}
                     <div className="bg-card p-6 rounded-2xl border border-border shadow-custom-lg">
                         <h2 className="text-xl font-semibold text-text-title mb-4">Dados do Patrocinador</h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <InputField name="sponsorId" label="ID do Patrocinador" placeholder="Opcional"/>
+                            <InputField name="sponsorId" label="ID do Patrocinador" placeholder="Opcional" />
                             <div>
                                 <label className="block text-sm font-medium text-text-body mb-2">Nome do Patrocinador</label>
                                 <div className="w-full px-4 py-3 rounded-lg bg-surface border border-border text-text-soft">
@@ -158,7 +267,7 @@ const Register: React.FC = () => {
                     {/* Personal Data */}
                     <div className="bg-card p-6 rounded-2xl border border-border shadow-custom-lg">
                         <h2 className="text-xl font-semibold text-text-title mb-6">Dados Pessoais</h2>
-                        
+
                         <div className="flex flex-col items-center mb-6">
                             <input
                                 type="file"
@@ -169,7 +278,7 @@ const Register: React.FC = () => {
                             />
                             <div onClick={handleAvatarClick} className="relative cursor-pointer group">
                                 {avatarPreview ? (
-                                     <img src={avatarPreview} alt="Avatar" className="w-24 h-24 rounded-full border-4 border-surface object-cover" />
+                                    <img src={avatarPreview} alt="Avatar" className="w-24 h-24 rounded-full border-4 border-surface object-cover" />
                                 ) : (
                                     <PlaceholderAvatar />
                                 )}
@@ -179,7 +288,18 @@ const Register: React.FC = () => {
                             </div>
                             <p className="text-sm text-text-soft mt-2">Anexar foto do consultor</p>
                         </div>
-                        
+
+                        <div className="flex justify-end mb-4">
+                            <button
+                                type="button"
+                                onClick={handleSyncPlatformData}
+                                disabled={loading}
+                                className="text-xs font-bold text-gold bg-gold/10 px-3 py-1.5 rounded-full border border-gold/30 hover:bg-gold/20 transition-all flex items-center gap-2 disabled:opacity-50"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                                Sincronizar com Plataforma RS
+                            </button>
+                        </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <InputField name="fullName" label="Nome Completo" required />
                             <InputField name="email" label="E-mail" type="email" required />
@@ -206,18 +326,18 @@ const Register: React.FC = () => {
                             <InputField name="state" label="Estado" disabled={cepLoading} required />
                         </div>
                     </div>
-                    
+
                     {/* Access Data */}
                     <div className="bg-card p-6 rounded-2xl border border-border shadow-custom-lg">
                         <h2 className="text-xl font-semibold text-text-title mb-4">Dados de Acesso</h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                             <InputField name="password" label="Senha" type="password" required />
-                             <InputField name="confirmPassword" label="Confirmar Senha" type="password" required />
+                            <InputField name="password" label="Senha" type="password" required />
+                            <InputField name="confirmPassword" label="Confirmar Senha" type="password" required />
                         </div>
                     </div>
 
-                    <button type="submit" className="w-full text-center py-4 px-6 bg-gold text-lg text-card hover:bg-gold-hover font-semibold rounded-lg transition-colors duration-200">
-                        Finalizar Cadastro
+                    <button type="submit" disabled={loading} className="w-full text-center py-4 px-6 bg-gold text-lg text-card hover:bg-gold-hover font-semibold rounded-lg transition-colors duration-200 disabled:opacity-50">
+                        {loading ? 'Processando...' : 'Finalizar Cadastro'}
                     </button>
                 </form>
             </div>

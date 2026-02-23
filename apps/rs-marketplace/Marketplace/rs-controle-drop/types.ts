@@ -5,6 +5,20 @@ export interface User {
   id: string;
   name: string;
   role: UserRole;
+  email?: string;
+  idConsultor?: string;
+  avatarUrl?: string;
+  cpfCnpj?: string;
+  birthDate?: string;
+  graduacao?: string;
+  address?: {
+    zipCode: string;
+    street: string;
+    number: string;
+    neighborhood: string;
+    city: string;
+    state: string;
+  };
 }
 
 export interface PaymentMethodConfig {
@@ -50,7 +64,7 @@ export interface ProductVariant {
 }
 
 export interface Product {
-  id:string;
+  id: string;
   name: string;
   sku?: string;
   category?: string; // PRT-023: Category for filtering
@@ -61,17 +75,17 @@ export interface Product {
   currentStock: number;
   minStock: number;
   status: 'Active' | 'Inactive';
-  
+
   // PRT-019: Support for variations
   variants?: ProductVariant[];
-  
+
   userId: string;
 }
 
 // --- NEW: LGPD Consents ---
 export interface CustomerConsents {
-    transactional: boolean; // Order updates, recovery (Legitimate Interest/Contract)
-    marketing: boolean;     // Promotions, newsletter (Requires Opt-in)
+  transactional: boolean; // Order updates, recovery (Legitimate Interest/Contract)
+  marketing: boolean;     // Promotions, newsletter (Requires Opt-in)
 }
 
 export interface Customer {
@@ -146,14 +160,14 @@ export interface Order {
   utmCampaign?: string;
   utmContent?: string;
   utmTerm?: string;
-  
+
   notes?: string;
   postSaleEvents?: PostSaleEvent[];
   userId: string;
 }
 
 /** @deprecated Use the Order interface directly. This alias is for transitional purposes. */
-export interface Sale extends Order {} 
+export interface Sale extends Order { }
 
 export interface TrafficSpend {
   id: string;
@@ -173,7 +187,7 @@ export interface Lead {
   phone?: string;
   city: string;
   state: string;
-  source: string; 
+  source: string;
   status: 'New' | 'Contacted' | 'Converted' | 'Lost';
   linkedSaleId?: string;
   userId: string;
@@ -203,7 +217,7 @@ export interface MonthlySummary {
   leadsFromTraffic: number;
 }
 
-export type AlertType = 
+export type AlertType =
   | 'LOW_STOCK'
   | 'NEGATIVE_ROI_STREAK'
   | 'LOW_PRODUCT_MARGIN'
@@ -224,36 +238,36 @@ export interface AppAlert {
 export type TrackingPixelPlatform = 'meta' | 'google_ga4' | 'google_ads' | 'tiktok' | 'taboola' | 'pinterest' | 'linkedin';
 
 export interface TrackingPixel {
-    id: string;
-    userId: string;
-    platform: TrackingPixelPlatform;
-    name: string;
-    config: { [key: string]: string }; // Stores IDs like pixelId, conversionLabel, etc.
-    createdAt: string;
+  id: string;
+  userId: string;
+  platform: TrackingPixelPlatform;
+  name: string;
+  config: { [key: string]: string }; // Stores IDs like pixelId, conversionLabel, etc.
+  createdAt: string;
 }
 
 export interface ShortLinkClick {
-    id: string;
-    timestamp: string;
-    location?: string;
-    userAgent?: string;
+  id: string;
+  timestamp: string;
+  location?: string;
+  userAgent?: string;
 }
 
 export interface ShortLink {
-    id: string;
-    userId: string;
-    slug: string; // rs.co/slug
-    originalUrl: string;
-    finalUrl: string; // URL with UTMs
-    name: string;
-    utmSource?: string;
-    utmMedium?: string;
-    utmCampaign?: string;
-    utmContent?: string;
-    utmTerm?: string;
-    isActive: boolean;
-    clicks: ShortLinkClick[];
-    createdAt: string;
+  id: string;
+  userId: string;
+  slug: string; // rs.co/slug
+  originalUrl: string;
+  finalUrl: string; // URL with UTMs
+  name: string;
+  utmSource?: string;
+  utmMedium?: string;
+  utmCampaign?: string;
+  utmContent?: string;
+  utmTerm?: string;
+  isActive: boolean;
+  clicks: ShortLinkClick[];
+  createdAt: string;
 }
 
 // Audit Logs (PRT-018)
@@ -261,31 +275,31 @@ export type AuditAction = 'CREATE' | 'UPDATE' | 'DELETE';
 export type AuditEntity = 'Product' | 'Order' | 'Customer' | 'Supplier' | 'Pixel' | 'User';
 
 export interface AuditChange {
-    field: string;
-    old: any;
-    new: any;
+  field: string;
+  old: any;
+  new: any;
 }
 
 export interface AuditLog {
-    id: string;
-    date: string;
-    userId: string;
-    userName: string;
-    action: AuditAction;
-    entity: AuditEntity;
-    entityId: string;
-    details: string;
-    changes?: AuditChange[];
+  id: string;
+  date: string;
+  userId: string;
+  userName: string;
+  action: AuditAction;
+  entity: AuditEntity;
+  entityId: string;
+  details: string;
+  changes?: AuditChange[];
 }
 
 // --- NEW: Offers & Funnel ---
 export interface MarketingOffer {
-    id: string;
-    type: 'bump' | 'upsell';
-    name: string;
-    description: string;
-    price: number;
-    productId: string; // For inventory linking
+  id: string;
+  type: 'bump' | 'upsell';
+  name: string;
+  description: string;
+  price: number;
+  productId: string; // For inventory linking
 }
 
 // --- NEW: Cart & Checkout States ---
@@ -295,108 +309,109 @@ export type CheckoutStatus = 'iniciado' | 'em_andamento' | 'abandonado' | 'concl
 export type CheckoutFunnelStep = 'dados_pessoais' | 'endereco_frete' | 'pagamento' | 'upsell' | 'concluido';
 
 export interface CartItem {
-    id: string;
-    productId: string;
-    variantId?: string;
-    productName: string;
-    quantity: number;
-    unitPrice: number;
+  id: string;
+  productId: string;
+  variantId?: string;
+  productName: string;
+  quantity: number;
+  unitPrice: number;
 }
 
 export interface Cart {
-    id: string;
-    userId: string; // Can be a guest session ID or a logged-in user ID
-    status: CartStatus;
-    items: CartItem[];
-    createdAt: string;
-    updatedAt: string;
-    utmSource?: string;
-    utmCampaign?: string;
+  id: string;
+  userId: string; // Can be a guest session ID or a logged-in user ID
+  status: CartStatus;
+  items: CartItem[];
+  createdAt: string;
+  updatedAt: string;
+  utmSource?: string;
+  utmCampaign?: string;
 }
 
 export interface Checkout {
-    id: string;
-    cartId: string;
-    userId: string;
-    status: CheckoutStatus;
-    customerInfo: Partial<Customer>;
-    shippingInfo: {
-        method?: string;
-        cost?: number;
-    };
-    paymentInfo: {
-        method?: string;
-        status?: 'pending' | 'paid' | 'failed';
-    };
-    consents?: CustomerConsents; // LGPD
-    acceptedOffers?: MarketingOffer[]; // Track accepted Bumps/Upsells
-    currentStep?: CheckoutFunnelStep;
-    total: number;
-    createdAt: string;
-    updatedAt: string;
-    utmSource?: string;
-    utmCampaign?: string;
+  id: string;
+  cartId: string;
+  userId: string;
+  status: CheckoutStatus;
+  customerInfo: Partial<Customer>;
+  shippingInfo: {
+    method?: string;
+    cost?: number;
+  };
+  paymentInfo: {
+    method?: string;
+    status?: 'pending' | 'paid' | 'failed';
+    metadata?: any; // RS-PIX: Stores QR Code and other data
+  };
+  consents?: CustomerConsents; // LGPD
+  acceptedOffers?: MarketingOffer[]; // Track accepted Bumps/Upsells
+  currentStep?: CheckoutFunnelStep;
+  total: number;
+  createdAt: string;
+  updatedAt: string;
+  utmSource?: string;
+  utmCampaign?: string;
 }
 
 // --- NEW: Abandonment Log Structure ---
 export type RecoveryStatus = 'pendente' | 'em_contato' | 'recuperado' | 'nao_recuperado';
 
 export interface AbandonmentLog {
-    id: string;
-    referenceId: string; // cartId or checkoutId
-    type: 'CART_ABANDONED' | 'CHECKOUT_ABANDONED';
-    recoveryStatus: RecoveryStatus;
-    funnelStep: string; // 'carrinho', 'dados_pessoais', etc.
-    customerName?: string;
-    contact?: string; // Phone or Email if available
-    consents?: CustomerConsents; // LGPD in Log
-    utmSource?: string;
-    utmCampaign?: string;
-    value: number;
-    itemsSummary: { name: string; quantity: number }[];
-    abandonedAt: string;
-    notes?: string;
+  id: string;
+  referenceId: string; // cartId or checkoutId
+  type: 'CART_ABANDONED' | 'CHECKOUT_ABANDONED';
+  recoveryStatus: RecoveryStatus;
+  funnelStep: string; // 'carrinho', 'dados_pessoais', etc.
+  customerName?: string;
+  contact?: string; // Phone or Email if available
+  consents?: CustomerConsents; // LGPD in Log
+  utmSource?: string;
+  utmCampaign?: string;
+  value: number;
+  itemsSummary: { name: string; quantity: number }[];
+  abandonedAt: string;
+  notes?: string;
 }
 
 // --- NEW: Message Templates ---
 export interface MessageTemplate {
-    id: string;
-    name: string;
-    content: string;
-    type?: 'transactional' | 'marketing'; // To classify templates
+  id: string;
+  name: string;
+  content: string;
+  type?: 'transactional' | 'marketing'; // To classify templates
 }
 
 // --- NEW: AI Copilot & Memory ---
 export type ChatRole = 'user' | 'model' | 'system';
 
 export interface ChatMessage {
-    id: string;
-    role: ChatRole;
-    content: string;
-    timestamp: string;
-    isAction?: boolean; 
-    uiType?: 'default' | 'recovery_list' | 'product_list'; // For rich UI
-    data?: any; // Payload for rich UI
+  id: string;
+  role: ChatRole;
+  content: string;
+  timestamp: string;
+  isAction?: boolean;
+  uiType?: 'default' | 'recovery_list' | 'product_list'; // For rich UI
+  data?: any; // Payload for rich UI
 }
 
 // AI Contextual Memory
 export interface UserPreference {
-    key: string;
-    value: any;
+  key: string;
+  value: any;
 }
 
 export interface ChatSession {
-    id: string;
-    title: string;
-    date: string;
-    messages: ChatMessage[];
+  id: string;
+  title: string;
+  date: string;
+  messages: ChatMessage[];
 }
 
 export interface AIUserContext {
-    userId: string;
-    lastInteraction: string;
-    recentTopics: string[]; // e.g. ['finance', 'inventory']
-    preferences: UserPreference[];
-    lastActions: { action: string, timestamp: string, details?: string }[];
-    sessions: ChatSession[];
+  userId: string;
+  lastInteraction: string;
+  recentTopics: string[]; // e.g. ['finance', 'inventory']
+  preferences: UserPreference[];
+  lastActions: { action: string, timestamp: string, details?: string }[];
+  sessions: ChatSession[];
 }

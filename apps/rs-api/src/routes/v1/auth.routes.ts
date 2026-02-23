@@ -47,7 +47,7 @@ router.post('/register', async (req, res) => {
       const { data: sponsor } = await supabase
         .from('consultores')
         .select('id')
-        .eq('login', sponsorId)
+        .eq('username', sponsorId)
         .single();
       if (sponsor) sponsorDbId = sponsor.id;
     }
@@ -57,7 +57,7 @@ router.post('/register', async (req, res) => {
       const { data: root } = await supabase
         .from('consultores')
         .select('id')
-        .eq('login', 'rsprolipsi')
+        .eq('username', 'rsprolipsi')
         .single();
       sponsorDbId = root?.id;
     }
@@ -84,7 +84,7 @@ router.post('/register', async (req, res) => {
         email,
         telefone: telefone || '',
         patrocinador_id: sponsorDbId,
-        login,
+        username: login,
         status: 'ativo', // Entra ativo conforme solicitado
         pin_atual: 'Iniciante'
       });

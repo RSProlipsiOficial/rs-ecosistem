@@ -1,9 +1,18 @@
-FROM node:18-alpine
+FROM node:20-alpine
+
 WORKDIR /app
-COPY package*.json ./
-RUN npm ci || npm install
+
+# Copiar package.json
+COPY package.json ./
+
+# Instalar dependências
+RUN npm install
+
+# Copiar código
 COPY . .
-RUN npm run build || true
-RUN npm i -g serve
-ENV PORT=3002
-CMD ["sh","-c","if [ -f dist/dist/index.html ] || [ -f dist/index.html ] || [ -f index.html ] || [ -f vite.config.ts ] || [ -f vite.config.js ]; then exec serve -s dist/dist -l ${PORT}; else exec npm run start; fi"]
+
+# Expor porta
+EXPOSE 5002
+
+# Comando de inicialização
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]

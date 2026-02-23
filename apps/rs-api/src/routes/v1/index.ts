@@ -19,6 +19,9 @@ import sigmaRoutes from './sigma.routes';
 import uploadRoutes from './upload.routes';
 
 import networkRoutes from './network.routes';
+import matrixRoutes from './matrix.routes';
+import opsRoutes from './ops.routes';
+import reportsRoutes from './reports.routes';
 
 // Configuração das rotas V1
 // Montagem explícita para garantir compatibilidade com apiUrls.ts e V1_ENDPOINTS
@@ -29,8 +32,11 @@ router.use('/wallet', walletRoutes);
 router.use('/admin', adminRoutes);
 router.use('/consultants', consultantsRoutes);
 router.use('/sigma', sigmaRoutes);
+router.use('/matrix', matrixRoutes);
 router.use('/network', networkRoutes);
+router.use('/ops', opsRoutes);
 router.use('/upload', uploadRoutes);
+router.use('/reports', reportsRoutes);
 
 // Health check específico do V1
 router.get('/system/health', (req, res) => {

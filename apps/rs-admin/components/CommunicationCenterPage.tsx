@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import communicationAPI from '../src/services/communicationAPI';
 import { GoogleGenAI, GenerateContentResponse, Type } from '@google/genai';
-import { 
-    BellIcon, 
+import {
+    BellIcon,
     ChatBubbleLeftRightIcon,
     ChatBubbleBottomCenterTextIcon,
     PhotoIcon,
@@ -57,12 +57,12 @@ interface CommunicationCenterPageProps {
 }
 
 interface Catalog {
-  id: string;
-  title: string;
-  coverImage: string | null;
-  pdfSource: string | null;
-  sourceType: 'file' | 'url' | 'none';
-  fileName?: string;
+    id: string;
+    title: string;
+    coverImage: string | null;
+    pdfSource: string | null;
+    sourceType: 'file' | 'url' | 'none';
+    fileName?: string;
 }
 
 interface DownloadMaterial {
@@ -136,8 +136,8 @@ const AiModal: React.FC<{
     const [isAiLoading, setIsAiLoading] = useState(false);
 
     useEffect(() => {
-        if (item) { 
-            setFormData(item); 
+        if (item) {
+            setFormData(item);
         } else { // Creating new
             if (modalType === 'agenda') {
                 setFormData({ title: '', content: '', category: 'Boas-vindas', isDeletable: true });
@@ -155,7 +155,7 @@ const AiModal: React.FC<{
         const checked = (e.target as HTMLInputElement).checked;
         setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
     };
-    
+
     const handleSave = () => { onSave({ ...formData, id: item?.id }); };
 
     const handleGenerateWithAi = async () => {
@@ -179,7 +179,7 @@ const AiModal: React.FC<{
             setIsAiLoading(false);
         }
     };
-    
+
     const baseInputClasses = "bg-[#2A2A2A] border border-[#2A2A2A] text-[#E5E7EB] rounded-lg p-2.5 focus:ring-[#FFD700] focus:border-[#FFD700] w-full disabled:opacity-50";
 
     return (
@@ -204,10 +204,10 @@ const AiModal: React.FC<{
                     <div>
                         <label className="block text-sm font-medium text-gray-300 mb-1">Título</label>
                         <div className="flex gap-2">
-                             <input type="text" name="title" value={formData.title ?? ''} onChange={handleChange} className={baseInputClasses} />
-                             <button onClick={handleGenerateWithAi} disabled={isAiLoading} className="flex-shrink-0 flex items-center justify-center gap-2 bg-[#FFD700] text-black font-bold py-2 px-4 rounded-lg hover:bg-yellow-600 disabled:bg-yellow-500/50 transition-colors text-sm w-44">
-                                {isAiLoading ? <><SpinnerIcon className="w-5 h-5 animate-spin" /> Gerando...</> : <><SparklesIcon className="w-5 h-5"/> Gerar com IA</>}
-                             </button>
+                            <input type="text" name="title" value={formData.title ?? ''} onChange={handleChange} className={baseInputClasses} />
+                            <button onClick={handleGenerateWithAi} disabled={isAiLoading} className="flex-shrink-0 flex items-center justify-center gap-2 bg-[#FFD700] text-black font-bold py-2 px-4 rounded-lg hover:bg-yellow-600 disabled:bg-yellow-500/50 transition-colors text-sm w-44">
+                                {isAiLoading ? <><SpinnerIcon className="w-5 h-5 animate-spin" /> Gerando...</> : <><SparklesIcon className="w-5 h-5" /> Gerar com IA</>}
+                            </button>
                         </div>
                     </div>
                     <div><label className="block text-sm font-medium text-gray-300 mb-1">Conteúdo</label><textarea name="content" value={formData.content ?? ''} onChange={handleChange} rows={6} className={baseInputClasses} disabled={isAiLoading}></textarea></div>
@@ -286,7 +286,7 @@ const AgendaComemorativaTab: React.FC<{
                         return (
                             <div key={category}>
                                 <h2 className="text-xl font-bold text-[#E5E7EB] mb-3 flex items-center gap-2">
-                                {getIcon(category, { className: "w-6 h-6 text-yellow-500"})} {category}
+                                    {getIcon(category, { className: "w-6 h-6 text-yellow-500" })} {category}
                                 </h2>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     {(categoryItems as AgendaItem[]).map(item => (
@@ -307,7 +307,7 @@ const AgendaComemorativaTab: React.FC<{
                     })}
                 </div>
             ) : (
-                 <div className="text-center py-16 text-gray-500">
+                <div className="text-center py-16 text-gray-500">
                     <CalendarDaysIcon className="w-12 h-12 mx-auto" />
                     <p className="mt-2">Nenhum item na agenda comemorativa.</p>
                 </div>
@@ -332,13 +332,13 @@ const MaterialsTab: React.FC<{
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {catalogs.map(c => (
                     <div key={c.id} className="group relative bg-[#1E1E1E] border border-[#2A2A2A] rounded-lg overflow-hidden">
-                        <div className="aspect-w-3 aspect-h-4 bg-gray-800 flex items-center justify-center">{c.coverImage ? <img src={c.coverImage} alt={c.title} className="w-full h-full object-cover"/> : <CatalogIcon className="w-12 h-12 text-gray-600"/>}</div>
+                        <div className="aspect-w-3 aspect-h-4 bg-gray-800 flex items-center justify-center">{c.coverImage ? <img src={c.coverImage} alt={c.title} className="w-full h-full object-cover" /> : <CatalogIcon className="w-12 h-12 text-gray-600" />}</div>
                         <div className="p-3"><p className="font-semibold text-white truncate">{c.title}</p></div>
                         <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            {c.pdfSource && <button onClick={() => forceDownload(c.pdfSource!, c.fileName || c.title)} className="flex items-center gap-2 text-sm bg-yellow-500 text-black font-bold px-3 py-1.5 rounded-md"><ArrowDownTrayIcon className="w-4 h-4"/> Baixar</button>}
+                            {c.pdfSource && <button onClick={() => forceDownload(c.pdfSource!, c.fileName || c.title)} className="flex items-center gap-2 text-sm bg-yellow-500 text-black font-bold px-3 py-1.5 rounded-md"><ArrowDownTrayIcon className="w-4 h-4" /> Baixar</button>}
                             <div className="flex gap-2">
-                                <button onClick={() => onEdit('catalog', c)} className="p-1.5 text-gray-300 hover:text-yellow-400"><PencilIcon className="w-4 h-4"/></button>
-                                <button onClick={() => onDelete('catalog', c.id)} className="p-1.5 text-gray-300 hover:text-red-500"><TrashIcon className="w-4 h-4"/></button>
+                                <button onClick={() => onEdit('catalog', c)} className="p-1.5 text-gray-300 hover:text-yellow-400"><PencilIcon className="w-4 h-4" /></button>
+                                <button onClick={() => onDelete('catalog', c.id)} className="p-1.5 text-gray-300 hover:text-red-500"><TrashIcon className="w-4 h-4" /></button>
                             </div>
                         </div>
                     </div>
@@ -354,16 +354,16 @@ const MaterialsTab: React.FC<{
                 {downloads.map(d => (
                     <div key={d.id} className="group flex items-center justify-between p-3 bg-[#1E1E1E] border border-[#2A2A2A] rounded-lg">
                         <div className="flex items-center gap-4">
-                            <div className="p-2 bg-[#2A2A2A] rounded-lg text-yellow-500">{getIcon(d.iconType, {className: "w-6 h-6"})}</div>
+                            <div className="p-2 bg-[#2A2A2A] rounded-lg text-yellow-500">{getIcon(d.iconType, { className: "w-6 h-6" })}</div>
                             <div>
                                 <p className="font-semibold text-white">{d.title}</p>
                                 <p className="text-sm text-gray-400">{d.description}</p>
                             </div>
                         </div>
                         <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            {d.fileUrl && <button onClick={() => forceDownload(d.fileUrl!, d.fileName || d.title)} className="p-2 text-gray-300 hover:text-yellow-400"><ArrowDownTrayIcon className="w-5 h-5"/></button>}
-                            <button onClick={() => onEdit('download', d)} className="p-2 text-gray-300 hover:text-yellow-400"><PencilIcon className="w-5 h-5"/></button>
-                            <button onClick={() => onDelete('download', d.id)} className="p-2 text-gray-300 hover:text-red-500"><TrashIcon className="w-5 h-5"/></button>
+                            {d.fileUrl && <button onClick={() => forceDownload(d.fileUrl!, d.fileName || d.title)} className="p-2 text-gray-300 hover:text-yellow-400"><ArrowDownTrayIcon className="w-5 h-5" /></button>}
+                            <button onClick={() => onEdit('download', d)} className="p-2 text-gray-300 hover:text-yellow-400"><PencilIcon className="w-5 h-5" /></button>
+                            <button onClick={() => onDelete('download', d.id)} className="p-2 text-gray-300 hover:text-red-500"><TrashIcon className="w-5 h-5" /></button>
                         </div>
                     </div>
                 ))}
@@ -389,12 +389,12 @@ const MaterialEditModal: React.FC<{
             setFormData({ title: '', sourceType: 'none', fileUrl: null, pdfSource: null, coverImage: null });
         }
     }, [material, isOpen]);
-    
+
     if (!isOpen) return null;
 
     const isCatalog = type === 'catalog';
     const sourceProp = isCatalog ? 'pdfSource' : 'fileUrl';
-    
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
@@ -405,12 +405,12 @@ const MaterialEditModal: React.FC<{
             const file = e.target.files[0];
             const reader = new FileReader();
             reader.onload = (event) => {
-                setFormData(prev => ({...prev, [field]: event.target?.result as string, fileName: file.name }));
+                setFormData(prev => ({ ...prev, [field]: event.target?.result as string, fileName: file.name }));
             };
             reader.readAsDataURL(file);
         }
     };
-    
+
     const handleSave = () => { onSave({ ...formData, id: material?.id }); };
 
     return (
@@ -423,7 +423,7 @@ const MaterialEditModal: React.FC<{
                     <div><label className="block text-sm font-medium text-gray-300 mb-1">Fonte</label><select name="sourceType" value={formData.sourceType || 'none'} onChange={handleChange} className="bg-[#2A2A2A] w-full p-2 rounded-lg"><option value="none">Nenhum</option><option value="file">Arquivo (Upload)</option><option value="url">URL Externa</option></select></div>
                     {formData.sourceType === 'file' && <div><label className="block text-sm font-medium text-gray-300 mb-1">Arquivo {isCatalog ? 'PDF' : ''}</label><button onClick={() => fileInputRef.current?.click()} className="w-full text-sm bg-gray-700 p-2 rounded-lg hover:bg-gray-600">{formData.fileName || 'Selecionar arquivo...'}</button><input ref={fileInputRef} type="file" onChange={(e) => handleFileChange(e, sourceProp)} className="hidden" accept={isCatalog ? '.pdf' : undefined} /></div>}
                     {formData.sourceType === 'url' && <div><label className="block text-sm font-medium text-gray-300 mb-1">URL do Arquivo</label><input type="url" name={sourceProp} value={formData[sourceProp] || ''} onChange={handleChange} className="bg-[#2A2A2A] w-full p-2 rounded-lg" /></div>}
-                    {isCatalog && <div><label className="block text-sm font-medium text-gray-300 mb-1">Imagem de Capa</label>{formData.coverImage && <img src={formData.coverImage} className="w-24 h-32 object-cover rounded-md mb-2"/>}<button onClick={() => coverInputRef.current?.click()} className="w-full text-sm bg-gray-700 p-2 rounded-lg hover:bg-gray-600">Selecionar imagem...</button><input ref={coverInputRef} type="file" onChange={(e) => handleFileChange(e, 'coverImage')} className="hidden" accept="image/*"/></div>}
+                    {isCatalog && <div><label className="block text-sm font-medium text-gray-300 mb-1">Imagem de Capa</label>{formData.coverImage && <img src={formData.coverImage} className="w-24 h-32 object-cover rounded-md mb-2" />}<button onClick={() => coverInputRef.current?.click()} className="w-full text-sm bg-gray-700 p-2 rounded-lg hover:bg-gray-600">Selecionar imagem...</button><input ref={coverInputRef} type="file" onChange={(e) => handleFileChange(e, 'coverImage')} className="hidden" accept="image/*" /></div>}
                     {!isCatalog && <div><label className="block text-sm font-medium text-gray-300 mb-1">Ícone</label><select name="iconType" value={formData.iconType || 'document'} onChange={handleChange} className="bg-[#2A2A2A] w-full p-2 rounded-lg"><option value="document">Documento</option><option value="photo">Imagem</option><option value="presentation">Apresentação</option></select></div>}
                 </main>
                 <footer className="p-4 bg-black/50 border-t border-[#2A2A2A] flex justify-end gap-3"><button onClick={onClose} className="px-4 py-2 text-sm bg-gray-700 rounded-lg hover:bg-gray-600">Cancelar</button><button onClick={handleSave} className="px-4 py-2 text-sm bg-[#FFD700] text-black font-bold rounded-lg hover:bg-yellow-600">Salvar</button></footer>
@@ -439,11 +439,11 @@ const CommunicationCenterPage: React.FC<CommunicationCenterPageProps> = ({ credi
     const [agendaItems, setAgendaItems] = useState(initialAgendaItems);
     const [catalogs, setCatalogs] = useState(initialCatalogs);
     const [downloads, setDownloads] = useState(initialDownloads);
-    
+
     const [isAiModalOpen, setIsAiModalOpen] = useState(false);
     const [editingItem, setEditingItem] = useState<Announcement | AgendaItem | null>(null);
     const [aiModalType, setAiModalType] = useState<'announcement' | 'agenda'>('announcement');
-    
+
     const [isMaterialModalOpen, setIsMaterialModalOpen] = useState(false);
     const [editingMaterial, setEditingMaterial] = useState<Catalog | DownloadMaterial | null>(null);
     const [materialType, setMaterialType] = useState<'catalog' | 'download'>('catalog');
@@ -496,6 +496,7 @@ const CommunicationCenterPage: React.FC<CommunicationCenterPageProps> = ({ credi
         setLoading(false);
     };
 
+
     const loadAnnouncements = async () => {
         const res = await communicationAPI.announcements.getAll();
         if (res.success && res.data) {
@@ -508,6 +509,9 @@ const CommunicationCenterPage: React.FC<CommunicationCenterPageProps> = ({ credi
                 new: Boolean(item.is_new)
             }));
             setAnnouncements(formatted);
+        } else {
+            console.error("Failed to load announcements:", res.error);
+            setError(formatError(res.error));
         }
     };
 
@@ -522,6 +526,9 @@ const CommunicationCenterPage: React.FC<CommunicationCenterPageProps> = ({ credi
                 isDeletable: Boolean(item.is_deletable)
             }));
             setAgendaItems(formatted);
+        } else {
+            console.error("Failed to load agenda:", res.error);
+            setError(formatError(res.error));
         }
     };
 
@@ -537,6 +544,9 @@ const CommunicationCenterPage: React.FC<CommunicationCenterPageProps> = ({ credi
                 fileName: item.file_name || ''
             }));
             setCatalogs(formatted);
+        } else {
+            console.error("Failed to load catalogs:", res.error);
+            setError(formatError(res.error));
         }
     };
 
@@ -553,6 +563,9 @@ const CommunicationCenterPage: React.FC<CommunicationCenterPageProps> = ({ credi
                 fileName: item.file_name || ''
             }));
             setDownloads(formatted);
+        } else {
+            console.error("Failed to load materials:", res.error);
+            setError(formatError(res.error));
         }
     };
 
@@ -572,14 +585,14 @@ const CommunicationCenterPage: React.FC<CommunicationCenterPageProps> = ({ credi
         if (!window.confirm("Tem certeza que deseja excluir este item?")) return;
         setLoading(true);
         setError('');
-        
+
         if (type === 'announcement') {
             const res = await communicationAPI.announcements.delete(String(id));
             if (res.success) {
                 setAnnouncements(prev => prev.filter(item => item.id !== id));
                 setSuccess('Comunicado excluído com sucesso!');
             } else {
-                setError(normalizeError(res.error) || 'Erro ao excluir');
+                setError(formatError(res.error) || 'Erro ao excluir');
             }
         } else {
             const res = await communicationAPI.agenda.delete(String(id));
@@ -587,7 +600,7 @@ const CommunicationCenterPage: React.FC<CommunicationCenterPageProps> = ({ credi
                 setAgendaItems(prev => prev.filter(item => item.id !== id));
                 setSuccess('Item da agenda excluído com sucesso!');
             } else {
-                setError(normalizeError(res.error) || 'Erro ao excluir');
+                setError(formatError(res.error) || 'Erro ao excluir');
             }
         }
         setLoading(false);
@@ -597,7 +610,7 @@ const CommunicationCenterPage: React.FC<CommunicationCenterPageProps> = ({ credi
     const handleSaveItem = async (item: any) => {
         setLoading(true);
         setError('');
-        
+
         if (aiModalType === 'announcement') {
             const t = String(item.title || '').trim();
             const c = String(item.content || '').trim();
@@ -614,11 +627,11 @@ const CommunicationCenterPage: React.FC<CommunicationCenterPageProps> = ({ credi
                 is_published: true,
                 audience: ['consultor', 'marketplace']
             };
-            
-            const res = item.id 
+
+            const res = item.id
                 ? await communicationAPI.announcements.update(String(item.id), payload)
                 : await communicationAPI.announcements.create(payload);
-            
+
             if (res.success) {
                 await loadAnnouncements();
                 setSuccess('Comunicado salvo com sucesso!');
@@ -640,11 +653,11 @@ const CommunicationCenterPage: React.FC<CommunicationCenterPageProps> = ({ credi
                 is_deletable: item.isDeletable !== false,
                 active: true
             };
-            
+
             const res = item.id
                 ? await communicationAPI.agenda.update(String(item.id), payload)
                 : await communicationAPI.agenda.create(payload);
-            
+
             if (res.success) {
                 await loadAgenda();
                 setSuccess('Item da agenda salvo com sucesso!');
@@ -652,12 +665,12 @@ const CommunicationCenterPage: React.FC<CommunicationCenterPageProps> = ({ credi
                 setError(formatError(res.error) || 'Erro ao salvar item da agenda');
             }
         }
-        
+
         setIsAiModalOpen(false);
         setLoading(false);
         setTimeout(() => setSuccess(''), 3000);
     };
-    
+
     // Handlers for Materials
     const handleEditMaterial = (type: 'catalog' | 'download', material: Catalog | DownloadMaterial) => {
         setMaterialType(type);
@@ -673,14 +686,14 @@ const CommunicationCenterPage: React.FC<CommunicationCenterPageProps> = ({ credi
         if (!window.confirm("Tem certeza que deseja excluir este material?")) return;
         setLoading(true);
         setError('');
-        
+
         if (type === 'catalog') {
             const res = await communicationAPI.catalogs.delete(id);
             if (res.success) {
                 setCatalogs(prev => prev.filter(c => c.id !== id));
                 setSuccess('Catálogo excluído com sucesso!');
             } else {
-                setError(normalizeError(res.error) || 'Erro ao excluir');
+                setError(formatError(res.error) || 'Erro ao excluir');
             }
         } else {
             const res = await communicationAPI.materials.delete(id);
@@ -688,7 +701,7 @@ const CommunicationCenterPage: React.FC<CommunicationCenterPageProps> = ({ credi
                 setDownloads(prev => prev.filter(d => d.id !== id));
                 setSuccess('Material excluído com sucesso!');
             } else {
-                setError(normalizeError(res.error) || 'Erro ao excluir');
+                setError(formatError(res.error) || 'Erro ao excluir');
             }
         }
         setLoading(false);
@@ -698,7 +711,7 @@ const CommunicationCenterPage: React.FC<CommunicationCenterPageProps> = ({ credi
     const handleSaveMaterial = async (material: any) => {
         setLoading(true);
         setError('');
-        
+
         if (materialType === 'catalog') {
             const payload = {
                 title: material.title,
@@ -708,16 +721,16 @@ const CommunicationCenterPage: React.FC<CommunicationCenterPageProps> = ({ credi
                 file_name: material.fileName,
                 is_published: true
             };
-            
+
             const res = material.id
                 ? await communicationAPI.catalogs.update(material.id, payload)
                 : await communicationAPI.catalogs.create(payload);
-            
+
             if (res.success) {
                 await loadCatalogs();
                 setSuccess('Catálogo salvo com sucesso!');
             } else {
-                setError(normalizeError(res.error) || 'Erro ao salvar catálogo');
+                setError(formatError(res.error) || 'Erro ao salvar catálogo');
             }
         } else {
             const payload = {
@@ -729,34 +742,33 @@ const CommunicationCenterPage: React.FC<CommunicationCenterPageProps> = ({ credi
                 file_name: material.fileName,
                 is_published: true
             };
-            
+
             const res = material.id
                 ? await communicationAPI.materials.update(material.id, payload)
                 : await communicationAPI.materials.create(payload);
-            
+
             if (res.success) {
                 await loadMaterials();
                 setSuccess('Material salvo com sucesso!');
             } else {
-                setError(normalizeError(res.error) || 'Erro ao salvar material');
+                setError(formatError(res.error) || 'Erro ao salvar material');
             }
         }
-        
+
         setIsMaterialModalOpen(false);
         setLoading(false);
         setTimeout(() => setSuccess(''), 3000);
     };
 
-
     const TabButton: React.FC<{ tabId: string, label: string, icon: React.ReactNode }> = ({ tabId, label, icon }) => (
-        <button onClick={() => setActiveTab(tabId)} className={`flex items-center gap-2 px-4 py-3 text-sm font-bold transition-colors rounded-t-lg border-b-2 whitespace-nowrap ${ activeTab === tabId ? 'border-yellow-500 text-yellow-500' : 'border-transparent text-gray-400 hover:text-white' }`}>
+        <button onClick={() => setActiveTab(tabId)} className={`flex items-center gap-2 px-4 py-3 text-sm font-bold transition-colors rounded-t-lg border-b-2 whitespace-nowrap ${activeTab === tabId ? 'border-yellow-500 text-yellow-500' : 'border-transparent text-gray-400 hover:text-white'}`}>
             {icon} {label}
         </button>
     );
 
     return (
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <h1 className="text-3xl font-bold text-yellow-500 mb-6">Central de Comunicação e Conteúdo</h1>
+            <h1 className="text-3xl font-bold text-yellow-500 mb-6">Central de Comunicação e Conteúdo (DEBUG)</h1>
 
             {/* Mensagens de Feedback */}
             {error && (
@@ -774,10 +786,10 @@ const CommunicationCenterPage: React.FC<CommunicationCenterPageProps> = ({ credi
 
             <div className="border-b border-gray-800 mb-6">
                 <nav className="-mb-px flex space-x-2 overflow-x-auto">
-                    <TabButton tabId="announcements" label="Mural de Comunicados" icon={<BellIcon className="w-5 h-5"/>} />
-                    <TabButton tabId="agenda" label="Agenda Comemorativa" icon={<CalendarDaysIcon className="w-5 h-5"/>} />
-                    <TabButton tabId="training" label="Central de Treinamentos" icon={<BookOpenIcon className="w-5 h-5"/>} />
-                    <TabButton tabId="materials" label="Materiais de Apoio" icon={<ArrowDownTrayIcon className="w-5 h-5"/>} />
+                    <TabButton tabId="announcements" label="Mural de Comunicados" icon={<BellIcon className="w-5 h-5" />} />
+                    <TabButton tabId="agenda" label="Agenda Comemorativa" icon={<CalendarDaysIcon className="w-5 h-5" />} />
+                    <TabButton tabId="training" label="Central de Treinamentos" icon={<BookOpenIcon className="w-5 h-5" />} />
+                    <TabButton tabId="materials" label="Materiais de Apoio" icon={<ArrowDownTrayIcon className="w-5 h-5" />} />
                 </nav>
             </div>
 

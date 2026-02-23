@@ -1,27 +1,30 @@
 // FIX: Add `useRef` to the import statement from 'react' to resolve the 'Cannot find name' error.
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { GoogleGenAI, GenerateContentResponse, Type } from '@google/genai';
-import { 
+import {
     PlusIcon, CloseIcon, PencilIcon, TrashIcon, ArrowLeftIcon, PlayCircleIcon, CheckCircleIcon, RobotIcon,
     TrainingChartIcon, TrainingUsersIcon, TrainingDnaIcon, SparklesIcon, SpinnerIcon, HandThumbUpIcon,
     ChatBubbleOvalLeftEllipsisIcon, ShareIcon, HandThumbUpIconSolid, ClipboardDocumentListIcon, QuestionMarkCircleIcon, PaperAirplaneIcon
 } from '../icons';
+import { trainingsAPI, lessonsAPI } from '../../src/services/communicationAPI';
 
 // --- TYPES ---
 interface TrainingLesson {
-  id: string;
-  title: string;
-  youtubeUrl: string; // Full URL
-  completed: boolean;
-  liked: boolean;
+    id: string;
+    title: string;
+    youtubeUrl: string; // Full URL
+    completed: boolean;
+    liked: boolean;
+    trainingId?: string;
+    description?: string;
 }
 
 interface TrainingModule {
-  id: string;
-  title: string;
-  description: string;
-  icon: 'chart' | 'users' | 'dna' | 'robot';
-  lessons: TrainingLesson[];
+    id: string;
+    title: string;
+    description: string;
+    icon: 'chart' | 'users' | 'dna' | 'robot';
+    lessons: TrainingLesson[];
 }
 
 interface Comment {
@@ -40,53 +43,6 @@ interface AiChatMessage {
     text: string;
 }
 
-// --- MOCK DATA ---
-const initialTrainings: TrainingModule[] = [
-    {
-        id: 'module1',
-        title: 'Mestres do Tráfego Pago',
-        description: 'Do básico ao avançado: crie campanhas de alta conversão no Facebook e Google Ads.',
-        icon: 'chart',
-        lessons: [
-            { id: 'l1-1', title: 'O que é Facebook Ads?', youtubeUrl: 'https://www.youtube.com/watch?v=NwsSay0o-c0', completed: true, liked: false },
-            { id: 'l1-2', title: 'Criando sua Conta de Anúncios', youtubeUrl: 'https://www.youtube.com/watch?v=NwsSay0o-c0', completed: true, liked: false },
-            { id: 'l1-3', title: 'Como criar uma Página (Fanpage)', youtubeUrl: 'https://www.youtube.com/watch?v=NwsSay0o-c0', completed: false, liked: false },
-            { id: 'l1-4', title: 'Instalando o Pixel do Facebook', youtubeUrl: 'https://www.youtube.com/watch?v=NwsSay0o-c0', completed: false, liked: false },
-        ]
-    },
-    {
-        id: 'module2',
-        title: 'O Poder do Tráfego Orgânico',
-        description: 'Domine técnicas de SEO e marketing de conteúdo para gerar leads e vendas sem investir em anúncios.',
-        icon: 'users',
-        lessons: [
-            { id: 'l2-1', title: 'Introdução ao SEO', youtubeUrl: 'https://www.youtube.com/watch?v=NwsSay0o-c0', completed: true, liked: false },
-            { id: 'l2-2', title: 'Pesquisa de Palavras-Chave', youtubeUrl: 'https://www.youtube.com/watch?v=NwsSay0o-c0', completed: false, liked: false },
-        ]
-    },
-    {
-        id: 'module3',
-        title: 'DNA RS Prólipsi',
-        description: 'Aprofunde seu conhecimento sobre a empresa, nossos produtos, plano de negócios e cultura.',
-        icon: 'dna',
-        lessons: [
-            { id: 'l3-1', title: 'Como fazer seu cadastro', youtubeUrl: 'https://www.youtube.com/watch?v=NwsSay0o-c0', completed: true, liked: false },
-            { id: 'l3-2', title: 'Obtendo seu link da loja', youtubeUrl: 'https://www.youtube.com/watch?v=NwsSay0o-c0', completed: false, liked: false },
-            { id: 'l3-3', title: 'Navegando no Escritório Virtual', youtubeUrl: 'https://www.youtube.com/watch?v=NwsSay0o-c0', completed: false, liked: false },
-        ]
-    },
-    {
-        id: 'module4',
-        title: 'Inteligência Artificial',
-        description: 'Aprenda a usar nossa assistente virtual (RSIA) para treinar, aprender e otimizar seus resultados.',
-        icon: 'robot',
-        lessons: [
-            { id: 'l4-1', title: 'Conhecendo a RSIA', youtubeUrl: 'https://www.youtube.com/watch?v=NwsSay0o-c0', completed: false, liked: false },
-            { id: 'l4-2', title: 'Como usar a RSIA para treinar?', youtubeUrl: 'https://www.youtube.com/watch?v=NwsSay0o-c0', completed: false, liked: false },
-        ]
-    }
-];
-
 // --- UTILS & HELPERS ---
 const getModuleIcon = (icon: TrainingModule['icon']) => {
     const props = { className: 'w-12 h-12 text-[#FFD700]' };
@@ -95,12 +51,13 @@ const getModuleIcon = (icon: TrainingModule['icon']) => {
         case 'users': return <TrainingUsersIcon {...props} />;
         case 'dna': return <TrainingDnaIcon {...props} />;
         case 'robot': return <RobotIcon {...props} />;
-        default: return null;
+        default: return <TrainingChartIcon {...props} />;
     }
 };
 
 const getYoutubeEmbedUrl = (url: string) => {
     try {
+        if (!url) return '';
         const urlObj = new URL(url);
         const videoId = urlObj.searchParams.get('v');
         if (videoId) {
@@ -111,7 +68,7 @@ const getYoutubeEmbedUrl = (url: string) => {
         }
     } catch (e) {
         if (url && !url.includes('http')) {
-            return `https://www.youtube-nocookie.com/embed/${url}`;
+            return `https://www.youtube-nocookie.com/embed/${url}`; // Fallback if just ID provided
         }
     }
     return '';
@@ -148,7 +105,7 @@ const QuizModal: React.FC<{
             setScore(prev => prev + 1);
         }
     };
-    
+
     const handleNext = () => {
         setIsAnswered(false);
         setSelectedAnswer(null);
@@ -201,11 +158,14 @@ const QuizModal: React.FC<{
 // --- MAIN COMPONENT ---
 const TrainingCenter: React.FC<TrainingCenterProps> = ({ credits, setCredits }) => {
     // Component State
-    const [trainings, setTrainings] = useState(initialTrainings);
+    const [trainings, setTrainings] = useState<TrainingModule[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
     const [view, setView] = useState<'list' | 'detail'>('list');
     const [selectedModuleId, setSelectedModuleId] = useState<string | null>(null);
     const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null);
-    
+
     // AI Feature State
     const [aiExplanation, setAiExplanation] = useState<string | null>(null);
     const [isAiLoading, setIsAiLoading] = useState(false);
@@ -216,14 +176,14 @@ const TrainingCenter: React.FC<TrainingCenterProps> = ({ credits, setCredits }) 
     const [lessonChatMessages, setLessonChatMessages] = useState<AiChatMessage[]>([]);
     const [isChatResponseLoading, setIsChatResponseLoading] = useState(false);
     const [chatUserInput, setChatUserInput] = useState('');
-    
+
     // Interaction State
-    const [comments, setComments] = useState<Record<string, Comment[]>>({ 'l1-1': [{ user: 'Admin', text: 'Ótima aula introdutória!', date: '2024-07-28' }] });
+    const [comments, setComments] = useState<Record<string, Comment[]>>({});
     const [newComment, setNewComment] = useState('');
 
     // Modal State
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [modalConfig, setModalConfig] = useState<{type: 'module' | 'lesson', item: any} | null>(null);
+    const [modalConfig, setModalConfig] = useState<{ type: 'module' | 'lesson', item: any } | null>(null);
     const [isQuizModalOpen, setIsQuizModalOpen] = useState(false);
 
     // Derived State
@@ -231,13 +191,39 @@ const TrainingCenter: React.FC<TrainingCenterProps> = ({ credits, setCredits }) 
     const selectedLesson = useMemo(() => selectedModule?.lessons.find(l => l.id === selectedLessonId), [selectedModule, selectedLessonId]);
     const chatEndRef = useRef<null | HTMLDivElement>(null);
 
-    // Effects
+    // Load Data
+    useEffect(() => {
+        loadTrainings();
+    }, []);
+
+    const loadTrainings = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const response = await trainingsAPI.getAll();
+            if (response.success && response.data) {
+                setTrainings(response.data);
+            } else {
+                // If fail, just set empty array, don't break UI
+                setTrainings([]);
+                if (response.error) console.error('Error loading trainings:', response.error);
+            }
+        } catch (err: any) {
+            console.error('Error loading trainings:', err);
+            setError('Não foi possível carregar os treinamentos.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Effects for View Navigation
     useEffect(() => {
         if (view === 'detail' && selectedModule && !selectedLessonId && selectedModule.lessons.length > 0) {
             setSelectedLessonId(selectedModule.lessons[0].id);
         } else if (view === 'list') {
             setSelectedLessonId(null);
         }
+        // AI State Reset
         setAiExplanation(null);
         setIsAiLoading(false);
         setAiSummary(null);
@@ -246,23 +232,27 @@ const TrainingCenter: React.FC<TrainingCenterProps> = ({ credits, setCredits }) 
         setIsQuizLoading(false);
         setLessonChatMessages([{ sender: 'bot', text: 'Olá! Faça uma pergunta sobre esta aula e eu responderei com base no conteúdo.' }]);
     }, [view, selectedModuleId, selectedLessonId]);
-    
+
     useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [lessonChatMessages]);
 
     // Handlers
     const handleSelectModule = (moduleId: string) => { setSelectedModuleId(moduleId); setView('detail'); };
     const handleBackToList = () => { setView('list'); setSelectedModuleId(null); };
+
+    // Local state only for these (not persisted to API yet as API doesn't support like/complete per user in this implementation version)
+    // TODO: Persist progress
     const handleToggleLessonComplete = (lessonId: string) => { setTrainings(trainings.map(m => m.id === selectedModuleId ? { ...m, lessons: m.lessons.map(l => l.id === lessonId ? { ...l, completed: !l.completed } : l) } : m)); };
     const handleToggleLike = (lessonId: string) => { setTrainings(trainings.map(m => m.id === selectedModuleId ? { ...m, lessons: m.lessons.map(l => l.id === lessonId ? { ...l, liked: !l.liked } : l) } : m)); };
+
     const handleShare = async () => { if (selectedLesson) { try { if (navigator.share) { await navigator.share({ title: `Aula: ${selectedLesson.title}`, text: `Confira esta aula sobre ${selectedLesson.title} no treinamento da RS Prólipsi!`, url: selectedLesson.youtubeUrl }); } else { await navigator.clipboard.writeText(selectedLesson.youtubeUrl); alert('Link da aula copiado para a área de transferência!'); } } catch (err) { console.error('Error sharing:', err); } } };
-    const handlePostComment = (e: React.FormEvent) => { e.preventDefault(); if (newComment.trim() && selectedLessonId) { setComments(prev => ({ ...prev, [selectedLessonId]: [...(prev[selectedLessonId] || []), { user: 'Roberto Camargo', text: newComment, date: new Date().toISOString() }] })); setNewComment(''); } };
-    
+    const handlePostComment = (e: React.FormEvent) => { e.preventDefault(); if (newComment.trim() && selectedLessonId) { setComments(prev => ({ ...prev, [selectedLessonId]: [...(prev[selectedLessonId] || []), { user: 'Admin', text: newComment, date: new Date().toISOString() }] })); setNewComment(''); } };
+
     // --- AI HANDLERS ---
     const handleAiAction = async (action: 'explain' | 'summarize' | 'quiz' | 'chat', promptText?: string) => {
         if (!selectedLesson || !selectedModule) return;
         if (credits <= 0) { alert("Créditos de IA insuficientes."); return; }
 
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY || process.env.API_KEY || '' });
         let prompt = '';
         let config: any = { model: 'gemini-2.5-flash' };
 
@@ -293,8 +283,8 @@ const TrainingCenter: React.FC<TrainingCenterProps> = ({ credits, setCredits }) 
 
         try {
             const response = await ai.models.generateContent({ ...config, contents: prompt });
-            const responseText = response.text;
-            
+            const responseText = response.text || '';
+
             switch (action) {
                 case 'explain': setAiExplanation(responseText); break;
                 case 'summarize': setAiSummary(responseText); break;
@@ -305,14 +295,14 @@ const TrainingCenter: React.FC<TrainingCenterProps> = ({ credits, setCredits }) 
         } catch (error) {
             console.error(`AI ${action} failed:`, error);
             const errorMsg = "Ocorreu um erro ao processar sua solicitação. Tente novamente.";
-            switch(action) {
+            switch (action) {
                 case 'explain': setAiExplanation(errorMsg); break;
                 case 'summarize': setAiSummary(errorMsg); break;
-                case 'chat': setLessonChatMessages(prev => [...prev, {sender: 'bot', text: errorMsg}]); break;
+                case 'chat': setLessonChatMessages(prev => [...prev, { sender: 'bot', text: errorMsg }]); break;
                 default: alert(errorMsg);
             }
         } finally {
-            switch(action) {
+            switch (action) {
                 case 'explain': setIsAiLoading(false); break;
                 case 'summarize': setIsAiSummaryLoading(false); break;
                 case 'quiz': setIsQuizLoading(false); break;
@@ -320,13 +310,99 @@ const TrainingCenter: React.FC<TrainingCenterProps> = ({ credits, setCredits }) 
             }
         }
     };
-    
-    // CRUD Handlers
+
+    // CRUD Handlers (Updated to use API)
     const openModal = (type: 'module' | 'lesson', item: any = null) => { setModalConfig({ type, item }); setIsModalOpen(true); };
-    const handleSave = (savedItem: any) => { if (!modalConfig) return; if (modalConfig.type === 'module') { if (savedItem.id) { setTrainings(trainings.map(m => m.id === savedItem.id ? { ...m, ...savedItem } : m)); } else { setTrainings([...trainings, { id: `module${Date.now()}`, title: savedItem.title || 'Novo Módulo', description: savedItem.description || '', icon: 'chart', lessons: [] }]); } } else if (modalConfig.type === 'lesson') { if (!selectedModuleId) return; if (savedItem.id) { setTrainings(trainings.map(m => m.id === selectedModuleId ? { ...m, lessons: m.lessons.map(l => l.id === savedItem.id ? { ...l, ...savedItem } : l) } : m)); } else { setTrainings(trainings.map(m => m.id === selectedModuleId ? { ...m, lessons: [...m.lessons, { id: `l${Date.now()}`, title: savedItem.title || 'Nova Aula', youtubeUrl: savedItem.youtubeUrl || '', completed: false, liked: false }] } : m)); } } setIsModalOpen(false); };
-    const handleDelete = (type: 'module' | 'lesson', id: string) => { if (!window.confirm(`Tem certeza que deseja excluir est${type === 'module' ? 'e módulo' : 'a aula'}?`)) return; if (type === 'module') { setTrainings(trainings.filter(m => m.id !== id)); if (selectedModuleId === id) handleBackToList(); } else if (type === 'lesson' && selectedModuleId) { setTrainings(trainings.map(m => { if (m.id === selectedModuleId) { const updatedLessons = m.lessons.filter(l => l.id !== id); if (selectedLessonId === id) setSelectedLessonId(updatedLessons.length > 0 ? updatedLessons[0].id : null); return { ...m, lessons: updatedLessons }; } return m; })); } };
+
+    const handleSave = async (savedItem: any) => {
+        if (!modalConfig) return;
+
+        try {
+            if (modalConfig.type === 'module') {
+                let res;
+                if (savedItem.id) {
+                    res = await trainingsAPI.update(savedItem.id, savedItem);
+                } else {
+                    res = await trainingsAPI.create(savedItem);
+                }
+
+                if (res.success) {
+                    await loadTrainings(); // Reload to refresh list
+                } else {
+                    alert('Erro ao salvar módulo: ' + res.error);
+                }
+
+            } else if (modalConfig.type === 'lesson') {
+                if (!selectedModuleId) return;
+
+                const lessonPayload = {
+                    ...savedItem,
+                    trainingId: selectedModuleId // Map to module_id
+                };
+
+                let res;
+                if (savedItem.id) {
+                    res = await lessonsAPI.update(savedItem.id, lessonPayload);
+                } else {
+                    res = await lessonsAPI.create(lessonPayload);
+                }
+
+                if (res.success) {
+                    await loadTrainings(); // Reload to refresh list
+                } else {
+                    alert('Erro ao salvar aula: ' + res.error);
+                }
+            }
+            setIsModalOpen(false);
+        } catch (e) {
+            console.error('Save error:', e);
+            alert('Erro ao salvar.');
+        }
+    };
+
+    const handleDelete = async (type: 'module' | 'lesson', id: string) => {
+        if (!window.confirm(`Tem certeza que deseja excluir est${type === 'module' ? 'e módulo' : 'a aula'}?`)) return;
+
+        try {
+            if (type === 'module') {
+                const res = await trainingsAPI.delete(id);
+                if (res.success) {
+                    setTrainings(trainings.filter(m => m.id !== id));
+                    if (selectedModuleId === id) handleBackToList();
+                } else {
+                    alert('Erro ao excluir módulo.');
+                }
+            } else if (type === 'lesson' && selectedModuleId) {
+                const res = await lessonsAPI.delete(id);
+                if (res.success) {
+                    // Optimistic update
+                    setTrainings(trainings.map(m => {
+                        if (m.id === selectedModuleId) {
+                            const updatedLessons = m.lessons.filter(l => l.id !== id);
+                            if (selectedLessonId === id) setSelectedLessonId(updatedLessons.length > 0 ? updatedLessons[0].id : null);
+                            return { ...m, lessons: updatedLessons };
+                        }
+                        return m;
+                    }));
+                } else {
+                    alert('Erro ao excluir aula.');
+                }
+            }
+        } catch (e) {
+            console.error('Delete error', e);
+            alert('Erro ao excluir.');
+        }
+    };
 
     // --- RENDER FUNCTIONS ---
+    if (loading) {
+        return <div className="flex justify-center items-center h-64"><SpinnerIcon className="w-10 h-10 animate-spin text-[#FFD700]" /></div>;
+    }
+
+    if (error) {
+        return <div className="text-red-500 text-center p-8 border border-red-500 rounded-xl">{error} <button onClick={loadTrainings} className="underline ml-2">Tentar novamente</button></div>;
+    }
+
     return (
         <>
             {view === 'detail' && selectedModule ? (
@@ -335,18 +411,18 @@ const TrainingCenter: React.FC<TrainingCenterProps> = ({ credits, setCredits }) 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                         <div className="lg:col-span-2 space-y-4">
                             <div className="aspect-video bg-black rounded-xl overflow-hidden border border-[#2A2A2A]"><iframe key={selectedLesson?.id} width="100%" height="100%" src={getYoutubeEmbedUrl(selectedLesson?.youtubeUrl || '')} title={selectedLesson?.title} frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe></div>
-                            
+
                             {selectedLesson && <div className="space-y-4">
                                 <div className="flex justify-between items-center gap-4 flex-wrap">
                                     <h2 className="text-2xl font-bold text-white">{selectedLesson.title}</h2>
                                     <div className="flex items-center gap-2">
-                                        <button onClick={() => handleAiAction('summarize')} disabled={isAiSummaryLoading || credits <= 0} title={credits <= 0 ? "Créditos insuficientes" : "Resumir com IA"} className="flex-shrink-0 flex items-center justify-center gap-2 bg-[#FFD700]/10 text-[#FFD700] font-bold py-2 px-3 rounded-lg hover:bg-[#FFD700]/20 disabled:opacity-50 transition-colors text-sm"><ClipboardDocumentListIcon className="w-5 h-5"/> Resumir</button>
-                                        <button onClick={() => handleAiAction('explain')} disabled={isAiLoading || credits <= 0} title={credits <= 0 ? "Créditos insuficientes" : "Explicar conceito com IA"} className="flex-shrink-0 flex items-center justify-center gap-2 bg-[#FFD700]/10 text-[#FFD700] font-bold py-2 px-3 rounded-lg hover:bg-[#FFD700]/20 disabled:opacity-50 transition-colors text-sm"><SparklesIcon className="w-5 h-5"/> Explicar</button>
+                                        <button onClick={() => handleAiAction('summarize')} disabled={isAiSummaryLoading || credits <= 0} title={credits <= 0 ? "Créditos insuficientes" : "Resumir com IA"} className="flex-shrink-0 flex items-center justify-center gap-2 bg-[#FFD700]/10 text-[#FFD700] font-bold py-2 px-3 rounded-lg hover:bg-[#FFD700]/20 disabled:opacity-50 transition-colors text-sm"><ClipboardDocumentListIcon className="w-5 h-5" /> Resumir</button>
+                                        <button onClick={() => handleAiAction('explain')} disabled={isAiLoading || credits <= 0} title={credits <= 0 ? "Créditos insuficientes" : "Explicar conceito com IA"} className="flex-shrink-0 flex items-center justify-center gap-2 bg-[#FFD700]/10 text-[#FFD700] font-bold py-2 px-3 rounded-lg hover:bg-[#FFD700]/20 disabled:opacity-50 transition-colors text-sm"><SparklesIcon className="w-5 h-5" /> Explicar</button>
                                     </div>
                                 </div>
-                                
-                                {(isAiSummaryLoading || aiSummary) && <aside className="p-4 bg-black/50 border border-[#2A2A2A] rounded-lg relative animate-fade-in"><h4 className="font-bold text-yellow-500 mb-2">Resumo da IA</h4><button onClick={() => setAiSummary(null)} className="absolute top-2 right-2 text-gray-500 hover:text-white"><CloseIcon className="w-5 h-5"/></button>{isAiSummaryLoading ? <div className="flex items-center gap-2 text-gray-400"><SpinnerIcon className="w-5 h-5 animate-spin"/>Gerando resumo...</div> : <p className="text-sm text-gray-300 whitespace-pre-wrap">{aiSummary}</p>}</aside>}
-                                {(isAiLoading || aiExplanation) && <aside className="p-4 bg-black/50 border border-[#2A2A2A] rounded-lg relative animate-fade-in"><h4 className="font-bold text-yellow-500 mb-2">Explicação da IA</h4><button onClick={() => setAiExplanation(null)} className="absolute top-2 right-2 text-gray-500 hover:text-white"><CloseIcon className="w-5 h-5"/></button>{isAiLoading ? <div className="flex items-center gap-2 text-gray-400"><SpinnerIcon className="w-5 h-5 animate-spin"/>Gerando explicação...</div> : <p className="text-sm text-gray-300 whitespace-pre-wrap">{aiExplanation}</p>}</aside>}
+
+                                {(isAiSummaryLoading || aiSummary) && <aside className="p-4 bg-black/50 border border-[#2A2A2A] rounded-lg relative animate-fade-in"><h4 className="font-bold text-yellow-500 mb-2">Resumo da IA</h4><button onClick={() => setAiSummary(null)} className="absolute top-2 right-2 text-gray-500 hover:text-white"><CloseIcon className="w-5 h-5" /></button>{isAiSummaryLoading ? <div className="flex items-center gap-2 text-gray-400"><SpinnerIcon className="w-5 h-5 animate-spin" />Gerando resumo...</div> : <p className="text-sm text-gray-300 whitespace-pre-wrap">{aiSummary}</p>}</aside>}
+                                {(isAiLoading || aiExplanation) && <aside className="p-4 bg-black/50 border border-[#2A2A2A] rounded-lg relative animate-fade-in"><h4 className="font-bold text-yellow-500 mb-2">Explicação da IA</h4><button onClick={() => setAiExplanation(null)} className="absolute top-2 right-2 text-gray-500 hover:text-white"><CloseIcon className="w-5 h-5" /></button>{isAiLoading ? <div className="flex items-center gap-2 text-gray-400"><SpinnerIcon className="w-5 h-5 animate-spin" />Gerando explicação...</div> : <p className="text-sm text-gray-300 whitespace-pre-wrap">{aiExplanation}</p>}</aside>}
 
                                 <div className="flex flex-wrap items-center justify-between gap-4 py-4 border-y border-[#2A2A2A]">
                                     <div className="flex items-center gap-2"><input type="checkbox" id="mark-complete" checked={selectedLesson.completed} onChange={() => handleToggleLessonComplete(selectedLesson.id)} className="w-5 h-5 accent-[#FFD700] bg-gray-700 border-gray-600 rounded" /><label htmlFor="mark-complete" className="text-sm font-medium text-gray-300">Marcar como concluída</label></div>
@@ -356,18 +432,18 @@ const TrainingCenter: React.FC<TrainingCenterProps> = ({ credits, setCredits }) 
                                         <button onClick={handleShare} className="flex items-center gap-1.5 text-sm text-gray-300 font-medium bg-[#2A2A2A] hover:bg-gray-700 px-3 py-1.5 rounded-md transition-colors"><ShareIcon className="w-4 h-4" />Compartilhar</button>
                                     </div>
                                 </div>
-                                
+
                                 <div className="space-y-4 pt-2">
                                     <h3 className="text-lg font-bold text-white">Pergunte à RSIA sobre esta aula</h3>
                                     <div className="h-64 flex flex-col bg-black/50 border border-[#2A2A2A] rounded-lg p-3">
-                                        <div className="flex-1 overflow-y-auto space-y-4 pr-2">{lessonChatMessages.map((msg, i) => <div key={i} className={`flex items-start gap-2 ${msg.sender === 'user' ? 'justify-end' : ''}`}>{msg.sender === 'bot' && <div className="w-7 h-7 flex-shrink-0 bg-[#2A2A2A] rounded-full flex items-center justify-center border border-gray-600"><RobotIcon className="w-4 h-4 text-[#FFD700]"/></div>}<div className={`max-w-[85%] px-3 py-2 rounded-xl text-sm ${msg.sender === 'bot' ? 'bg-[#2A2A2A] text-gray-300 rounded-tl-none' : 'bg-yellow-500 text-black rounded-br-none'}`}>{msg.text}</div></div>)} {isChatResponseLoading && <div className="flex items-start gap-2"><div className="w-7 h-7 flex-shrink-0 bg-[#2A2A2A] rounded-full flex items-center justify-center border border-gray-600"><RobotIcon className="w-4 h-4 text-[#FFD700]"/></div><div className="px-3 py-2 bg-[#2A2A2A] rounded-xl rounded-tl-none"><SpinnerIcon className="w-5 h-5 text-gray-400 animate-spin" /></div></div>} <div ref={chatEndRef} /></div>
-                                        <form onSubmit={(e) => {e.preventDefault(); handleAiAction('chat', chatUserInput); setChatUserInput(''); }} className="flex items-center gap-2 pt-3 border-t border-[#2A2A2A]"><input type="text" value={chatUserInput} onChange={e => setChatUserInput(e.target.value)} placeholder="Faça uma pergunta..." className="flex-1 bg-gray-800 text-white rounded-lg p-2 text-sm border-gray-700 focus:ring-yellow-500"/><button type="submit" disabled={!chatUserInput.trim() || isChatResponseLoading || credits <= 0} className="w-9 h-9 flex-shrink-0 bg-yellow-500 text-black rounded-full flex items-center justify-center hover:bg-yellow-600 disabled:bg-gray-600"><PaperAirplaneIcon className="w-4 h-4"/></button></form>
+                                        <div className="flex-1 overflow-y-auto space-y-4 pr-2">{lessonChatMessages.map((msg, i) => <div key={i} className={`flex items-start gap-2 ${msg.sender === 'user' ? 'justify-end' : ''}`}>{msg.sender === 'bot' && <div className="w-7 h-7 flex-shrink-0 bg-[#2A2A2A] rounded-full flex items-center justify-center border border-gray-600"><RobotIcon className="w-4 h-4 text-[#FFD700]" /></div>}<div className={`max-w-[85%] px-3 py-2 rounded-xl text-sm ${msg.sender === 'bot' ? 'bg-[#2A2A2A] text-gray-300 rounded-tl-none' : 'bg-yellow-500 text-black rounded-br-none'}`}>{msg.text}</div></div>)} {isChatResponseLoading && <div className="flex items-start gap-2"><div className="w-7 h-7 flex-shrink-0 bg-[#2A2A2A] rounded-full flex items-center justify-center border border-gray-600"><RobotIcon className="w-4 h-4 text-[#FFD700]" /></div><div className="px-3 py-2 bg-[#2A2A2A] rounded-xl rounded-tl-none"><SpinnerIcon className="w-5 h-5 text-gray-400 animate-spin" /></div></div>} <div ref={chatEndRef} /></div>
+                                        <form onSubmit={(e) => { e.preventDefault(); handleAiAction('chat', chatUserInput); setChatUserInput(''); }} className="flex items-center gap-2 pt-3 border-t border-[#2A2A2A]"><input type="text" value={chatUserInput} onChange={e => setChatUserInput(e.target.value)} placeholder="Faça uma pergunta..." className="flex-1 bg-gray-800 text-white rounded-lg p-2 text-sm border-gray-700 focus:ring-yellow-500" /><button type="submit" disabled={!chatUserInput.trim() || isChatResponseLoading || credits <= 0} className="w-9 h-9 flex-shrink-0 bg-yellow-500 text-black rounded-full flex items-center justify-center hover:bg-yellow-600 disabled:bg-gray-600"><PaperAirplaneIcon className="w-4 h-4" /></button></form>
                                     </div>
                                 </div>
                             </div>}
                         </div>
-                        
-                        <div className="lg:col-span-1 bg-[#1E1E1E] border border-[#2A2A2A] rounded-xl p-4 flex flex-col max-h-[70vh]"><div className="flex justify-between items-start mb-4"><h3 className="text-xl font-bold text-white">{selectedModule.title}</h3><button onClick={() => openModal('module', selectedModule)} className="p-2 text-gray-400 hover:text-[#FFD700]"><PencilIcon className="w-5 h-5" /></button></div><div className="flex-1 overflow-y-auto pr-2 space-y-2">{selectedModule.lessons.map((lesson, index) => <div key={lesson.id} className={`group flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors ${selectedLessonId === lesson.id ? 'bg-[#FFD700]/10' : 'hover:bg-white/5'}`} onClick={() => setSelectedLessonId(lesson.id)}><div className="flex items-center gap-3">{lesson.completed ? <CheckCircleIcon className="w-5 h-5 text-green-500"/> : <PlayCircleIcon className="w-5 h-5 text-gray-400"/>}<span className={`font-medium ${selectedLessonId === lesson.id ? 'text-[#FFD700]' : 'text-gray-200'}`}>Aula {index + 1}: {lesson.title}</span></div><div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"><button onClick={(e) => { e.stopPropagation(); openModal('lesson', lesson); }} className="p-1 text-gray-400 hover:text-yellow-400"><PencilIcon className="w-4 h-4" /></button><button onClick={(e) => { e.stopPropagation(); handleDelete('lesson', lesson.id); }} className="p-1 text-gray-400 hover:text-red-500"><TrashIcon className="w-4 h-4" /></button></div></div>)}</div><button onClick={() => openModal('lesson', null)} className="w-full mt-4 flex items-center justify-center gap-2 bg-[#FFD700]/10 text-[#FFD700] font-bold py-2 px-4 rounded-lg hover:bg-[#FFD700]/20 transition-colors text-sm"><PlusIcon className="w-5 h-5" />Adicionar Aula</button></div>
+
+                        <div className="lg:col-span-1 bg-[#1E1E1E] border border-[#2A2A2A] rounded-xl p-4 flex flex-col max-h-[70vh]"><div className="flex justify-between items-start mb-4"><h3 className="text-xl font-bold text-white">{selectedModule.title}</h3><button onClick={() => openModal('module', selectedModule)} className="p-2 text-gray-400 hover:text-[#FFD700]"><PencilIcon className="w-5 h-5" /></button></div><div className="flex-1 overflow-y-auto pr-2 space-y-2">{selectedModule.lessons.map((lesson, index) => <div key={lesson.id} className={`group flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors ${selectedLessonId === lesson.id ? 'bg-[#FFD700]/10' : 'hover:bg-white/5'}`} onClick={() => setSelectedLessonId(lesson.id)}><div className="flex items-center gap-3">{lesson.completed ? <CheckCircleIcon className="w-5 h-5 text-green-500" /> : <PlayCircleIcon className="w-5 h-5 text-gray-400" />}<span className={`font-medium ${selectedLessonId === lesson.id ? 'text-[#FFD700]' : 'text-gray-200'}`}>Aula {index + 1}: {lesson.title}</span></div><div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"><button onClick={(e) => { e.stopPropagation(); openModal('lesson', lesson); }} className="p-1 text-gray-400 hover:text-yellow-400"><PencilIcon className="w-4 h-4" /></button><button onClick={(e) => { e.stopPropagation(); handleDelete('lesson', lesson.id); }} className="p-1 text-gray-400 hover:text-red-500"><TrashIcon className="w-4 h-4" /></button></div></div>)}</div><button onClick={() => openModal('lesson', null)} className="w-full mt-4 flex items-center justify-center gap-2 bg-[#FFD700]/10 text-[#FFD700] font-bold py-2 px-4 rounded-lg hover:bg-[#FFD700]/20 transition-colors text-sm"><PlusIcon className="w-5 h-5" />Adicionar Aula</button></div>
                     </div>
                 </div>
             ) : (
@@ -399,17 +475,17 @@ const TrainingEditModal: React.FC<TrainingEditModalProps> = ({ config, onClose, 
     useEffect(() => { setFormData(config?.item || {}); }, [config]);
 
     if (!config) return null;
-    
+
     const isModule = config.type === 'module';
     const title = config.item ? `Editar ${isModule ? 'Módulo' : 'Aula'}` : `Novo ${isModule ? 'Módulo' : 'Aula'}`;
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => { setFormData({ ...formData, [e.target.name]: e.target.value }); };
-    
+
     const handleGenerateDescriptionWithAi = async () => {
         if (credits <= 0) { alert("Créditos insuficientes para gerar descrição."); return; }
         if (!formData.title || formData.title.trim() === '') { alert('Por favor, insira um título para o módulo antes de gerar a descrição.'); return; }
         setIsAiDescLoading(true);
         try {
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+            const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY || process.env.API_KEY || '' });
             const prompt = `Crie uma descrição curta e impactante para um módulo de treinamento chamado "${formData.title}". O público são consultores de marketing de rede da empresa RS Prólipsi. A descrição deve ser motivadora e resumir o objetivo do módulo em 2 ou 3 frases.`;
             const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
             setFormData(prev => ({ ...prev, description: response.text }));
@@ -427,7 +503,7 @@ const TrainingEditModal: React.FC<TrainingEditModalProps> = ({ config, onClose, 
         if (!isModule && (!formData.youtubeUrl || formData.youtubeUrl.trim() === '')) { alert('A URL do vídeo não pode estar vazia.'); return; }
         onSave(formData);
     };
-    
+
     return (
         <div className="fixed inset-0 bg-black/80 z-50 flex justify-center items-center p-4">
             <div className="bg-[#1E1E1E] border border-[#2A2A2A] rounded-2xl shadow-xl w-full max-w-lg">
@@ -445,7 +521,7 @@ const TrainingEditModal: React.FC<TrainingEditModalProps> = ({ config, onClose, 
                             <div className="flex justify-between items-center mb-1">
                                 <label className="text-sm font-medium text-gray-300">Descrição</label>
                                 <button type="button" onClick={handleGenerateDescriptionWithAi} disabled={isAiDescLoading || credits <= 0} title={credits <= 0 ? "Créditos insuficientes" : "Gerar descrição com IA"} className="flex items-center gap-1.5 text-xs text-[#FFD700] font-semibold hover:text-yellow-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
-                                    {isAiDescLoading ? <SpinnerIcon className="w-4 h-4 animate-spin"/> : <SparklesIcon className="w-4 h-4"/>}
+                                    {isAiDescLoading ? <SpinnerIcon className="w-4 h-4 animate-spin" /> : <SparklesIcon className="w-4 h-4" />}
                                     Gerar com IA
                                 </button>
                             </div>

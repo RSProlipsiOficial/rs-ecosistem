@@ -1,0 +1,23 @@
+{
+  "masterIdsCount": 3,
+  "masters": [
+    {
+      "id": "89c000c0-7a39-4e1e-8dee-5978d846fa89",
+      "name": "RS Prólipsi ",
+      "totalChildren": 6,
+      "nonMasterChildren": 6
+    },
+    {
+      "id": "56334782-424e-4554-9b44-69b0eb454203",
+      "name": "Rota Fácil Teste",
+      "totalChildren": 0,
+      "nonMasterChildren": 0
+    },
+    {
+      "id": "d107da4e-e266-41b0-947a-0c66b2f2b9ef",
+      "name": "Rota Fácil Oficial",
+      "totalChildren": 0,
+      "nonMasterChildren": 0
+    }
+  ]
+}

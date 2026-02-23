@@ -9,20 +9,31 @@ const supabaseKey = process.env.VITE_SUPABASE_SERVICE_ROLE_KEY || process.env.SU
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function inspect() {
-    console.log('Inspecting consultores table...');
-    const { data, error } = await supabase.from('consultores').select('*').limit(1);
+    console.log('--- Inspecting User Identity ---');
+    const userId = 'd107da4e-e266-41b0-947a-0c66b2f2b9ef';
 
-    if (error) {
-        console.error('Error:', error);
-    } else {
-        if (data.length > 0) {
-            console.log('Columns:', Object.keys(data[0]));
-            console.log('Sample Row:', data[0]);
-        } else {
-            console.log('Table is empty, cannot infer columns from data.');
-            // Try to insert a dummy to see error? No.
-        }
+    // Check user_profiles
+    const { data: profile, error: pErr } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+    if (pErr) console.error('User Profiles Error:', pErr);
+    else {
+        console.log('Profile Keys:', Object.keys(profile));
+        console.log('Profile ID (id):', profile.id);
+        console.log('Profile user_id:', profile.user_id);
     }
+
+    // Check consultores
+    const { data: consultor } = await supabase
+        .from('consultores')
+        .select('id, user_id, nome, username')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+    console.log('Consultores ID:', consultor?.id);
 }
 
 inspect();

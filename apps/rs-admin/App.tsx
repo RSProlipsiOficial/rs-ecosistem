@@ -6,11 +6,13 @@ import ConsultantsPage from './components/ConsultantsPage';
 import SettingsPage from './components/SettingsPage';
 import SigmeSettingsPage from './components/SigmeSettingsPage';
 import CareerPlanPage from './components/CareerPlanPage';
+import DigitalCareerPlanPage from './components/DigitalCareerPlanPage';
 import CareerReportsPage from './components/CareerReportsPage';
 import FidelityBonusPage from './components/FidelityBonusPage';
 // Wallet imports removed
 import ManageCDsPage from './components/cd/ManageCDsPage';
 import CDStorePage from './components/cd/CDStorePage';
+import HeadquartersPanel from './components/headquarters/HeadquartersPanel';
 // import CDReportsPage from './components/cd/CDReportsPage';
 // Marketplace imports removed
 import CommunicationCenterPage from './components/CommunicationCenterPage';
@@ -27,6 +29,7 @@ import MpStores from './components/marketplace-admin/Stores';
 import MpSellers from './components/marketplace-admin/Sellers';
 import MpConfig from './components/marketplace-admin/Config';
 import MpPermissions from './components/marketplace-admin/Permissions';
+import CycleClosingTab from './components/CycleClosingTab';
 // SIGME views removidas: centralização em Configurações SIGMA
 
 const App: React.FC = () => {
@@ -48,6 +51,9 @@ const App: React.FC = () => {
     const applyHashRoute = () => {
       const hash = (window.location.hash || '').replace('#', '');
       switch (hash) {
+        case '/rede-de-cds':
+          setActiveView('Rede de CDs');
+          break;
         case '/admin/consultor/panel-settings':
           setActiveView('Admin Configurações do Painel');
           break;
@@ -80,7 +86,9 @@ const App: React.FC = () => {
       case 'Dashboard':
         return <Dashboard setActiveView={setActiveView} />;
       case 'Consultores':
-        return <ConsultantsPage />;
+        return <ConsultantsPage initialTab="management" />;
+      case 'Rede Inteligente':
+        return <ConsultantsPage initialTab="hierarchy" />;
       case 'Admin Dados Pessoais':
         return <PersonalData />;
       case 'Admin Dashboard Editor':
@@ -99,6 +107,8 @@ const App: React.FC = () => {
         return <CareerPlanPage />;
       case 'Relatórios Carreira':
         return <CareerReportsPage />;
+      case 'Plano Carreira Digital':
+        return <DigitalCareerPlanPage />;
       case 'Bônus Fidelidade':
         return <FidelityBonusPage />;
       // WalletPay internal routes removed
@@ -108,6 +118,18 @@ const App: React.FC = () => {
         return <CDStorePage cdId={selectedCDId} />;
       case 'Relatórios CD':
         return <div className="p-8"><h1 className="text-2xl text-yellow-500">Relatórios CD - Em desenvolvimento</h1></div>;
+
+      // --- GESTÃO DE REDE (MASTER) ---
+      case 'Rede de CDs':
+        return <HeadquartersPanel activeTab="OVERVIEW" />;
+      case 'Abastecimento CDs':
+        return <HeadquartersPanel activeTab="REQUESTS" />;
+      case 'Vendas da Rede':
+        return <HeadquartersPanel activeTab="SALES" />;
+      case 'Fechamento de Ciclos':
+        return <CycleClosingTab />;
+      case 'Regras de Franquia':
+        return <HeadquartersPanel activeTab="RULES" />;
       // Marketplace internal routes removed
       case 'Comunicação':
       case 'Communication':

@@ -15,15 +15,11 @@ const supabase = createClient(
  * Importar closeCycle do rs-ops
  * Verifica se o módulo existe antes de importar
  */
-let closeCycle;
-try {
-  const opsPath = path.resolve(__dirname, '../../../rs-ops/src/core/cycles/closeCycle');
-  closeCycle = require(opsPath).closeCycle;
-  console.log('✅ rs-ops/closeCycle carregado com sucesso');
-} catch (error) {
-  console.warn('⚠️  rs-ops não encontrado, usando fallback HTTP');
-  closeCycle = null;
-}
+/**
+ * Importar lógica de bônus do rs-core
+ */
+const { distributeAllBonuses } = require('../../../rs-core/src/math/distributeBonus');
+const { getSigmaConfigCore } = require('../../../rs-core/src/services/sigmaConfigCore');
 
 /**
  * Inicia listener de eventos de ciclo via Supabase Realtime
@@ -51,16 +47,14 @@ function startCycleEventListener() {
           console.log(`💰 Processando bônus para consultor ${consultor_id}...`);
           console.log(`🔄 Ciclo ID: ${cycle_id}`);
 
-          // Chamar rs-ops para distribuir bônus
-          if (closeCycle) {
-            // OPÇÃO 1: Importação direta (mais rápido)
-            console.log('📞 Chamando rs-ops.closeCycle() diretamente...');
-            await closeCycle(consultor_id);
-          } else {
-            // OPÇÃO 2: Fallback para HTTP (se rs-ops estiver em outro servidor)
-            console.log('📞 Chamando rs-ops via HTTP (fallback)...');
-            await callRsOpsViaHTTP(consultor_id, cycle_id);
-          }
+          // Distribuir bônus usando rs-core
+          console.log('📞 Distribuindo bônus via rs-core...');
+          const cfg = await getSigmaConfigCore();
+          await distributeAllBonuses({
+            consultor_id: consultor_id,
+            cycle_id: cycle_id,
+            cycle_value: cfg.cycle.value
+          });
 
           // Marcar evento como processado
           await supabase

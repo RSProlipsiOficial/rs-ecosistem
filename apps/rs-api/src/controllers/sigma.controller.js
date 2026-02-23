@@ -48,16 +48,15 @@ exports.getMatrix = async (req, res) => {
   try {
     const { userId } = req.params;
     
-    // Busca matriz ativa
+    // Busca ciclo aberto (matriz ativa)
     const { data: matrix, error } = await supabase
-      .from('matrix_nodes')
-      .select(`
-        *,
-        children:matrix_nodes!parent_id(*)
-      `)
-      .eq('user_id', userId)
-      .eq('is_active', true)
-      .single();
+      .from('matriz_cycles')
+      .select('*')
+      .eq('consultor_id', userId)
+      .eq('status', 'open')
+      .order('opened_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
     
     if (error) throw error;
     
@@ -81,11 +80,12 @@ exports.getPosition = async (req, res) => {
     const { userId } = req.params;
     
     const { data, error } = await supabase
-      .from('matrix_nodes')
-      .select('position, level, parent_id, is_active')
-      .eq('user_id', userId)
-      .eq('is_active', true)
-      .single();
+      .from('matriz_cycles')
+      .select('slots_filled, cycle_number, status')
+      .eq('consultor_id', userId)
+      .eq('status', 'open')
+      .limit(1)
+      .maybeSingle();
     
     if (error) throw error;
     
@@ -116,7 +116,7 @@ exports.getDownlines = async (req, res) => {
           id,
           nome,
           email,
-          nivel_carreira,
+          pin_atual,
           status
         )
       `)
@@ -148,10 +148,9 @@ exports.getCycles = async (req, res) => {
   try {
     const { userId } = req.params;
     
-    const { data, error } = await supabase
-      .from('matrix_cycles')
+      .from('matriz_cycles')
       .select('*')
-      .eq('user_id', userId)
+      .eq('consultor_id', userId)
       .order('completed_at', { ascending: false });
     
     if (error) throw error;
@@ -177,9 +176,9 @@ exports.completeCycle = async (req, res) => {
     const { userId, matrixId } = req.body;
     
     // Chama função do banco que processa tudo
-    const { data, error } = await supabase.rpc('complete_cycle', {
-      p_user_id: userId,
-      p_matrix_id: matrixId
+    const { data, error } = await supabase.rpc('process_sale_and_cycle', {
+      p_buyer_id: userId,
+      p_product_id: matrixId // No novo esquema, passamos o ID da "venda" ou "ativação"
     });
     
     if (error) throw error;

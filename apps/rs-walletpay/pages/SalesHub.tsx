@@ -14,33 +14,33 @@ const TabButton: React.FC<{ label: string; active: boolean; onClick: () => void;
         onClick={onClick}
         className={`whitespace-nowrap py-4 px-4 border-b-2 font-medium text-sm transition-colors
             ${active ? 'border-gold text-gold' : 'border-transparent text-text-soft hover:text-text-body hover:border-border'
-        }`}
+            }`}
     >
         {label}
     </button>
 );
 
 const InputField: React.FC<{ name: string, label: string, value: string, onChange: (e: React.ChangeEvent<HTMLInputElement>) => void, type?: string, placeholder?: string, required?: boolean, disabled?: boolean }> =
-({ name, label, value, onChange, type = 'text', placeholder, required = false, disabled = false }) => (
-   <div>
-       <label htmlFor={name} className="block text-sm font-medium text-text-body mb-2">{label}</label>
-       <input
-           type={type}
-           id={name}
-           name={name}
-           value={value}
-           onChange={onChange}
-           placeholder={placeholder}
-           required={required}
-           disabled={disabled}
-           className="w-full px-4 py-3 rounded-lg bg-surface border border-border focus:outline-none focus:ring-2 focus:ring-gold/25 focus:border-transparent transition-all disabled:opacity-50"
-       />
-   </div>
-);
+    ({ name, label, value, onChange, type = 'text', placeholder, required = false, disabled = false }) => (
+        <div>
+            <label htmlFor={name} className="block text-sm font-medium text-text-body mb-2">{label}</label>
+            <input
+                type={type}
+                id={name}
+                name={name}
+                value={value}
+                onChange={onChange}
+                placeholder={placeholder}
+                required={required}
+                disabled={disabled}
+                className="w-full px-4 py-3 rounded-lg bg-surface border border-border focus:outline-none focus:ring-2 focus:ring-gold/25 focus:border-transparent transition-all disabled:opacity-50"
+            />
+        </div>
+    );
 
 
 // --- Clientes Tab ---
-const ClientsView: React.FC<{clients: Client[], onAddClient: (client: Client) => void}> = ({ clients, onAddClient }) => {
+const ClientsView: React.FC<{ clients: Client[], onAddClient: (client: Client) => void }> = ({ clients, onAddClient }) => {
     const [modalOpen, setModalOpen] = useState(false);
     const [newClient, setNewClient] = useState({ name: '', email: '', phone: '' });
 
@@ -48,7 +48,7 @@ const ClientsView: React.FC<{clients: Client[], onAddClient: (client: Client) =>
         const { name, value } = e.target;
         setNewClient(prev => ({ ...prev, [name]: value }));
     };
-    
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         onAddClient({
@@ -77,7 +77,7 @@ const ClientsView: React.FC<{clients: Client[], onAddClient: (client: Client) =>
                     </div>
                 ))}
             </div>
-             <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title="Novo Cliente">
+            <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title="Novo Cliente">
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <InputField name="name" label="Nome Completo" value={newClient.name} onChange={handleChange} required />
                     <InputField name="email" label="E-mail" type="email" value={newClient.email} onChange={handleChange} required />
@@ -90,11 +90,11 @@ const ClientsView: React.FC<{clients: Client[], onAddClient: (client: Client) =>
 };
 
 // --- Vendas Tab ---
-const SalesView: React.FC<{sales: Sale[], clients: Client[], onAddSale: (sale: Sale) => void}> = ({ sales, clients, onAddSale }) => {
+const SalesView: React.FC<{ sales: Sale[], clients: Client[], onAddSale: (sale: Sale) => void }> = ({ sales, clients, onAddSale }) => {
     const [modalOpen, setModalOpen] = useState(false);
     const [comingSoon, setComingSoon] = useState(false);
     const [newSale, setNewSale] = useState({ clientId: '', items: '', totalAmount: '' });
-    
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         const client = clients.find(c => c.id === newSale.clientId);
@@ -153,13 +153,13 @@ const SalesView: React.FC<{sales: Sale[], clients: Client[], onAddSale: (sale: S
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
                         <label htmlFor="clientId" className="block text-sm font-medium text-text-body mb-2">Cliente</label>
-                        <select id="clientId" name="clientId" value={newSale.clientId} onChange={(e) => setNewSale(p => ({...p, clientId: e.target.value}))} required className="w-full px-4 py-3 rounded-lg bg-surface border border-border">
+                        <select id="clientId" name="clientId" value={newSale.clientId} onChange={(e) => setNewSale(p => ({ ...p, clientId: e.target.value }))} required className="w-full px-4 py-3 rounded-lg bg-surface border border-border">
                             <option value="" disabled>Selecione um cliente</option>
                             {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                         </select>
                     </div>
-                    <InputField name="items" label="Produtos/Serviços" value={newSale.items} onChange={(e) => setNewSale(p => ({...p, items: e.target.value}))} placeholder="Ex: Kit Essencial" required />
-                    <InputField name="totalAmount" label="Valor Total" type="number" value={newSale.totalAmount} onChange={(e) => setNewSale(p => ({...p, totalAmount: e.target.value}))} placeholder="0.00" required />
+                    <InputField name="items" label="Produtos/Serviços" value={newSale.items} onChange={(e) => setNewSale(p => ({ ...p, items: e.target.value }))} placeholder="Ex: Kit Essencial" required />
+                    <InputField name="totalAmount" label="Valor Total" type="number" value={newSale.totalAmount} onChange={(e) => setNewSale(p => ({ ...p, totalAmount: e.target.value }))} placeholder="0.00" required />
                     <button type="submit" className="mt-4 w-full text-center py-3 px-6 bg-gold text-card font-semibold rounded-lg">Salvar Venda</button>
                 </form>
             </Modal>
@@ -205,28 +205,18 @@ const SalesHub: React.FC = () => {
                     });
                     setClients(Object.values(uniqueClients));
                 } else {
-                    if (import.meta.env.DEV) {
-                        setClients(MOCK_CLIENTS);
-                        setSales(MOCK_SALES);
-                    } else {
-                        setClients([]);
-                        setSales([]);
-                    }
-                }
-            } catch (err) {
-                console.error('Erro ao carregar orders/clientes:', err);
-                if (import.meta.env.DEV) {
-                    setClients(MOCK_CLIENTS);
-                    setSales(MOCK_SALES);
-                } else {
                     setClients([]);
                     setSales([]);
                 }
+            } catch (err) {
+                console.error('Erro ao carregar orders/clientes:', err);
+                setClients([]);
+                setSales([]);
             }
         };
         load();
     }, []);
-    
+
     const handleAddClient = (client: Client) => setClients(prev => [client, ...prev]);
     const handleAddSale = (sale: Sale) => setSales(prev => [sale, ...prev]);
 

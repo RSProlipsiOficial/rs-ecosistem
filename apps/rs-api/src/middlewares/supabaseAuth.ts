@@ -78,7 +78,7 @@ export async function supabaseAuth(req: AuthenticatedRequest, res: Response, nex
     // Adiciona informações do usuário à requisição
     // Verifica metadata para role customizada (prioridade sobre role do JWT)
     const customRole = user.user_metadata?.role || user.app_metadata?.role;
-    
+
     req.user = {
       id: user.id,
       email: user.email || undefined,
@@ -167,6 +167,7 @@ function isValidJwtFormat(token: string): boolean {
 // Roles disponíveis no sistema
 export const ROLES = {
   ADMIN: 'admin',
+  SUPERADMIN: 'superadmin',
   CONSULTOR: 'consultor',
   MASTER: 'master',
   LOJISTA: 'lojista',

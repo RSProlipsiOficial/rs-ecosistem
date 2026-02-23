@@ -46,41 +46,27 @@ router.get('/dashboard/overview', supabaseAuth, requireRole([ROLES.CONSULTOR, RO
       console.error('Erro ao buscar rede:', networkError);
     }
 
-    // Buscar saldo da carteira
+    // Buscar saldo da carteira (tabela wallets - real)
     const { data: walletData, error: walletError } = await supabase
-      .from('wallet_accounts')
+      .from('wallets')
       .select('balance, available_balance, blocked_balance')
       .eq('user_id', userId)
       .single();
 
-    if (walletError) {
+    if (walletError && walletError.code !== 'PGRST116') {
       console.error('Erro ao buscar carteira:', walletError);
     }
 
-    // Buscar performance e rank
+    // Buscar performance e rank (tabela real)
     const { data: performanceData, error: performanceError } = await supabase
       .from('consultant_performance')
       .select('current_rank, points, next_rank')
       .eq('consultant_id', userId)
       .single();
 
-    if (performanceError) {
+    if (performanceError && performanceError.code !== 'PGRST116') {
       console.error('Erro ao buscar performance:', performanceError);
     }
-
-    // Calcular totais
-    const totalSales = salesData?.reduce((sum, sale) => sum + (sale.amount || 0), 0) || 0;
-    const thisMonthSales = salesData
-      ?.filter(sale => {
-        const saleDate = new Date(sale.created_at);
-        const now = new Date();
-        return saleDate.getMonth() === now.getMonth() && saleDate.getFullYear() === now.getFullYear();
-      })
-      .reduce((sum, sale) => sum + (sale.amount || 0), 0) || 0;
-
-    const pendingSales = salesData
-      ?.filter(sale => sale.status === 'pending')
-      .reduce((sum, sale) => sum + (sale.amount || 0), 0) || 0;
 
     const dashboardData = {
       sales: {
@@ -89,7 +75,7 @@ router.get('/dashboard/overview', supabaseAuth, requireRole([ROLES.CONSULTOR, RO
         pending: pendingSales
       },
       network: {
-        total: networkData?.count || 0,
+        total: networkData?.total_count || 0,
         active: networkData?.active_count || 0,
         newThisMonth: networkData?.new_this_month || 0
       },
@@ -179,36 +165,56 @@ router.get('/dashboard/network', supabaseAuth, requireRole([ROLES.CONSULTOR, ROL
 });
 
 // GET /v1/consultor/dashboard/performance
-router.get('/dashboard/performance', supabaseAuth, requireRole([ROLES.CONSULTOR, ROLES.MASTER, ROLES.ADMIN]), async (req, res) => {
-  // Logic from old /performance
+router.get('/dashboard/performance', supabaseAuth, requireRole([ROLES.CONSULTOR, ROLES.MASTER, ROLES.ADMIN]), async (req: any, res) => {
   try {
-    // TODO: Buscar performance real do consultor
-    // Retornando zeros por enquanto para remover dados fictícios
+    const userId = req.user.id;
+
+    // 1. Fetch performance stats (points, rank)
+    const { data: perf } = await supabase
+      .from('consultant_performance')
+      .select('*')
+      .eq('consultant_id', userId)
+      .single();
+
+    // 2. Fetch bonuses totals (cycle, depth, fidelity, top_sigma, career)
+    const { data: bonuses } = await supabase
+      .from('bonuses')
+      .select('amount, bonus_type')
+      .eq('user_id', userId);
+
+    const bonusTotals = (bonuses || []).reduce((acc: any, b: any) => {
+      acc[b.bonus_type] = (acc[b.bonus_type] || 0) + Number(b.amount);
+      acc.total += Number(b.amount);
+      return acc;
+    }, { total: 0 });
+
     const performanceData = {
       sales: {
-        daily: 0.00,
-        weekly: 0.00,
-        monthly: 0.00
+        daily: 0, // Need to implement daily sales tracking if required
+        weekly: 0,
+        monthly: 0
       },
       commissions: {
-        total: 0.00,
-        available: 0.00,
-        pending: 0.00
+        total: bonusTotals.total || 0,
+        available: bonusTotals.total || 0, // Simplified
+        pending: 0
       },
       goals: {
-        current: 0.00,
-        target: 5000.00,
-        progress: 0
+        current: perf?.points || 0,
+        target: 5000.00, // Hardcoded threshold for next rank or goal
+        progress: perf?.points ? Math.min(Math.round((perf.points / 5000) * 100), 100) : 0
+      },
+      details: {
+        rank: perf?.current_rank || 'Iniciante',
+        nextRank: perf?.next_rank || 'Bronze',
+        points: perf?.points || 0
       }
     };
 
     res.json(performanceData);
-
   } catch (error) {
     console.error('Erro na performance:', error);
-    res.status(500).json({
-      error: 'Erro interno do servidor'
-    });
+    res.status(500).json({ error: 'Erro interno do servidor' });
   }
 });
 

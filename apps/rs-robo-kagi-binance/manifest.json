@@ -1,7 +1,7 @@
 {
-  "short_name": "Robô Kagi",
-  "name": "Robô Kagi + Fibo (Binance Scanner)",
-  "description": "A prototype trading bot panel for scanning Binance pairs using Kagi charts and Fibonacci targets.",
+  "short_name": "RS Robo Kagi",
+  "name": "RS Robo Kagi Binance",
+  "description": "Painel avançado de robôs de trading utilizando Kagi e IA via OpenRouter.",
   "icons": [
     {
       "src": "/logo192.png",

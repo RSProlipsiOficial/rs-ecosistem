@@ -1,0 +1,98 @@
+[
+  {
+    "name": "Alessandra Rosa de Araújo",
+    "id": "00000000-0000-4000-a000-000000164ea3",
+    "directs": 6,
+    "sponsor": "4706b805-ca7e-46bf-a7a7-2ad5bc8c0438"
+  },
+  {
+    "name": "Tiago Santos Miranda",
+    "id": "00000000-0000-4000-a000-0000005a35f6",
+    "directs": 8,
+    "sponsor": "b4d54416-119e-41f7-92c2-cde26e5e6e9f"
+  },
+  {
+    "name": "joão josé oliveira miranda",
+    "id": "034051dc-8742-4df4-85ff-36a01844c612",
+    "directs": 21,
+    "sponsor": "69806370-f06e-4c5f-b728-f96410a6f462"
+  },
+  {
+    "name": "Michael De Araújo Medeiros",
+    "id": "4706b805-ca7e-46bf-a7a7-2ad5bc8c0438",
+    "directs": 29,
+    "sponsor": "69806370-f06e-4c5f-b728-f96410a6f462"
+  },
+  {
+    "name": "José Luiz de Souza",
+    "id": "e1f992df-3fff-42ad-8a40-1349a86ff0e6",
+    "directs": 6,
+    "sponsor": "034051dc-8742-4df4-85ff-36a01844c612"
+  },
+  {
+    "name": "jose costa dos santos",
+    "id": "0e43ad8e-3c82-4f29-b3a0-55d0f7fe6e84",
+    "directs": 8,
+    "sponsor": "e1f992df-3fff-42ad-8a40-1349a86ff0e6"
+  },
+  {
+    "name": "Alaor Garcia da Silva",
+    "id": "2e65f464-2b85-4c97-a285-fc1ab31c8789",
+    "directs": 8,
+    "sponsor": "b9822794-e382-42f1-ae07-bd02f04532ed"
+  },
+  {
+    "name": "Emanuel Mendes Claro",
+    "id": "179d44cd-3351-4cdb-ad1e-78ac274108c2",
+    "directs": 28,
+    "sponsor": "89c000c0-7a39-4e1e-8dee-5978d846fa89"
+  },
+  {
+    "name": "maxwel santos",
+    "id": "69806370-f06e-4c5f-b728-f96410a6f462",
+    "directs": 6,
+    "sponsor": "179d44cd-3351-4cdb-ad1e-78ac274108c2"
+  },
+  {
+    "name": "Jose Maria Figueiredo dos Santos",
+    "id": "3c6672ef-8256-48c9-bb6c-4b07aa239816",
+    "directs": 10,
+    "sponsor": "472316c6-4064-45fe-a102-2ff885dcaf25"
+  },
+  {
+    "name": "RS Prólipsi ",
+    "id": "89c000c0-7a39-4e1e-8dee-5978d846fa89",
+    "directs": 6,
+    "sponsor": null
+  },
+  {
+    "name": "Jorge pereira dos santos",
+    "id": "472316c6-4064-45fe-a102-2ff885dcaf25",
+    "directs": 6,
+    "sponsor": "e1f992df-3fff-42ad-8a40-1349a86ff0e6"
+  },
+  {
+    "name": "sidnalva maria bueno camargo",
+    "id": "b4d54416-119e-41f7-92c2-cde26e5e6e9f",
+    "directs": 8,
+    "sponsor": "89c000c0-7a39-4e1e-8dee-5978d846fa89"
+  },
+  {
+    "name": "Helenice Moreno de Oliveira",
+    "id": "00000000-0000-4000-a000-000000537b05",
+    "directs": 10,
+    "sponsor": "179d44cd-3351-4cdb-ad1e-78ac274108c2"
+  },
+  {
+    "name": "Oseias Silva",
+    "id": "fcab07f8-5144-4983-9fab-1576c015675f",
+    "directs": 6,
+    "sponsor": "89c000c0-7a39-4e1e-8dee-5978d846fa89"
+  },
+  {
+    "name": "Marisane Antunes de lima",
+    "id": "7720eac9-2d47-4730-86bc-8ce3fd38e886",
+    "directs": 6,
+    "sponsor": "89c000c0-7a39-4e1e-8dee-5978d846fa89"
+  }
+]

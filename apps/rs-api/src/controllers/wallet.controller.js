@@ -11,6 +11,36 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY
 );
 
+/**
+ * Helper: Resolve auth.users.id → consultores.id
+ * A tabela wallets usa consultor_id (FK → consultores.id),
+ * mas o frontend envia auth.users.id.
+ */
+async function resolveConsultorId(userId) {
+  // 1. Tenta direto em consultores.id
+  const { data: direct } = await supabase
+    .from('consultores')
+    .select('id')
+    .eq('id', userId)
+    .single();
+  if (direct) return direct.id;
+
+  // 2. Busca por consultores.user_id (auth.users.id)
+  const { data: byUser } = await supabase
+    .from('consultores')
+    .select('id')
+    .eq('user_id', userId)
+    .single();
+  if (byUser) {
+    console.log(`🔄 [Wallet] Resolvido auth(${userId}) → consultor(${byUser.id})`);
+    return byUser.id;
+  }
+
+  // 3. Fallback: usa o ID original (pode falhar)
+  console.warn(`⚠️ [Wallet] Não encontrou consultor para userId=${userId}`);
+  return userId;
+}
+
 // ================================================
 // SALDO E TRANSAÇÕES
 // ================================================
@@ -21,11 +51,12 @@ const supabase = createClient(
 exports.getBalance = async (req, res) => {
   try {
     const { userId } = req.params;
+    const consultorId = await resolveConsultorId(userId);
 
     const { data, error } = await supabase
       .from('wallets')
       .select('saldo_disponivel, saldo_bloqueado, saldo_total')
-      .eq('consultor_id', userId)
+      .eq('consultor_id', consultorId)
       .single();
 
     if (error) throw error;
@@ -574,11 +605,14 @@ exports.debitWallet = async (req, res) => {
       });
     }
 
+    // Resolver consultor_id real
+    const consultorId = await resolveConsultorId(userId);
+
     // Buscar saldo atual
     const { data: wallet, error: walletError } = await supabase
       .from('wallets')
       .select('saldo_disponivel')
-      .eq('consultor_id', userId)
+      .eq('consultor_id', consultorId)
       .single();
 
     if (walletError || !wallet) {
@@ -608,9 +642,43 @@ exports.debitWallet = async (req, res) => {
         saldo_total: newBalance,
         updated_at: new Date().toISOString()
       })
-      .eq('consultor_id', userId);
+      .eq('consultor_id', consultorId);
 
     if (updateError) throw updateError;
+
+    // Atualizar status do pedido para 'paid' se orderId foi fornecido
+    if (orderId) {
+      await supabase
+        .from('orders')
+        .update({
+          payment_status: 'paid',
+          status: 'confirmed',
+          payment_method: 'wallet',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', orderId);
+      console.log(`✅ [Wallet] Pedido ${orderId} marcado como pago via saldo.`);
+
+      // PROCESSAR BÔNUS MMN — igual ao webhook do Mercado Pago
+      try {
+        const { registerSale } = require('../services/salesService');
+        const saleResult = await registerSale({
+          orderId,
+          mpPaymentId: `wallet-${Date.now()}`,
+          amount: amount,
+          method: 'wallet',
+          receivedAt: new Date().toISOString()
+        });
+        console.log(`✅ [Wallet] Bônus MMN processados:`, {
+          sales: saleResult.sales?.length || 0,
+          matrixValue: saleResult.totalMatrixValue || 0
+        });
+      } catch (bonusError) {
+        console.error('⚠️ [Wallet] Erro ao processar bônus MMN (pedido já pago):', bonusError.message);
+        // Não falha o pagamento — bônus pode ser reprocessado depois
+      }
+    }
+
 
     // Registrar transação
     await supabase

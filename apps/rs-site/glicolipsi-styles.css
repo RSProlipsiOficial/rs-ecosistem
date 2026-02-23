@@ -1,0 +1,208 @@
+/* GlicoLipsi Custom Styles */
+/* Inspirado na landing page original com cores douradas e design moderno */
+
+/* Variáveis de cores do GlicoLipsi */
+:root {
+    --glicolipsi-gold: #C8A74E;
+    --glicolipsi-gold-hover: #D4B561;
+    --glicolipsi-gold-glow: rgba(200, 167, 78, 0.4);
+    --glicolipsi-base-deep: #050505;
+}
+
+/* Efeito de brilho no texto dourado (gold-text) */
+@keyframes shine {
+    to {
+        background-position: 200% center;
+    }
+}
+
+.gold-text {
+    background: linear-gradient(135deg, #fff 0%, var(--glicolipsi-gold) 50%, #fff 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    background-size: 200% auto;
+    animation: shine 5s linear infinite;
+}
+
+/* Pulse animation para badges */
+@keyframes pulse-dot {
+    0% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(200, 167, 78, 0.7);
+    }
+    70% {
+        transform: scale(1);
+        box-shadow: 0 0 0 10px rgba(200, 167, 78, 0);
+    }
+    100% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(200, 167, 78, 0);
+    }
+}
+
+/* Badge de novidade */
+.badge-new {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(200, 167, 78, 0.1);
+    color: var(--glicolipsi-gold);
+    border: 1px solid var(--glicolipsi-gold);
+    padding: 6px 16px;
+    border-radius: 50px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    margin-bottom: 24px;
+}
+
+.pulse-dot {
+    width: 8px;
+    height: 8px;
+    background: var(--glicolipsi-gold);
+    border-radius: 50%;
+    animation: pulse-dot 1.5s infinite;
+}
+
+/* Efeito de flutuação para imagem do produto */
+@keyframes floating {
+    0%, 100% {
+        transform: translateY(0px);
+    }
+    50% {
+        transform: translateY(-20px);
+    }
+}
+
+.floating {
+    animation: floating 3s ease-in-out infinite;
+}
+
+/* Glass cards com efeito hover */
+.glass-card-glicolipsi {
+    background: rgba(22, 26, 33, 0.7);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(200, 167, 78, 0.2);
+    border-radius: 24px;
+    padding: 40px;
+    transition: all 0.3s ease;
+}
+
+.glass-card-glicolipsi:hover {
+    border-color: var(--glicolipsi-gold);
+    transform: translateY(-8px);
+    box-shadow: 0 15px 40px rgba(200, 167, 78, 0.2);
+}
+
+/* Estilo para pricing cards */
+.pricing-card-featured {
+    border: 2px solid var(--glicolipsi-gold) !important;
+    transform: scale(1.05);
+    background: rgba(200, 167, 78, 0.05) !important;
+}
+
+.best-seller-badge {
+    position: absolute;
+    top: -15px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--glicolipsi-gold);
+    color: #000;
+    padding: 4px 20px;
+    border-radius: 20px;
+    font-weight: 800;
+    font-size: 0.8rem;
+    z-index: 10;
+}
+
+/* Botão com animação de pulso */
+.btn-pulse {
+    animation: btn-pulse 2s infinite;
+}
+
+@keyframes btn-pulse {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(200, 167, 78, 0.4);
+    }
+    70% {
+        transform: scale(1.05);
+        box-shadow: 0 0 0 15px rgba(200, 167, 78, 0);
+    }
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(200, 167, 78, 0);
+    }
+}
+
+/* Efeito de reveal/fade-in ao scroll */
+.reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: 0.8s ease-out;
+}
+
+.reveal.active {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Background glows animados */
+.glicolipsi-bg-glow {
+    position: fixed;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, var(--glicolipsi-gold-glow) 0%, transparent 70%);
+    filter: blur(100px);
+    opacity: 0.2;
+    pointer-events: none;
+    z-index: -1;
+}
+
+.glow-top-right {
+    top: -10%;
+    right: -10%;
+}
+
+.glow-bottom-left {
+    bottom: -10%;
+    left: -10%;
+}
+
+/* Estilos para o WhatsApp floating button */
+.whatsapp-float {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 65px;
+    height: 65px;
+    background: #25d366;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 10px 25px rgba(37, 211, 102, 0.4);
+    z-index: 1000;
+    transition: transform 0.3s ease;
+}
+
+.whatsapp-float:hover {
+    transform: scale(1.1);
+}
+
+.whatsapp-float img {
+    width: 35px;
+    height: 35px;
+}
+
+/* Estilos responsivos */
+@media (max-width: 768px) {
+    .pricing-card-featured {
+        transform: scale(1);
+        margin: 20px 0;
+    }
+    
+    .glass-card-glicolipsi {
+        padding: 24px;
+    }
+}

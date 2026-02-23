@@ -2,6 +2,56 @@ import { Product } from '../types';
 
 export const initialProducts: Product[] = [
   {
+    id: 'prod-glicolipsi',
+    category: 'Physical',
+    purchaseUrl: 'https://checkout.rsprolipsi.com.br/gicolipsi-1',
+    imageUrls: [
+      '/assets/glicolipsi-product.png',
+      '/assets/glicolipsi-ingredients.png',
+      '/assets/glicolipsi-benefits.png',
+    ],
+    translations: {
+      pt: {
+        name: 'GlicoLipsi',
+        description: '<h3>A Chave para o Equilíbrio Metabólico que Você Sempre Buscou</h3><p>Recupere sua vitalidade e mantenha sua glicose sob controle com a potência dos ativos naturais do GlicoLipsi. Ciência, segurança e resultados reais.</p><h4>Fórmula Definitiva</h4><p>O GlicoLipsi combina os 4 pilares da natureza para o seu bem-estar metabólico:</p><ul><li><strong>Feno-grego:</strong> O suporte natural mais potente para a sensibilidade à insulina.</li><li><strong>Cúrcuma:</strong> Atua no combate ao estresse oxidativo e inflamação celular.</li><li><strong>Magnésio Dimalato:</strong> O combustível essencial para a regulação energética diária.</li><li><strong>Alho em Pó:</strong> Proteção cardiovascular e equilíbrio do colesterol LDL.</li></ul>',
+      },
+      en: {
+        name: 'GlicoLipsi',
+        description: '<h3>The Key to Metabolic Balance You\'ve Always Sought</h3><p>Regain your vitality and keep your glucose under control with the power of GlicoLipsi\'s natural actives. Science, safety, and real results.</p><h4>The Definitive Formula</h4><p>GlicoLipsi combines the 4 pillars of nature for your metabolic well-being:</p><ul><li><strong>Fenugreek:</strong> The most powerful natural support for insulin sensitivity.</li><li><strong>Turmeric:</strong> Acts in combating oxidative stress and cellular inflammation.</li><li><strong>Magnesium Malate:</strong> The essential fuel for daily energy regulation.</li><li><strong>Garlic Powder:</strong> Cardiovascular protection and LDL cholesterol balance.</li></ul>',
+      },
+      es: {
+        name: 'GlicoLipsi',
+        description: '<h3>La Clave para el Equilibrio Metabólico que Siempre Buscaste</h3><p>Recupera tu vitalidad y mantén tu glucosa bajo control con el poder de los activos naturales de GlicoLipsi. Ciencia, seguridad y resultados reales.</p><h4>La Fórmula Definitiva</h4><p>GlicoLipsi combina los 4 pilares de la naturaleza para tu bienestar metabólico:</p><ul><li><strong>Fenogreco:</strong> El soporte natural más potente para la sensibilidad a la insulina.</li><li><strong>Cúrcuma:</strong> Actúa en la lucha contra el estrés oxidativo y la inflamación celular.</li><li><strong>Magnesio Malato:</strong> El combustible esencial para la regulación energética diaria.</li><li><strong>Ajo en Polvo:</strong> Protección cardiovascular y equilibrio del colesterol LDL.</li></ul>',
+      },
+    },
+    variants: [
+      { id: 'v1-glicolipsi', name: '1 Pote (30 dias)', originalPrice: 267.00, price: 170.00, sku: 'GLICO-1POTE', stock: 500 },
+      { id: 'v3-glicolipsi', name: '3 Potes (90 dias)', originalPrice: 510.00, price: 459.00, sku: 'GLICO-3POTES', stock: 300 },
+      { id: 'v6-glicolipsi', name: '6 Potes (180 dias)', originalPrice: 1020.00, price: 867.00, sku: 'GLICO-6POTES', stock: 200 },
+    ],
+    reviews: [
+      { id: 'r1-glicolipsi', author: 'Maria S.', rating: 5, text: 'Minha glicose finalmente estabilizou! Recomendo muito.', likes: 42, createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString() },
+      { id: 'r2-glicolipsi', author: 'João P.', rating: 5, text: 'Sinto muito mais energia durante o dia. Produto excelente!', likes: 28, createdAt: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString() },
+      { id: 'r3-glicolipsi', author: 'Carla F.', rating: 4, text: 'Bom produto, resultados apareceram após 30 dias.', likes: 19, createdAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString() },
+    ],
+    status: 'active',
+    tags: ['saúde', 'glicose', 'metabolismo', 'suplemento'],
+    shipping: {
+      weight: 0.3,
+      dimensions: {
+        length: 12,
+        width: 12,
+        height: 15,
+      },
+    },
+    seo: {
+        metaTitle: 'GlicoLipsi | Equilíbrio Metabólico e Vitalidade Diária',
+        metaDescription: 'Recupere sua vitalidade e mantenha sua glicose sob controle com a potência dos ativos naturais do GlicoLipsi. Feno-grego, Cúrcuma, Magnésio e Alho.',
+        slug: 'glicolipsi'
+    },
+    eligibleForCartRecovery: true,
+  },
+  {
     id: 'prod-d1',
     category: 'Digital',
     purchaseUrl: '#',

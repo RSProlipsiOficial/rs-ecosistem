@@ -1,9 +1,7 @@
-FROM node:18-alpine
+FROM node:20-alpine
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci || npm install
+RUN npm install
 COPY . .
-RUN npm run build || true
-RUN npm i -g serve
-ENV PORT=3004
-CMD ["sh","-c","if [ -f dist/index.html ] || [ -f index.html ] || [ -f vite.config.ts ] || [ -f vite.config.js ]; then exec serve -s dist -l ${PORT}; else exec npm run start; fi"]
+EXPOSE 5006
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]

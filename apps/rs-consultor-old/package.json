@@ -1,0 +1,14 @@
+{
+  "name": "rs-consultor-root",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "cd dist && vite --port 3102",
+    "build": "cd dist && pnpm install && vite build",
+    "preview": "cd dist && vite preview --port 3102",
+    "start": "serve -s dist/dist -l $PORT"
+  },
+  "dependencies": {
+    "serve": "^14.2.1"
+  }
+}

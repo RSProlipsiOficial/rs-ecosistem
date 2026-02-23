@@ -1,0 +1,312 @@
+{
+  "consultores": [
+    {
+      "id": "00000000-0000-4000-a000-00000080fa09",
+      "user_id": null,
+      "nome": "Marcos Lima Rovaris",
+      "email": "marcosl.rovaris@gmaik.com",
+      "patrocinador_id": "d107da4e-e266-41b0-947a-0c66b2f2b9ef",
+      "mmn_id": null,
+      "created_at": "2025-12-23T15:22:14.493"
+    },
+    {
+      "id": "3c003ba4-ecf3-4cf3-a99f-d8b9f3d7c692",
+      "user_id": null,
+      "nome": "francisco josé oliveira miranda",
+      "email": "mirandafranciscomiranda@gmail.com",
+      "patrocinador_id": "d9510f58-0c84-43e1-9027-ad2b849ea13d",
+      "mmn_id": null,
+      "created_at": "2025-12-23T15:22:14.492"
+    },
+    {
+      "id": "e3d01f3d-4c41-4b0f-824b-1bacc491f7b2",
+      "user_id": null,
+      "nome": "fabíola francisco luiz",
+      "email": "fabiolaoliveira007@gmail.com",
+      "patrocinador_id": "e1f992df-3fff-42ad-8a40-1349a86ff0e6",
+      "mmn_id": null,
+      "created_at": "2025-12-23T15:22:14.492"
+    },
+    {
+      "id": "00000000-0000-4000-a000-000000239914",
+      "user_id": null,
+      "nome": "Marcos Abreu",
+      "email": "magaiver_abreu@hotmail.com",
+      "patrocinador_id": "d107da4e-e266-41b0-947a-0c66b2f2b9ef",
+      "mmn_id": null,
+      "created_at": "2025-12-23T15:22:14.493"
+    },
+    {
+      "id": "b4a99ae8-a86c-4f6b-98de-96c76d03afdf",
+      "user_id": null,
+      "nome": "Pedro Flávio Almeida Silva",
+      "email": "pedroflavioalmeida777@gmail.com",
+      "patrocinador_id": "665fec92-125e-4f00-bedd-22572741779e",
+      "mmn_id": null,
+      "created_at": "2025-12-23T15:22:14.493"
+    },
+    {
+      "id": "54442021-1dd1-47ac-92a6-dc732b9433f7",
+      "user_id": null,
+      "nome": "Edinelson Manoel Dos Santos",
+      "email": "edinelsongato@hotmail.com",
+      "patrocinador_id": "d107da4e-e266-41b0-947a-0c66b2f2b9ef",
+      "mmn_id": null,
+      "created_at": "2025-12-23T15:22:14.493"
+    },
+    {
+      "id": "00000000-0000-4000-a000-0000005a35f6",
+      "user_id": null,
+      "nome": "Tiago Santos Miranda",
+      "email": "tiagomiranda06@gmail.com",
+      "patrocinador_id": "d107da4e-e266-41b0-947a-0c66b2f2b9ef",
+      "mmn_id": null,
+      "created_at": "2025-12-23T15:22:14.493"
+    },
+    {
+      "id": "00000000-0000-4000-a000-00000040855e",
+      "user_id": null,
+      "nome": "Antônio Geraldo",
+      "email": "agbtonho@gmail.com",
+      "patrocinador_id": "179d44cd-3351-4cdb-ad1e-78ac274108c2",
+      "mmn_id": null,
+      "created_at": "2025-12-23T15:22:14.493"
+    },
+    {
+      "id": "34f8a140-d25b-4c71-baf4-a6faef7a3a59",
+      "user_id": null,
+      "nome": "Rafael Grando",
+      "email": "rafael.grando.21@gmail.com",
+      "patrocinador_id": "035517aa-00ce-459d-beb2-d898742a7806",
+      "mmn_id": null,
+      "created_at": "2025-12-23T15:22:14.493"
+    },
+    {
+      "id": "00000000-0000-4000-a000-0000004853b8",
+      "user_id": null,
+      "nome": "Odair Luna",
+      "email": "1odairluna@gmail.com",
+      "patrocinador_id": "d107da4e-e266-41b0-947a-0c66b2f2b9ef",
+      "mmn_id": null,
+      "created_at": "2025-12-23T15:22:14.493"
+    },
+    {
+      "id": "8360d35d-d76e-4177-910f-49f22b9da233",
+      "user_id": null,
+      "nome": "Geraldo Carvalho Costa",
+      "email": "geraldocarvalhocosta1960@gmail.com",
+      "patrocinador_id": "d107da4e-e266-41b0-947a-0c66b2f2b9ef",
+      "mmn_id": null,
+      "created_at": "2025-12-23T15:22:14.493"
+    },
+    {
+      "id": "00000000-0000-4000-a000-0000000b6607",
+      "user_id": null,
+      "nome": "pedro paulista prado",
+      "email": "pedropopo@gmail.com",
+      "patrocinador_id": "00000000-0000-4000-a000-0000003ea539",
+      "mmn_id": null,
+      "created_at": "2025-12-23T15:22:14.494"
+    },
+    {
+      "id": "00000000-0000-4000-a000-0000008f14c9",
+      "user_id": null,
+      "nome": "Pedro de sousa barros",
+      "email": "pedro.sousabarros01@gmail.com",
+      "patrocinador_id": "00000000-0000-4000-a000-0000005a35f6",
+      "mmn_id": null,
+      "created_at": "2025-12-23T15:22:14.494"
+    },
+    {
+      "id": "737bcf77-617d-4015-91ae-0737ecb8ce70",
+      "user_id": null,
+      "nome": "pedro lourival pires de oliveira",
+      "email": "pedropingo@gmail.com",
+      "patrocinador_id": "b4d167ec-edd1-406f-abe2-bb27f109a72c",
+      "mmn_id": null,
+      "created_at": "2025-12-23T15:22:14.492"
+    },
+    {
+      "id": "179d44cd-3351-4cdb-ad1e-78ac274108c2",
+      "user_id": null,
+      "nome": "Emanuel Mendes Claro",
+      "email": "emclaro@hotmail.com",
+      "patrocinador_id": "d107da4e-e266-41b0-947a-0c66b2f2b9ef",
+      "mmn_id": null,
+      "created_at": "2025-12-23T15:22:14.491"
+    },
+    {
+      "id": "b4d54416-119e-41f7-92c2-cde26e5e6e9f",
+      "user_id": null,
+      "nome": "sidnalva maria bueno camargo",
+      "email": "sidnalvambcamargo@gmail.com",
+      "patrocinador_id": "d107da4e-e266-41b0-947a-0c66b2f2b9ef",
+      "mmn_id": null,
+      "created_at": "2025-12-23T15:22:14.492"
+    },
+    {
+      "id": "4685d42c-2ae7-465d-9c52-035cfc3dde9e",
+      "user_id": null,
+      "nome": "Geraldo renato Alves de solza",
+      "email": "gasrenato@gmail.com",
+      "patrocinador_id": "b4d54416-119e-41f7-92c2-cde26e5e6e9f",
+      "mmn_id": null,
+      "created_at": "2025-12-23T15:22:14.492"
+    },
+    {
+      "id": "5203e372-c146-4232-99db-c37f08c4252e",
+      "user_id": null,
+      "nome": "Rosely Monteiro",
+      "email": "silvarosely555@gmail.com",
+      "patrocinador_id": "d107da4e-e266-41b0-947a-0c66b2f2b9ef",
+      "mmn_id": null,
+      "created_at": "2025-12-23T15:22:14.492"
+    },
+    {
+      "id": "940d6dc0-4197-4875-a61e-572f3e5aec8e",
+      "user_id": null,
+      "nome": "Patrike Daniel Pedroso",
+      "email": "patrikedaniel2@icloud.com",
+      "patrocinador_id": "179d44cd-3351-4cdb-ad1e-78ac274108c2",
+      "mmn_id": null,
+      "created_at": "2025-12-23T15:22:14.492"
+    },
+    {
+      "id": "00000000-0000-4000-a000-0000000407c4",
+      "user_id": null,
+      "nome": "Paola Emanuelle Figueiredo",
+      "email": "paola.emanuelle.gmm@gmail.com",
+      "patrocinador_id": "034051dc-8742-4df4-85ff-36a01844c612",
+      "mmn_id": null,
+      "created_at": "2025-12-23T15:22:14.494"
+    },
+    {
+      "id": "00000000-0000-4000-a000-0000000af977",
+      "user_id": null,
+      "nome": "Marcos Da Silva",
+      "email": "marcoslsilva85@gmail.com",
+      "patrocinador_id": "034051dc-8742-4df4-85ff-36a01844c612",
+      "mmn_id": null,
+      "created_at": "2025-12-23T15:22:14.494"
+    },
+    {
+      "id": "00000000-0000-4000-a000-0000007abe21",
+      "user_id": null,
+      "nome": "Antônio Marcos Costa",
+      "email": "mmnamcjp@gmail.com",
+      "patrocinador_id": "00000000-0000-4000-a000-0000002eb4f3",
+      "mmn_id": null,
+      "created_at": "2025-12-23T15:22:14.494"
+    },
+    {
+      "id": "00000000-0000-4000-a000-0000008b0e96",
+      "user_id": null,
+      "nome": "Emanuel Davi",
+      "email": "emanuelscheidt20@gmail.com",
+      "patrocinador_id": "179d44cd-3351-4cdb-ad1e-78ac274108c2",
+      "mmn_id": null,
+      "created_at": "2025-12-23T15:22:14.494"
+    },
+    {
+      "id": "fcab07f8-5144-4983-9fab-1576c015675f",
+      "user_id": null,
+      "nome": "Oseias Silva",
+      "email": "montagensdemoveis2022@gmail.com",
+      "patrocinador_id": "d107da4e-e266-41b0-947a-0c66b2f2b9ef",
+      "mmn_id": null,
+      "created_at": "2025-12-23T15:22:14.492"
+    },
+    {
+      "id": "7720eac9-2d47-4730-86bc-8ce3fd38e886",
+      "user_id": null,
+      "nome": "Marisane Antunes de lima",
+      "email": "marisaneantunes@hotmail.com",
+      "patrocinador_id": "d107da4e-e266-41b0-947a-0c66b2f2b9ef",
+      "mmn_id": null,
+      "created_at": "2025-12-23T15:22:14.492"
+    },
+    {
+      "id": "fa05e517-f2e0-4458-aeed-97e574dc8d5d",
+      "user_id": null,
+      "nome": "Júlio Galvão",
+      "email": "julio.adriana.luiz@gmail.com",
+      "patrocinador_id": "d107da4e-e266-41b0-947a-0c66b2f2b9ef",
+      "mmn_id": null,
+      "created_at": "2025-12-23T15:22:14.492"
+    },
+    {
+      "id": "cac9b785-c854-49d2-89ec-b2bf8986132f",
+      "user_id": null,
+      "nome": "Kaue Moreira",
+      "email": "kaue.moreira.12@icloud.com",
+      "patrocinador_id": "d107da4e-e266-41b0-947a-0c66b2f2b9ef",
+      "mmn_id": null,
+      "created_at": "2025-12-23T15:22:14.493"
+    },
+    {
+      "id": "1258fb1f-1f29-4ab3-bc4b-f5f59e95d996",
+      "user_id": null,
+      "nome": "Laércio Montesso Gonçalves",
+      "email": "montesso70@gmail.com",
+      "patrocinador_id": "d107da4e-e266-41b0-947a-0c66b2f2b9ef",
+      "mmn_id": null,
+      "created_at": "2025-12-23T15:22:14.493"
+    },
+    {
+      "id": "00000000-0000-4000-a000-0000008df3f5",
+      "user_id": null,
+      "nome": "Pedro Henrique",
+      "email": "pedroazevedoigrejauniversal@gmail.com",
+      "patrocinador_id": "d107da4e-e266-41b0-947a-0c66b2f2b9ef",
+      "mmn_id": null,
+      "created_at": "2025-12-23T15:22:14.493"
+    },
+    {
+      "id": "00000000-0000-4000-a000-0000005b416a",
+      "user_id": null,
+      "nome": "Rafael Alves Guido",
+      "email": "rafael.apvs1@hotmail.com",
+      "patrocinador_id": "d107da4e-e266-41b0-947a-0c66b2f2b9ef",
+      "mmn_id": null,
+      "created_at": "2025-12-23T15:22:14.493"
+    },
+    {
+      "id": "00000000-0000-4000-a000-0000006a38ba",
+      "user_id": null,
+      "nome": "Salvador  dos Reus",
+      "email": "salvareis27@gmail.com",
+      "patrocinador_id": "d107da4e-e266-41b0-947a-0c66b2f2b9ef",
+      "mmn_id": null,
+      "created_at": "2025-12-23T15:22:14.494"
+    },
+    {
+      "id": "00000000-0000-4000-a000-000000107f54",
+      "user_id": null,
+      "nome": "Francisco das chagas Pereira Araujo",
+      "email": "franciscoaraujoa77@gmail.com",
+      "patrocinador_id": "d107da4e-e266-41b0-947a-0c66b2f2b9ef",
+      "mmn_id": null,
+      "created_at": "2025-12-23T15:22:14.494"
+    }
+  ],
+  "roots": [
+    {
+      "id": "89c000c0-7a39-4e1e-8dee-5978d846fa89",
+      "user_id": "30c74d63-c184-4f7d-898a-8e16b3babd39",
+      "nome": "RS Prólipsi ",
+      "email": "robertorjbc@gmail.com",
+      "patrocinador_id": null,
+      "mmn_id": null,
+      "created_at": "2026-01-13T03:46:13.391999"
+    },
+    {
+      "id": "d107da4e-e266-41b0-947a-0c66b2f2b9ef",
+      "user_id": "d107da4e-e266-41b0-947a-0c66b2f2b9ef",
+      "nome": "Rota Fácil Oficial",
+      "email": "rsprolipsioficial@gmail.com",
+      "patrocinador_id": "89c000c0-7a39-4e1e-8dee-5978d846fa89",
+      "mmn_id": null,
+      "created_at": "2025-12-23T15:22:14.491"
+    }
+  ]
+}

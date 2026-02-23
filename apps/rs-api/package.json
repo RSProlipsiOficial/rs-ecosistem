@@ -14,17 +14,17 @@
     "@fastify/cors": "^11.1.0",
     "@fastify/helmet": "^13.0.2",
     "@fastify/static": "^8.3.0",
-    "@supabase/supabase-js": "^2.80.0",
+    "@supabase/supabase-js": "^2.95.3",
     "axios": "^1.13.2",
     "cors": "^2.8.5",
-    "dotenv": "^16.3.1",
+    "dotenv": "^16.6.1",
     "express": "^4.18.2",
     "fastify": "^5.6.2",
     "jsonwebtoken": "^9.0.2",
-    "mercadopago": "^2.0.10",
-    "multer": "^2.0.2",
-    "rs-config": "workspace:*",
-    "rs-ops-config": "workspace:*",
+    "mercadopago": "^2.12.0",
+    "pg": "^8.17.1",
+    "rs-config": "file:../../packages/rs-config",
+    "rs-ops-config": "file:../../packages/rs-ops-config",
     "xlsx": "^0.18.5",
     "zod": "^3.23.8"
   },
@@ -33,9 +33,10 @@
     "@types/express": "^4.17.20",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/multer": "^2.0.0",
-    "@types/node": "^20.9.0",
-    "ts-node": "^10.9.1",
+    "@types/node": "^20.19.30",
+    "multer": "^2.0.2",
+    "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
-    "typescript": "^5.6.3"
+    "typescript": "^5.9.3"
   }
 }

@@ -13,16 +13,16 @@ import { AIStrategy } from './lib/aiStrategies';
 import SubscriptionExpiredView from './components/auth/SubscriptionExpiredView';
 import CheckoutView from './components/checkout/CheckoutView';
 import Modal from './components/Modal';
-import { 
-  supabaseCreateUser, 
-  supabaseGetUserByEmail, 
-  supabaseSaveMasterApiState, 
-  supabaseGetMasterApiState, 
-  supabaseSaveRobotInstance, 
-  supabaseGetRobotInstances,
-  supabaseDeleteRobotInstance,
-  supabaseUpdateUser,
-  SupabaseUser // Import SupabaseUser for type consistency
+import {
+    supabaseCreateUser,
+    supabaseGetUserByEmail,
+    supabaseSaveMasterApiState,
+    supabaseGetMasterApiState,
+    supabaseSaveRobotInstance,
+    supabaseGetRobotInstances,
+    supabaseDeleteRobotInstance,
+    supabaseUpdateUser,
+    SupabaseUser // Import SupabaseUser for type consistency
 } from './lib/supabase';
 
 
@@ -30,70 +30,70 @@ import {
 
 // Extracted from the old global Config
 export interface TradingParameters {
-  risk_mode: 'PERCENTUAL' | 'MINIMO' | 'FIXED_CAPITAL';
-  risk_per_trade: number;
-  risk_fixed_capital_base: number;
-  timeframe: string;
-  kagi_mode: 'ATR' | 'PCT';
-  kagi_rev_atr: number;
-  kagi_rev_pct: number;
-  max_pending_candles: number;
-  mode: 'MANUAL' | 'AUTO';
-  live: boolean;
-  validity_mode: 'FIXED' | 'DYNAMIC_ATR';
-  base_validity_candles: number;
-  fib_target: number;
-  stop_management_mode: 'FIXED' | 'DYNAMIC_KAGI';
-  ai_strategy: AIStrategy;
-  ai_mode: 'MANUAL' | 'AUTO';
-  ai_news_filter?: boolean;
-  break_even_active?: boolean;
-  break_even_mode?: 'TARGET_PCT' | 'RR';
-  break_even_trigger_pct?: number;
-  break_even_trigger_rr?: number;
-  trailing_stop_active?: boolean;
-  trailing_stop_mode?: 'PERCENTAGE' | 'ATR';
-  trailing_stop_distance_pct?: number;
-  trailing_stop_distance_atr?: number;
+    risk_mode: 'PERCENTUAL' | 'MINIMO' | 'FIXED_CAPITAL';
+    risk_per_trade: number;
+    risk_fixed_capital_base: number;
+    timeframe: string;
+    kagi_mode: 'ATR' | 'PCT';
+    kagi_rev_atr: number;
+    kagi_rev_pct: number;
+    max_pending_candles: number;
+    mode: 'MANUAL' | 'AUTO';
+    live: boolean;
+    validity_mode: 'FIXED' | 'DYNAMIC_ATR';
+    base_validity_candles: number;
+    fib_target: number;
+    stop_management_mode: 'FIXED' | 'DYNAMIC_KAGI';
+    ai_strategy: AIStrategy;
+    ai_mode: 'MANUAL' | 'AUTO';
+    ai_news_filter?: boolean;
+    break_even_active?: boolean;
+    break_even_mode?: 'TARGET_PCT' | 'RR';
+    break_even_trigger_pct?: number;
+    break_even_trigger_rr?: number;
+    trailing_stop_active?: boolean;
+    trailing_stop_mode?: 'PERCENTAGE' | 'ATR';
+    trailing_stop_distance_pct?: number;
+    trailing_stop_distance_atr?: number;
 }
 
 
 export interface Alert {
-  symbol: string;
-  signal: 'buy' | 'sell';
-  entry: number;
-  stop: number;
-  tp: number;
+    symbol: string;
+    signal: 'buy' | 'sell';
+    entry: number;
+    stop: number;
+    tp: number;
 }
 
 export interface Order {
-  symbol: string;
-  side: 'buy' | 'sell';
-  entry: number;
-  stop: number;
-  tp: number;
-  status?: 'OPEN' | 'TP' | 'SL';
-  pnl?: number;
-  origin?: 'kagi' | 'ai' | 'manual';
-  timestamp?: number;
+    symbol: string;
+    side: 'buy' | 'sell';
+    entry: number;
+    stop: number;
+    tp: number;
+    status?: 'OPEN' | 'TP' | 'SL';
+    pnl?: number;
+    origin?: 'kagi' | 'ai' | 'manual';
+    timestamp?: number;
 }
 
 export interface Position {
-  symbol: string;
-  side: 'LONG' | 'SHORT';
-  size: number;
-  entryPrice: number;
-  markPrice: number;
-  pnl: number;
-  margin: number;
+    symbol: string;
+    side: 'LONG' | 'SHORT';
+    size: number;
+    entryPrice: number;
+    markPrice: number;
+    pnl: number;
+    margin: number;
 }
 
 export interface AccountState {
-  totalBalance: number;
-  availableBalance: number;
-  totalUnrealizedPnl: number;
-  marginUsed: number;
-  positions: Position[];
+    totalBalance: number;
+    availableBalance: number;
+    totalUnrealizedPnl: number;
+    marginUsed: number;
+    positions: Position[];
 }
 
 export interface Drawing {
@@ -143,25 +143,25 @@ export interface VisibleComponents {
 }
 
 export interface Notification {
-  id: number;
-  message: string;
-  type: 'order' | 'veto' | 'info';
-  timestamp: number;
-  isRead: boolean;
-  symbol?: string;
+    id: number;
+    message: string;
+    type: 'order' | 'veto' | 'info';
+    timestamp: number;
+    isRead: boolean;
+    symbol?: string;
 }
 
 export interface RobotInstance {
-  id: string;
-  type: 'kagi' | 'ai';
-  symbol: string;
-  timeframe: string;
-  maxCapital: number;
-  isRunning: boolean;
-  pnl: number;
-  trades: number;
-  winRate: number;
-  params: TradingParameters; // Each robot now has its own full set of parameters
+    id: string;
+    type: 'kagi' | 'ai';
+    symbol: string;
+    timeframe: string;
+    maxCapital: number;
+    isRunning: boolean;
+    pnl: number;
+    trades: number;
+    winRate: number;
+    params: TradingParameters; // Each robot now has its own full set of parameters
 }
 
 
@@ -169,13 +169,13 @@ type WsStatus = 'connecting' | 'connected' | 'disconnected';
 export type MarketType = 'futures' | 'spot';
 export type View = 'analysis' | 'dashboard' | 'profile' | 'admin' | 'robots' | 'checkout';
 export interface User {
-  id: string;
-  name: string;
-  email: string;
-  isAdmin: boolean; // Corresponds to is_admin in Supabase
-  plan: 'Starter' | 'Pro' | 'Expert' | 'Trader' | 'Enterprise' | 'Teste Grátis';
-  subscriptionEndDate: string; // ISO string e.g., "2024-12-31T23:59:59Z", corresponds to subscription_end_date
-  doc: string; // CPF/CNPJ
+    id: string;
+    name: string;
+    email: string;
+    isAdmin: boolean; // Corresponds to is_admin in Supabase
+    plan: 'Starter' | 'Pro' | 'Expert' | 'Trader' | 'Enterprise' | 'Teste Grátis';
+    subscriptionEndDate: string; // ISO string e.g., "2024-12-31T23:59:59Z", corresponds to subscription_end_date
+    doc: string; // CPF/CNPJ
 }
 export type SubscriptionStatus = 'active' | 'grace_period' | 'expired';
 export type MasterApiState = { apiKey: string, apiSecret: string, isValidated: boolean };
@@ -233,58 +233,58 @@ const loadVisibleComponents = (): VisibleComponents => {
 
 
 export default function App() {
-  const [user, setUser] = useState<User | null>(null);
-  const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
+    const [user, setUser] = useState<User | null>(null);
+    const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
 
-  // States moved from original App
-  const [alerts, setAlerts] = useState<Alert[]>([]);
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [wsStatus, setWsStatus] = useState<WsStatus>('connecting');
-  const [accountState, setAccountState] = useState<AccountState | null>(null);
-  const [isAccountLoading, setIsAccountLoading] = useState(true);
-  const [accountError, setAccountError] = useState<string | null>(null);
-  const [allSymbols, setAllSymbols] = useState<string[]>([]);
-  const [market, setMarket] = useState<MarketType>('futures');
-  // Global config is now just for app-wide state like live mode
-  const [appConfig, setAppConfig] = useState<{ live: boolean }>({ live: false });
-  const [isAiPanelVisible, setAiPanelVisible] = useState(false);
-  const [aiMonitoredSymbols, setAiMonitoredSymbols] = useState<string[]>([]);
-  const [aiAnalyses, setAiAnalyses] = useState<AIAnalysis[]>([]);
-  const [activeView, setActiveView] = useState<View>('analysis');
-  const [toasts, setToasts] = useState<ToastMessage[]>([]);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [chartStates, setChartStates] = useState<ChartState[]>([
-    { symbol: 'BTC/USDT', timeframe: '1h' },
-    { symbol: 'ETH/USDT', timeframe: '4h' },
-    { symbol: 'SOL/USDT', timeframe: '1h' },
-    { symbol: 'BNB/USDT', timeframe: '1D' },
-  ]);
-  const [activeChartIndex, setActiveChartIndex] = useState<number>(0);
-  const [visibleComponents, setVisibleComponents] = useState<VisibleComponents>(loadVisibleComponents());
-  const [latestPrices, setLatestPrices] = useState<Record<string, { price: number; time: number }>>({});
+    // States moved from original App
+    const [alerts, setAlerts] = useState<Alert[]>([]);
+    const [orders, setOrders] = useState<Order[]>([]);
+    const [wsStatus, setWsStatus] = useState<WsStatus>('connecting');
+    const [accountState, setAccountState] = useState<AccountState | null>(null);
+    const [isAccountLoading, setIsAccountLoading] = useState(true);
+    const [accountError, setAccountError] = useState<string | null>(null);
+    const [allSymbols, setAllSymbols] = useState<string[]>([]);
+    const [market, setMarket] = useState<MarketType>('futures');
+    // Global config is now just for app-wide state like live mode
+    const [appConfig, setAppConfig] = useState<{ live: boolean }>({ live: false });
+    const [isAiPanelVisible, setAiPanelVisible] = useState(false);
+    const [aiMonitoredSymbols, setAiMonitoredSymbols] = useState<string[]>([]);
+    const [aiAnalyses, setAiAnalyses] = useState<AIAnalysis[]>([]);
+    const [activeView, setActiveView] = useState<View>('analysis');
+    const [toasts, setToasts] = useState<ToastMessage[]>([]);
+    const [notifications, setNotifications] = useState<Notification[]>([]);
+    const [chartStates, setChartStates] = useState<ChartState[]>([
+        { symbol: 'BTC/USDT', timeframe: '1h' },
+        { symbol: 'ETH/USDT', timeframe: '4h' },
+        { symbol: 'SOL/USDT', timeframe: '1h' },
+        { symbol: 'BNB/USDT', timeframe: '1D' },
+    ]);
+    const [activeChartIndex, setActiveChartIndex] = useState<number>(0);
+    const [visibleComponents, setVisibleComponents] = useState<VisibleComponents>(loadVisibleComponents());
+    const [latestPrices, setLatestPrices] = useState<Record<string, { price: number; time: number }>>({});
 
-  // State for Robot Manager
-  const [robotInstances, setRobotInstances] = useState<RobotInstance[]>(getInitialRobotInstances());
-  const [masterApiState, setMasterApiState] = useState<MasterApiState>({ apiKey: '', apiSecret: '', isValidated: false });
-  const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionStatus>('active');
-  const [planToCheckout, setPlanToCheckout] = useState<User['plan'] | null>(null);
-  const [pendingRegistration, setPendingRegistration] = useState<RegistrationData | null>(null);
-  const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
+    // State for Robot Manager
+    const [robotInstances, setRobotInstances] = useState<RobotInstance[]>(getInitialRobotInstances());
+    const [masterApiState, setMasterApiState] = useState<MasterApiState>({ apiKey: '', apiSecret: '', isValidated: false });
+    const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionStatus>('active');
+    const [planToCheckout, setPlanToCheckout] = useState<User['plan'] | null>(null);
+    const [pendingRegistration, setPendingRegistration] = useState<RegistrationData | null>(null);
+    const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
 
 
-  const activeSymbol = chartStates[activeChartIndex]?.symbol || 'BTC/USDT';
+    const activeSymbol = chartStates[activeChartIndex]?.symbol || 'BTC/USDT';
 
-  const addToast = (message: string, type: 'success' | 'error' | 'info') => {
-    setToasts(prev => [...prev, { id: Date.now(), message, type }]);
-  };
-  
-  const handleUpdateChartState = (index: number, newState: Partial<ChartState>) => {
-    setChartStates(prev => {
-        const newChartStates = [...prev];
-        newChartStates[index] = { ...newChartStates[index], ...newState };
-        return newChartStates;
-    });
-  };
+    const addToast = (message: string, type: 'success' | 'error' | 'info') => {
+        setToasts(prev => [...prev, { id: Date.now(), message, type }]);
+    };
+
+    const handleUpdateChartState = (index: number, newState: Partial<ChartState>) => {
+        setChartStates(prev => {
+            const newChartStates = [...prev];
+            newChartStates[index] = { ...newChartStates[index], ...newState };
+            return newChartStates;
+        });
+    };
 
     useEffect(() => {
         try {
@@ -306,14 +306,16 @@ export default function App() {
 
             let newStatus: SubscriptionStatus;
 
-            if (now > gracePeriodEnd) {
+            if (user.email === 'rsprolipsioficial@gmail.com') {
+                newStatus = 'active';
+            } else if (now > gracePeriodEnd) {
                 newStatus = 'expired';
             } else if (now > endDate) {
                 newStatus = 'grace_period';
             } else {
                 newStatus = 'active';
             }
-            
+
             if (newStatus !== subscriptionStatus) {
                 setSubscriptionStatus(newStatus);
                 if (newStatus === 'grace_period') {
@@ -328,176 +330,178 @@ export default function App() {
         checkSubscription();
         const interval = setInterval(checkSubscription, 60 * 1000); // Check every minute
         return () => clearInterval(interval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [user, subscriptionStatus]); // addToast and setRobotInstances can cause re-renders if not stable
 
 
-  useEffect(() => {
-    if (!user || subscriptionStatus === 'expired' || activeView === 'checkout') return; // Don't connect if not logged in, expired, or checking out
+    useEffect(() => {
+        if (!user || subscriptionStatus === 'expired' || activeView === 'checkout') return; // Don't connect if not logged in, expired, or checking out
 
-    const ws = connectWS((msg: any) => {
-      // NOTE: The single-bot state messages are now obsolete with the multi-robot manager.
-      // In a real implementation, a new 'robot_instances_update' message would be used.
-      if (msg.type === 'ai_monitor_list') setAiMonitoredSymbols(msg.data.symbols);
-      if (msg.type === 'tick') setAlerts(msg.data.alerts);
-      
-      if (msg.type === 'order') {
-        const orderData = { ...msg.data, status: msg.data.status || 'OPEN', timestamp: Date.now() };
-        setOrders((o) => [orderData, ...o]);
-        const orderMessage = `Ordem ${orderData.side} em ${orderData.symbol} executada.`;
-        addToast(orderMessage, 'success');
-        setNotifications(prev => [{ id: Date.now(), message: orderMessage, type: 'order', timestamp: Date.now(), isRead: false, symbol: orderData.symbol }, ...prev]);
-      }
-      
-      if (msg.type === 'ai_news_veto') {
-        const vetoData = msg.data;
-        const message = `Trade em ${vetoData.symbol} vetado: ${vetoData.reason}`;
-        addToast(message, 'info');
-        setNotifications(prev => [{ id: Date.now(), message, type: 'veto', timestamp: Date.now(), isRead: false, symbol: vetoData.symbol }, ...prev]);
-      }
-      
-      if (msg.type === 'ai_analysis') setAiAnalyses(prev => [{ ...msg.data, time: Date.now(), drawings: msg.data.drawings || [] }, ...prev].slice(0, 10));
-      
-      if (msg.type === 'account') {
-        setAccountState(msg.data);
-        if (isAccountLoading) setIsAccountLoading(false);
-        if (accountError) setAccountError(null);
-      }
-      
-      if (msg.type === 'price_update') {
-          setLatestPrices(prev => ({
-              ...prev,
-              [msg.data.symbol]: { price: msg.data.price, time: msg.data.time / 1000 }
-          }));
-      }
-    }, setWsStatus);
-    return () => ws.close();
-  }, [user, isAccountLoading, accountError, subscriptionStatus, activeView]);
+        const ws = connectWS((msg: any) => {
+            // NOTE: The single-bot state messages are now obsolete with the multi-robot manager.
+            // In a real implementation, a new 'robot_instances_update' message would be used.
+            if (msg.type === 'ai_monitor_list') setAiMonitoredSymbols(msg.data.symbols);
+            if (msg.type === 'tick') setAlerts(msg.data.alerts);
 
-
-  // Supabase: Initial data load effect
-  useEffect(() => {
-    if (!user) {
-        setRobotInstances([]);
-        setMasterApiState({ apiKey: '', apiSecret: '', isValidated: false });
-        return;
-    }
-
-    const loadUserData = async () => {
-        try {
-            const apiState = await supabaseGetMasterApiState(user.id);
-            setMasterApiState(apiState);
-
-            const robots = await supabaseGetRobotInstances(user.id);
-            setRobotInstances(robots);
-
-            // Fetch app config (live mode) and AI monitor list only once per user session if needed
-            const [configData, monitorListData] = await Promise.all([
-                fetchConfig(), fetchAIMonitorList()
-            ]);
-            setAppConfig(configData);
-            setAiMonitoredSymbols(monitorListData.symbols);
-
-            addToast('Dados do usuário e robôs carregados.', 'success');
-        } catch (e) {
-            console.error('Failed to load user data from Supabase:', e);
-            addToast('Erro ao carregar dados do usuário.', 'error');
-            // If API keys fail to load, ensure isAccountLoading is handled
-            setAccountError(e instanceof Error ? e.message : "Ocorreu um erro desconhecido.");
-        }
-    };
-
-    loadUserData();
-  }, [user]); // Re-run when user changes (login/logout)
-
-
-  useEffect(() => {
-    if (wsStatus !== 'connected' || activeView === 'checkout') {
-        setIsAccountLoading(true);
-        setAccountState(null);
-        setAccountError(null);
-        setAllSymbols([]);
-        // setAiMonitoredSymbols([]); // Removed, handled by initial data load
-        return;
-    }
-
-    const fetchInitialData = async () => {
-        setIsAccountLoading(true);
-        try {
-            // Account info is fetched on initial data load (after Supabase user load), not per websocket connect
-            // This condition prevents re-fetching if accountState is already present from Supabase
-            if (!accountState) {
-                const accountData = await fetchAccountInfo();
-                setAccountState(accountData);
+            if (msg.type === 'order') {
+                const orderData = { ...msg.data, status: msg.data.status || 'OPEN', timestamp: Date.now() };
+                setOrders((o) => [orderData, ...o]);
+                const orderMessage = `Ordem ${orderData.side} em ${orderData.symbol} executada.`;
+                addToast(orderMessage, 'success');
+                setNotifications(prev => [{ id: Date.now(), message: orderMessage, type: 'order', timestamp: Date.now(), isRead: false, symbol: orderData.symbol }, ...prev]);
             }
-            const symbolsData = await fetchSymbols(market);
-            setAllSymbols(symbolsData.symbols);
-            setAccountError(null);
-        } catch (e) {
-            setAccountError(e instanceof Error ? e.message : "Ocorreu um erro desconhecido.");
+
+            if (msg.type === 'ai_news_veto') {
+                const vetoData = msg.data;
+                const message = `Trade em ${vetoData.symbol} vetado: ${vetoData.reason}`;
+                addToast(message, 'info');
+                setNotifications(prev => [{ id: Date.now(), message, type: 'veto', timestamp: Date.now(), isRead: false, symbol: vetoData.symbol }, ...prev]);
+            }
+
+            if (msg.type === 'ai_analysis') setAiAnalyses(prev => [{ ...msg.data, time: Date.now(), drawings: msg.data.drawings || [] }, ...prev].slice(0, 10));
+
+            if (msg.type === 'account') {
+                setAccountState(msg.data);
+                if (isAccountLoading) setIsAccountLoading(false);
+                if (accountError) setAccountError(null);
+            }
+
+            if (msg.type === 'price_update') {
+                setLatestPrices(prev => ({
+                    ...prev,
+                    [msg.data.symbol]: { price: msg.data.price, time: msg.data.time / 1000 }
+                }));
+            }
+        }, setWsStatus);
+        return () => {
+            ws(); // Chamar a função de cleanup
+        };
+    }, [user, isAccountLoading, accountError, subscriptionStatus, activeView]);
+
+
+    // Supabase: Initial data load effect
+    useEffect(() => {
+        if (!user) {
+            setRobotInstances([]);
+            setMasterApiState({ apiKey: '', apiSecret: '', isValidated: false });
+            return;
+        }
+
+        const loadUserData = async () => {
+            try {
+                const apiState = await supabaseGetMasterApiState(user.id);
+                setMasterApiState(apiState);
+
+                const robots = await supabaseGetRobotInstances(user.id);
+                setRobotInstances(robots);
+
+                // Fetch app config (live mode) and AI monitor list only once per user session if needed
+                const [configData, monitorListData] = await Promise.all([
+                    fetchConfig(), fetchAIMonitorList()
+                ]);
+                setAppConfig(configData);
+                setAiMonitoredSymbols(monitorListData.symbols);
+
+                addToast('Dados do usuário e robôs carregados.', 'success');
+            } catch (e) {
+                console.error('Failed to load user data from Supabase:', e);
+                addToast('Erro ao carregar dados do usuário.', 'error');
+                // If API keys fail to load, ensure isAccountLoading is handled
+                setAccountError(e instanceof Error ? e.message : "Ocorreu um erro desconhecido.");
+            }
+        };
+
+        loadUserData();
+    }, [user]); // Re-run when user changes (login/logout)
+
+
+    useEffect(() => {
+        if (wsStatus !== 'connected' || activeView === 'checkout') {
+            setIsAccountLoading(true);
             setAccountState(null);
-        } finally {
-            setIsAccountLoading(false);
+            setAccountError(null);
+            setAllSymbols([]);
+            // setAiMonitoredSymbols([]); // Removed, handled by initial data load
+            return;
+        }
+
+        const fetchInitialData = async () => {
+            setIsAccountLoading(true);
+            try {
+                // Account info is fetched on initial data load (after Supabase user load), not per websocket connect
+                // This condition prevents re-fetching if accountState is already present from Supabase
+                if (!accountState) {
+                    const accountData = await fetchAccountInfo();
+                    setAccountState(accountData);
+                }
+                const symbolsData = await fetchSymbols(market);
+                setAllSymbols(symbolsData.symbols);
+                setAccountError(null);
+            } catch (e) {
+                setAccountError(e instanceof Error ? e.message : "Ocorreu um erro desconhecido.");
+                setAccountState(null);
+            } finally {
+                setIsAccountLoading(false);
+            }
+        };
+
+        fetchInitialData();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [wsStatus, market, activeView]);
+
+    // Supabase: Save API state whenever masterApiState changes (e.g., from ControlPanel)
+    const setMasterApiStateAndPersist = useCallback(async (newState: MasterApiState) => {
+        setMasterApiState(newState);
+        if (user) {
+            try {
+                await supabaseSaveMasterApiState(user.id, newState);
+                addToast('Chaves API atualizadas no banco de dados.', 'info');
+            } catch (e) {
+                console.error('Failed to save API state to Supabase:', e);
+                addToast('Erro ao salvar chaves API no banco de dados.', 'error');
+            }
+        }
+    }, [user, addToast]);
+
+
+    const handleLogin = async (credentials: { email: string, password?: string }) => {
+        // In a real app, you'd verify credentials with Supabase Auth
+        // For now, we simulate success and fetch user data from our 'users' table.
+        try {
+            const existingUser = await supabaseGetUserByEmail(credentials.email);
+
+            if (!existingUser) {
+                addToast('Usuário não encontrado. Por favor, registre-se.', 'error');
+                return;
+            }
+
+            // Simulate password check (in a real app, use Supabase Auth `signInWithPassword`)
+            if (credentials.email === 'rsprolipsioficial@gmail.com' && credentials.password !== 'admin123') {
+                addToast('Credenciais inválidas.', 'error');
+                return;
+            } else if (credentials.email !== 'rsprolipsioficial@gmail.com' && credentials.password !== 'password123') { // generic user mock
+                addToast('Credenciais inválidas.', 'error');
+                return;
+            }
+
+            setUser({
+                id: existingUser.id,
+                name: existingUser.nome,
+                email: existingUser.email,
+                isAdmin: existingUser.pin_atual === 'Presidente', // Mocking admin check
+                plan: existingUser.pin_atual as User['plan'],
+                subscriptionEndDate: existingUser.data_ativacao,
+                doc: existingUser.cpf
+            });
+
+            // Master API state will be loaded by the useEffect hook after setUser
+            addToast('Login realizado com sucesso!', 'success');
+
+        } catch (e) {
+            addToast(e instanceof Error ? e.message : 'Erro durante o login.', 'error');
         }
     };
-    
-    fetchInitialData();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [wsStatus, market, activeView]);
 
-  // Supabase: Save API state whenever masterApiState changes (e.g., from ControlPanel)
-  const setMasterApiStateAndPersist = useCallback(async (newState: MasterApiState) => {
-    setMasterApiState(newState);
-    if (user) {
-        try {
-            await supabaseSaveMasterApiState(user.id, newState);
-            addToast('Chaves API atualizadas no banco de dados.', 'info');
-        } catch (e) {
-            console.error('Failed to save API state to Supabase:', e);
-            addToast('Erro ao salvar chaves API no banco de dados.', 'error');
-        }
-    }
-  }, [user, addToast]);
-
-
-  const handleLogin = async (credentials: {email: string, password?: string}) => {
-    // In a real app, you'd verify credentials with Supabase Auth
-    // For now, we simulate success and fetch user data from our 'users' table.
-    try {
-        const existingUser = await supabaseGetUserByEmail(credentials.email);
-
-        if (!existingUser) {
-            addToast('Usuário não encontrado. Por favor, registre-se.', 'error');
-            return;
-        }
-        
-        // Simulate password check (in a real app, use Supabase Auth `signInWithPassword`)
-        if (credentials.email === 'rsprolipsioficial@gmail.com' && credentials.password !== 'admin123') {
-            addToast('Credenciais inválidas.', 'error');
-            return;
-        } else if (credentials.email !== 'rsprolipsioficial@gmail.com' && credentials.password !== 'password123') { // generic user mock
-            addToast('Credenciais inválidas.', 'error');
-            return;
-        }
-        
-        setUser({ 
-            id: existingUser.id, 
-            name: existingUser.name, 
-            email: existingUser.email, 
-            isAdmin: existingUser.is_admin,
-            plan: existingUser.plan,
-            subscriptionEndDate: existingUser.subscription_end_date,
-            doc: existingUser.doc
-        });
-
-        // Master API state will be loaded by the useEffect hook after setUser
-        addToast('Login realizado com sucesso!', 'success');
-
-    } catch (e) {
-        addToast(e instanceof Error ? e.message : 'Erro durante o login.', 'error');
-    }
-  };
-  
     // This handler now only manages FREE TRIAL registrations
     const handleRegister = async (data: RegistrationData): Promise<{ success: boolean; message?: string }> => {
         try {
@@ -529,13 +533,13 @@ export default function App() {
             const createdUser = await supabaseCreateUser(newUser, initialApiState);
             if (createdUser) {
                 setUser({
-                    id: createdUser.id, 
-                    name: createdUser.name, 
-                    email: createdUser.email, 
-                    isAdmin: createdUser.is_admin,
-                    plan: createdUser.plan,
-                    subscriptionEndDate: createdUser.subscription_end_date,
-                    doc: createdUser.doc
+                    id: createdUser.id,
+                    name: createdUser.nome,
+                    email: createdUser.email,
+                    isAdmin: createdUser.pin_atual === "Presidente",
+                    plan: createdUser.pin_atual as User['plan'],
+                    subscriptionEndDate: createdUser.data_ativacao,
+                    doc: createdUser.cpf
                 });
                 setMasterApiState(initialApiState);
                 addToast('Registro bem-sucedido! Bem-vindo ao Teste Grátis!', 'success');
@@ -550,7 +554,7 @@ export default function App() {
             return { success: false, message };
         }
     };
-    
+
     const handleProceedToCheckout = (data: RegistrationData) => {
         setPendingRegistration(data);
         setPlanToCheckout(data.plan);
@@ -568,8 +572,8 @@ export default function App() {
             // Check if user already exists (should have been checked in AuthView before proceeding to checkout)
             let existingUser = await supabaseGetUserByEmail(data.email);
             if (existingUser) {
-                 addToast('Este email já está registrado. Faça login ou use outro email.', 'error');
-                 return;
+                addToast('Este email já está registrado. Faça login ou use outro email.', 'error');
+                return;
             }
 
             // FIX: Adjusted newUser object to match the expected type for supabaseCreateUser
@@ -591,12 +595,12 @@ export default function App() {
             if (createdUser) {
                 setUser({
                     id: createdUser.id,
-                    name: createdUser.name, 
-                    email: createdUser.email, 
-                    isAdmin: createdUser.is_admin,
-                    plan: createdUser.plan,
-                    subscriptionEndDate: createdUser.subscription_end_date,
-                    doc: createdUser.doc
+                    name: createdUser.nome,
+                    email: createdUser.email,
+                    isAdmin: createdUser.pin_atual === "Presidente",
+                    plan: createdUser.pin_atual as User['plan'],
+                    subscriptionEndDate: createdUser.data_ativacao,
+                    doc: createdUser.cpf
                 });
                 setMasterApiState(initialApiState);
                 setIsCheckoutModalOpen(false);
@@ -605,13 +609,13 @@ export default function App() {
                 setActiveView('dashboard'); // Start on dashboard after paying
                 addToast('Pagamento bem-sucedido! Sua conta foi criada.', 'success');
             } else {
-                 addToast('Falha ao criar usuário no Supabase após o pagamento.', 'error');
+                addToast('Falha ao criar usuário no Supabase após o pagamento.', 'error');
             }
         } catch (e) {
-             addToast(e instanceof Error ? e.message : 'Erro ao processar registro pago.', 'error');
+            addToast(e instanceof Error ? e.message : 'Erro ao processar registro pago.', 'error');
         }
     };
-  
+
     const handleSaveRobot = async (robot: RobotInstance) => {
         if (!user) {
             addToast('Você precisa estar logado para salvar robôs.', 'error');
@@ -619,7 +623,7 @@ export default function App() {
         }
 
         const robotWithUserId = { ...robot, user_id: user.id }; // Attach user_id for Supabase
-        
+
         try {
             const savedRobot = await supabaseSaveRobotInstance(robotWithUserId);
             if (savedRobot) {
@@ -657,7 +661,7 @@ export default function App() {
     };
 
     const handleToggleRobotStatus = (robotId: string) => {
-        setRobotInstances(prev => prev.map(r => 
+        setRobotInstances(prev => prev.map(r =>
             r.id === robotId ? { ...r, isRunning: !r.isRunning } : r
         ));
         // NOTE: isRunning status is currently client-side. To persist it,
@@ -665,7 +669,7 @@ export default function App() {
         // For this task, we're not persisting `isRunning` to DB as it often reflects
         // a real-time server-side state.
     };
-    
+
     const handleLogout = () => {
         setUser(null);
         setMasterApiState({ apiKey: '', apiSecret: '', isValidated: false });
@@ -674,8 +678,8 @@ export default function App() {
     };
 
     const navigateToCheckout = (plan: User['plan']) => {
-      setPlanToCheckout(plan);
-      setActiveView('checkout');
+        setPlanToCheckout(plan);
+        setActiveView('checkout');
     };
 
     const handlePurchaseSuccess = async (newPlan: User['plan']) => {
@@ -707,193 +711,194 @@ export default function App() {
     };
 
 
-  if (!user) {
-    const handleModalClose = () => {
-        setIsCheckoutModalOpen(false);
-        setPendingRegistration(null);
-        setPlanToCheckout(null);
-    };
+    if (!user) {
+        const handleModalClose = () => {
+            setIsCheckoutModalOpen(false);
+            setPendingRegistration(null);
+            setPlanToCheckout(null);
+        };
+        return (
+            <>
+                <div className="fixed top-4 right-4 z-[100] space-y-2">
+                    {toasts.map(toast => (
+                        <Toast key={toast.id} {...toast} onDismiss={() => setToasts(t => t.filter(item => item.id !== toast.id))} />
+                    ))}
+                </div>
+                <AuthView onLogin={handleLogin} onRegister={handleRegister} onProceedToPayment={handleProceedToCheckout} addToast={addToast} />
+                <Modal isOpen={isCheckoutModalOpen} onClose={handleModalClose} title="Finalizar Pagamento">
+                    <CheckoutView
+                        user={null}
+                        planToCheckout={planToCheckout}
+                        onPurchaseSuccess={() => { }} // Not used in registration flow
+                        onRegistrationSuccess={handleRegistrationSuccess}
+                        initialData={pendingRegistration}
+                        onBack={handleModalClose}
+                        isModal={true}
+                    />
+                </Modal>
+            </>
+        );
+    }
+
+    if (subscriptionStatus === 'expired') {
+        return <SubscriptionExpiredView />;
+    }
+
+
+    const renderView = () => {
+        switch (activeView) {
+            case 'analysis':
+                return <AnalysisView
+                    allSymbols={allSymbols}
+                    alerts={alerts}
+                    activeSymbol={activeSymbol}
+                    handleUpdateChartState={handleUpdateChartState}
+                    wsStatus={wsStatus}
+                    market={market}
+                    setMarket={setMarket}
+                    aiMonitoredSymbols={aiMonitoredSymbols}
+                    setAiMonitoredSymbols={setAiMonitoredSymbols}
+                    chartStates={chartStates}
+                    activeChartIndex={activeChartIndex}
+                    setActiveChartIndex={setActiveChartIndex}
+                    robotInstances={robotInstances}
+                    aiAnalyses={aiAnalyses}
+                    isAiPanelVisible={isAiPanelVisible}
+                    accountState={accountState}
+                    addToast={addToast}
+                    orders={orders}
+                    isAccountLoading={isAccountLoading}
+                    accountError={accountError}
+                    setOrders={setOrders}
+                    visibleComponents={visibleComponents}
+                    latestPrices={latestPrices}
+                />;
+            case 'dashboard':
+                return <Dashboard orders={orders} accountState={accountState} visibleComponents={visibleComponents} />;
+            case 'robots':
+                return <RobotsView
+                    robotInstances={robotInstances}
+                    allSymbols={allSymbols}
+                    onSave={handleSaveRobot}
+                    onDelete={handleDeleteRobot}
+                    onToggleStatus={handleToggleRobotStatus}
+                    masterApiState={masterApiState}
+                    subscriptionStatus={subscriptionStatus}
+                />;
+            case 'profile':
+                return <Profile user={user!} addToast={addToast} profilePhoto={profilePhoto} setProfilePhoto={setProfilePhoto} setActiveView={setActiveView} navigateToCheckout={navigateToCheckout} />;
+            case 'admin':
+                return <Admin addToast={addToast} setActiveView={setActiveView} />;
+            case 'checkout':
+                // This case is now only for logged-in users upgrading their plan
+                return (
+                    <div className="min-h-screen bg-zinc-950 text-zinc-200 p-4 sm:p-6 lg:p-8 font-sans">
+                        <CheckoutView
+                            user={user}
+                            planToCheckout={planToCheckout}
+                            onPurchaseSuccess={handlePurchaseSuccess}
+                            onRegistrationSuccess={() => { }} // Not used here
+                            initialData={null}
+                            onBack={() => {
+                                setActiveView('profile');
+                                setPlanToCheckout(null);
+                            }}
+                        />
+                    </div>
+                )
+            default:
+                return <AnalysisView
+                    allSymbols={allSymbols}
+                    alerts={alerts}
+                    activeSymbol={activeSymbol}
+                    handleUpdateChartState={handleUpdateChartState}
+                    wsStatus={wsStatus}
+                    market={market}
+                    setMarket={setMarket}
+                    aiMonitoredSymbols={aiMonitoredSymbols}
+                    setAiMonitoredSymbols={setAiMonitoredSymbols}
+                    chartStates={chartStates}
+                    activeChartIndex={activeChartIndex}
+                    setActiveChartIndex={setActiveChartIndex}
+                    robotInstances={robotInstances}
+                    aiAnalyses={aiAnalyses}
+                    isAiPanelVisible={isAiPanelVisible}
+                    accountState={accountState}
+                    addToast={addToast}
+                    orders={orders}
+                    isAccountLoading={isAccountLoading}
+                    accountError={accountError}
+                    setOrders={setOrders}
+                    visibleComponents={visibleComponents}
+                    latestPrices={latestPrices}
+                />;
+        }
+    }
+
+
     return (
-        <>
+        <div className="min-h-screen font-sans text-xs flex flex-col bg-zinc-950 text-zinc-200">
             <div className="fixed top-4 right-4 z-[100] space-y-2">
                 {toasts.map(toast => (
-                  <Toast key={toast.id} {...toast} onDismiss={() => setToasts(t => t.filter(item => item.id !== toast.id))} />
+                    <Toast key={toast.id} {...toast} onDismiss={() => setToasts(t => t.filter(item => item.id !== toast.id))} />
                 ))}
             </div>
-            <AuthView onLogin={handleLogin} onRegister={handleRegister} onProceedToPayment={handleProceedToCheckout} addToast={addToast} />
-            <Modal isOpen={isCheckoutModalOpen} onClose={handleModalClose} title="Finalizar Pagamento">
-                <CheckoutView
-                    user={null}
-                    planToCheckout={planToCheckout}
-                    onPurchaseSuccess={() => {}} // Not used in registration flow
-                    onRegistrationSuccess={handleRegistrationSuccess}
-                    initialData={pendingRegistration}
-                    onBack={handleModalClose}
-                    isModal={true}
-                />
-            </Modal>
-        </>
-    );
-  }
-  
-  if (subscriptionStatus === 'expired') {
-    return <SubscriptionExpiredView />;
-  }
 
-
-  const renderView = () => {
-    switch(activeView) {
-        case 'analysis':
-            return <AnalysisView 
-                        allSymbols={allSymbols}
-                        alerts={alerts}
-                        activeSymbol={activeSymbol}
-                        handleUpdateChartState={handleUpdateChartState}
-                        wsStatus={wsStatus}
-                        market={market}
-                        setMarket={setMarket}
-                        aiMonitoredSymbols={aiMonitoredSymbols}
-                        setAiMonitoredSymbols={setAiMonitoredSymbols}
-                        chartStates={chartStates}
-                        activeChartIndex={activeChartIndex}
-                        setActiveChartIndex={setActiveChartIndex}
-                        robotInstances={robotInstances}
-                        aiAnalyses={aiAnalyses}
-                        isAiPanelVisible={isAiPanelVisible}
-                        accountState={accountState}
-                        addToast={addToast}
-                        orders={orders}
-                        isAccountLoading={isAccountLoading}
-                        accountError={accountError}
-                        setOrders={setOrders}
-                        visibleComponents={visibleComponents}
-                        latestPrices={latestPrices}
-                    />;
-        case 'dashboard':
-            return <Dashboard orders={orders} accountState={accountState} visibleComponents={visibleComponents} />;
-        case 'robots':
-            return <RobotsView 
-                        robotInstances={robotInstances}
-                        allSymbols={allSymbols}
-                        onSave={handleSaveRobot}
-                        onDelete={handleDeleteRobot}
-                        onToggleStatus={handleToggleRobotStatus}
-                        masterApiState={masterApiState}
-                        subscriptionStatus={subscriptionStatus}
-                    />;
-        case 'profile':
-            return <Profile user={user!} addToast={addToast} profilePhoto={profilePhoto} setProfilePhoto={setProfilePhoto} setActiveView={setActiveView} navigateToCheckout={navigateToCheckout} />;
-        case 'admin':
-            return <Admin addToast={addToast} setActiveView={setActiveView} />;
-        case 'checkout':
-            // This case is now only for logged-in users upgrading their plan
-            return (
-                <div className="min-h-screen bg-zinc-950 text-zinc-200 p-4 sm:p-6 lg:p-8 font-sans">
-                     <CheckoutView
-                        user={user}
-                        planToCheckout={planToCheckout}
-                        onPurchaseSuccess={handlePurchaseSuccess}
-                        onRegistrationSuccess={() => {}} // Not used here
-                        initialData={null}
-                        onBack={() => {
-                            setActiveView('profile');
-                            setPlanToCheckout(null);
-                        }}
-                    />
-                </div>
-            )
-        default:
-            return <AnalysisView 
-                        allSymbols={allSymbols}
-                        alerts={alerts}
-                        activeSymbol={activeSymbol}
-                        handleUpdateChartState={handleUpdateChartState}
-                        wsStatus={wsStatus}
-                        market={market}
-                        setMarket={setMarket}
-                        aiMonitoredSymbols={aiMonitoredSymbols}
-                        setAiMonitoredSymbols={setAiMonitoredSymbols}
-                        chartStates={chartStates}
-                        activeChartIndex={activeChartIndex}
-                        setActiveChartIndex={setActiveChartIndex}
-                        robotInstances={robotInstances}
-                        aiAnalyses={aiAnalyses}
-                        isAiPanelVisible={isAiPanelVisible}
-                        accountState={accountState}
-                        addToast={addToast}
-                        orders={orders}
-                        isAccountLoading={isAccountLoading}
-                        accountError={accountError}
-                        setOrders={setOrders}
-                        visibleComponents={visibleComponents}
-                        latestPrices={latestPrices}
-                    />;
-    }
-  }
-
-
-  return (
-    <div className="min-h-screen font-sans text-xs flex flex-col bg-zinc-950 text-zinc-200">
-       <div className="fixed top-4 right-4 z-[100] space-y-2">
-        {toasts.map(toast => (
-          <Toast key={toast.id} {...toast} onDismiss={() => setToasts(t => t.filter(item => item.id !== toast.id))} />
-        ))}
-      </div>
-
-       {activeView !== 'checkout' && user ? (
-        <Layout
-            user={user}
-            profilePhoto={profilePhoto}
-            wsStatus={wsStatus}
-            onConfigSave={(newConfig) => setAppConfig(newConfig)}
-            isAiPanelVisible={isAiPanelVisible}
-            setAiPanelVisible={setAiPanelVisible}
-            activeView={activeView}
-            setActiveView={setActiveView}
-            addToast={addToast}
-            appConfig={appConfig}
-            visibleComponents={visibleComponents}
-            setVisibleComponents={setVisibleComponents}
-            notifications={notifications}
-            setNotifications={setNotifications}
-            handleLogout={handleLogout}
-            masterApiState={masterApiState}
-            setMasterApiState={setMasterApiStateAndPersist} // Use the persisting setter
-            subscriptionStatus={subscriptionStatus}
-          >
-            {wsStatus === 'disconnected' ? (
-                <div className="h-full flex items-center justify-center m-2 text-zinc-400">
-                    <div className="text-center bg-zinc-900 p-8 rounded-lg border border-zinc-800 max-w-md w-full">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-red-500" viewBox="0 0 24 24" fill="currentColor">
-                            <path fillRule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zm-1.72 6.97a.75.75 0 10-1.06 1.06L10.94 12l-1.72 1.72a.75.75 0 101.06 1.06L12 13.06l1.72 1.72a.75.75 0 101.06-1.06L13.06 12l1.72-1.72a.75.75 0 10-1.06-1.06L12 10.94l-1.72-1.72z" clipRule="evenodd" />
-                        </svg>
-                        <p className="font-bold text-lg text-red-400 mt-4">Conexão Perdida</p>
-                        <p className="text-sm text-zinc-400 mt-2">Não foi possível conectar ao servidor backend.</p>
-                        <p className="text-xs text-zinc-500 mt-1">Tentando reconectar automaticamente...</p>
-                        <div className="mt-6">
-                            <button 
-                                onClick={() => window.location.reload()}
-                                className="bg-amber-500 hover:bg-amber-600 text-black font-bold px-4 py-2 rounded transition-colors"
-                                aria-label="Recarregar a página"
-                            >
-                                Recarregar Página
-                            </button>
+            {activeView !== 'checkout' && user ? (
+                <Layout
+                    user={user}
+                    profilePhoto={profilePhoto}
+                    wsStatus={wsStatus}
+                    onConfigSave={(newConfig) => setAppConfig(newConfig)}
+                    isAiPanelVisible={isAiPanelVisible}
+                    setAiPanelVisible={setAiPanelVisible}
+                    activeView={activeView}
+                    setActiveView={setActiveView}
+                    addToast={addToast}
+                    appConfig={appConfig}
+                    visibleComponents={visibleComponents}
+                    setVisibleComponents={setVisibleComponents}
+                    notifications={notifications}
+                    setNotifications={setNotifications}
+                    handleLogout={handleLogout}
+                    masterApiState={masterApiState}
+                    setMasterApiState={setMasterApiStateAndPersist} // Use the persisting setter
+                    subscriptionStatus={subscriptionStatus}
+                >
+                    {wsStatus === 'disconnected' ? (
+                        <div className="h-full flex items-center justify-center m-2 text-zinc-400">
+                            <div className="text-center bg-zinc-900 p-8 rounded-lg border border-zinc-800 max-w-md w-full">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-red-500" viewBox="0 0 24 24" fill="currentColor">
+                                    <path fillRule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zm-1.72 6.97a.75.75 0 10-1.06 1.06L10.94 12l-1.72 1.72a.75.75 0 101.06 1.06L12 13.06l1.72 1.72a.75.75 0 101.06-1.06L13.06 12l1.72-1.72a.75.75 0 10-1.06-1.06L12 10.94l-1.72-1.72z" clipRule="evenodd" />
+                                </svg>
+                                <h1 className="text-xl font-bold text-amber-300">RS Robo Kagi Binance</h1>
+                                <p className="font-bold text-lg text-red-400 mt-4">Conexão Perdida</p>
+                                <p className="text-sm text-zinc-400 mt-2">Não foi possível conectar ao servidor backend.</p>
+                                <p className="text-xs text-zinc-500 mt-1">Tentando reconectar automaticamente...</p>
+                                <div className="mt-6">
+                                    <button
+                                        onClick={() => window.location.reload()}
+                                        className="bg-amber-500 hover:bg-amber-600 text-black font-bold px-4 py-2 rounded transition-colors"
+                                        aria-label="Recarregar a página"
+                                    >
+                                        Recarregar Página
+                                    </button>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                </div>
+                    ) : (
+                        renderView()
+                    )}
+                </Layout>
             ) : (
-                renderView()
+                renderView() // Render CheckoutView (full page) for logged-in users
             )}
-          </Layout>
-        ) : (
-            renderView() // Render CheckoutView (full page) for logged-in users
-        )}
 
-      {activeView !== 'checkout' && appConfig.live === false && wsStatus === 'connected' && (
-        <footer className="sticky bottom-0 z-20 bg-yellow-500 text-black text-center p-2 font-bold text-sm animate-fade-in-up">
-            MODO SIMULAÇÃO ATIVO: Nenhuma ordem real será enviada.
-        </footer>
-      )}
-    </div>
-  );
+            {activeView !== 'checkout' && appConfig.live === false && wsStatus === 'connected' && (
+                <footer className="sticky bottom-0 z-20 bg-yellow-500 text-black text-center p-2 font-bold text-sm animate-fade-in-up">
+                    MODO SIMULAÇÃO ATIVO: Nenhuma ordem real será enviada.
+                </footer>
+            )}
+        </div>
+    );
 }

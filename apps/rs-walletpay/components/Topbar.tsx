@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
+import { supabase } from '../src/lib/supabaseClient';
 import ComingSoonModal from './ComingSoonModal';
 
 interface TopbarProps {
@@ -13,27 +14,68 @@ const Topbar: React.FC<TopbarProps> = ({ onMenuClick }) => {
   const breadcrumb = path ? path.charAt(0).toUpperCase() + path.slice(1) : 'Dashboard';
 
   const [isProfileMenuOpen, setProfileMenuOpen] = useState(false);
+  const [userProfile, setUserProfile] = useState<{ name: string; avatarUrl: string | null }>({
+    name: localStorage.getItem('userName') || 'Consultor',
+    avatarUrl: null
+  });
   const [comingSoonFeature, setComingSoonFeature] = useState<string | null>(null);
   const profileMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-        if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
-            setProfileMenuOpen(false);
+    const fetchUserData = async () => {
+      const userId = localStorage.getItem('userId');
+      if (!userId) return;
+
+      try {
+        const { data } = await supabase
+          .from('user_profiles')
+          .select('nome_completo, avatar_url')
+          .eq('user_id', userId)
+          .maybeSingle();
+
+        if (data) {
+          setUserProfile({
+            name: data.nome_completo || userProfile.name,
+            avatarUrl: data.avatar_url
+          });
         }
+      } catch (err) {
+        console.error('Erro ao buscar dados do topo:', err);
+      }
+    };
+
+    fetchUserData();
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
+        setProfileMenuOpen(false);
+      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
-  
+
   const handleNavigation = (path: string) => {
-      setProfileMenuOpen(false);
-      navigate(path);
+    setProfileMenuOpen(false);
+    navigate(path);
   }
 
+  const handleLogout = () => {
+    // Limpar dados locais
+    localStorage.removeItem('token');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('userName');
+    localStorage.removeItem('userEmail');
+    localStorage.removeItem('autoLogin');
+    localStorage.removeItem('loginSource');
+
+    // Redirecionar para login
+    window.location.href = '/#/login';
+  };
+
   const handleComingSoon = (feature: string) => {
-      setComingSoonFeature(feature);
-      setProfileMenuOpen(false);
+    setComingSoonFeature(feature);
+    setProfileMenuOpen(false);
   };
 
   return (
@@ -56,7 +98,7 @@ const Topbar: React.FC<TopbarProps> = ({ onMenuClick }) => {
           {/* Search */}
           <div className="hidden md:block relative">
             <span className="absolute inset-y-0 left-0 flex items-center pl-3">
-               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-text-body" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-text-body" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
             </span>
             <input
               type="text"
@@ -65,28 +107,35 @@ const Topbar: React.FC<TopbarProps> = ({ onMenuClick }) => {
             />
           </div>
 
+          <div className="flex items-center gap-3 pr-2 border-r border-border">
+            <div className="text-right hidden sm:block">
+              <p className="text-sm font-bold text-white leading-none">{userProfile.name}</p>
+              <p className="text-xs text-text-soft mt-1">Consultor RS</p>
+            </div>
+          </div>
+
           {/* Avatar */}
           <div className="relative" ref={profileMenuRef}>
             <button onClick={() => setProfileMenuOpen(!isProfileMenuOpen)} className="w-10 h-10 rounded-full overflow-hidden border-2 border-transparent hover:border-gold transition">
-              <img src="https://picsum.photos/100/100" alt="Avatar" className="w-full h-full object-cover" />
+              <img
+                src={userProfile.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(userProfile.name)}&background=D4AF37&color=000`}
+                alt="Avatar"
+                className="w-full h-full object-cover"
+              />
             </button>
             {isProfileMenuOpen && (
-                <div className="origin-top-right absolute right-0 mt-2 w-48 rounded-lg shadow-lg bg-card border border-border ring-1 ring-black ring-opacity-5 z-20">
-                    <div className="py-1">
-                        <button onClick={() => handleNavigation('/app/dashboard')} className="w-full text-left flex items-center gap-3 px-4 py-2 text-sm text-text-body hover:bg-surface hover:text-text-title transition-colors">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                            Ver Perfil
-                        </button>
-                         <button onClick={() => handleNavigation('/app/settings')} className="w-full text-left flex items-center gap-3 px-4 py-2 text-sm text-text-body hover:bg-surface hover:text-text-title transition-colors">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 0 2l-.15.08a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1 0-2l.15-.08a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                            Configurações
-                        </button>
-                        <button onClick={() => handleComingSoon('Sair')} className="w-full text-left flex items-center gap-3 px-4 py-2 text-sm text-text-body hover:bg-surface hover:text-text-title transition-colors">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
-                            Sair
-                        </button>
-                    </div>
+              <div className="origin-top-right absolute right-0 mt-2 w-48 rounded-lg shadow-lg bg-card border border-border ring-1 ring-black ring-opacity-5 z-20">
+                <div className="py-1">
+                  <button onClick={() => handleNavigation('/app/settings')} className="w-full text-left flex items-center gap-3 px-4 py-2 text-sm text-text-body hover:bg-surface hover:text-text-title transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                    Perfil
+                  </button>
+                  <button onClick={handleLogout} className="w-full text-left flex items-center gap-3 px-4 py-2 text-sm text-red-400 hover:bg-red-500/10 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                    Sair
+                  </button>
                 </div>
+              </div>
             )}
           </div>
         </div>

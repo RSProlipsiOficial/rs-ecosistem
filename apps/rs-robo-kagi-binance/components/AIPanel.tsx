@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { askAI, analyzeChartAI } from '../lib/api';
-import type { GroundingChunk } from '@google/genai';
+// GroundingChunk removed as it's specific to Google AI
 
 interface AIPanelProps {
     focusSymbol: string;
@@ -8,7 +8,7 @@ interface AIPanelProps {
 }
 
 type AITab = 'qa' | 'analysis';
-type Message = { role: 'user' | 'model', text: string, citations?: GroundingChunk[] };
+type Message = { role: 'user' | 'model', text: string, citations?: any[] };
 
 const LoadingSpinner = () => (
     <div className="flex justify-center items-center space-x-2">
@@ -28,7 +28,7 @@ export default function AIPanel({ focusSymbol, aiStrategy }: AIPanelProps) {
     const handleQaSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!qaPrompt.trim() || isLoading) return;
-        
+
         const newHistory: Message[] = [...qaHistory, { role: 'user', text: qaPrompt }];
         setQaHistory(newHistory);
         setQaPrompt('');
@@ -69,13 +69,13 @@ export default function AIPanel({ focusSymbol, aiStrategy }: AIPanelProps) {
                     onClick={() => setActiveTab('analysis')}
                     className={`px-4 py-2 ${activeTab === 'analysis' ? 'text-amber-300 border-b-2 border-amber-300' : 'text-zinc-400 hover:text-zinc-200'}`}
                 >
-                    Análise Técnica IA
+                    RS AI / Análise Técnica
                 </button>
                 <button
                     onClick={() => setActiveTab('qa')}
                     className={`px-4 py-2 ${activeTab === 'qa' ? 'text-amber-300 border-b-2 border-amber-300' : 'text-zinc-400 hover:text-zinc-200'}`}
                 >
-                    Co-Piloto IA (P&R)
+                    RS AI / Co-Piloto
                 </button>
             </div>
             <div className="pt-4 min-h-[200px]">
@@ -87,12 +87,12 @@ export default function AIPanel({ focusSymbol, aiStrategy }: AIPanelProps) {
                 )}
                 {activeTab === 'analysis' ? (
                     <div>
-                        <button 
+                        <button
                             onClick={handleAnalysis}
                             disabled={isLoading}
                             className="bg-amber-500 hover:bg-amber-600 text-black font-bold px-4 py-2 rounded transition-colors w-full disabled:opacity-50 disabled:cursor-wait"
                         >
-                           {isLoading ? 'Analisando...' : `Analisar Gráfico ${focusSymbol}`}
+                            {isLoading ? 'Analisando...' : `Analisar Gráfico ${focusSymbol}`}
                         </button>
                         <div className="mt-4 text-zinc-300 whitespace-pre-wrap font-mono text-xs bg-zinc-950 p-3 rounded-md max-h-96 overflow-y-auto">
                             {isLoading && !analysisResult && <LoadingSpinner />}
@@ -121,7 +121,7 @@ export default function AIPanel({ focusSymbol, aiStrategy }: AIPanelProps) {
                             {isLoading && qaHistory.length > 0 && <LoadingSpinner />}
                         </div>
                         <form onSubmit={handleQaSubmit} className="flex gap-2 pt-2">
-                            <input 
+                            <input
                                 type="text"
                                 value={qaPrompt}
                                 onChange={(e) => setQaPrompt(e.target.value)}

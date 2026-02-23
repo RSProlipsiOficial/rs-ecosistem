@@ -1,6 +1,6 @@
 /**
- * RS PRÓLIPSI - DISTRIBUIÇÃO DE BÔNUS
- * Matemática completa baseada no plano de marketing oficial
+ * RS PRÓLIPSI - DISTRIBUIÇÃO DE BÔNUS (MOTOR UNIFICADO)
+ * Matemática completa baseada no plano de marketing oficial (marketingRules.ts)
  */
 import { getSigmaConfigCore } from '../services/sigmaConfigCore'
 import { isActiveInMatrixBase } from '../services/sigmaEligibility'
@@ -28,11 +28,16 @@ interface Beneficiario {
 interface CycleData {
   consultor_id: string;
   cycle_id: string;
-  cycle_value: number; // 360.00
+  cycle_value: number; // ex: 360.00
+}
+
+interface VMECConfig {
+  linhas_requeridas: number;
+  percentuais: number[];
 }
 
 // ================================================
-// 1. BÔNUS DE CICLO (30% = R$ 108)
+// 1. BÔNUS DE CICLO (30%)
 // ================================================
 
 export async function calculateCycleBonus(cycleValue?: number): Promise<BonusDistribution> {
@@ -50,7 +55,7 @@ export async function calculateCycleBonus(cycleValue?: number): Promise<BonusDis
 }
 
 // ================================================
-// 2. BÔNUS DE PROFUNDIDADE (6.81% = R$ 24.52)
+// 2. BÔNUS DE PROFUNDIDADE (6.81% - L1..L6)
 // ================================================
 
 export async function calculateDepthBonus(
@@ -60,42 +65,57 @@ export async function calculateDepthBonus(
   const cfg = await getSigmaConfigCore();
   const basePool = cycleValue * (cfg.depthBonus.basePercent / 100);
   const weights = cfg.depthBonus.levels.map(l => l.percent);
-  const sum = weights.reduce((a, b) => a + b, 0);
+  const sum = weights.reduce((a, b) => a + b, 0) || 1;
   const beneficiarios: Beneficiario[] = [];
+
   let targetLevel = 1;
   let index = 0;
   let lastEligible: { id: string; nivel: number } | undefined;
+
   while (targetLevel <= cfg.depthBonus.levels.length && index < uplines.length) {
     const intendedCfg = cfg.depthBonus.levels.find(l => l.level === targetLevel);
     const intendedWeight = intendedCfg ? intendedCfg.percent : 0;
-    // compressão dinâmica: procurar próximo upline elegível (ativo na matriz base)
+
     let chosen: { id: string; nivel: number } | undefined;
     while (index < uplines.length) {
       const candidate = uplines[index++];
       if (await isActiveInMatrixBase(candidate.id)) { chosen = candidate; break; }
     }
+
     if (!chosen) { targetLevel++; continue; }
     lastEligible = chosen;
+
     const sharePct = (intendedWeight / sum) * 100;
     const valor = +((basePool * intendedWeight) / sum).toFixed(2);
-    beneficiarios.push({ consultor_id: chosen.id, nivel: targetLevel, valor, percentual: +sharePct.toFixed(5) });
+    beneficiarios.push({
+      consultor_id: chosen.id,
+      nivel: targetLevel,
+      valor,
+      percentual: +sharePct.toFixed(5)
+    });
     targetLevel++;
   }
-  // Se faltou alocar níveis e há pelo menos um elegível, alocar remanescentes no último elegível
+
+  // Se houver níveis sem uplines novos, alocar para o último elegível (compressão)
   while (targetLevel <= cfg.depthBonus.levels.length && lastEligible) {
     const intendedCfg = cfg.depthBonus.levels.find(l => l.level === targetLevel);
     const intendedWeight = intendedCfg ? intendedCfg.percent : 0;
-    const sharePct = (intendedWeight / sum) * 100;
     const valor = +((basePool * intendedWeight) / sum).toFixed(2);
-    beneficiarios.push({ consultor_id: lastEligible.id, nivel: targetLevel, valor, percentual: +sharePct.toFixed(5) });
+    beneficiarios.push({
+      consultor_id: lastEligible.id,
+      nivel: targetLevel,
+      valor,
+      percentual: +((intendedWeight / sum) * 100).toFixed(5)
+    });
     targetLevel++;
   }
+
   const totalValor = beneficiarios.reduce((s, b) => s + b.valor, 0);
   return { tipo: 'profundidade', valor: totalValor, percentual: cfg.depthBonus.basePercent, beneficiarios };
 }
 
 // ================================================
-// 3. POOL DE FIDELIDADE (1.25% = R$ 4.50)
+// 3. POOL DE FIDELIDADE (1.25%)
 // ================================================
 
 export async function calculateFidelityPool(
@@ -103,62 +123,43 @@ export async function calculateFidelityPool(
   uplines: { id: string; nivel: number }[]
 ): Promise<BonusDistribution> {
   const cfg = await getSigmaConfigCore();
-  const basePool = +(cycleValue * (cfg.fidelityBonus.percentTotal / 100)).toFixed(2);
+  const poolBase = +(cycleValue * (cfg.fidelityBonus.percentTotal / 100)).toFixed(2);
   const weights = (cfg.fidelityBonus.levels || []).map(l => l.percent);
   const sum = weights.reduce((a, b) => a + b, 0) || 1;
   const beneficiarios: Beneficiario[] = [];
+
   let targetLevel = 1;
   let index = 0;
   let lastEligible: { id: string; nivel: number } | undefined;
+
   while (targetLevel <= (cfg.fidelityBonus.levels || []).length && index < uplines.length) {
     const intendedCfg = cfg.fidelityBonus.levels?.find(l => l.level === targetLevel);
     const intendedWeight = intendedCfg ? intendedCfg.percent : 0;
+
     let chosen: { id: string; nivel: number } | undefined;
     while (index < uplines.length) {
       const candidate = uplines[index++];
       if (await isActiveInMatrixBase(candidate.id)) { chosen = candidate; break; }
     }
+
     if (!chosen) { targetLevel++; continue; }
     lastEligible = chosen;
-    const sharePct = (intendedWeight / sum) * 100;
-    const valor = +((basePool * intendedWeight) / sum).toFixed(2);
-    beneficiarios.push({ consultor_id: chosen.id, nivel: targetLevel, valor, percentual: +sharePct.toFixed(5) });
+
+    const valor = +((poolBase * intendedWeight) / sum).toFixed(2);
+    beneficiarios.push({
+      consultor_id: chosen.id,
+      nivel: targetLevel,
+      valor,
+      percentual: +((intendedWeight / sum) * 100).toFixed(5)
+    });
     targetLevel++;
   }
-  while (targetLevel <= (cfg.fidelityBonus.levels || []).length && lastEligible) {
-    const intendedCfg = cfg.fidelityBonus.levels?.find(l => l.level === targetLevel);
-    const intendedWeight = intendedCfg ? intendedCfg.percent : 0;
-    const sharePct = (intendedWeight / sum) * 100;
-    const valor = +((basePool * intendedWeight) / sum).toFixed(2);
-    beneficiarios.push({ consultor_id: lastEligible.id, nivel: targetLevel, valor, percentual: +sharePct.toFixed(5) });
-    targetLevel++;
-  }
-  return { tipo: 'fidelidade', valor: basePool, percentual: cfg.fidelityBonus.percentTotal, beneficiarios };
+
+  return { tipo: 'fidelidade', valor: poolBase, percentual: cfg.fidelityBonus.percentTotal, beneficiarios };
 }
 
 // ================================================
-// 4. POOL TOP SIGMA (4.5% = R$ 16.20)
-// ================================================
-
-export async function calculateTopSigmaPool(
-  totalCyclesValue: number,
-  topConsultores: { id: string; posicao: number }[]
-): Promise<BonusDistribution> {
-  const cfg = await getSigmaConfigCore();
-  const totalPool = +(totalCyclesValue * (cfg.topSigma.percentTotal / 100)).toFixed(2);
-  const mapRanks = new Map(cfg.topSigma.ranks.map(r => [r.rank, r.percent]));
-  const beneficiarios: Beneficiario[] = [];
-  for (const c of topConsultores) {
-    if (!(await isActiveInMatrixBase(c.id))) continue;
-    const pct = mapRanks.get(c.posicao) || 0;
-    const valor = +(totalPool * (pct / 100)).toFixed(2);
-    beneficiarios.push({ consultor_id: c.id, valor, percentual: pct });
-  }
-  return { tipo: 'top_sigma', valor: totalPool, percentual: cfg.topSigma.percentTotal, beneficiarios };
-}
-
-// ================================================
-// 5. BÔNUS DE CARREIRA (6.39% = R$ 23)
+// 4. BÔNUS DE CARREIRA (ACÚMULO TRIMESTRAL)
 // ================================================
 
 export async function calculateCareerBonus(
@@ -173,257 +174,162 @@ export async function calculateCareerBonus(
   if (!(await isActiveInMatrixBase(consultor.id))) {
     return { tipo: 'carreira', valor: 0, percentual: cfg.career.percentTotal, beneficiarios: [] }
   }
-  const percentual = cfg.career.percentTotal;
-  const valorPorCiclo = cfg.career.valuePerCycle;
 
-  const pinCfg = cfg.career.pins.find(p => p.orderIndex === consultor.pin_nivel);
-  const vmecConfig: VMECConfig = pinCfg
-    ? {
-      linhas_requeridas: pinCfg.minLinesRequired,
-      percentuais: String(pinCfg.vmecDistribution)
-        .split(/[\/|,]/)
-        .map(s => parseFloat(String(s).trim()))
-        .filter(n => !isNaN(n))
+  // 1. Encontrar o maior PIN atingido (acumulado no trimestre)
+  let bestPin = cfg.career.pins[0]; // Bronze default
+  for (const pin of cfg.career.pins) {
+    const vmec: VMECConfig = {
+      linhas_requeridas: pin.minLinesRequired,
+      percentuais: String(pin.vmecDistribution).split(/[\/|,]/).map(Number).filter(n => !isNaN(n))
+    };
+    const validos = calculateValidCycles(consultor.linhas_diretas, vmec);
+    if (validos >= pin.cyclesRequired) {
+      bestPin = pin;
     }
-    : { linhas_requeridas: 0, percentuais: [] };
+  }
 
-  const ciclosValidos = calculateValidCycles(consultor.linhas_diretas, vmecConfig);
-  const valor = +(ciclosValidos * valorPorCiclo).toFixed(2);
+  // 2. Verificar já pago no trimestre
+  const url = process.env.SUPABASE_URL!;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY!;
+  const sb = createClient(url, key);
+
+  const now = new Date();
+  const quarter = Math.floor(now.getMonth() / 3);
+  const quarterStart = new Date(now.getFullYear(), quarter * 3, 1).toISOString();
+
+  const { data: results } = await sb.from('wallet_transactions').select('amount').eq('user_id', consultor.id).eq('type', 'bonus_career').gte('created_at', quarterStart);
+  const alreadyPaid = (results || []).reduce((sum, t) => sum + Number(t.amount), 0);
+
+  const toPay = Math.max(0, bestPin.rewardValue - alreadyPaid);
 
   return {
     tipo: 'carreira',
-    valor,
-    percentual,
-    beneficiarios: [{ consultor_id: consultor.id, valor, percentual }]
+    valor: +toPay.toFixed(2),
+    percentual: cfg.career.percentTotal,
+    beneficiarios: toPay > 0 ? [{ consultor_id: consultor.id, valor: +toPay.toFixed(2), percentual: cfg.career.percentTotal }] : []
   };
 }
 
 // ================================================
-// VMEC - VOLUME MÁXIMO POR EQUIPE E CICLO
-// ================================================
-
-interface VMECConfig {
-  linhas_requeridas: number;
-  percentuais: number[];
-}
-
-function getVMECForPin() { return { linhas_requeridas: 0, percentuais: [] } }
-
-/**
- * Calcula ciclos válidos aplicando VMEC
- * 
- * REGRAS:
- * 1. Pode ter INFINITAS linhas (sem limite)
- * 2. NENHUMA linha pode exceder seu percentual máximo
- * 3. Se alguma linha exceder, aplica o limite APENAS naquela linha
- * 4. Precisa ter pelo menos o número mínimo de linhas ativas
- * 
- * Exemplo Rubi [50%, 30%, 20%]:
- * - 10 linhas, todas dentro do limite → conta TODAS
- * - 3 linhas: L1=60%, L2=30%, L3=10% → L1 limita em 50%
- */
-function calculateValidCycles(
-  linhas: { linha: number; ciclos: number }[],
-  vmec: VMECConfig
-): number {
-  // Se não tem VMEC configurado (Bronze), conta tudo
-  if (vmec.linhas_requeridas === 0 || vmec.percentuais.length === 0) {
-    return linhas.reduce((sum, l) => sum + l.ciclos, 0);
-  }
-
-  // Filtrar linhas com ciclos > 0
-  const linhasAtivas = linhas.filter(l => l.ciclos > 0);
-
-  // Verificar se tem o mínimo de linhas requeridas
-  if (linhasAtivas.length < vmec.linhas_requeridas) {
-    // Não qualifica! Precisa ter o número mínimo de linhas
-    return 0;
-  }
-
-  // Calcular total geral de ciclos (TODAS as linhas)
-  const totalCiclos = linhas.reduce((sum, l) => sum + l.ciclos, 0);
-
-  // Aplicar VMEC: verificar cada linha individualmente
-  let ciclosValidos = 0;
-
-  for (const linha of linhas) {
-    if (linha.ciclos === 0) continue;
-
-    // Calcular percentual que esta linha representa
-    const percentualLinha = (linha.ciclos / totalCiclos) * 100;
-
-    // Encontrar o limite máximo permitido para qualquer linha
-    // (pega o MAIOR percentual disponível, pois pode ter infinitas linhas)
-    const limiteMaximo = Math.max(...vmec.percentuais);
-    const limiteCiclos = Math.floor(totalCiclos * (limiteMaximo / 100));
-
-    // Se a linha está dentro do limite, conta tudo
-    // Se excedeu, limita ao máximo permitido
-    if (linha.ciclos <= limiteCiclos) {
-      ciclosValidos += linha.ciclos;
-    } else {
-      ciclosValidos += limiteCiclos;
-    }
-  }
-
-  return ciclosValidos;
-}
-
-/**
- * Valida se a distribuição de linhas está adequada para o VMEC
- * Retorna se qualifica + detalhes
- */
-function validateVMECDistribution(
-  linhas: { linha: number; ciclos: number }[],
-  vmec: VMECConfig
-): {
-  qualifica: boolean;
-  motivo?: string;
-  ciclos_validos: number;
-  linhas_ativas: number;
-  linhas_requeridas: number;
-} {
-  const linhasAtivas = linhas.filter(l => l.ciclos > 0);
-
-  if (linhasAtivas.length < vmec.linhas_requeridas) {
-    return {
-      qualifica: false,
-      motivo: `Precisa ter pelo menos ${vmec.linhas_requeridas} linhas ativas. Você tem ${linhasAtivas.length}.`,
-      ciclos_validos: 0,
-      linhas_ativas: linhasAtivas.length,
-      linhas_requeridas: vmec.linhas_requeridas
-    };
-  }
-
-  const ciclosValidos = calculateValidCycles(linhas, vmec);
-
-  return {
-    qualifica: true,
-    ciclos_validos: ciclosValidos,
-    linhas_ativas: linhasAtivas.length,
-    linhas_requeridas: vmec.linhas_requeridas
-  };
-}
-
-// ================================================
-// EXEMPLO DE USO
-// ================================================
-
-/**
- * Exemplo: Consultor Safira (PIN 4) com 2 linhas
- * Linha 1: 100 ciclos
- * Linha 2: 50 ciclos
- * Total: 150 ciclos
- * 
- * VMEC Safira: [60%, 40%]
- * Linha 1 conta até: 150 * 0.60 = 90 ciclos (mas tem 100, então usa 90)
- * Linha 2 conta até: 150 * 0.40 = 60 ciclos (mas tem 50, então usa 50)
- * Ciclos válidos: 90 + 50 = 140 ciclos
- * 
- * Bônus carreira: 140 * R$ 23 = R$ 3.220
- */
-
-// ================================================
-// DISTRIBUIÇÃO COMPLETA
+// DISTRIBUIÇÃO E PERSISTÊNCIA COMPLETA
 // ================================================
 
 export async function distributeAllBonuses(cycle: CycleData) {
   const distributions: BonusDistribution[] = [];
+  const url = process.env.SUPABASE_URL!;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY!;
+  const sb = createClient(url, key);
 
-  // 1. Bônus de Ciclo (30%)
+  // 1. Ciclo
   const cycleBonus = await calculateCycleBonus(cycle.cycle_value);
   distributions.push(cycleBonus);
 
-  // 2. Bônus de Profundidade (6.81%)
-  // Buscar uplines do consultor (L1-L6)
+  // 2. Profundidade
   const uplines = await getUplines(cycle.consultor_id, 6);
   const depthBonus = await calculateDepthBonus(cycle.cycle_value, uplines);
   distributions.push(depthBonus);
 
-  // 3. Pool de Fidelidade (1.25%)
-  // Buscar consultores elegíveis que fizeram reentrada
+  // 3. Fidelidade (Pool) - Pendente até reentrada
   const fidelityBonus = await calculateFidelityPool(cycle.cycle_value, uplines);
   distributions.push(fidelityBonus);
 
-  // 4. Pool Top SIGMA (4.5%)
-  // Calcular no final do mês com todos os ciclos
-  // distributions.push(topSigmaBonus);
-
-  // 5. Bônus de Carreira (6.39%)
+  // 4. Carreira
   const consultorData = await getConsultorCareerData(cycle.consultor_id);
   const careerBonus = await calculateCareerBonus(cycle.cycle_value, consultorData);
   distributions.push(careerBonus);
 
+  // 5. Liberação por Reentrada
+  const { count: cycleCount } = await sb.from('matriz_cycles').select('*', { count: 'exact', head: true }).eq('consultor_id', cycle.consultor_id).eq('status', 'completed');
+  const currentNum = (cycleCount || 0) + 1;
+  if (currentNum > 1) {
+    await sb.from('wallet_transactions').update({ status: 'completed' }).eq('user_id', cycle.consultor_id).eq('type', 'bonus_fidelity').eq('status', 'pending');
+  }
+
+  // 6. Salvar no Banco
+  await persistDistributions(sb, distributions, cycle);
+
   return distributions;
 }
 
-// ================================================
-// HELPERS (implementar com Supabase)
-// ================================================
+async function persistDistributions(sb: any, distributions: BonusDistribution[], cycle: CycleData) {
+  for (const dist of distributions) {
+    if (dist.tipo === 'ciclo') {
+      await creditSingleBonus(sb, cycle.consultor_id, dist.valor, 'bonus_cycle', `Bônus de Ciclo SIGMA`, cycle.cycle_id);
+      continue;
+    }
 
-async function getUplines(consultorId: string, levels: number): Promise<{ id: string; nivel: number }[]> {
-  const url = process.env.SUPABASE_URL as string
-  const key = (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY) as string
-  if (!url || !key) return []
-  const sb = createClient(url, key)
-  const chain: { id: string; nivel: number }[] = []
-  let current = consultorId
-  let nivel = 1
-  while (nivel <= levels) {
-    const { data } = await sb
-      .from('downlines')
-      .select('upline_id')
-      .eq('downline_id', current)
-      .limit(1)
-      .maybeSingle()
-    const up = (data as any)?.upline_id
-    if (!up) break
-    chain.push({ id: String(up), nivel })
-    current = String(up)
-    nivel++
+    for (const b of dist.beneficiarios) {
+      const typeMap: any = { 'profundidade': 'bonus_depth', 'fidelidade': 'bonus_fidelity', 'carreira': 'bonus_career' };
+      const type = typeMap[dist.tipo] || dist.tipo;
+      const isFid = dist.tipo === 'fidelidade';
+      const status = isFid ? 'pending' : 'completed';
+
+      await sb.from('bonuses').insert({ user_id: b.consultor_id, bonus_type: dist.tipo, amount: b.valor, origin_cycle_id: cycle.cycle_id, origin_user_id: cycle.consultor_id, level: b.nivel });
+
+      if (status === 'completed') {
+        await creditSingleBonus(sb, b.consultor_id, b.valor, type, `Bônus ${dist.tipo} - Ciclo de ${cycle.consultor_id}`, cycle.cycle_id, b.nivel);
+      } else {
+        await sb.from('wallet_transactions').insert({ user_id: b.consultor_id, type, amount: b.valor, description: `Bônus Fidelidade (Pendente)`, status: 'pending', metadata: { cycle_id: cycle.cycle_id, level: b.nivel } });
+      }
+    }
   }
-  return chain
 }
 
-// fidelidade usa uplines e compressão dinâmica com níveis configurados
+async function creditSingleBonus(sb: any, userId: string, amount: number, type: string, description: string, cycleId: string, level?: number) {
+  if (amount <= 0) return;
+  const { data: wallet } = await sb.from('wallets').select('saldo_disponivel').eq('consultor_id', userId).single();
+  const oldBalance = Number(wallet?.saldo_disponivel || 0);
+  const newBalance = +(oldBalance + amount).toFixed(2);
 
-async function getConsultorCareerData(consultorId: string) {
-  // TODO: Buscar dados do consultor e linhas diretas
-  return {
-    id: consultorId,
-    pin_nivel: 4,
-    linhas_diretas: [
-      { linha: 1, ciclos: 100 },
-      { linha: 2, ciclos: 50 }
-    ]
-  };
+  await sb.from('wallet_transactions').insert({ user_id: userId, type, amount, description, status: 'completed', balance_after: newBalance, metadata: { cycle_id: cycleId, level } });
+  await sb.from('wallets').update({ saldo_disponivel: newBalance, saldo_total: newBalance, updated_at: new Date().toISOString() }).eq('consultor_id', userId);
 }
 
 // ================================================
-// VALIDAÇÃO
+// HELPERS
 // ================================================
 
-export function validateTotalDistribution(distributions: BonusDistribution[]): boolean {
-  const total = distributions.reduce((sum, d) => sum + d.percentual, 0);
-  const expected = 48.95; // 30 + 6.81 + 1.25 + 4.5 + 6.39
-
-  const isValid = Math.abs(total - expected) < 0.01;
-
-  if (!isValid) {
-    console.error(`❌ Distribuição inválida: ${total}% (esperado: ${expected}%)`);
+export function calculateValidCycles(linhas: { linha: number; ciclos: number }[], vmec: VMECConfig): number {
+  if (vmec.linhas_requeridas === 0 || vmec.percentuais.length === 0) return linhas.reduce((s, l) => s + l.ciclos, 0);
+  if (linhas.filter(l => l.ciclos > 0).length < vmec.linhas_requeridas) return 0;
+  const total = linhas.reduce((s, l) => s + l.ciclos, 0);
+  let validos = 0;
+  for (const l of linhas) {
+    const max = Math.max(...vmec.percentuais);
+    const limit = Math.floor(total * (max / 100));
+    validos += Math.min(l.ciclos, limit);
   }
-
-  return isValid;
+  return validos;
 }
 
-export default {
-  calculateCycleBonus,
-  calculateDepthBonus,
-  calculateFidelityPool,
-  calculateTopSigmaPool,
-  calculateCareerBonus,
-  calculateValidCycles,
-  validateVMECDistribution,
-  distributeAllBonuses,
-  validateTotalDistribution
-};
+async function getUplines(id: string, levels: number): Promise<{ id: string; nivel: number }[]> {
+  const sb = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY!);
+  const chain = []; let cur = id;
+  for (let i = 1; i <= levels; i++) {
+    const { data } = await sb.from('downlines').select('upline_id').eq('downline_id', cur).maybeSingle();
+    const up = (data as any)?.upline_id;
+    if (!up) break;
+    chain.push({ id: String(up), nivel: i });
+    cur = String(up);
+  }
+  return chain;
+}
+
+async function getConsultorCareerData(id: string) {
+  const sb = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY!);
+  const { data: c } = await sb.from('consultores').select('pin_nivel').eq('id', id).single();
+  const now = new Date(); const q = Math.floor(now.getMonth() / 3);
+  const start = new Date(now.getFullYear(), q * 3, 1).toISOString();
+  const { data: directs } = await sb.from('consultores').select('id').eq('patrocinador_id', id);
+  const linhas = [];
+  if (directs) {
+    for (let i = 0; i < directs.length; i++) {
+      const { data: teamIds } = await sb.rpc('get_team_ids', { root_id: directs[i].id });
+      const { count } = await sb.from('matriz_cycles').select('*', { count: 'exact', head: true }).in('consultor_id', teamIds || [directs[i].id]).eq('status', 'completed').gte('completed_at', start);
+      linhas.push({ linha: i + 1, ciclos: count || 0 });
+    }
+  }
+  return { id, pin_nivel: c?.pin_nivel || 1, linhas_diretas: linhas };
+}
+
+export default { distributeAllBonuses };

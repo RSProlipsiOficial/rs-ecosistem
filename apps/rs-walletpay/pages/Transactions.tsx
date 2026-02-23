@@ -29,11 +29,12 @@ const Transactions: React.FC = () => {
     const [apiTransactions, setApiTransactions] = useState<LedgerEntry[]>([]);
 
     useEffect(() => {
-        const loadTransactions = async () => {            try {
+        const loadTransactions = async () => {
+            try {
                 setLoading(true);
                 const userId = localStorage.getItem('userId') || 'demo-user';
                 const response = await walletAPI.getTransactions(userId);
-                
+
                 if (response?.data?.success) {
                     setApiTransactions(response.data.transactions);
                 }
@@ -43,13 +44,13 @@ const Transactions: React.FC = () => {
                 setLoading(false);
             }
         };
-        
+
         loadTransactions();
     }, []);
 
     const handleOpenModal = (entry: LedgerEntry) => setSelectedEntry(entry);
     const handleCloseModal = () => setSelectedEntry(null);
-    
+
     const handleClearFilters = () => {
         setFilter('');
         setStartDate('');
@@ -108,10 +109,10 @@ const Transactions: React.FC = () => {
         },
     ], []);
 
-    const sourceData = apiTransactions.length > 0 ? apiTransactions : (import.meta.env.DEV ? MOCK_LEDGER_ENTRIES : []);
+    const sourceData = apiTransactions;
     const filteredData = sourceData.filter(entry => {
         const filterLower = filter.toLowerCase();
-        
+
         // Text filter
         const textMatch = !filterLower ? true : (
             entry.description.toLowerCase().includes(filterLower) ||
@@ -135,7 +136,7 @@ const Transactions: React.FC = () => {
 
     const renderModalContent = () => {
         if (!selectedEntry) return null;
-        
+
         const details = selectedEntry.details || {};
         const isPendingWithdrawal = selectedEntry.type === LedgerEventType.WITHDRAWAL && selectedEntry.state === LedgerState.PENDING;
 
@@ -156,9 +157,9 @@ const Transactions: React.FC = () => {
                     {selectedEntry.fee > 0 && <DetailRow label="Líquido" value={formatCurrency(selectedEntry.amount - selectedEntry.fee)} />}
                     <DetailRow label="Status" value={<StatusBadge status={selectedEntry.state} />} />
                     <DetailRow label="Referência" value={selectedEntry.refId} />
-                    
+
                     {Object.keys(details).length > 0 && <hr className="border-border/50 my-3" />}
-                    
+
                     {Object.keys(details).length > 0 && <h4 className="font-bold text-text-title mb-2">Detalhes Adicionais</h4>}
 
                     {Object.entries(details).map(([key, value]) => (
@@ -177,7 +178,7 @@ const Transactions: React.FC = () => {
             </div>
         );
     };
-    
+
     const formElementClass = "w-full px-3 py-2 rounded-lg bg-surface border border-border focus:outline-none focus:ring-2 focus:ring-gold/25 focus:border-transparent transition-all";
 
     return (
@@ -204,21 +205,21 @@ const Transactions: React.FC = () => {
                         </div>
                     </div>
                     <div className="flex-grow" style={{ minWidth: '180px' }}>
-                         <label className="text-xs text-text-soft mb-1 block">Tipo</label>
-                         <select className={formElementClass} value={selectedType} onChange={e => setSelectedType(e.target.value)}>
+                        <label className="text-xs text-text-soft mb-1 block">Tipo</label>
+                        <select className={formElementClass} value={selectedType} onChange={e => setSelectedType(e.target.value)}>
                             <option value="">Todos os Tipos</option>
                             {Object.entries(typeLabels).map(([key, label]) => (
                                 <option key={key} value={key}>{label}</option>
                             ))}
-                         </select>
+                        </select>
                     </div>
                     <div className="flex-grow" style={{ minWidth: '130px' }}>
-                         <label className="text-xs text-text-soft mb-1 block">De</label>
-                         <input type="date" className={formElementClass} value={startDate} onChange={e => setStartDate(e.target.value)} />
+                        <label className="text-xs text-text-soft mb-1 block">De</label>
+                        <input type="date" className={formElementClass} value={startDate} onChange={e => setStartDate(e.target.value)} />
                     </div>
-                     <div className="flex-grow" style={{ minWidth: '130px' }}>
-                         <label className="text-xs text-text-soft mb-1 block">Até</label>
-                         <input type="date" className={formElementClass} value={endDate} onChange={e => setEndDate(e.target.value)} />
+                    <div className="flex-grow" style={{ minWidth: '130px' }}>
+                        <label className="text-xs text-text-soft mb-1 block">Até</label>
+                        <input type="date" className={formElementClass} value={endDate} onChange={e => setEndDate(e.target.value)} />
                     </div>
                 </div>
                 <div className="flex justify-end gap-2">
@@ -231,8 +232,8 @@ const Transactions: React.FC = () => {
                 </div>
             </div>
 
-    <DataTable columns={columns} data={filteredData} onRowClick={handleOpenModal} />
-            
+            <DataTable columns={columns} data={filteredData} onRowClick={handleOpenModal} />
+
             <Modal isOpen={!!selectedEntry} onClose={handleCloseModal} title="Detalhes da Transação">
                 {renderModalContent()}
             </Modal>

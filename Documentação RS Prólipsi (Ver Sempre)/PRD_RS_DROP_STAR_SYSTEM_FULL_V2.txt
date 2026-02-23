@@ -1,0 +1,311 @@
+
+PRD – RS-DROP STAR REWARDS SYSTEM (FULL VERSION)
+Versão 2.0 – Documento Técnico Oficial
+========================================================
+
+===============================
+1. VISÃO GERAL
+===============================
+O RS-DROP Star Rewards System é o sistema oficial e unificado de progressão, premiação, reconhecimento e comissionamento do ecossistema RS Prólipsi. Ele recompensa consultores que vendem:
+
+- Produtos físicos RS (alta margem)
+- Produtos físicos de lojistas/afiliados (margem 30%)
+- Produtos digitais RS (margem extremamente alta)
+
+O sistema é 100% ACUMULATIVO:
+O consultor que atinge níveis superiores recebe TODOS os prêmios de TODOS os níveis anteriores, além dos upgrades de comissão e reconhecimento permanente.
+
+Todo o modelo é sustentado por:
+- Fundo fixo de 4% aplicado sobre trechos de faturamento
+- Margem alta dos produtos RS físicos
+- Margem muito alta dos produtos digitais (80%–95%)
+
+O objetivo é construir o PLANO DE RECOMPENSAS mais forte do Brasil.
+
+========================================================
+2. OBJETIVOS DO SISTEMA
+========================================================
+1. Proporcionar uma jornada de crescimento clara, motivadora e permanente.
+2. Recompensar o consultor com prêmios físicos reais e premium.
+3. Criar diferenciação nacional no mercado de dropship e digital delivery.
+4. Utilizar margem digital para escalar muito a lucratividade do consultor.
+5. Garantir sustentabilidade financeira estruturada nos 4%.
+6. Aumentar comissão de forma escalonada e definitiva.
+7. Criar status e reconhecimento em cada Nível Star.
+
+========================================================
+3. REGRAS GERAIS DO SISTEMA
+========================================================
+3.1 Ciclo de Avaliação
+- O ciclo tem duração de 3 meses (trimestre).
+- Ao final de cada ciclo, o nível máximo atingido é verificado.
+
+3.2 Modelo Acumulativo
+Se o consultor atinge o RS Legend Star:
+ele recebe TODOS os prêmios de RS One Star até RS Legend Star.
+
+3.3 Cálculo do Fundo (4%)
+Cada trecho entre níveis gera:
+
+    fundo = trecho × 0.04
+
+Exemplo:
+meta anterior = 250.000
+meta atual = 500.000
+trecho = 250.000
+fundo = 10.000
+
+3.4 Regras de Comissionamento (Produtos RS)
+- Inicia em 25%
+- Finaliza em 38%
+- Aumenta conforme nível Star
+- Aumento é permanente
+
+3.5 Regras de Comissionamento (Afiliado Físico)
+- Inicia em 7%
+- Finaliza em 15%
+
+3.6 Regras de Comissionamento (Produtos Digitais RS)
+Devido ao custo quase zero, a comissão é agressiva:
+
+Nível | Comissão Digital
+RS One Star | 30%
+RS Two Star | 35%
+RS Three Star | 40%
+RS Pro Star | 45%
+RS Prime Star | 50%
+RS Elite Star | 55%
+RS Legend Star | 60%
+
+========================================================
+4. ESCADA DE NÍVEIS – RS STAR SYSTEM
+========================================================
+NÍVEL 1 — RS ONE STAR (1?)
+Meta: 10.000  
+Trecho: 10.000  
+Fundo: 400  
+
+Prêmio:
+- Placa RS One Star  
+
+Comissões após nível:
+- RS: 27%
+- Afiliado: 8%
+- Digital: 30%
+
+----------------------------------------------
+
+NÍVEL 2 — RS TWO STAR (2?)
+Meta: 100.000  
+Trecho: 90.000  
+Fundo: 3.600  
+
+Prêmio:
+- Headset Gamer Premium
+- Placa RS Two Star
+
+Comissões após nível:
+- RS: 30%
+- Afiliado: 10%
+- Digital: 35%
+
+----------------------------------------------
+
+NÍVEL 3 — RS THREE STAR (3?)
+Meta: 250.000  
+Trecho: 150.000  
+Fundo: 6.000  
+
+Prêmio — Kit Creator Light:
+- Teclado mecânico premium
+- Mouse gamer premium
+- Microfone condensador
+- Ring Light 30cm
+- Braço articulado
+- Placa RS Three Star
+
+Comissões após nível:
+- RS: 33%
+- Afiliado: 12%
+- Digital: 40%
+
+----------------------------------------------
+
+NÍVEL 4 — RS PRO STAR (4?)
+Meta: 500.000  
+Trecho: 250.000  
+Fundo: 10.000  
+
+Prêmio — PC i9 PRO BUILDER:
+- Intel i9
+- 16GB RAM
+- SSD 512GB
+- Fonte 600W real
+- Gabinete RGB
+- Placa RS Pro Star
+
+Comissões após nível:
+- RS: 35%
+- Afiliado: 12%
+- Digital: 45%
+
+----------------------------------------------
+
+NÍVEL 5 — RS PRIME STAR (5?)
+Meta: 1.000.000  
+Trecho: 500.000  
+Fundo: 20.000  
+
+Prêmio — Cruzeiro RS Premium Pack:
+- Cruzeiro internacional (2 pessoas)
+- Kit RS Prime:
+  - Mochila RS
+  - Camiseta RS
+  - Boné premium
+  - Copo térmico
+- Placa RS Prime Star
+
+Comissões após nível:
+- RS: 35–36%
+- Afiliado: 15%
+- Digital: 50%
+
+----------------------------------------------
+
+NÍVEL 6 — RS ELITE STAR (6?)
+Meta: 2.000.000  
+Trecho: 1.000.000  
+Fundo: 40.000  
+
+Prêmio — Elite Travel Pack:
+- Viagem internacional (2 pessoas)
+- Agasalho RS completo
+- Camiseta RS Elite
+- Placa RS Elite Star
+
+Comissões após nível:
+- RS: 37%
+- Afiliado: 15%
+- Digital: 55%
+
+----------------------------------------------
+
+NÍVEL 7 — RS LEGEND STAR (7?)
+Meta: 5.000.000  
+Trecho: 3.000.000  
+Fundo: 120.000  
+
+Prêmio — THE LEGEND PACK:
+- Carro 0 km (80–100 mil)
+- Placa RS Legend Star (preta e dourado)
+
+Comissões após nível:
+- RS: 38%
+- Afiliado: 15%
+- Digital: 60%
+
+========================================================
+5. BANCO DE DADOS – MODELO FINAL
+========================================================
+
+Tabela: rs_drop_niveis
+- id_nivel
+- nome_exibicao
+- estrelas
+- meta_faturamento
+- trecho
+- pct_comissao_rs
+- pct_comissao_afiliado
+- pct_comissao_digital
+- descricao_premio
+- valor_estimado_premio
+- ativo
+
+Tabela: rs_produtos
+- id_produto
+- tipo (fisico_rs, afiliado, digital)
+- preco
+- custo
+- comissao_base
+- comissao_por_nivel (json)
+
+Tabela: rs_premiacoes
+- id_premiacao
+- id_consultor
+- id_nivel
+- entregue (boolean)
+- data_entrega
+- codigo_rastreio
+
+Tabela: rs_faturamento
+- id
+- id_consultor
+- tipo_produto
+- valor
+- data
+
+Tabela: rs_faturamento_digital
+- id
+- id_consultor
+- id_produto
+- valor
+- data
+
+========================================================
+6. LÓGICA DE PREMIAÇÃO (ACUMULATIVA)
+========================================================
+
+Processo:
+1. Somar faturamento trimestral
+2. Determinar maior nível atingido (N)
+3. Listar níveis 1…N
+4. Entregar TODOS os prêmios pendentes
+5. Atualizar % RS, Afiliado e Digital
+6. Registrar premiações
+7. Gerar placas correspondentes
+8. Notificar consultor
+9. Registrar auditoria
+
+Fundo total acumulado na jornada:
+5.000.000 × 0.04 = 200.000  
+Prêmios totais aproximados: ~140.000  
+Modelo 100% sustentável.
+
+========================================================
+7. FLUXO OPERACIONAL COMPLETO
+========================================================
+1. Consultor vende produtos físicos e digitais.
+2. Sistema separa preços, margens e comissões automaticamente.
+3. Ao final do ciclo, o sistema calcula o nível máximo.
+4. Atualiza comissões e libera prêmios.
+5. Emite placas e notifica logística.
+6. Exibe no painel:
+   - progresso
+   - histórico
+   - premiações
+   - nível atual
+   - % atual (RS, afiliado, digital)
+7. Registra logs e mantém compliance interno.
+
+========================================================
+8. PRODUTOS DIGITAIS — INTEGRAÇÃO OFICIAL
+========================================================
+Produtos digitais RS (ex: RotaFácil, apps, cursos, SaaS, IA) possuem:
+- custo marginal zero
+- entrega automática
+- margem de 80% a 95%
+
+Portanto:
+
+Comissão Digital por Nível:
+RS One Star: 30%
+RS Two Star: 35%
+RS Three Star: 40%
+RS Pro Star: 45%
+RS Prime Star: 50%
+RS Elite Star: 55%
+RS Legend Star: 60%
+
+========================================================
+FIM DO PRD OFICIAL – VERSÃO COMPLETA
+========================================================

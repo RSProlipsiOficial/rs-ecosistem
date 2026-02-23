@@ -31,7 +31,7 @@ export const API_URLS = {
 
   // 👥 Consultores
   CONSULTANTS: {
-    GET_ALL: '/admin/consultants',
+    GET_ALL: '/v1/admin/consultants',
     GET_BY_ID: '/admin/consultor/:id',
     CREATE: '/v1/consultants',
     LOOKUP: '/v1/consultants/lookup',
@@ -52,7 +52,7 @@ export const API_URLS = {
 
   // 📊 Dashboard & Relatórios
   DASHBOARD: {
-    OVERVIEW: '/v1/dashboard/overview',
+    OVERVIEW: '/v1/admin/overview',
     PERFORMANCE: '/v1/dashboard/performance',
     FINANCIAL: '/v1/dashboard/financial',
   },

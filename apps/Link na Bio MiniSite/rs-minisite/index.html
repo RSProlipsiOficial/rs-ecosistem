@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0a0a0a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+  <title>RS MiniSite | Link na Bio Profissional</title>
+  <meta name="description"
+    content="Crie seu site profissional para bio em minutos com o RS MiniSite. Links, vídeos, galeria e produtos em um único lugar." />
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://bio.rsprolipsi.com.br/" />
+  <meta property="og:title" content="RS MiniSite | Link na Bio Profissional" />
+  <meta property="og:description"
+    content="Crie seu site profissional para bio em minutos com o RS MiniSite. Links, vídeos, galeria e produtos em um único lugar." />
+  <meta property="og:image" content="/og-image.jpg" />
+
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image" />
+  <meta property="twitter:url" content="https://bio.rsprolipsi.com.br/" />
+  <meta property="twitter:title" content="RS MiniSite | Link na Bio Profissional" />
+  <meta property="twitter:description"
+    content="Crie seu site profissional para bio em minutos com o RS MiniSite. Links, vídeos, galeria e produtos em um único lugar." />
+  <meta property="twitter:image" content="/og-image.jpg" />
+
+  <link rel="manifest" href="/manifest.json">
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Playfair+Display:wght@700&display=swap"
+    rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            rs: {
+              black: '#0a0a0a',
+              dark: '#121212',
+              gold: '#D4AF37',
+              goldLight: '#F3E5AB',
+              goldDark: '#AA8C2C',
+              gray: '#2A2A2A'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            serif: ['Playfair Display', 'serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Custom Scrollbar for that SaaS feel */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #121212;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #2A2A2A;
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #D4AF37;
+    }
+  </style>
+  <script type="importmap">
+{
+  "imports": {
+    "lucide-react": "https://esm.sh/lucide-react@^0.562.0",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "react": "https://esm.sh/react@^19.2.3",
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2.39.7"
+  }
+}
+</script>
+  <link rel="stylesheet" href="./index.css">
+</head>
+
+<body class="bg-rs-black text-white antialiased">
+  <div id="root"></div>
+  <script type="module" src="./index.tsx"></script>
+</body>
+
+</html>

@@ -1,0 +1,81 @@
+{
+  "success": true,
+  "tree": {
+    "id": "89c000c0-7a39-4e1e-8dee-5978d846fa89",
+    "name": "RS Prólipsi ",
+    "pin": "Bronze",
+    "status": "ativo",
+    "avatar": "https://ui-avatars.com/api/?name=RS%20Pr%C3%B3lipsi%20&background=random",
+    "registrationDate": "2026-01-13T03:46:13.391999",
+    "level": 0,
+    "directCount": 6,
+    "children": [
+      {
+        "id": "179d44cd-3351-4cdb-ad1e-78ac274108c2",
+        "name": "Emanuel Mendes Claro",
+        "pin": "Consultor",
+        "status": "ativo",
+        "avatar": "https://ui-avatars.com/api/?name=Emanuel%20Mendes%20Claro&background=random",
+        "registrationDate": "2024-01-01T10:00:00",
+        "level": 1,
+        "directCount": 0,
+        "children": []
+      },
+      {
+        "id": "b4d54416-119e-41f7-92c2-cde26e5e6e9f",
+        "name": "sidnalva maria bueno camargo",
+        "pin": "Consultor",
+        "status": "ativo",
+        "avatar": "https://ui-avatars.com/api/?name=sidnalva%20maria%20bueno%20camargo&background=random",
+        "registrationDate": "2024-01-01T11:00:00",
+        "level": 1,
+        "directCount": 0,
+        "children": []
+      },
+      {
+        "id": "fcab07f8-5144-4983-9fab-1576c015675f",
+        "name": "Oseias Silva",
+        "pin": "Consultor",
+        "status": "ativo",
+        "avatar": "https://ui-avatars.com/api/?name=Oseias%20Silva&background=random",
+        "registrationDate": "2024-01-01T12:00:00",
+        "level": 1,
+        "directCount": 0,
+        "children": []
+      },
+      {
+        "id": "7720eac9-2d47-4730-86bc-8ce3fd38e886",
+        "name": "Marisane Antunes de lima",
+        "pin": "Consultor",
+        "status": "ativo",
+        "avatar": "https://ui-avatars.com/api/?name=Marisane%20Antunes%20de%20lima&background=random",
+        "registrationDate": "2024-01-01T13:00:00",
+        "level": 1,
+        "directCount": 0,
+        "children": []
+      },
+      {
+        "id": "5203e372-c146-4232-99db-c37f08c4252e",
+        "name": "Rosely Monteiro",
+        "pin": "Consultor",
+        "status": "ativo",
+        "avatar": "https://ui-avatars.com/api/?name=Rosely%20Monteiro&background=random",
+        "registrationDate": "2024-01-01T14:00:00",
+        "level": 1,
+        "directCount": 0,
+        "children": []
+      },
+      {
+        "id": "fa05e517-f2e0-4458-aeed-97e574dc8d5d",
+        "name": "Júlio Galvão",
+        "pin": "Consultor",
+        "status": "ativo",
+        "avatar": "https://ui-avatars.com/api/?name=J%C3%BAlio%20Galv%C3%A3o&background=random",
+        "registrationDate": "2024-01-01T15:00:00",
+        "level": 1,
+        "directCount": 0,
+        "children": []
+      }
+    ]
+  }
+}

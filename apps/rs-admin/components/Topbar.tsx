@@ -99,6 +99,66 @@ const Topbar: React.FC<TopbarProps> = ({ toggleSidebar, setActiveView }) => {
         setIsNotificationsOpen(false);
     };
 
+    // User Profile State
+    const [userProfile, setUserProfile] = useState<any>(null);
+
+    useEffect(() => {
+        const fetchUserProfile = async () => {
+            try {
+                // 1. Get Session
+                const { data: { session } } = await import('../src/services/supabase').then(m => m.supabase.auth.getSession());
+
+                if (session?.user) {
+                    const userId = session.user.id;
+                    const { supabase } = await import('../src/services/supabase');
+
+                    // 2. Try fetching from user_profiles
+                    const { data: profile } = await supabase
+                        .from('user_profiles')
+                        .select('*')
+                        .eq('user_id', userId)
+                        .maybeSingle();
+
+                    const OFFICIAL_LOGO_RS = 'https://raw.githubusercontent.com/RS-Prolipsi/assets/main/logo_rs_gold.png';
+                    const BANNED_PATTERNS = ['0aa67016', 'user-attachments/assets', 'google', 'ai-studio'];
+
+                    // 3. Fallback/Logic similar to App.tsx logic
+                    let avatarUrl = profile?.avatar_url || OFFICIAL_LOGO_RS;
+                    const isBanned = BANNED_PATTERNS.some(p => avatarUrl?.includes(p));
+                    const isMaster = session.user.email?.includes('rsprolipsi') || profile?.slug === 'rsprolipsi';
+
+                    if (isBanned || isMaster || !profile?.avatar_url) {
+                        avatarUrl = OFFICIAL_LOGO_RS;
+                    }
+
+                    if (profile) {
+                        const loginId = profile.slug || profile.id_consultor || profile.consultant_id;
+                        setUserProfile({
+                            name: isMaster ? 'SEDE RS PRÓLIPSI' : (profile.nome_completo || profile.name || 'Administrador'),
+                            avatarUrl: avatarUrl,
+                            loginId: loginId && loginId.length < 20 ? loginId : null,
+                            shortId: userId.split('-')[0].toUpperCase(),
+                            role: 'Administrador' // Or fetch role
+                        });
+                    } else {
+                        // If no profile, use session data with official logo fallback
+                        setUserProfile({
+                            name: session.user.email || 'Administrador',
+                            avatarUrl: OFFICIAL_LOGO_RS,
+                            loginId: null,
+                            shortId: userId.split('-')[0].toUpperCase(),
+                            role: 'Administrador'
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error("Error fetching admin profile:", error);
+            }
+        };
+
+        fetchUserProfile();
+    }, []);
+
     return (
         <header className="flex items-center justify-between h-20 px-6 bg-[#1E1E1E] border-b border-[#2A2A2A] gap-4">
             {/* Left Side */}
@@ -133,7 +193,7 @@ const Topbar: React.FC<TopbarProps> = ({ toggleSidebar, setActiveView }) => {
                 {/* Search Results Dropdown */}
                 {isResultsOpen && (filteredConsultants.length > 0 || filteredProducts.length > 0 || filteredActivities.length > 0) && (
                     <div className="absolute top-full mt-2 w-full bg-[#2A2A2A] border border-[#3A3A3A] rounded-lg shadow-2xl z-50 overflow-hidden max-h-96 overflow-y-auto">
-                        {/* Search results rendering logic remains, but will show nothing with empty mock data */}
+                        {/* Search results rendering logic remains */}
                     </div>
                 )}
             </div>
@@ -182,11 +242,24 @@ const Topbar: React.FC<TopbarProps> = ({ toggleSidebar, setActiveView }) => {
                 {/* User Profile */}
                 <div className="flex items-center cursor-pointer" onClick={() => setActiveView('Configurações')}>
                     <div className="text-right mr-4 hidden sm:block">
-                        <p className="font-semibold text-[#E5E7EB]">Admin</p>
-                        <p className="text-xs text-[#FFD700]">Administrador</p>
+                        <p className="font-semibold text-[#E5E7EB]">{userProfile?.name || 'Admin'}</p>
+                        <div className="flex items-center justify-end gap-1.5 mt-0.5">
+                            {userProfile?.loginId && (userProfile.loginId !== 'RS-PRO-001') && (
+                                <span className="text-[9px] font-black text-yellow-500 uppercase tracking-widest bg-yellow-500/10 px-1.5 py-0.5 rounded border border-yellow-500/20">
+                                    {userProfile.loginId}
+                                </span>
+                            )}
+                            <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest bg-gray-800 px-1.5 py-0.5 rounded border border-gray-700">
+                                #{userProfile?.shortId || '---'}
+                            </span>
+                        </div>
                     </div>
-                    <div className="w-12 h-12 rounded-full bg-gray-700 flex items-center justify-center border-2 border-[#FFD700]">
-                        <UsersIcon className="w-6 h-6 text-yellow-500" />
+                    <div className="w-12 h-12 rounded-full bg-gray-700 flex items-center justify-center border-2 border-[#FFD700] overflow-hidden">
+                        {userProfile?.avatarUrl ? (
+                            <img src={userProfile.avatarUrl} alt={userProfile.name} className="w-full h-full object-cover" />
+                        ) : (
+                            <UsersIcon className="w-6 h-6 text-yellow-500" />
+                        )}
                     </div>
                 </div>
             </div>

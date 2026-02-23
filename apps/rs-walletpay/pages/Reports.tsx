@@ -23,7 +23,7 @@ const TabButton: React.FC<{ label: string; active: boolean; onClick: () => void;
         onClick={onClick}
         className={`whitespace-nowrap py-4 px-4 border-b-2 font-medium text-sm transition-colors
             ${active ? 'border-gold text-gold' : 'border-transparent text-text-soft hover:text-text-body hover:border-border'
-        }`}
+            }`}
     >
         {label}
     </button>
@@ -40,7 +40,7 @@ const EarningsSummaryTab: React.FC<{ earningsData: LedgerEntry[] }> = ({ earning
             if (!searchTerm.trim()) return true;
             const lowercasedFilter = searchTerm.toLowerCase();
             return entry.description.toLowerCase().includes(lowercasedFilter) ||
-                   entry.refId.toLowerCase().includes(lowercasedFilter);
+                entry.refId.toLowerCase().includes(lowercasedFilter);
         });
 
         const earnings = filteredBySearch.filter(e => e.amount > 0 && (
@@ -54,13 +54,13 @@ const EarningsSummaryTab: React.FC<{ earningsData: LedgerEntry[] }> = ({ earning
         const totalEarnings = earnings.reduce((sum, e) => sum + e.amount, 0);
         const totalBonuses = bonuses.reduce((sum, e) => sum + e.amount, 0);
         const totalCommissions = commissions.reduce((sum, e) => sum + e.amount, 0);
-        
+
         const breakdown = earnings.reduce((acc, entry) => {
             const type = typeLabels[entry.type] || entry.type;
             if (!acc[type]) {
                 acc[type] = { count: 0, total: 0, latestDate: entry.occurredAt };
             } else {
-                 if (new Date(entry.occurredAt) > new Date(acc[type].latestDate)) {
+                if (new Date(entry.occurredAt) > new Date(acc[type].latestDate)) {
                     acc[type].latestDate = entry.occurredAt;
                 }
             }
@@ -68,12 +68,12 @@ const EarningsSummaryTab: React.FC<{ earningsData: LedgerEntry[] }> = ({ earning
             acc[type].total += entry.amount;
             return acc;
         }, {} as Record<string, { count: number; total: number; latestDate: string; }>);
-        
+
         return {
             totalEarnings: formatCurrency(totalEarnings / 100),
             totalBonuses: formatCurrency(totalBonuses / 100),
             totalCommissions: formatCurrency(totalCommissions / 100),
-            breakdown: Object.keys(breakdown).map((type) => ({ type, ...breakdown[type] })).sort((a,b) => b.total - a.total)
+            breakdown: Object.keys(breakdown).map((type) => ({ type, ...breakdown[type] })).sort((a, b) => b.total - a.total)
         };
     }, [earningsData, searchTerm]);
 
@@ -144,7 +144,7 @@ const EarningsSummaryTab: React.FC<{ earningsData: LedgerEntry[] }> = ({ earning
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border">
-                             {summary.breakdown.length > 0 ? summary.breakdown.map((item) => (
+                            {summary.breakdown.length > 0 ? summary.breakdown.map((item) => (
                                 <tr key={item.type} className="hover:bg-surface/50">
                                     <td className="px-6 py-4 font-medium text-text-title">{item.type}</td>
                                     <td className="px-6 py-4 text-text-body">{new Date(item.latestDate).toLocaleDateString('pt-BR')}</td>
@@ -168,11 +168,11 @@ const EarningsSummaryTab: React.FC<{ earningsData: LedgerEntry[] }> = ({ earning
 const CareerProgressTab: React.FC = () => {
     const { achievedPins, nextPin } = useMemo(() => {
         const currentUserPinIndex = MARKETING_PLAN_DATA.careerPlan.findIndex(p => p.pin === MOCK_USER_PROFILE.currentPin);
-        
+
         if (currentUserPinIndex === -1) {
             return { achievedPins: [], nextPin: MARKETING_PLAN_DATA.careerPlan[0] };
         }
-        
+
         const achieved = MARKETING_PLAN_DATA.careerPlan.slice(0, currentUserPinIndex + 1);
         const next = MARKETING_PLAN_DATA.careerPlan[currentUserPinIndex + 1] || null;
 
@@ -216,7 +216,7 @@ const CareerProgressTab: React.FC = () => {
                     </table>
                 </div>
             </div>
-            
+
             {nextPin && (
                 <div className="bg-card rounded-2xl border border-border p-6">
                     <h3 className="text-lg font-bold text-text-title">Próximo Nível: <span className="text-gold">{nextPin.pin}</span></h3>
@@ -280,16 +280,15 @@ const Reports: React.FC = () => {
 
     const tabs = [
         { id: 'summary', label: 'Resumo de Ganhos', component: <EarningsSummaryTab earningsData={filteredEntries} /> },
-        { id: 'progress', label: 'Progresso de Carreira', component: <CareerProgressTab /> },
     ];
 
     return (
         <div className="space-y-6">
-             <div>
+            <div>
                 <h1 className="text-3xl font-bold text-text-title">Relatórios de Desempenho</h1>
                 <p className="text-text-body mt-1">Acompanhe seus ganhos e seu progresso de carreira.</p>
             </div>
-             <div className="bg-card p-4 rounded-2xl border border-border flex flex-col sm:flex-row items-center gap-4">
+            <div className="bg-card p-4 rounded-2xl border border-border flex flex-col sm:flex-row items-center gap-4">
                 <div className="flex-1 w-full sm:w-auto">
                     <label htmlFor="start-date" className="text-xs text-text-soft mb-1 block">Data de Início</label>
                     <input

@@ -1,6 +1,5 @@
 packages:
   - "apps/*"
-  - "apps/rs-consultor/dist"
   - "apps/rs-marketplace/Marketplace/*"
   - "packages/*"
   - "supabase/*"

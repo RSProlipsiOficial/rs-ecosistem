@@ -1,0 +1,27 @@
+{
+  "mastersCount": 3,
+  "masterIds": [
+    "89c000c0-7a39-4e1e-8dee-5978d846fa89",
+    "56334782-424e-4554-9b44-69b0eb454203",
+    "d107da4e-e266-41b0-947a-0c66b2f2b9ef"
+  ],
+  "targetFound": true,
+  "initialCurrentLevelIds": [
+    "89c000c0-7a39-4e1e-8dee-5978d846fa89",
+    "56334782-424e-4554-9b44-69b0eb454203",
+    "d107da4e-e266-41b0-947a-0c66b2f2b9ef"
+  ],
+  "levelChildrenCount": 6,
+  "childrenMapKeys": [
+    "89c000c0-7a39-4e1e-8dee-5978d846fa89"
+  ],
+  "uniqueChildrenCount": 6,
+  "uniqueChildrenNames": [
+    "Emanuel Mendes Claro",
+    "sidnalva maria bueno camargo",
+    "Rosely Monteiro",
+    "Marisane Antunes de lima",
+    "Júlio Galvão",
+    "Oseias Silva"
+  ]
+}

@@ -29,18 +29,18 @@ exports.createCheckout = async (req, res) => {
       buyerCpf,
       buyerType = 'cliente',
       referredBy, // Patrocinador/indicador
-      
+
       // Itens do pedido
       items, // [{ product_id, quantity }]
-      
+
       // Entrega
       shippingAddress,
       shippingMethod,
       shippingCost = 0,
-      
+
       // Pagamento
       paymentMethod = 'pix', // 'pix', 'boleto', 'checkout-pro'
-      
+
       // Notas
       customerNotes
     } = req.body;
@@ -81,9 +81,13 @@ exports.createCheckout = async (req, res) => {
       paymentData = await gerarBoleto(order, { buyerEmail, buyerName, buyerCpf });
     } else if (paymentMethod === 'checkout-pro') {
       paymentData = await gerarCheckoutPro(order, { buyerEmail, buyerName, buyerCpf }, items);
+    } else if (paymentMethod === 'wallet') {
+      // Pagamento com saldo: pedido criado, débito é feito separadamente via /api/wallet/debit
+      paymentData = { method: 'wallet', status: 'awaiting_debit' };
+      console.log('💰 Pedido criado para pagamento com saldo. Débito será feito via wallet/debit.');
     }
 
-    console.log('✅ Pagamento gerado:', paymentData?.paymentId || paymentData?.init_point);
+    console.log('✅ Pagamento gerado (Objeto Final):', JSON.stringify(paymentData, null, 2));
 
     // 4. Retornar pedido + dados de pagamento
     res.json({
@@ -203,7 +207,7 @@ async function gerarBoleto(order, buyer) {
  */
 async function gerarCheckoutPro(order, buyer, items) {
   const preference = new Preference(mp);
-  
+
   // Formatar itens para MP
   const mpItems = items.map(item => ({
     id: item.product_id,
@@ -219,7 +223,7 @@ async function gerarCheckoutPro(order, buyer, items) {
       payer: {
         name: buyer.buyerName,
         email: buyer.buyerEmail,
-        identification: buyer.buyerCpf ? {
+        identification: (buyer.buyerCpf && buyer.buyerCpf.replace(/[^0-9]/g, '').length === 11) ? {
           type: 'CPF',
           number: buyer.buyerCpf.replace(/[^0-9]/g, '')
         } : undefined

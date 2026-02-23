@@ -42,7 +42,7 @@ export function initSupabase() {
  */
 export async function getConsultorById(consultorId: string) {
   const { data, error } = await supabase
-    .from('users')
+    .from('consultores')
     .select('*')
     .eq('id', consultorId)
     .single();
@@ -60,10 +60,10 @@ export async function getConsultorById(consultorId: string) {
  */
 export async function getDownlines(consultorId: string) {
   const { data, error } = await supabase
-    .from('users')
+    .from('consultores')
     .select('*')
-    .eq('sponsor_id', consultorId)
-    .eq('active', true);
+    .eq('patrocinador_id', consultorId)
+    .eq('status', 'ativo');
 
   if (error) {
     logEvent("supabase.error", { operation: "getDownlines", error: error.message });
@@ -78,8 +78,13 @@ export async function getDownlines(consultorId: string) {
  */
 export async function saveCycleHistory(cycleData: any) {
   const { data, error } = await supabase
-    .from('cycles_history')
-    .insert([cycleData])
+    .from('cycles')
+    .insert([{
+      consultor_id: cycleData.consultorId,
+      cycle_index: cycleData.cycle_index || 1,
+      status: 'completed',
+      slots_filled: 6
+    }])
     .select()
     .single();
 
@@ -132,7 +137,7 @@ export async function updateWallet(consultorId: string, amount: number, type: st
   // Atualiza com novo saldo
   const { data, error } = await supabase
     .from('wallets')
-    .update({ 
+    .update({
       balance: newBalance,
       updated_at: new Date().toISOString()
     })
@@ -158,15 +163,15 @@ export async function getUpline(consultorId: string, levels: number = 6) {
 
   for (let i = 0; i < levels; i++) {
     const { data } = await supabase
-      .from('users')
-      .select('id, name, sponsor_id')
+      .from('consultores')
+      .select('id, nome, patrocinador_id')
       .eq('id', currentId)
       .single();
 
-    if (!data || !data.sponsor_id) break;
+    if (!data || !data.patrocinador_id) break;
 
     upline.push(data);
-    currentId = data.sponsor_id;
+    currentId = data.patrocinador_id;
   }
 
   return upline;

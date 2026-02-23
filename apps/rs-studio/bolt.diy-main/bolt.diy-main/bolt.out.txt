@@ -1,0 +1,8 @@
+
+> bolt@1.0.0 dev:silent
+> cross-env NO_COLOR=1 FORCE_COLOR=0 NODE_OPTIONS=--max-old-space-size=4096 node pre-start.cjs && vite --clearScreen false --logLevel error --port 33006 --host 0.0.0.0
+
+BOLT DIY
+Version: v1.0.0
+Commit: 7bb479e
+Starting dev server...

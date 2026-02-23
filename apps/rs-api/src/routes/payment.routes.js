@@ -9,12 +9,8 @@ const crypto = require('crypto');
 const { mp } = require('../lib/mp');
 const { Preference, Payment } = require('mercadopago');
 
-router.use((req, res, next) => {
-  if (!process.env.MP_ACCESS_TOKEN) {
-    return res.status(400).json({ error: 'mp.token_missing' });
-  }
-  next();
-});
+// Middleware removido para permitir que o SDK gerencie a validação do token
+// e evitar erros de sincronização de env vars em tempo de execução
 
 /**
  * POST /api/payment/checkout-pro

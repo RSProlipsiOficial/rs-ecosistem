@@ -1,0 +1,3050 @@
+[
+  {
+    "id": "d107da4e-e266-41b0-947a-0c66b2f2b9ef",
+    "nome": "RS Prólipsi ",
+    "cpf": "23430313000185",
+    "indicador_excel": "Raiz top da rede",
+    "expected_sponsor_id": null,
+    "status": "Mapeado"
+  },
+  {
+    "id": "179d44cd-3351-4cdb-ad1e-78ac274108c2",
+    "nome": "Emanuel Mendes Claro",
+    "cpf": "023.350.629-21",
+    "indicador_excel": "RS Prólipsi Empresa",
+    "expected_sponsor_id": "89c000c0-7a39-4e1e-8dee-5978d846fa89",
+    "status": "Mapeado"
+  },
+  {
+    "id": "69806370-f06e-4c5f-b728-f96410a6f462",
+    "nome": "maxwel santos",
+    "cpf": "146.571.157-07",
+    "indicador_excel": "Emanuel Mendes Claro",
+    "expected_sponsor_id": "179d44cd-3351-4cdb-ad1e-78ac274108c2",
+    "status": "Mapeado"
+  },
+  {
+    "id": "38b9f62c-c1d7-4978-bad6-dbe70e097306",
+    "nome": "Joana Alcina Rodrigues Castro Mendes Claro",
+    "cpf": "142.302.848-10",
+    "indicador_excel": "Emanuel Mendes Claro",
+    "expected_sponsor_id": "179d44cd-3351-4cdb-ad1e-78ac274108c2",
+    "status": "Mapeado"
+  },
+  {
+    "id": "034051dc-8742-4df4-85ff-36a01844c612",
+    "nome": "joão josé oliveira miranda",
+    "cpf": "320.942.649-04",
+    "indicador_excel": "maxwel santos",
+    "expected_sponsor_id": "69806370-f06e-4c5f-b728-f96410a6f462",
+    "status": "Mapeado"
+  },
+  {
+    "id": "4706b805-ca7e-46bf-a7a7-2ad5bc8c0438",
+    "nome": "Michael De Araújo Medeiros",
+    "cpf": "126.503.987-95",
+    "indicador_excel": "maxwel santos",
+    "expected_sponsor_id": "69806370-f06e-4c5f-b728-f96410a6f462",
+    "status": "Mapeado"
+  },
+  {
+    "id": "e1f992df-3fff-42ad-8a40-1349a86ff0e6",
+    "nome": "José Luiz de Souza",
+    "cpf": "503.563.139-72",
+    "indicador_excel": "joão josé oliveira miranda",
+    "expected_sponsor_id": "034051dc-8742-4df4-85ff-36a01844c612",
+    "status": "Mapeado"
+  },
+  {
+    "id": "b9822794-e382-42f1-ae07-bd02f04532ed",
+    "nome": "celso lopes da rosa",
+    "cpf": "425.109.889-72",
+    "indicador_excel": "joão josé oliveira miranda",
+    "expected_sponsor_id": "034051dc-8742-4df4-85ff-36a01844c612",
+    "status": "Mapeado"
+  },
+  {
+    "id": "2e65f464-2b85-4c97-a285-fc1ab31c8789",
+    "nome": "Alaor Garcia da Silva",
+    "cpf": "678.730.659-87",
+    "indicador_excel": "celso lopes da rosa",
+    "expected_sponsor_id": "b9822794-e382-42f1-ae07-bd02f04532ed",
+    "status": "Mapeado"
+  },
+  {
+    "id": "e3d01f3d-4c41-4b0f-824b-1bacc491f7b2",
+    "nome": "fabíola francisco luiz",
+    "cpf": "836.889.519-72",
+    "indicador_excel": "José Luiz de Souza",
+    "expected_sponsor_id": "e1f992df-3fff-42ad-8a40-1349a86ff0e6",
+    "status": "Mapeado"
+  },
+  {
+    "id": "be120d1a-24df-40b6-9621-5d88f1f8b34b",
+    "nome": "laudenice da silva",
+    "cpf": "928.027.109-15",
+    "indicador_excel": "fabíola francisco luiz",
+    "expected_sponsor_id": "e3d01f3d-4c41-4b0f-824b-1bacc491f7b2",
+    "status": "Mapeado"
+  },
+  {
+    "id": "a68386df-6838-478a-b398-b42c3e7c32c4",
+    "nome": "mauricio pereira de carvalho",
+    "cpf": "650.231.299-34",
+    "indicador_excel": "celso lopes da rosa",
+    "expected_sponsor_id": "b9822794-e382-42f1-ae07-bd02f04532ed",
+    "status": "Mapeado"
+  },
+  {
+    "id": "e9bf9262-7f54-4498-802e-697dd17cf6ce",
+    "nome": "Fabiano Moreira",
+    "cpf": "309.687.408-55",
+    "indicador_excel": "Alaor Garcia da Silva",
+    "expected_sponsor_id": "2e65f464-2b85-4c97-a285-fc1ab31c8789",
+    "status": "Mapeado"
+  },
+  {
+    "id": "fcab07f8-5144-4983-9fab-1576c015675f",
+    "nome": "Oseias Silva",
+    "cpf": "066.846.229-93",
+    "indicador_excel": "RS Prólipsi Empresa",
+    "expected_sponsor_id": "89c000c0-7a39-4e1e-8dee-5978d846fa89",
+    "status": "Mapeado"
+  },
+  {
+    "id": "0e43ad8e-3c82-4f29-b3a0-55d0f7fe6e84",
+    "nome": "jose costa dos santos",
+    "cpf": "568.309.209-49",
+    "indicador_excel": "José Luiz de Souza",
+    "expected_sponsor_id": "e1f992df-3fff-42ad-8a40-1349a86ff0e6",
+    "status": "Mapeado"
+  },
+  {
+    "id": "9c8fc1f2-2412-49c3-89f7-dd1774e532d9",
+    "nome": "zilda pereia dos santos",
+    "cpf": "838.234.689-87",
+    "indicador_excel": "jose costa dos santos",
+    "expected_sponsor_id": "0e43ad8e-3c82-4f29-b3a0-55d0f7fe6e84",
+    "status": "Mapeado"
+  },
+  {
+    "id": "8454c825-a66a-4f37-a450-10de5bbaced2",
+    "nome": "leonina silva dias",
+    "cpf": "048.845.649-52",
+    "indicador_excel": "zilda pereia dos santos",
+    "expected_sponsor_id": "9c8fc1f2-2412-49c3-89f7-dd1774e532d9",
+    "status": "Mapeado"
+  },
+  {
+    "id": "51fb8779-0b66-43ae-81e4-bebad05dd516",
+    "nome": "joziana pereira dos santos",
+    "cpf": "089.020.029-77",
+    "indicador_excel": "zilda pereia dos santos",
+    "expected_sponsor_id": "9c8fc1f2-2412-49c3-89f7-dd1774e532d9",
+    "status": "Mapeado"
+  },
+  {
+    "id": "d3b599b3-fdff-48e6-b4a8-4f9098d761b3",
+    "nome": "silso pereira da silva",
+    "cpf": "401.880.279-04",
+    "indicador_excel": "jose costa dos santos",
+    "expected_sponsor_id": "0e43ad8e-3c82-4f29-b3a0-55d0f7fe6e84",
+    "status": "Mapeado"
+  },
+  {
+    "id": "8abec405-818a-4e14-8c71-72ec7a718f89",
+    "nome": "cleuci costa  do  santos",
+    "cpf": "705.727.399-15",
+    "indicador_excel": "joziana pereira dos santos",
+    "expected_sponsor_id": "51fb8779-0b66-43ae-81e4-bebad05dd516",
+    "status": "Mapeado"
+  },
+  {
+    "id": "5a77754b-3cf0-46ab-adc9-cf9db7e479c4",
+    "nome": "joci costa dos santos",
+    "cpf": "541.071.809-72",
+    "indicador_excel": "cleuci costa  do  santos",
+    "expected_sponsor_id": "8abec405-818a-4e14-8c71-72ec7a718f89",
+    "status": "Mapeado"
+  },
+  {
+    "id": "b4d167ec-edd1-406f-abe2-bb27f109a72c",
+    "nome": "davi gomes",
+    "cpf": "580.710.679-20",
+    "indicador_excel": "silso pereira da silva",
+    "expected_sponsor_id": "d3b599b3-fdff-48e6-b4a8-4f9098d761b3",
+    "status": "Mapeado"
+  },
+  {
+    "id": "3d2e7b0e-1231-4909-acfd-0aaebb3aabc9",
+    "nome": "ilson daniel de oliveira",
+    "cpf": "019.797.439-24",
+    "indicador_excel": "cleuci costa  do  santos",
+    "expected_sponsor_id": "8abec405-818a-4e14-8c71-72ec7a718f89",
+    "status": "Mapeado"
+  },
+  {
+    "id": "737bcf77-617d-4015-91ae-0737ecb8ce70",
+    "nome": "pedro lourival pires de oliveira",
+    "cpf": "510.608.419-91",
+    "indicador_excel": "davi gomes",
+    "expected_sponsor_id": "b4d167ec-edd1-406f-abe2-bb27f109a72c",
+    "status": "Mapeado"
+  },
+  {
+    "id": "a84696b6-1415-4ff9-8ea9-43f3b369f29c",
+    "nome": "paulo de quadros",
+    "cpf": "070.985.049-20",
+    "indicador_excel": "ilson daniel de oliveira",
+    "expected_sponsor_id": "3d2e7b0e-1231-4909-acfd-0aaebb3aabc9",
+    "status": "Mapeado"
+  },
+  {
+    "id": "ae8ebd5e-c37c-4bd9-a308-24e4099ad146",
+    "nome": "Olinda pereira dos santos",
+    "cpf": "940.241.209-30",
+    "indicador_excel": "zilda pereia dos santos",
+    "expected_sponsor_id": "9c8fc1f2-2412-49c3-89f7-dd1774e532d9",
+    "status": "Mapeado"
+  },
+  {
+    "id": "80ed1149-e4d3-44b9-a417-d94e7705f8c5",
+    "nome": "jhonny vasconcelos",
+    "cpf": "047.208.419-45",
+    "indicador_excel": "maxwel santos",
+    "expected_sponsor_id": "69806370-f06e-4c5f-b728-f96410a6f462",
+    "status": "Mapeado"
+  },
+  {
+    "id": "74dc3a86-b73a-4284-b61e-bfc1c65a535d",
+    "nome": "Matheus dorneles medeiros",
+    "cpf": "146.252.789-29",
+    "indicador_excel": "Oseias Silva",
+    "expected_sponsor_id": "fcab07f8-5144-4983-9fab-1576c015675f",
+    "status": "Mapeado"
+  },
+  {
+    "id": "1c20baee-b5cc-44fb-b177-a16811ca849e",
+    "nome": "Thais Alencar Moreira Medeiros",
+    "cpf": "169.617.427-93",
+    "indicador_excel": "Michael De Araújo Medeiros",
+    "expected_sponsor_id": "4706b805-ca7e-46bf-a7a7-2ad5bc8c0438",
+    "status": "Mapeado"
+  },
+  {
+    "id": "f97a78f6-faa1-4b87-8dcf-8dd80418d51f",
+    "nome": "Laiany Manuela Oliveira de Siqueira",
+    "cpf": "136.128.286-06",
+    "indicador_excel": "jhonny vasconcelos",
+    "expected_sponsor_id": "80ed1149-e4d3-44b9-a417-d94e7705f8c5",
+    "status": "Mapeado"
+  },
+  {
+    "id": "bd6801b6-ad2f-44f1-b6e9-5fa2166c6473",
+    "nome": "lucimara aparecida dorneles christen",
+    "cpf": "065.681.559-00",
+    "indicador_excel": "Matheus dorneles medeiros",
+    "expected_sponsor_id": "74dc3a86-b73a-4284-b61e-bfc1c65a535d",
+    "status": "Mapeado"
+  },
+  {
+    "id": "e01fd889-7e07-4b24-97af-c29f90794b25",
+    "nome": "Lucas dorneles medeiros",
+    "cpf": "131.788.679-88",
+    "indicador_excel": "Matheus dorneles medeiros",
+    "expected_sponsor_id": "74dc3a86-b73a-4284-b61e-bfc1c65a535d",
+    "status": "Mapeado"
+  },
+  {
+    "id": "ba932cde-29c2-4c55-b726-b34f77b4df34",
+    "nome": "odete aparecida dorneles",
+    "cpf": "054.727.959-07",
+    "indicador_excel": "Lucas dorneles medeiros",
+    "expected_sponsor_id": "e01fd889-7e07-4b24-97af-c29f90794b25",
+    "status": "Mapeado"
+  },
+  {
+    "id": "b4d54416-119e-41f7-92c2-cde26e5e6e9f",
+    "nome": "sidnalva maria bueno camargo",
+    "cpf": "545.091.229-34",
+    "indicador_excel": "RS Prólipsi Empresa",
+    "expected_sponsor_id": "89c000c0-7a39-4e1e-8dee-5978d846fa89",
+    "status": "Mapeado"
+  },
+  {
+    "id": "9142feae-abe5-44ab-a0ce-97dbeebab7bc",
+    "nome": "maria conceição de souza marques",
+    "cpf": "161.805.501-15",
+    "indicador_excel": "sidnalva maria bueno camargo",
+    "expected_sponsor_id": "b4d54416-119e-41f7-92c2-cde26e5e6e9f",
+    "status": "Mapeado"
+  },
+  {
+    "id": "3355cfbd-fbd8-4e72-a769-ef67298b959c",
+    "nome": "adilson fernandes borges",
+    "cpf": "742.067.619-49",
+    "indicador_excel": "joão josé oliveira miranda",
+    "expected_sponsor_id": "034051dc-8742-4df4-85ff-36a01844c612",
+    "status": "Mapeado"
+  },
+  {
+    "id": "5e967bdd-f8d9-4e99-8d2f-245a062ecfb2",
+    "nome": "Jailton Bispo",
+    "cpf": "005.678.915-77",
+    "indicador_excel": "Michael De Araújo Medeiros",
+    "expected_sponsor_id": "4706b805-ca7e-46bf-a7a7-2ad5bc8c0438",
+    "status": "Mapeado"
+  },
+  {
+    "id": "1bbbab8c-44e3-4a86-8372-662104a3b4fa",
+    "nome": "Maria Julia",
+    "cpf": "067.245.229-43",
+    "indicador_excel": "fabíola francisco luiz",
+    "expected_sponsor_id": "e3d01f3d-4c41-4b0f-824b-1bacc491f7b2",
+    "status": "Mapeado"
+  },
+  {
+    "id": "6ea93be0-912d-4712-bed9-26da832a0e9d",
+    "nome": "Luciano Cleiton Miguel",
+    "cpf": "175.289.748-03",
+    "indicador_excel": "Emanuel Mendes Claro",
+    "expected_sponsor_id": "179d44cd-3351-4cdb-ad1e-78ac274108c2",
+    "status": "Mapeado"
+  },
+  {
+    "id": "665fec92-125e-4f00-bedd-22572741779e",
+    "nome": "Ewerton camargo simer",
+    "cpf": "094.398.159-06",
+    "indicador_excel": "joão josé oliveira miranda",
+    "expected_sponsor_id": "034051dc-8742-4df4-85ff-36a01844c612",
+    "status": "Mapeado"
+  },
+  {
+    "id": "8ac4311c-3ea8-420f-83c7-3a0c21c87372",
+    "nome": "Maria Machado",
+    "cpf": "883.682.469-20",
+    "indicador_excel": "fabíola francisco luiz",
+    "expected_sponsor_id": "e3d01f3d-4c41-4b0f-824b-1bacc491f7b2",
+    "status": "Mapeado"
+  },
+  {
+    "id": "73eafba9-f2d1-4aaa-aa58-2c3ba0fa7905",
+    "nome": "Eunilde Penteado",
+    "cpf": "688.883.509-00",
+    "indicador_excel": "fabíola francisco luiz",
+    "expected_sponsor_id": "e3d01f3d-4c41-4b0f-824b-1bacc491f7b2",
+    "status": "Mapeado"
+  },
+  {
+    "id": "4d0fd436-23c2-4ebc-9ddc-60ad03e0323b",
+    "nome": "Regina Paula",
+    "cpf": "030.457.239-00",
+    "indicador_excel": "fabíola francisco luiz",
+    "expected_sponsor_id": "e3d01f3d-4c41-4b0f-824b-1bacc491f7b2",
+    "status": "Mapeado"
+  },
+  {
+    "id": "279ddc78-f1f9-4ecf-a8b6-915aca3a2976",
+    "nome": "Alex Lourenco",
+    "cpf": "109.891.119-97",
+    "indicador_excel": "maxwel santos",
+    "expected_sponsor_id": "69806370-f06e-4c5f-b728-f96410a6f462",
+    "status": "Mapeado"
+  },
+  {
+    "id": "9e973569-f641-45cf-8a2b-91a1e708b958",
+    "nome": "antonio martins da costa",
+    "cpf": "009.235.048-85",
+    "indicador_excel": "Emanuel Mendes Claro",
+    "expected_sponsor_id": "179d44cd-3351-4cdb-ad1e-78ac274108c2",
+    "status": "Mapeado"
+  },
+  {
+    "id": "b7f9f0b0-7207-4f73-9f8a-28f75ef6d25d",
+    "nome": "charles batista dos santos",
+    "cpf": "051.156.199-70",
+    "indicador_excel": "Ewerton camargo simer",
+    "expected_sponsor_id": "665fec92-125e-4f00-bedd-22572741779e",
+    "status": "Mapeado"
+  },
+  {
+    "id": "c3944242-be21-4d3b-af05-a97ba7a4f694",
+    "nome": "sônia de lima barbosa",
+    "cpf": "098.272.569-80",
+    "indicador_excel": "charles batista dos santos",
+    "expected_sponsor_id": "b7f9f0b0-7207-4f73-9f8a-28f75ef6d25d",
+    "status": "Mapeado"
+  },
+  {
+    "id": "472316c6-4064-45fe-a102-2ff885dcaf25",
+    "nome": "Jorge pereira dos santos",
+    "cpf": "392.312.759-68",
+    "indicador_excel": "José Luiz de Souza",
+    "expected_sponsor_id": "e1f992df-3fff-42ad-8a40-1349a86ff0e6",
+    "status": "Mapeado"
+  },
+  {
+    "id": "3c6672ef-8256-48c9-bb6c-4b07aa239816",
+    "nome": "Jose Maria Figueiredo dos Santos",
+    "cpf": "034.362.728-09",
+    "indicador_excel": "Jorge pereira dos santos",
+    "expected_sponsor_id": "472316c6-4064-45fe-a102-2ff885dcaf25",
+    "status": "Mapeado"
+  },
+  {
+    "id": "51d552aa-414c-4370-b6e5-8d32a924e325",
+    "nome": "edson padilha miranda",
+    "cpf": "081.025.509-02",
+    "indicador_excel": "joão josé oliveira miranda",
+    "expected_sponsor_id": "034051dc-8742-4df4-85ff-36a01844c612",
+    "status": "Mapeado"
+  },
+  {
+    "id": "0864b704-3635-469d-8c06-b77882513d40",
+    "nome": "washington padilha miranda",
+    "cpf": "124.357.259-06",
+    "indicador_excel": "edson padilha miranda",
+    "expected_sponsor_id": "51d552aa-414c-4370-b6e5-8d32a924e325",
+    "status": "Mapeado"
+  },
+  {
+    "id": "1e2c83f8-5c2e-4699-8fe6-33da6f702216",
+    "nome": "ingrid padilha miranda",
+    "cpf": "089.819.879-80",
+    "indicador_excel": "edson padilha miranda",
+    "expected_sponsor_id": "51d552aa-414c-4370-b6e5-8d32a924e325",
+    "status": "Mapeado"
+  },
+  {
+    "id": "d9510f58-0c84-43e1-9027-ad2b849ea13d",
+    "nome": "jurandir padilha miranda",
+    "cpf": "152.015.099-75",
+    "indicador_excel": "joão josé oliveira miranda",
+    "expected_sponsor_id": "034051dc-8742-4df4-85ff-36a01844c612",
+    "status": "Mapeado"
+  },
+  {
+    "id": "82dd6ca6-47fe-4b56-a935-2fd5165d1fec",
+    "nome": "wellington padilha miranda",
+    "cpf": "152.014.999-96",
+    "indicador_excel": "jurandir padilha miranda",
+    "expected_sponsor_id": "d9510f58-0c84-43e1-9027-ad2b849ea13d",
+    "status": "Mapeado"
+  },
+  {
+    "id": "3c003ba4-ecf3-4cf3-a99f-d8b9f3d7c692",
+    "nome": "francisco josé oliveira miranda",
+    "cpf": "320.942.999-53",
+    "indicador_excel": "jurandir padilha miranda",
+    "expected_sponsor_id": "d9510f58-0c84-43e1-9027-ad2b849ea13d",
+    "status": "Mapeado"
+  },
+  {
+    "id": "08836d1b-e8a5-4984-ab1f-51ca653ca0ee",
+    "nome": "miguel josé oliveira miranda",
+    "cpf": "426.825.419-68",
+    "indicador_excel": "ingrid padilha miranda",
+    "expected_sponsor_id": "1e2c83f8-5c2e-4699-8fe6-33da6f702216",
+    "status": "Mapeado"
+  },
+  {
+    "id": "a2f9be95-c11f-42d7-a5fa-f09e3a381b70",
+    "nome": "zilma dos santos",
+    "cpf": "728.788.199-34",
+    "indicador_excel": "ingrid padilha miranda",
+    "expected_sponsor_id": "1e2c83f8-5c2e-4699-8fe6-33da6f702216",
+    "status": "Mapeado"
+  },
+  {
+    "id": "10025cf8-9e84-4da0-93eb-e50196cb12e3",
+    "nome": "Leticia De Almeida silva",
+    "cpf": "801.220.899-79",
+    "indicador_excel": "jhonny vasconcelos",
+    "expected_sponsor_id": "80ed1149-e4d3-44b9-a417-d94e7705f8c5",
+    "status": "Mapeado"
+  },
+  {
+    "id": "8eb0eac8-1164-4dd6-bc8a-4ffbd45838b8",
+    "nome": "Mickaela Galhardohormam",
+    "cpf": "113.654.409-74",
+    "indicador_excel": "Laiany Manuela Oliveira de Siqueira",
+    "expected_sponsor_id": "f97a78f6-faa1-4b87-8dcf-8dd80418d51f",
+    "status": "Mapeado"
+  },
+  {
+    "id": "4deec542-78cf-4e98-9f8b-8e8f6809c074",
+    "nome": "Eliene costa da Silva costa da Silva",
+    "cpf": "020.275.041-84",
+    "indicador_excel": "sidnalva maria bueno camargo",
+    "expected_sponsor_id": "b4d54416-119e-41f7-92c2-cde26e5e6e9f",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00062e3f-74c4-46a0-9305-116903aec131",
+    "nome": "luiz carlos ribeiro dos santos",
+    "cpf": "275.051.039-20",
+    "indicador_excel": "mauricio pereira de carvalho",
+    "expected_sponsor_id": "a68386df-6838-478a-b398-b42c3e7c32c4",
+    "status": "Mapeado"
+  },
+  {
+    "id": "c7f3b115-1503-4591-ad7f-9c9e4ae1d8cf",
+    "nome": "carmiele pitombeira lima ferreira",
+    "cpf": "073.067.663-33",
+    "indicador_excel": "Eliene costa da Silva costa da Silva",
+    "expected_sponsor_id": "4deec542-78cf-4e98-9f8b-8e8f6809c074",
+    "status": "Mapeado"
+  },
+  {
+    "id": "e20deed5-9646-48f7-965f-543ed72db645",
+    "nome": "aparecido inocencio da silva",
+    "cpf": "604.832.619-04",
+    "indicador_excel": "carmiele pitombeira lima ferreira",
+    "expected_sponsor_id": "c7f3b115-1503-4591-ad7f-9c9e4ae1d8cf",
+    "status": "Mapeado"
+  },
+  {
+    "id": "b65a9c2a-e4e7-4f08-9058-6abb10077e08",
+    "nome": "jose alceu",
+    "cpf": "761.966.589-72",
+    "indicador_excel": "Oseias Silva",
+    "expected_sponsor_id": "fcab07f8-5144-4983-9fab-1576c015675f",
+    "status": "Mapeado"
+  },
+  {
+    "id": "a1482b9c-fc81-424f-91c6-52eb73eea3a4",
+    "nome": "hedi wilson claro",
+    "cpf": "256.867.568-30",
+    "indicador_excel": "charles batista dos santos",
+    "expected_sponsor_id": "b7f9f0b0-7207-4f73-9f8a-28f75ef6d25d",
+    "status": "Mapeado"
+  },
+  {
+    "id": "2c5abf45-90c9-414c-8098-d69767f45f25",
+    "nome": "maria helena bernardo bandeira",
+    "cpf": "031.171.679-27",
+    "indicador_excel": "hedi wilson claro",
+    "expected_sponsor_id": "a1482b9c-fc81-424f-91c6-52eb73eea3a4",
+    "status": "Mapeado"
+  },
+  {
+    "id": "57a8002d-0084-4a5a-83f0-f5b7f8240049",
+    "nome": "fernanda pereira dos santos",
+    "cpf": "070.368.629-12",
+    "indicador_excel": "Ewerton camargo simer",
+    "expected_sponsor_id": "665fec92-125e-4f00-bedd-22572741779e",
+    "status": "Mapeado"
+  },
+  {
+    "id": "78386489-8b2a-45d1-bea4-f039b140dea1",
+    "nome": "dineuza josé ferreira pinto",
+    "cpf": "518.406.265-34",
+    "indicador_excel": "Jailton Bispo",
+    "expected_sponsor_id": "5e967bdd-f8d9-4e99-8d2f-245a062ecfb2",
+    "status": "Mapeado"
+  },
+  {
+    "id": "04773eed-100c-499f-bbbb-c6bc17ad76bd",
+    "nome": "liliane luciano algostinho",
+    "cpf": "055.464.629-30",
+    "indicador_excel": "Ewerton camargo simer",
+    "expected_sponsor_id": "665fec92-125e-4f00-bedd-22572741779e",
+    "status": "Mapeado"
+  },
+  {
+    "id": "86eaa22a-2d60-48c4-a216-38c38287e2c4",
+    "nome": "elizeu lopes da rosa",
+    "cpf": "065.679.009-11",
+    "indicador_excel": "celso lopes da rosa",
+    "expected_sponsor_id": "b9822794-e382-42f1-ae07-bd02f04532ed",
+    "status": "Mapeado"
+  },
+  {
+    "id": "1a5522ee-b921-4ca1-800a-eb5853053cc0",
+    "nome": "ezaul fabio de mello",
+    "cpf": "838.700.089-20",
+    "indicador_excel": "elizeu lopes da rosa",
+    "expected_sponsor_id": "86eaa22a-2d60-48c4-a216-38c38287e2c4",
+    "status": "Mapeado"
+  },
+  {
+    "id": "44f2c7d4-b969-4c49-8eae-88d361653973",
+    "nome": "maria da gloria da silva",
+    "cpf": "808.316.998-68",
+    "indicador_excel": "ezaul fabio de mello",
+    "expected_sponsor_id": "1a5522ee-b921-4ca1-800a-eb5853053cc0",
+    "status": "Mapeado"
+  },
+  {
+    "id": "ee238268-82e0-4a1d-ab97-52743b0c6935",
+    "nome": "Maria Aparecida de Sousa",
+    "cpf": "359.778.678-24",
+    "indicador_excel": "Luciano Cleiton Miguel",
+    "expected_sponsor_id": "6ea93be0-912d-4712-bed9-26da832a0e9d",
+    "status": "Mapeado"
+  },
+  {
+    "id": "caaaf533-5481-48ca-9264-0a54650e835b",
+    "nome": "Elivelton Drey",
+    "cpf": "097.792.799-70",
+    "indicador_excel": "Jorge pereira dos santos",
+    "expected_sponsor_id": "472316c6-4064-45fe-a102-2ff885dcaf25",
+    "status": "Mapeado"
+  },
+  {
+    "id": "e29678de-c797-4f09-843e-2ad4024185de",
+    "nome": "edilson santos de jesus",
+    "cpf": "862.203.995-10",
+    "indicador_excel": "jhonny vasconcelos",
+    "expected_sponsor_id": "80ed1149-e4d3-44b9-a417-d94e7705f8c5",
+    "status": "Mapeado"
+  },
+  {
+    "id": "37dc492b-5e73-43d9-8f4e-62f923959226",
+    "nome": "bismarck padilha miranda",
+    "cpf": "089.825.239-36",
+    "indicador_excel": "wellington padilha miranda",
+    "expected_sponsor_id": "82dd6ca6-47fe-4b56-a935-2fd5165d1fec",
+    "status": "Mapeado"
+  },
+  {
+    "id": "af8253e5-75a5-456a-8642-2b73a958f6d5",
+    "nome": "marlene gonçalves carneiro",
+    "cpf": "014.631.089-66",
+    "indicador_excel": "wellington padilha miranda",
+    "expected_sponsor_id": "82dd6ca6-47fe-4b56-a935-2fd5165d1fec",
+    "status": "Mapeado"
+  },
+  {
+    "id": "287e3339-a733-404c-b2d6-94d696bbf013",
+    "nome": "nilson da cruz",
+    "cpf": "365.242.809-97",
+    "indicador_excel": "adilson fernandes borges",
+    "expected_sponsor_id": "3355cfbd-fbd8-4e72-a769-ef67298b959c",
+    "status": "Mapeado"
+  },
+  {
+    "id": "a0c29bda-7e20-46c1-9835-aca4b332e777",
+    "nome": "jose raimundo da silva",
+    "cpf": "428.420.349-53",
+    "indicador_excel": "adilson fernandes borges",
+    "expected_sponsor_id": "3355cfbd-fbd8-4e72-a769-ef67298b959c",
+    "status": "Mapeado"
+  },
+  {
+    "id": "621a2ac4-f5c7-4e00-9828-97d898271fae",
+    "nome": "sérgio selatchek",
+    "cpf": "931.646.459-53",
+    "indicador_excel": "joão josé oliveira miranda",
+    "expected_sponsor_id": "034051dc-8742-4df4-85ff-36a01844c612",
+    "status": "Mapeado"
+  },
+  {
+    "id": "f3984c7c-107a-4c2b-a94f-001b8efe8580",
+    "nome": "lindalva dos santos",
+    "cpf": "052.199.449-75",
+    "indicador_excel": "sérgio selatchek",
+    "expected_sponsor_id": "621a2ac4-f5c7-4e00-9828-97d898271fae",
+    "status": "Mapeado"
+  },
+  {
+    "id": "2dd684cf-d9d4-43c5-8be7-c4ae71641945",
+    "nome": "lucio latczuc",
+    "cpf": "051.282.659-51",
+    "indicador_excel": "sérgio selatchek",
+    "expected_sponsor_id": "621a2ac4-f5c7-4e00-9828-97d898271fae",
+    "status": "Mapeado"
+  },
+  {
+    "id": "851cfec7-5791-484d-9492-26034d311b1d",
+    "nome": "jorge luis da silva",
+    "cpf": "357.973.129-72",
+    "indicador_excel": "joão josé oliveira miranda",
+    "expected_sponsor_id": "034051dc-8742-4df4-85ff-36a01844c612",
+    "status": "Mapeado"
+  },
+  {
+    "id": "153bf822-64f9-4f73-b243-8bd4f68c4176",
+    "nome": "giseli da silva",
+    "cpf": "070.572.849-85",
+    "indicador_excel": "jorge luis da silva",
+    "expected_sponsor_id": "851cfec7-5791-484d-9492-26034d311b1d",
+    "status": "Mapeado"
+  },
+  {
+    "id": "69ecfd6e-1a62-4a5d-9a88-3f553f57cf9a",
+    "nome": "joão acir tinesnski",
+    "cpf": "598.036.499-49",
+    "indicador_excel": "jorge luis da silva",
+    "expected_sponsor_id": "851cfec7-5791-484d-9492-26034d311b1d",
+    "status": "Mapeado"
+  },
+  {
+    "id": "542cf562-c8a9-45f3-aa31-2c0578f70c81",
+    "nome": "cleomar pontes macedo",
+    "cpf": "664.016.409-44",
+    "indicador_excel": "washington padilha miranda",
+    "expected_sponsor_id": "0864b704-3635-469d-8c06-b77882513d40",
+    "status": "Mapeado"
+  },
+  {
+    "id": "a8c69d89-bf55-4252-943d-0ae3c7fe013b",
+    "nome": "ademar roberto boller",
+    "cpf": "317.640.299-68",
+    "indicador_excel": "washington padilha miranda",
+    "expected_sponsor_id": "0864b704-3635-469d-8c06-b77882513d40",
+    "status": "Mapeado"
+  },
+  {
+    "id": "6970a076-a7b2-4b62-ad3a-044b5f061638",
+    "nome": "Virginia Cordeiro de lara",
+    "cpf": "631.584.859-15",
+    "indicador_excel": "Jorge pereira dos santos",
+    "expected_sponsor_id": "472316c6-4064-45fe-a102-2ff885dcaf25",
+    "status": "Mapeado"
+  },
+  {
+    "id": "5dea4adc-cb9a-4861-a27d-38cd738a15da",
+    "nome": "patricia querino vaz dos santos",
+    "cpf": "090.415.519-64",
+    "indicador_excel": "bismarck padilha miranda",
+    "expected_sponsor_id": "37dc492b-5e73-43d9-8f4e-62f923959226",
+    "status": "Mapeado"
+  },
+  {
+    "id": "e27e76e4-151e-417a-afb3-059a025048af",
+    "nome": "",
+    "cpf": "",
+    "indicador_excel": "bismarck",
+    "expected_sponsor_id": "37dc492b-5e73-43d9-8f4e-62f923959226",
+    "status": "Mapeado"
+  },
+  {
+    "id": "cc756f17-b6d6-487a-b760-3ff988f47a12",
+    "nome": "samyr erlom rissardi rocha da silva",
+    "cpf": "134.361.219-59",
+    "indicador_excel": "bismarck padilha miranda",
+    "expected_sponsor_id": "37dc492b-5e73-43d9-8f4e-62f923959226",
+    "status": "Mapeado"
+  },
+  {
+    "id": "baf087c9-d5cc-415f-8aec-f555ffb3bc72",
+    "nome": "antonio carlos fermino da silva",
+    "cpf": "599.123.089-72",
+    "indicador_excel": "zilma dos santos",
+    "expected_sponsor_id": "a2f9be95-c11f-42d7-a5fa-f09e3a381b70",
+    "status": "Mapeado"
+  },
+  {
+    "id": "da353ced-7657-438e-8cb8-b0463b9c2d1e",
+    "nome": "nível de jesus nantes borges",
+    "cpf": "004.227.829-55",
+    "indicador_excel": "adilson fernandes borges",
+    "expected_sponsor_id": "3355cfbd-fbd8-4e72-a769-ef67298b959c",
+    "status": "Mapeado"
+  },
+  {
+    "id": "0a784d01-b135-438e-bf58-823534dc05a6",
+    "nome": "antônio pereira nantes",
+    "cpf": "021.429.789-67",
+    "indicador_excel": "nível de jesus nantes borges",
+    "expected_sponsor_id": "da353ced-7657-438e-8cb8-b0463b9c2d1e",
+    "status": "Mapeado"
+  },
+  {
+    "id": "18538cc9-2575-4945-9443-81341ed07a9e",
+    "nome": "maurilei da silva nascimento",
+    "cpf": "048.102.967-25",
+    "indicador_excel": "zilma dos santos",
+    "expected_sponsor_id": "a2f9be95-c11f-42d7-a5fa-f09e3a381b70",
+    "status": "Mapeado"
+  },
+  {
+    "id": "ce05677c-e90d-4509-92f0-7c728ed75fde",
+    "nome": "anderson tolentino dos santos",
+    "cpf": "974.691.739-00",
+    "indicador_excel": "maria helena bernardo bandeira",
+    "expected_sponsor_id": "2c5abf45-90c9-414c-8098-d69767f45f25",
+    "status": "Mapeado"
+  },
+  {
+    "id": "5844dba1-82d4-4f3b-8e5f-fcb555761853",
+    "nome": "maikon vinicius borges",
+    "cpf": "108.198.499-60",
+    "indicador_excel": "maria helena bernardo bandeira",
+    "expected_sponsor_id": "2c5abf45-90c9-414c-8098-d69767f45f25",
+    "status": "Mapeado"
+  },
+  {
+    "id": "604c4bda-964f-4d74-9ddf-15f857a1a98e",
+    "nome": "iracema ferreira de oliveira tinte",
+    "cpf": "943.004.969-00",
+    "indicador_excel": "lucio latczuc",
+    "expected_sponsor_id": "2dd684cf-d9d4-43c5-8be7-c4ae71641945",
+    "status": "Mapeado"
+  },
+  {
+    "id": "9134f799-a3f2-4fef-a11c-126d0a4b5787",
+    "nome": "idalina ferreira de oliveira",
+    "cpf": "032.567.599-63",
+    "indicador_excel": "iracema ferreira de oliveira tinte",
+    "expected_sponsor_id": "604c4bda-964f-4d74-9ddf-15f857a1a98e",
+    "status": "Mapeado"
+  },
+  {
+    "id": "59fac24f-baba-4744-bbde-4a94a1717ce7",
+    "nome": "reginaldo do nascimento santos",
+    "cpf": "070.894.859-60",
+    "indicador_excel": "iracema ferreira de oliveira tinte",
+    "expected_sponsor_id": "604c4bda-964f-4d74-9ddf-15f857a1a98e",
+    "status": "Mapeado"
+  },
+  {
+    "id": "e24e7c2f-3302-45fd-b8e1-7abcc924c996",
+    "nome": "maria teresinha da silva",
+    "cpf": "017.812.319-66",
+    "indicador_excel": "lucio latczuc",
+    "expected_sponsor_id": "2dd684cf-d9d4-43c5-8be7-c4ae71641945",
+    "status": "Mapeado"
+  },
+  {
+    "id": "e27e76e4-151e-417a-afb3-059a025048af",
+    "nome": "",
+    "cpf": "",
+    "indicador_excel": "lucio",
+    "expected_sponsor_id": "2dd684cf-d9d4-43c5-8be7-c4ae71641945",
+    "status": "Mapeado"
+  },
+  {
+    "id": "6bdc0ad4-0b82-42b9-b5be-1791191f17b8",
+    "nome": "gerson dos santos de oliveira",
+    "cpf": "018.825.149-98",
+    "indicador_excel": "miguel josé oliveira miranda",
+    "expected_sponsor_id": "08836d1b-e8a5-4984-ab1f-51ca653ca0ee",
+    "status": "Mapeado"
+  },
+  {
+    "id": "b95162cf-7c35-4f39-a1b3-bfd886307b8d",
+    "nome": "darla fernanda szymanski",
+    "cpf": "110.499.409-70",
+    "indicador_excel": "José Luiz de Souza",
+    "expected_sponsor_id": "e1f992df-3fff-42ad-8a40-1349a86ff0e6",
+    "status": "Mapeado"
+  },
+  {
+    "id": "b382df80-2362-41e4-baaf-58a5dad23e28",
+    "nome": "Rosilda Andrade de souza",
+    "cpf": "069.333.959-44",
+    "indicador_excel": "laudenice da silva",
+    "expected_sponsor_id": "be120d1a-24df-40b6-9621-5d88f1f8b34b",
+    "status": "Mapeado"
+  },
+  {
+    "id": "058cd6f8-6374-489a-8bc2-3e65bfb1ac98",
+    "nome": "Danier Siqueira monteiro",
+    "cpf": "318.565.009-34",
+    "indicador_excel": "Jorge pereira dos santos",
+    "expected_sponsor_id": "472316c6-4064-45fe-a102-2ff885dcaf25",
+    "status": "Mapeado"
+  },
+  {
+    "id": "45500125-4f01-4c2e-8a5e-0947e1c8786e",
+    "nome": "vanda gonçalves ferreira",
+    "cpf": "726.840.469-72",
+    "indicador_excel": "jose costa dos santos",
+    "expected_sponsor_id": "0e43ad8e-3c82-4f29-b3a0-55d0f7fe6e84",
+    "status": "Mapeado"
+  },
+  {
+    "id": "866533bd-88c4-44ad-b45f-ea2d6772652e",
+    "nome": "valdir roberto scheffelmeier",
+    "cpf": "765.720.729-91",
+    "indicador_excel": "vanda gonçalves ferreira",
+    "expected_sponsor_id": "45500125-4f01-4c2e-8a5e-0947e1c8786e",
+    "status": "Mapeado"
+  },
+  {
+    "id": "38c10166-0079-4643-95b0-bcadf93dbfeb",
+    "nome": "carlos ribeiro de andrade",
+    "cpf": "171.330.179-20",
+    "indicador_excel": "davi gomes",
+    "expected_sponsor_id": "b4d167ec-edd1-406f-abe2-bb27f109a72c",
+    "status": "Mapeado"
+  },
+  {
+    "id": "ab7636e9-9dae-4694-b268-f5d8a5cb75dc",
+    "nome": "claudinei spindola",
+    "cpf": "019.910.159-09",
+    "indicador_excel": "silso pereira da silva",
+    "expected_sponsor_id": "d3b599b3-fdff-48e6-b4a8-4f9098d761b3",
+    "status": "Mapeado"
+  },
+  {
+    "id": "52b36cd4-6319-4a93-9be4-b1be2ca851e7",
+    "nome": "jose ani cezar correia",
+    "cpf": "320.188.359-04",
+    "indicador_excel": "claudinei spindola",
+    "expected_sponsor_id": "ab7636e9-9dae-4694-b268-f5d8a5cb75dc",
+    "status": "Mapeado"
+  },
+  {
+    "id": "9a095ba4-cd0c-4200-9769-fac1e77a3929",
+    "nome": "israel fernandes de oliveira",
+    "cpf": "045.190.049-93",
+    "indicador_excel": "sidnalva maria bueno camargo",
+    "expected_sponsor_id": "b4d54416-119e-41f7-92c2-cde26e5e6e9f",
+    "status": "Mapeado"
+  },
+  {
+    "id": "4685d42c-2ae7-465d-9c52-035cfc3dde9e",
+    "nome": "Geraldo renato Alves de solza",
+    "cpf": "835.842.699-20",
+    "indicador_excel": "sidnalva maria bueno camargo",
+    "expected_sponsor_id": "b4d54416-119e-41f7-92c2-cde26e5e6e9f",
+    "status": "Mapeado"
+  },
+  {
+    "id": "26b4b934-c4cb-43b9-8d86-95bc82248e10",
+    "nome": "Gilmar neves de campos",
+    "cpf": "978.584.809-44",
+    "indicador_excel": "Alaor Garcia da Silva",
+    "expected_sponsor_id": "2e65f464-2b85-4c97-a285-fc1ab31c8789",
+    "status": "Mapeado"
+  },
+  {
+    "id": "50e3d7b1-7e2f-436d-98d6-4f99e97a4647",
+    "nome": "Salete Freitas Farias Lourenço",
+    "cpf": "020.626.809-29",
+    "indicador_excel": "laudenice da silva",
+    "expected_sponsor_id": "be120d1a-24df-40b6-9621-5d88f1f8b34b",
+    "status": "Mapeado"
+  },
+  {
+    "id": "035517aa-00ce-459d-beb2-d898742a7806",
+    "nome": "simone de jesus lopes",
+    "cpf": "686.883.939-15",
+    "indicador_excel": "Emanuel Mendes Claro",
+    "expected_sponsor_id": "179d44cd-3351-4cdb-ad1e-78ac274108c2",
+    "status": "Mapeado"
+  },
+  {
+    "id": "8587f84a-a1d3-4fa3-8872-c91ecc983b8b",
+    "nome": "josé valdeci lopes",
+    "cpf": "747.868.909-44",
+    "indicador_excel": "simone de jesus lopes",
+    "expected_sponsor_id": "035517aa-00ce-459d-beb2-d898742a7806",
+    "status": "Mapeado"
+  },
+  {
+    "id": "179a2513-f30c-4e36-a81e-76c5163a4ce1",
+    "nome": "Márcia Velozo",
+    "cpf": "610.651.619-72",
+    "indicador_excel": "Jose Maria Figueiredo dos Santos",
+    "expected_sponsor_id": "3c6672ef-8256-48c9-bb6c-4b07aa239816",
+    "status": "Mapeado"
+  },
+  {
+    "id": "cd2a2540-5f62-43c7-8387-9e362ca35c15",
+    "nome": "Fabio Bomfim",
+    "cpf": "090.925.819-84",
+    "indicador_excel": "Jorge pereira dos santos",
+    "expected_sponsor_id": "472316c6-4064-45fe-a102-2ff885dcaf25",
+    "status": "Mapeado"
+  },
+  {
+    "id": "56dc30be-b9e2-406f-a910-ec49552abf94",
+    "nome": "Dalmon Pereira dos Santos",
+    "cpf": "530.401.399-91",
+    "indicador_excel": "Jose Maria Figueiredo dos Santos",
+    "expected_sponsor_id": "3c6672ef-8256-48c9-bb6c-4b07aa239816",
+    "status": "Mapeado"
+  },
+  {
+    "id": "326cb41f-2db8-4152-8a94-14be4cf88c7a",
+    "nome": "Sara Monteiro",
+    "cpf": "999.145.902-25",
+    "indicador_excel": "Fabio Bomfim",
+    "expected_sponsor_id": "cd2a2540-5f62-43c7-8387-9e362ca35c15",
+    "status": "Mapeado"
+  },
+  {
+    "id": "bf826631-0944-4efd-8bae-a3a6ae16a437",
+    "nome": "Joaquim Bomfim",
+    "cpf": "552.804.719-68",
+    "indicador_excel": "Fabio Bomfim",
+    "expected_sponsor_id": "cd2a2540-5f62-43c7-8387-9e362ca35c15",
+    "status": "Mapeado"
+  },
+  {
+    "id": "4eeee32a-ce2b-40ea-a70b-d78dca507789",
+    "nome": "Andiara Correia",
+    "cpf": "043.398.829-09",
+    "indicador_excel": "Fabio Bomfim",
+    "expected_sponsor_id": "cd2a2540-5f62-43c7-8387-9e362ca35c15",
+    "status": "Mapeado"
+  },
+  {
+    "id": "5203e372-c146-4232-99db-c37f08c4252e",
+    "nome": "Rosely Monteiro",
+    "cpf": "392.364.392-68",
+    "indicador_excel": "RS Prólipsi Empresa",
+    "expected_sponsor_id": "89c000c0-7a39-4e1e-8dee-5978d846fa89",
+    "status": "Mapeado"
+  },
+  {
+    "id": "44e75fc3-890d-4b50-b01e-93d4ced9dbe5",
+    "nome": "sebastiao manuel gonçalves",
+    "cpf": "353.950.109-63",
+    "indicador_excel": "darla fernanda szymanski",
+    "expected_sponsor_id": "b95162cf-7c35-4f39-a1b3-bfd886307b8d",
+    "status": "Mapeado"
+  },
+  {
+    "id": "61eefa9e-1417-4722-9203-631a069bd747",
+    "nome": "jair da silva fernandes",
+    "cpf": "393.878.289-72",
+    "indicador_excel": "darla fernanda szymanski",
+    "expected_sponsor_id": "b95162cf-7c35-4f39-a1b3-bfd886307b8d",
+    "status": "Mapeado"
+  },
+  {
+    "id": "ded8c8d0-f5dc-4dc4-8637-de54b7cff0d8",
+    "nome": "emerson gomes lemes",
+    "cpf": "039.974.936-50",
+    "indicador_excel": "jair da silva fernandes",
+    "expected_sponsor_id": "61eefa9e-1417-4722-9203-631a069bd747",
+    "status": "Mapeado"
+  },
+  {
+    "id": "c34eab0b-6af7-44c9-bdb3-36d31f69662a",
+    "nome": "jose ronaldo da silva agiar",
+    "cpf": "996.295.184-49",
+    "indicador_excel": "sebastiao manuel gonçalves",
+    "expected_sponsor_id": "44e75fc3-890d-4b50-b01e-93d4ced9dbe5",
+    "status": "Mapeado"
+  },
+  {
+    "id": "ec123a25-2349-47ae-ae3a-9a1938de8a4c",
+    "nome": "ezequiel moreira",
+    "cpf": "044.639.689-33",
+    "indicador_excel": "jose ronaldo da silva agiar",
+    "expected_sponsor_id": "c34eab0b-6af7-44c9-bdb3-36d31f69662a",
+    "status": "Mapeado"
+  },
+  {
+    "id": "3e6a45d4-3dcb-4f1a-9f2b-107bd0c52e66",
+    "nome": "gilda rosa da silva",
+    "cpf": "392.275.889-49",
+    "indicador_excel": "ezequiel moreira",
+    "expected_sponsor_id": "ec123a25-2349-47ae-ae3a-9a1938de8a4c",
+    "status": "Mapeado"
+  },
+  {
+    "id": "941b9c18-bd0c-40cf-8ae1-fffca698b398",
+    "nome": "Maria Conceição Batista Figueiredo",
+    "cpf": "304.188.058-06",
+    "indicador_excel": "Jose Maria Figueiredo dos Santos",
+    "expected_sponsor_id": "3c6672ef-8256-48c9-bb6c-4b07aa239816",
+    "status": "Mapeado"
+  },
+  {
+    "id": "2288cd5d-3992-41aa-a5c2-29f3dd3658eb",
+    "nome": "Jhonatan Henrique da silva",
+    "cpf": "068.359.199-14",
+    "indicador_excel": "jhonny vasconcelos",
+    "expected_sponsor_id": "80ed1149-e4d3-44b9-a417-d94e7705f8c5",
+    "status": "Mapeado"
+  },
+  {
+    "id": "f10cb6d3-e20a-4109-8295-e550b9952953",
+    "nome": "Neusa De Oliveira Baray",
+    "cpf": "385.921.342-34",
+    "indicador_excel": "Jose Maria Figueiredo dos Santos",
+    "expected_sponsor_id": "3c6672ef-8256-48c9-bb6c-4b07aa239816",
+    "status": "Mapeado"
+  },
+  {
+    "id": "ae8ab71f-85ab-4da4-8212-e4e74898cb2f",
+    "nome": "Maria Madalena Costa",
+    "cpf": "567.837.369-20",
+    "indicador_excel": "Neusa De Oliveira Baray",
+    "expected_sponsor_id": "f10cb6d3-e20a-4109-8295-e550b9952953",
+    "status": "Mapeado"
+  },
+  {
+    "id": "f27e3395-d750-4135-8507-5d43994749e5",
+    "nome": "Vilma Terezinha gomes",
+    "cpf": "231.760.679-68",
+    "indicador_excel": "Danier Siqueira monteiro",
+    "expected_sponsor_id": "058cd6f8-6374-489a-8bc2-3e65bfb1ac98",
+    "status": "Mapeado"
+  },
+  {
+    "id": "888074a9-0813-4ce6-a015-0da73ec845fa",
+    "nome": "Marcio Clemente",
+    "cpf": "048.576.109-22",
+    "indicador_excel": "Jorge pereira dos santos",
+    "expected_sponsor_id": "472316c6-4064-45fe-a102-2ff885dcaf25",
+    "status": "Mapeado"
+  },
+  {
+    "id": "7720eac9-2d47-4730-86bc-8ce3fd38e886",
+    "nome": "Marisane Antunes de lima",
+    "cpf": "881.242.829-00",
+    "indicador_excel": "RS Prólipsi Empresa",
+    "expected_sponsor_id": "89c000c0-7a39-4e1e-8dee-5978d846fa89",
+    "status": "Mapeado"
+  },
+  {
+    "id": "62cab044-f855-4a0d-8f93-8b59a0308073",
+    "nome": "Érica Farias de Araújo",
+    "cpf": "070.578.751-69",
+    "indicador_excel": "maxwel santos",
+    "expected_sponsor_id": "69806370-f06e-4c5f-b728-f96410a6f462",
+    "status": "Mapeado"
+  },
+  {
+    "id": "cbac1678-aa28-42ac-ba45-66713641f200",
+    "nome": "Raffael Richard Rocha",
+    "cpf": "084.839.589-10",
+    "indicador_excel": "Joana Alcina Rodrigues Castro Mendes Claro",
+    "expected_sponsor_id": "38b9f62c-c1d7-4978-bad6-dbe70e097306",
+    "status": "Mapeado"
+  },
+  {
+    "id": "449639aa-8ea0-46e6-87a0-aaa2985b228c",
+    "nome": "Ezequiel Guimarães",
+    "cpf": "029.876.109-20",
+    "indicador_excel": "Raffael Richard Rocha",
+    "expected_sponsor_id": "cbac1678-aa28-42ac-ba45-66713641f200",
+    "status": "Mapeado"
+  },
+  {
+    "id": "0065043f-b0c8-4ad6-8e3b-71f3303b8cca",
+    "nome": "Arnaldo Rodrigues Figueiredo",
+    "cpf": "034.772.478-76",
+    "indicador_excel": "Jose Maria Figueiredo dos Santos",
+    "expected_sponsor_id": "3c6672ef-8256-48c9-bb6c-4b07aa239816",
+    "status": "Mapeado"
+  },
+  {
+    "id": "5c305885-40e1-4038-a1eb-d900667537dd",
+    "nome": "murilo luiz dias henrique",
+    "cpf": "875.879.590-17",
+    "indicador_excel": "Topo Rede",
+    "expected_sponsor_id": null,
+    "status": "Mapeado"
+  },
+  {
+    "id": "fa05e517-f2e0-4458-aeed-97e574dc8d5d",
+    "nome": "Júlio Galvão",
+    "cpf": "009.559.524-41",
+    "indicador_excel": "RS Prólipsi Empresa",
+    "expected_sponsor_id": "89c000c0-7a39-4e1e-8dee-5978d846fa89",
+    "status": "Mapeado"
+  },
+  {
+    "id": "9b321325-33da-4cfa-9277-114f1dfbcd95",
+    "nome": "ildefonço ferreira de oliveira",
+    "cpf": "833.085.639-91",
+    "indicador_excel": "Érica Farias de Araújo",
+    "expected_sponsor_id": "62cab044-f855-4a0d-8f93-8b59a0308073",
+    "status": "Mapeado"
+  },
+  {
+    "id": "72ab2e7b-118a-4a21-98cf-49da82034b82",
+    "nome": "Milena Silva",
+    "cpf": "605.734.812-53",
+    "indicador_excel": "Jose Maria Figueiredo dos Santos",
+    "expected_sponsor_id": "3c6672ef-8256-48c9-bb6c-4b07aa239816",
+    "status": "Mapeado"
+  },
+  {
+    "id": "940d6dc0-4197-4875-a61e-572f3e5aec8e",
+    "nome": "Patrike Daniel Pedroso",
+    "cpf": "058.892.799-63",
+    "indicador_excel": "Emanuel Mendes Claro",
+    "expected_sponsor_id": "179d44cd-3351-4cdb-ad1e-78ac274108c2",
+    "status": "Mapeado"
+  },
+  {
+    "id": "0f93b81b-2c6b-4c98-85db-45a5d54b326b",
+    "nome": "Diully Einy Rodrigues Castro Mendes Claro",
+    "cpf": "119.115.989-29",
+    "indicador_excel": "Joana Alcina Rodrigues Castro Mendes Claro",
+    "expected_sponsor_id": "38b9f62c-c1d7-4978-bad6-dbe70e097306",
+    "status": "Mapeado"
+  },
+  {
+    "id": "fd6ac021-b8ab-4e0e-8ce4-178156417948",
+    "nome": "joao vicente jordao",
+    "cpf": "510.744.789-91",
+    "indicador_excel": "joão josé oliveira miranda",
+    "expected_sponsor_id": "034051dc-8742-4df4-85ff-36a01844c612",
+    "status": "Mapeado"
+  },
+  {
+    "id": "e38f2cf0-69c7-4a17-bff3-331eb3b6d2fc",
+    "nome": "Rosilene Figueiredo alves",
+    "cpf": "071.866.476-00",
+    "indicador_excel": "Arnaldo Rodrigues Figueiredo",
+    "expected_sponsor_id": "0065043f-b0c8-4ad6-8e3b-71f3303b8cca",
+    "status": "Mapeado"
+  },
+  {
+    "id": "9b006de0-f6ec-4fe1-96a9-8cb5ef7ec903",
+    "nome": "Jean Henrique Aparecido da Silva",
+    "cpf": "061.828.999-21",
+    "indicador_excel": "Joana Alcina Rodrigues Castro Mendes Claro",
+    "expected_sponsor_id": "38b9f62c-c1d7-4978-bad6-dbe70e097306",
+    "status": "Mapeado"
+  },
+  {
+    "id": "42d1a3b4-5ff4-48d2-852d-e7e477fda39b",
+    "nome": "Marcio Jakson Soares de Lima",
+    "cpf": "024.145.539-10",
+    "indicador_excel": "Joana Alcina Rodrigues Castro Mendes Claro",
+    "expected_sponsor_id": "38b9f62c-c1d7-4978-bad6-dbe70e097306",
+    "status": "Mapeado"
+  },
+  {
+    "id": "086888ae-f59a-46f4-8070-0d394af9aed5",
+    "nome": "Joyce Emile Feitora Rodrigues",
+    "cpf": "430.155.573-00",
+    "indicador_excel": "Ezequiel Guimarães",
+    "expected_sponsor_id": "449639aa-8ea0-46e6-87a0-aaa2985b228c",
+    "status": "Mapeado"
+  },
+  {
+    "id": "6e8bfee7-f77a-4fc4-92fe-1cb9813cb403",
+    "nome": "Daniel Ferreira da Silva",
+    "cpf": "079.366.494-25",
+    "indicador_excel": "Ezequiel Guimarães",
+    "expected_sponsor_id": "449639aa-8ea0-46e6-87a0-aaa2985b228c",
+    "status": "Mapeado"
+  },
+  {
+    "id": "27e77a66-94ad-4c42-81df-ce2bd62862f0",
+    "nome": "Ydalmi Josefina Herrera Diaz",
+    "cpf": "709.844.952-07",
+    "indicador_excel": "Ezequiel Guimarães",
+    "expected_sponsor_id": "449639aa-8ea0-46e6-87a0-aaa2985b228c",
+    "status": "Mapeado"
+  },
+  {
+    "id": "e52b8422-ab2e-4139-9785-8b985653e1b5",
+    "nome": "Arelys Nohemi Herrera",
+    "cpf": "707.326.312-11",
+    "indicador_excel": "Ezequiel Guimarães",
+    "expected_sponsor_id": "449639aa-8ea0-46e6-87a0-aaa2985b228c",
+    "status": "Mapeado"
+  },
+  {
+    "id": "31908445-72b7-4221-8a76-0c6d031242f1",
+    "nome": "Felipe Pereira Sousa",
+    "cpf": "046.083.891-14",
+    "indicador_excel": "Emanuel Mendes Claro",
+    "expected_sponsor_id": "179d44cd-3351-4cdb-ad1e-78ac274108c2",
+    "status": "Mapeado"
+  },
+  {
+    "id": "e846af0f-b8b3-4b00-9b92-41586fa461ea",
+    "nome": "Wild Halama",
+    "cpf": "090.642.239-63",
+    "indicador_excel": "Patrike Daniel Pedroso",
+    "expected_sponsor_id": "940d6dc0-4197-4875-a61e-572f3e5aec8e",
+    "status": "Mapeado"
+  },
+  {
+    "id": "5f9fd49b-3e59-4499-b0ed-27d9714f6f75",
+    "nome": "Solange Kuhn",
+    "cpf": "030.515.479-64",
+    "indicador_excel": "Marisane Antunes de lima",
+    "expected_sponsor_id": "7720eac9-2d47-4730-86bc-8ce3fd38e886",
+    "status": "Mapeado"
+  },
+  {
+    "id": "3ecfd98d-a6b6-46c4-920b-a476e611ff94",
+    "nome": "Viviane Cristina da silva",
+    "cpf": "058.065.409-52",
+    "indicador_excel": "Alaor Garcia da Silva",
+    "expected_sponsor_id": "2e65f464-2b85-4c97-a285-fc1ab31c8789",
+    "status": "Mapeado"
+  },
+  {
+    "id": "caf75a8e-d16f-4d65-9498-646eb05dc797",
+    "nome": "Vera Lucia  Aparecida Machado de Ramos",
+    "cpf": "029.042.969-21",
+    "indicador_excel": "cleuci costa  do  santos",
+    "expected_sponsor_id": "8abec405-818a-4e14-8c71-72ec7a718f89",
+    "status": "Mapeado"
+  },
+  {
+    "id": "aef3394e-595f-4ae7-ba19-48f3ebedae34",
+    "nome": "Maria Garcia Guerreiro",
+    "cpf": "057.639.519-64",
+    "indicador_excel": "davi gomes",
+    "expected_sponsor_id": "b4d167ec-edd1-406f-abe2-bb27f109a72c",
+    "status": "Mapeado"
+  },
+  {
+    "id": "29c9ab9d-002c-44d6-a8c2-bcb543f1d0b3",
+    "nome": "Valdo Nunes de Brito",
+    "cpf": "237.410.749-34",
+    "indicador_excel": "José Luiz de Souza",
+    "expected_sponsor_id": "e1f992df-3fff-42ad-8a40-1349a86ff0e6",
+    "status": "Mapeado"
+  },
+  {
+    "id": "977f8b7d-83de-4c48-bd4c-1ccbc79cd99d",
+    "nome": "Francine Dias da Conceição Labres de Oliveira",
+    "cpf": "076.819.349-44",
+    "indicador_excel": "maxwel santos",
+    "expected_sponsor_id": "69806370-f06e-4c5f-b728-f96410a6f462",
+    "status": "Mapeado"
+  },
+  {
+    "id": "dceac5bc-fa93-4de4-bd53-541f8acbcb28",
+    "nome": "Alessandra dos Santos Gobatto",
+    "cpf": "017.726.889-16",
+    "indicador_excel": "carmiele pitombeira lima ferreira",
+    "expected_sponsor_id": "c7f3b115-1503-4591-ad7f-9c9e4ae1d8cf",
+    "status": "Mapeado"
+  },
+  {
+    "id": "b4a99ae8-a86c-4f6b-98de-96c76d03afdf",
+    "nome": "Pedro Flávio Almeida Silva",
+    "cpf": "029.605.294-99",
+    "indicador_excel": "Ewerton camargo simer",
+    "expected_sponsor_id": "665fec92-125e-4f00-bedd-22572741779e",
+    "status": "Mapeado"
+  },
+  {
+    "id": "e27e76e4-151e-417a-afb3-059a025048af",
+    "nome": "",
+    "cpf": "",
+    "indicador_excel": "ewerton",
+    "expected_sponsor_id": "665fec92-125e-4f00-bedd-22572741779e",
+    "status": "Mapeado"
+  },
+  {
+    "id": "8b41aaeb-7ea9-469e-b98f-2ce08149cc3b",
+    "nome": "Wesley Henrrique",
+    "cpf": "087.680.989-10",
+    "indicador_excel": "israel fernandes de oliveira",
+    "expected_sponsor_id": "9a095ba4-cd0c-4200-9769-fac1e77a3929",
+    "status": "Mapeado"
+  },
+  {
+    "id": "8360d35d-d76e-4177-910f-49f22b9da233",
+    "nome": "Geraldo Carvalho Costa",
+    "cpf": "035.707.258-80",
+    "indicador_excel": "RS Prólipsi Empresa",
+    "expected_sponsor_id": "89c000c0-7a39-4e1e-8dee-5978d846fa89",
+    "status": "Mapeado"
+  },
+  {
+    "id": "ccac1f4f-3f51-4705-8e97-e677ec0fa99e",
+    "nome": "Maria Almeida",
+    "cpf": "451.217.884-87",
+    "indicador_excel": "Pedro Flávio Almeida Silva",
+    "expected_sponsor_id": "b4a99ae8-a86c-4f6b-98de-96c76d03afdf",
+    "status": "Mapeado"
+  },
+  {
+    "id": "394a4f06-aaf0-464c-a849-b651e691f1c0",
+    "nome": "Paulo Kayto de Souza Morgado",
+    "cpf": "362.068.528-22",
+    "indicador_excel": "Patrike Daniel Pedroso",
+    "expected_sponsor_id": "940d6dc0-4197-4875-a61e-572f3e5aec8e",
+    "status": "Mapeado"
+  },
+  {
+    "id": "a5c7504e-5334-4b43-8700-5b39e6bdd421",
+    "nome": "Anthony Nessias Borges Luiz",
+    "cpf": "087.415.449-94",
+    "indicador_excel": "Jean Henrique Aparecido da Silva",
+    "expected_sponsor_id": "9b006de0-f6ec-4fe1-96a9-8cb5ef7ec903",
+    "status": "Mapeado"
+  },
+  {
+    "id": "ed244a98-95cd-4103-9e30-22c5732bfe4b",
+    "nome": "Dalva de Lima Andrade",
+    "cpf": "075.072.019-02",
+    "indicador_excel": "Anthony Nessias Borges Luiz",
+    "expected_sponsor_id": "a5c7504e-5334-4b43-8700-5b39e6bdd421",
+    "status": "Mapeado"
+  },
+  {
+    "id": "68d81b3c-6756-470d-b389-7f324cea289b",
+    "nome": "Luiza Gerei Szymonek",
+    "cpf": "061.529.309-36",
+    "indicador_excel": "Anthony Nessias Borges Luiz",
+    "expected_sponsor_id": "a5c7504e-5334-4b43-8700-5b39e6bdd421",
+    "status": "Mapeado"
+  },
+  {
+    "id": "0fcb7fef-98f6-48b6-9010-ec9bc38e9010",
+    "nome": "Diego Rogerio da Silva Alves",
+    "cpf": "060.947.459-65",
+    "indicador_excel": "Jean Henrique Aparecido da Silva",
+    "expected_sponsor_id": "9b006de0-f6ec-4fe1-96a9-8cb5ef7ec903",
+    "status": "Mapeado"
+  },
+  {
+    "id": "7429dacc-85c7-48df-9ea4-10356dbaa894",
+    "nome": "claudemir dos santos gomes",
+    "cpf": "017.744.379-02",
+    "indicador_excel": "jose costa dos santos",
+    "expected_sponsor_id": "0e43ad8e-3c82-4f29-b3a0-55d0f7fe6e84",
+    "status": "Mapeado"
+  },
+  {
+    "id": "6c528e68-4e46-4bb8-9840-2649e4f251a5",
+    "nome": "Jonas Pereira",
+    "cpf": "033.312.549-59",
+    "indicador_excel": "cleuci costa  do  santos",
+    "expected_sponsor_id": "8abec405-818a-4e14-8c71-72ec7a718f89",
+    "status": "Mapeado"
+  },
+  {
+    "id": "cbd79102-d220-41bd-9f88-ef63339c414b",
+    "nome": "rosilda dias ferreira",
+    "cpf": "843.582.703-87",
+    "indicador_excel": "odete aparecida dorneles",
+    "expected_sponsor_id": "ba932cde-29c2-4c55-b726-b34f77b4df34",
+    "status": "Mapeado"
+  },
+  {
+    "id": "355ed2b3-bd0d-4309-b9c8-ba0e8d1a7ffa",
+    "nome": "Neide maria Da Silva Oliveira",
+    "cpf": "030.977.368-75",
+    "indicador_excel": "Michael De Araújo Medeiros",
+    "expected_sponsor_id": "4706b805-ca7e-46bf-a7a7-2ad5bc8c0438",
+    "status": "Mapeado"
+  },
+  {
+    "id": "2d7cf0c8-f777-413f-9d2e-4363c5756dd5",
+    "nome": "Vera Lucia Rosa dos Santos",
+    "cpf": "456.999.179-34",
+    "indicador_excel": "laudenice da silva",
+    "expected_sponsor_id": "be120d1a-24df-40b6-9621-5d88f1f8b34b",
+    "status": "Mapeado"
+  },
+  {
+    "id": "76dd129c-ae6c-4915-af5a-a79fdd67ddcd",
+    "nome": "Maria de lurdes gonçalves katcharowski",
+    "cpf": "391.931.799-87",
+    "indicador_excel": "joão josé oliveira miranda",
+    "expected_sponsor_id": "034051dc-8742-4df4-85ff-36a01844c612",
+    "status": "Mapeado"
+  },
+  {
+    "id": "c8f7924a-8120-4256-bc47-9677e5c09029",
+    "nome": "joeli barbosa de almeida",
+    "cpf": "672.019.979-04",
+    "indicador_excel": "laudenice da silva",
+    "expected_sponsor_id": "be120d1a-24df-40b6-9621-5d88f1f8b34b",
+    "status": "Mapeado"
+  },
+  {
+    "id": "db852a0b-6b9a-4d57-bf34-3974b1275092",
+    "nome": "leia dos santos",
+    "cpf": "057.733.459-00",
+    "indicador_excel": "José Luiz de Souza",
+    "expected_sponsor_id": "e1f992df-3fff-42ad-8a40-1349a86ff0e6",
+    "status": "Mapeado"
+  },
+  {
+    "id": "fe5df1f2-158e-4d6d-80f8-e387a91bcb54",
+    "nome": "Carmem Almeida",
+    "cpf": "027.611.604-60",
+    "indicador_excel": "Pedro Flávio Almeida Silva",
+    "expected_sponsor_id": "b4a99ae8-a86c-4f6b-98de-96c76d03afdf",
+    "status": "Mapeado"
+  },
+  {
+    "id": "5985f75e-1419-4aba-8870-fdd00a529a30",
+    "nome": "Manoel Domingos Bruno da Silva",
+    "cpf": "986.243.345-00",
+    "indicador_excel": "Emanuel Mendes Claro",
+    "expected_sponsor_id": "179d44cd-3351-4cdb-ad1e-78ac274108c2",
+    "status": "Mapeado"
+  },
+  {
+    "id": "0a9537f8-92a5-41b7-9355-31bd5578abc9",
+    "nome": "karolina Cordeiro dos Santos",
+    "cpf": "077.732.749-08",
+    "indicador_excel": "Rosilda Andrade de souza",
+    "expected_sponsor_id": "b382df80-2362-41e4-baaf-58a5dad23e28",
+    "status": "Mapeado"
+  },
+  {
+    "id": "cac9b785-c854-49d2-89ec-b2bf8986132f",
+    "nome": "Kaue Moreira",
+    "cpf": "125.666.959-89",
+    "indicador_excel": "RS Prólipsi Empresa",
+    "expected_sponsor_id": "89c000c0-7a39-4e1e-8dee-5978d846fa89",
+    "status": "Mapeado"
+  },
+  {
+    "id": "54442021-1dd1-47ac-92a6-dc732b9433f7",
+    "nome": "Edinelson Manoel Dos Santos",
+    "cpf": "534.950.985-34",
+    "indicador_excel": "RS Prólipsi Empresa",
+    "expected_sponsor_id": "89c000c0-7a39-4e1e-8dee-5978d846fa89",
+    "status": "Mapeado"
+  },
+  {
+    "id": "1258fb1f-1f29-4ab3-bc4b-f5f59e95d996",
+    "nome": "Laércio Montesso Gonçalves",
+    "cpf": "723.244.739-68",
+    "indicador_excel": "RS Prólipsi Empresa",
+    "expected_sponsor_id": "89c000c0-7a39-4e1e-8dee-5978d846fa89",
+    "status": "Mapeado"
+  },
+  {
+    "id": "5b6c494b-ebcd-4956-8eb9-d4b846f6a1c0",
+    "nome": "alda cordeiro da Rosa dos Santos",
+    "cpf": "017.954.889-13",
+    "indicador_excel": "Rosilda Andrade de souza",
+    "expected_sponsor_id": "b382df80-2362-41e4-baaf-58a5dad23e28",
+    "status": "Mapeado"
+  },
+  {
+    "id": "bf686c68-8e30-49bf-8221-29870f694937",
+    "nome": "Roseli Cruz Novais da Silva Novais",
+    "cpf": "593.647.345-72",
+    "indicador_excel": "Laércio Montesso Gonçalves",
+    "expected_sponsor_id": "1258fb1f-1f29-4ab3-bc4b-f5f59e95d996",
+    "status": "Mapeado"
+  },
+  {
+    "id": "c32c78f4-7286-4e0c-9b1c-4523328cd8b6",
+    "nome": "Maria Fernandes Borges Dias",
+    "cpf": "021.956.029-37",
+    "indicador_excel": "adilson fernandes borges",
+    "expected_sponsor_id": "3355cfbd-fbd8-4e72-a769-ef67298b959c",
+    "status": "Mapeado"
+  },
+  {
+    "id": "fb2d23f3-3283-4510-9512-06998beb238f",
+    "nome": "Janecir Spancerski",
+    "cpf": "703.235.429-72",
+    "indicador_excel": "Marisane Antunes de lima",
+    "expected_sponsor_id": "7720eac9-2d47-4730-86bc-8ce3fd38e886",
+    "status": "Mapeado"
+  },
+  {
+    "id": "52ee705b-6069-4bb4-884c-887de665c035",
+    "nome": "João Alves Algarrão",
+    "cpf": "030.198.317-84",
+    "indicador_excel": "Laércio Montesso Gonçalves",
+    "expected_sponsor_id": "1258fb1f-1f29-4ab3-bc4b-f5f59e95d996",
+    "status": "Mapeado"
+  },
+  {
+    "id": "a673e619-d15d-43f7-81b6-146a4bbb4c7f",
+    "nome": "Osmar Pereira silva",
+    "cpf": "555.657.519-34",
+    "indicador_excel": "Laércio Montesso Gonçalves",
+    "expected_sponsor_id": "1258fb1f-1f29-4ab3-bc4b-f5f59e95d996",
+    "status": "Mapeado"
+  },
+  {
+    "id": "424a0225-0d89-4208-a388-59d0a049bfd2",
+    "nome": "Veralaine Romano da silva",
+    "cpf": "042.955.949-62",
+    "indicador_excel": "Osmar Pereira silva",
+    "expected_sponsor_id": "a673e619-d15d-43f7-81b6-146a4bbb4c7f",
+    "status": "Mapeado"
+  },
+  {
+    "id": "cbd7f57e-b403-495f-9513-8e8671d4b012",
+    "nome": "Edmilson Aparecido da Conceissão",
+    "cpf": "038.356.089-67",
+    "indicador_excel": "Jean Henrique Aparecido da Silva",
+    "expected_sponsor_id": "9b006de0-f6ec-4fe1-96a9-8cb5ef7ec903",
+    "status": "Mapeado"
+  },
+  {
+    "id": "d8779983-d300-4f57-8168-3ab18942b39e",
+    "nome": "Claudinei Oliveira",
+    "cpf": "728.793.789-15",
+    "indicador_excel": "Laércio Montesso Gonçalves",
+    "expected_sponsor_id": "1258fb1f-1f29-4ab3-bc4b-f5f59e95d996",
+    "status": "Mapeado"
+  },
+  {
+    "id": "0e211bb3-0052-4718-9417-94b1b2b5a5b2",
+    "nome": "Elesandro de Souza Vicente",
+    "cpf": "040.985.272-43",
+    "indicador_excel": "Patrike Daniel Pedroso",
+    "expected_sponsor_id": "940d6dc0-4197-4875-a61e-572f3e5aec8e",
+    "status": "Mapeado"
+  },
+  {
+    "id": "96c3fc99-c90b-49d5-9476-02cb0830e01c",
+    "nome": "Alexsandro Godinho Hoffmann",
+    "cpf": "123.759.926-10",
+    "indicador_excel": "simone de jesus lopes",
+    "expected_sponsor_id": "035517aa-00ce-459d-beb2-d898742a7806",
+    "status": "Mapeado"
+  },
+  {
+    "id": "34f8a140-d25b-4c71-baf4-a6faef7a3a59",
+    "nome": "Rafael Grando",
+    "cpf": "100.062.239-82",
+    "indicador_excel": "simone de jesus lopes",
+    "expected_sponsor_id": "035517aa-00ce-459d-beb2-d898742a7806",
+    "status": "Mapeado"
+  },
+  {
+    "id": "48548475-7e3d-4ceb-ad4b-c16e2a5c3b24",
+    "nome": "Adriana Vicente Lins",
+    "cpf": "171.217.698-67",
+    "indicador_excel": "Emanuel Mendes Claro",
+    "expected_sponsor_id": "179d44cd-3351-4cdb-ad1e-78ac274108c2",
+    "status": "Mapeado"
+  },
+  {
+    "id": "da5db6da-14c1-492c-9ca2-e9fe03c2e88a",
+    "nome": "Luiz Queiroz",
+    "cpf": "599.808.852-20",
+    "indicador_excel": "joão josé oliveira miranda",
+    "expected_sponsor_id": "034051dc-8742-4df4-85ff-36a01844c612",
+    "status": "Mapeado"
+  },
+  {
+    "id": "0bb0eab5-389f-4658-a5fb-1c890f0d8218",
+    "nome": "Lismara Cortez Algarrão",
+    "cpf": "004.999.289-97",
+    "indicador_excel": "João Alves Algarrão",
+    "expected_sponsor_id": "52ee705b-6069-4bb4-884c-887de665c035",
+    "status": "Mapeado"
+  },
+  {
+    "id": "9b598deb-0b2d-4682-8d79-f266c34e68ad",
+    "nome": "Osnir Ceccon",
+    "cpf": "704.432.549-15",
+    "indicador_excel": "Emanuel Mendes Claro",
+    "expected_sponsor_id": "179d44cd-3351-4cdb-ad1e-78ac274108c2",
+    "status": "Mapeado"
+  },
+  {
+    "id": "e2714e23-a345-430b-9fda-e4acc86e69a6",
+    "nome": "Sergio Alessandro Braga",
+    "cpf": "170.975.158-48",
+    "indicador_excel": "Patrike Daniel Pedroso",
+    "expected_sponsor_id": "940d6dc0-4197-4875-a61e-572f3e5aec8e",
+    "status": "Mapeado"
+  },
+  {
+    "id": "a673e619-d15d-43f7-81b6-146a4bbb4c7f",
+    "nome": "Osmar Pereira silva",
+    "cpf": "555.657.519-34",
+    "indicador_excel": "Laércio Montesso Gonçalves",
+    "expected_sponsor_id": "1258fb1f-1f29-4ab3-bc4b-f5f59e95d996",
+    "status": "Mapeado"
+  },
+  {
+    "id": "424a0225-0d89-4208-a388-59d0a049bfd2",
+    "nome": "Veralaine Romano da silva",
+    "cpf": "042.955.949-62",
+    "indicador_excel": "Osmar Pereira silva",
+    "expected_sponsor_id": "a673e619-d15d-43f7-81b6-146a4bbb4c7f",
+    "status": "Mapeado"
+  },
+  {
+    "id": "cbd7f57e-b403-495f-9513-8e8671d4b012",
+    "nome": "Edmilson Aparecido da Conceissão",
+    "cpf": "038.356.089-67",
+    "indicador_excel": "Jean Henrique Aparecido da Silva",
+    "expected_sponsor_id": "9b006de0-f6ec-4fe1-96a9-8cb5ef7ec903",
+    "status": "Mapeado"
+  },
+  {
+    "id": "d8779983-d300-4f57-8168-3ab18942b39e",
+    "nome": "Claudinei Oliveira",
+    "cpf": "728.793.789-15",
+    "indicador_excel": "Laércio Montesso Gonçalves",
+    "expected_sponsor_id": "1258fb1f-1f29-4ab3-bc4b-f5f59e95d996",
+    "status": "Mapeado"
+  },
+  {
+    "id": "0e211bb3-0052-4718-9417-94b1b2b5a5b2",
+    "nome": "Elesandro de Souza Vicente",
+    "cpf": "040.985.272-43",
+    "indicador_excel": "Patrike Daniel Pedroso",
+    "expected_sponsor_id": "940d6dc0-4197-4875-a61e-572f3e5aec8e",
+    "status": "Mapeado"
+  },
+  {
+    "id": "96c3fc99-c90b-49d5-9476-02cb0830e01c",
+    "nome": "Alexsandro Godinho Hoffmann",
+    "cpf": "123.759.926-10",
+    "indicador_excel": "simone de jesus lopes",
+    "expected_sponsor_id": "035517aa-00ce-459d-beb2-d898742a7806",
+    "status": "Mapeado"
+  },
+  {
+    "id": "34f8a140-d25b-4c71-baf4-a6faef7a3a59",
+    "nome": "Rafael Grando",
+    "cpf": "100.062.239-82",
+    "indicador_excel": "simone de jesus lopes",
+    "expected_sponsor_id": "035517aa-00ce-459d-beb2-d898742a7806",
+    "status": "Mapeado"
+  },
+  {
+    "id": "48548475-7e3d-4ceb-ad4b-c16e2a5c3b24",
+    "nome": "Adriana Vicente Lins",
+    "cpf": "171.217.698-67",
+    "indicador_excel": "Emanuel Mendes Claro",
+    "expected_sponsor_id": "179d44cd-3351-4cdb-ad1e-78ac274108c2",
+    "status": "Mapeado"
+  },
+  {
+    "id": "da5db6da-14c1-492c-9ca2-e9fe03c2e88a",
+    "nome": "Luiz Queiroz",
+    "cpf": "599.808.852-20",
+    "indicador_excel": "joão josé oliveira miranda",
+    "expected_sponsor_id": "034051dc-8742-4df4-85ff-36a01844c612",
+    "status": "Mapeado"
+  },
+  {
+    "id": "0bb0eab5-389f-4658-a5fb-1c890f0d8218",
+    "nome": "Lismara Cortez Algarrão",
+    "cpf": "004.999.289-97",
+    "indicador_excel": "João Alves Algarrão",
+    "expected_sponsor_id": "52ee705b-6069-4bb4-884c-887de665c035",
+    "status": "Mapeado"
+  },
+  {
+    "id": "9b598deb-0b2d-4682-8d79-f266c34e68ad",
+    "nome": "Osnir Ceccon",
+    "cpf": "704.432.549-15",
+    "indicador_excel": "Emanuel Mendes Claro",
+    "expected_sponsor_id": "179d44cd-3351-4cdb-ad1e-78ac274108c2",
+    "status": "Mapeado"
+  },
+  {
+    "id": "e2714e23-a345-430b-9fda-e4acc86e69a6",
+    "nome": "Sergio Alessandro Braga",
+    "cpf": "170.975.158-48",
+    "indicador_excel": "Patrike Daniel Pedroso",
+    "expected_sponsor_id": "940d6dc0-4197-4875-a61e-572f3e5aec8e",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-00000080fa09",
+    "nome": "Marcos Lima Rovaris",
+    "cpf": "079.834.749-03",
+    "indicador_excel": "Ramon Patricio Dutra",
+    "expected_sponsor_id": null,
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-000000291089",
+    "nome": "Guilherme Fortuna",
+    "cpf": "079.171.199-47",
+    "indicador_excel": "Ramon Patricio Dutra",
+    "expected_sponsor_id": null,
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-00000023e166",
+    "nome": "Nilzete Andrade",
+    "cpf": "089.888.837-99",
+    "indicador_excel": "Michael De Araújo Medeiros",
+    "expected_sponsor_id": "4706b805-ca7e-46bf-a7a7-2ad5bc8c0438",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-00000062eee2",
+    "nome": "Edvaldo G da silva",
+    "cpf": "323.213.091-72",
+    "indicador_excel": "Michael De Araújo Medeiros",
+    "expected_sponsor_id": "4706b805-ca7e-46bf-a7a7-2ad5bc8c0438",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-0000002cabef",
+    "nome": "Paulo Silva",
+    "cpf": "647.674.856-49",
+    "indicador_excel": "Michael De Araújo Medeiros",
+    "expected_sponsor_id": "4706b805-ca7e-46bf-a7a7-2ad5bc8c0438",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-0000005be070",
+    "nome": "Victor Borges",
+    "cpf": "705.499.672-06",
+    "indicador_excel": "Michael De Araújo Medeiros",
+    "expected_sponsor_id": "4706b805-ca7e-46bf-a7a7-2ad5bc8c0438",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-0000004d3d78",
+    "nome": "Gilvania Maria Da Silva Lima Lima",
+    "cpf": "725.033.434-49",
+    "indicador_excel": "Michael De Araújo Medeiros",
+    "expected_sponsor_id": "4706b805-ca7e-46bf-a7a7-2ad5bc8c0438",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-000000372c5a",
+    "nome": "Mayara De Araújo Medeiros Antão",
+    "cpf": "157.027.347-26",
+    "indicador_excel": "Michael De Araújo Medeiros",
+    "expected_sponsor_id": "4706b805-ca7e-46bf-a7a7-2ad5bc8c0438",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-00000084a682",
+    "nome": "Lourinaldo Ernesto Antao",
+    "cpf": "110.570.437-88",
+    "indicador_excel": "Michael De Araújo Medeiros",
+    "expected_sponsor_id": "4706b805-ca7e-46bf-a7a7-2ad5bc8c0438",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-000000099622",
+    "nome": "Thayná Duarte",
+    "cpf": "176.274.957-25",
+    "indicador_excel": "Michael De Araújo Medeiros",
+    "expected_sponsor_id": "4706b805-ca7e-46bf-a7a7-2ad5bc8c0438",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-000000604181",
+    "nome": "Luciana Santos",
+    "cpf": "840.834.095-68",
+    "indicador_excel": "Michael De Araújo Medeiros",
+    "expected_sponsor_id": "4706b805-ca7e-46bf-a7a7-2ad5bc8c0438",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-000000160a7b",
+    "nome": "Willams Gonçalves",
+    "cpf": "051.960.634-55",
+    "indicador_excel": "Michael De Araújo Medeiros",
+    "expected_sponsor_id": "4706b805-ca7e-46bf-a7a7-2ad5bc8c0438",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-000000164ea3",
+    "nome": "Alessandra Rosa de Araújo",
+    "cpf": "094.977.477-48",
+    "indicador_excel": "Michael De Araújo Medeiros",
+    "expected_sponsor_id": "4706b805-ca7e-46bf-a7a7-2ad5bc8c0438",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-0000000f92bd",
+    "nome": "Amelia Oliveira Ribeiro",
+    "cpf": "486.463.182-49",
+    "indicador_excel": "Michael De Araújo Medeiros",
+    "expected_sponsor_id": "4706b805-ca7e-46bf-a7a7-2ad5bc8c0438",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-000000506a30",
+    "nome": "Célia Alves Braga Braga",
+    "cpf": "545.792.877-20",
+    "indicador_excel": "Gilvania Maria Da Silva Lima Lima",
+    "expected_sponsor_id": "00000000-0000-4000-a000-0000004d3d78",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-0000003781c4",
+    "nome": "Emanoel Souza",
+    "cpf": "888.289.997-72",
+    "indicador_excel": "Sergio Alessandro Braga",
+    "expected_sponsor_id": "e2714e23-a345-430b-9fda-e4acc86e69a6",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-000000239914",
+    "nome": "Marcos Abreu",
+    "cpf": "408.137.113-04",
+    "indicador_excel": "RS Prólipsi Empresa",
+    "expected_sponsor_id": "89c000c0-7a39-4e1e-8dee-5978d846fa89",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-00000047ec03",
+    "nome": "Stefanie Rodrigues Hildever",
+    "cpf": "152.372.686-50",
+    "indicador_excel": "Sergio Alessandro Braga",
+    "expected_sponsor_id": "e2714e23-a345-430b-9fda-e4acc86e69a6",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-000000752c9e",
+    "nome": "Maria Goreti Da Rosa",
+    "cpf": "784.977.959-20",
+    "indicador_excel": "Michael De Araújo Medeiros",
+    "expected_sponsor_id": "4706b805-ca7e-46bf-a7a7-2ad5bc8c0438",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-0000008df3f5",
+    "nome": "Pedro Henrique",
+    "cpf": "058.073.847-76",
+    "indicador_excel": "RS Prólipsi Empresa",
+    "expected_sponsor_id": "89c000c0-7a39-4e1e-8dee-5978d846fa89",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-0000004b1ccb",
+    "nome": "Aguinaldo Andrade de Araújo",
+    "cpf": "109.780.017-29",
+    "indicador_excel": "Alessandra Rosa de Araújo",
+    "expected_sponsor_id": "00000000-0000-4000-a000-000000164ea3",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-0000006a4ea2",
+    "nome": "giselda fernanda costa arruda",
+    "cpf": "060.629.579-83",
+    "indicador_excel": "Luciano Cleiton Miguel",
+    "expected_sponsor_id": "6ea93be0-912d-4712-bed9-26da832a0e9d",
+    "status": "Mapeado"
+  },
+  {
+    "id": "f97a78f6-faa1-4b87-8dcf-8dd80418d51f",
+    "nome": "Kemeli De Melo Ferreira",
+    "cpf": "136.128.286-06",
+    "indicador_excel": "Luiz Queiroz",
+    "expected_sponsor_id": "da5db6da-14c1-492c-9ca2-e9fe03c2e88a",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-00000036f56c",
+    "nome": "Manoel Vicente Luiz",
+    "cpf": "275.862.514-87",
+    "indicador_excel": "Adriana Vicente Lins",
+    "expected_sponsor_id": "48548475-7e3d-4ceb-ad4b-c16e2a5c3b24",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-0000009664c6",
+    "nome": "Nadeje Lins Serafim",
+    "cpf": "716.029.254-53",
+    "indicador_excel": "Manoel Vicente Luiz",
+    "expected_sponsor_id": "00000000-0000-4000-a000-00000036f56c",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-0000005bb020",
+    "nome": "Saulo Virgilio Barbosa",
+    "cpf": "004.281.302-67",
+    "indicador_excel": "Laércio Montesso Gonçalves",
+    "expected_sponsor_id": "1258fb1f-1f29-4ab3-bc4b-f5f59e95d996",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-00000054b707",
+    "nome": "Márcia Souza",
+    "cpf": "067.094.039-98",
+    "indicador_excel": "Alessandra Rosa de Araújo",
+    "expected_sponsor_id": "00000000-0000-4000-a000-000000164ea3",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-0000005b416a",
+    "nome": "Rafael Alves Guido",
+    "cpf": "858.714.513-49",
+    "indicador_excel": "RS Prólipsi Empresa",
+    "expected_sponsor_id": "89c000c0-7a39-4e1e-8dee-5978d846fa89",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-000000638c71",
+    "nome": "Afonso Santos Da Silva",
+    "cpf": "752.717.619-91",
+    "indicador_excel": "jose costa dos santos",
+    "expected_sponsor_id": "0e43ad8e-3c82-4f29-b3a0-55d0f7fe6e84",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-00000072db3b",
+    "nome": "Janete Ferreira",
+    "cpf": "020.293.809-38",
+    "indicador_excel": "laudenice da silva",
+    "expected_sponsor_id": "be120d1a-24df-40b6-9621-5d88f1f8b34b",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-000000757dcc",
+    "nome": "Silmara Miranda",
+    "cpf": "605.447.082-53",
+    "indicador_excel": "Michael De Araújo Medeiros",
+    "expected_sponsor_id": "4706b805-ca7e-46bf-a7a7-2ad5bc8c0438",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-0000004eda25",
+    "nome": "CICERO RODRIGUES DOS SANTOS",
+    "cpf": "973.464.623-00",
+    "indicador_excel": "Luciano Cleiton Miguel",
+    "expected_sponsor_id": "6ea93be0-912d-4712-bed9-26da832a0e9d",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-0000006bd2ae",
+    "nome": "Audicir Canal",
+    "cpf": "007.630.599-60",
+    "indicador_excel": "Emanuel Mendes Claro",
+    "expected_sponsor_id": "179d44cd-3351-4cdb-ad1e-78ac274108c2",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-0000006ce239",
+    "nome": "Rosemario Martins Bernadino",
+    "cpf": "553.152.166-91",
+    "indicador_excel": "edilson santos de jesus",
+    "expected_sponsor_id": "e29678de-c797-4f09-843e-2ad4024185de",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-000000239fa9",
+    "nome": "Geziane Nunes de Almeida",
+    "cpf": "074.066.409-35",
+    "indicador_excel": "cleuci costa do santos",
+    "expected_sponsor_id": null,
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-0000004fb3cf",
+    "nome": "Dilvete Borba Alves",
+    "cpf": "479.110.859-00",
+    "indicador_excel": "Maria Goreti Da Rosa",
+    "expected_sponsor_id": "00000000-0000-4000-a000-000000752c9e",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-0000000dcdf5",
+    "nome": "CLAUDINEI MOREIRA",
+    "cpf": "014.412.469-67",
+    "indicador_excel": "jose costa dos santos",
+    "expected_sponsor_id": "0e43ad8e-3c82-4f29-b3a0-55d0f7fe6e84",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-00000040c6e2",
+    "nome": "Luiz Gustavo Ribeiro]",
+    "cpf": "143.645.779-36",
+    "indicador_excel": "joziana pereira dos santos",
+    "expected_sponsor_id": "51fb8779-0b66-43ae-81e4-bebad05dd516",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-0000000ffe42",
+    "nome": "Adiclandia Vicente Lins Gozzer",
+    "cpf": "636.682.382-00",
+    "indicador_excel": "Nadeje Lins Serafim",
+    "expected_sponsor_id": "00000000-0000-4000-a000-0000009664c6",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-000000230660",
+    "nome": "Jacilene Pessoa",
+    "cpf": "689.491.972-00",
+    "indicador_excel": "Michael De Araújo Medeiros",
+    "expected_sponsor_id": "4706b805-ca7e-46bf-a7a7-2ad5bc8c0438",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-0000002778fa",
+    "nome": "Rosa Alves de Barros Barros",
+    "cpf": "134.832.772-34",
+    "indicador_excel": "Gilvania Maria Da Silva Lima Lima",
+    "expected_sponsor_id": "00000000-0000-4000-a000-0000004d3d78",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-0000002bb921",
+    "nome": "Enildo Vieira januario",
+    "cpf": "337.767.068-80",
+    "indicador_excel": "edilson santos de jesus",
+    "expected_sponsor_id": "e29678de-c797-4f09-843e-2ad4024185de",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-00000078d0f4",
+    "nome": "Roberto Avelino Tomé",
+    "cpf": "682.170.309-44",
+    "indicador_excel": "Emanuel Mendes Claro",
+    "expected_sponsor_id": "179d44cd-3351-4cdb-ad1e-78ac274108c2",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-0000007d8090",
+    "nome": "Adnilson De Paula",
+    "cpf": "064.609.749-00",
+    "indicador_excel": "Luciano Cleiton Miguel",
+    "expected_sponsor_id": "6ea93be0-912d-4712-bed9-26da832a0e9d",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-0000007bc783",
+    "nome": "Adriano Sousa dos Santos",
+    "cpf": "287.280.358-01",
+    "indicador_excel": "Alessandra Rosa de Araújo",
+    "expected_sponsor_id": "00000000-0000-4000-a000-000000164ea3",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-000000135875",
+    "nome": "Teone Quirino Soares",
+    "cpf": "338.098.444-20",
+    "indicador_excel": "Michael De Araújo Medeiros",
+    "expected_sponsor_id": "4706b805-ca7e-46bf-a7a7-2ad5bc8c0438",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-000000618351",
+    "nome": "altamir alves marquardt",
+    "cpf": "414.766.709-00",
+    "indicador_excel": "simone de jesus lopes",
+    "expected_sponsor_id": "035517aa-00ce-459d-beb2-d898742a7806",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-000000578b80",
+    "nome": "john herbert do avelar",
+    "cpf": "010.176.189-92",
+    "indicador_excel": "Roberto Avelino Tomé",
+    "expected_sponsor_id": "00000000-0000-4000-a000-00000078d0f4",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-000000802bec",
+    "nome": "dalverson wagner correia",
+    "cpf": "034.945.549-00",
+    "indicador_excel": "jhonny vasconcelos",
+    "expected_sponsor_id": "80ed1149-e4d3-44b9-a417-d94e7705f8c5",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-0000002ad4bd",
+    "nome": "Esolimar Vieira paz",
+    "cpf": "012.669.271-82",
+    "indicador_excel": "Alessandra Rosa de Araújo",
+    "expected_sponsor_id": "00000000-0000-4000-a000-000000164ea3",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-0000006113b2",
+    "nome": "Tatiana Vasconcelos",
+    "cpf": "324.781.298-92",
+    "indicador_excel": "Alessandra Rosa de Araújo",
+    "expected_sponsor_id": "00000000-0000-4000-a000-000000164ea3",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-00000029bd15",
+    "nome": "marileia rio branco dos santos",
+    "cpf": "046.704.039-74",
+    "indicador_excel": "Alaor Garcia da Silva",
+    "expected_sponsor_id": "2e65f464-2b85-4c97-a285-fc1ab31c8789",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-0000007fa84e",
+    "nome": "INES TEREZINHA KOLACHNEK",
+    "cpf": "747.708.889-53",
+    "indicador_excel": "Alaor Garcia da Silva",
+    "expected_sponsor_id": "2e65f464-2b85-4c97-a285-fc1ab31c8789",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-0000005442a4",
+    "nome": "Joao Medeiros",
+    "cpf": "219.804.702-00",
+    "indicador_excel": "Emanuel Mendes Claro",
+    "expected_sponsor_id": "179d44cd-3351-4cdb-ad1e-78ac274108c2",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-0000006940db",
+    "nome": "Claudiney Sousa Luna",
+    "cpf": "033.676.234-82",
+    "indicador_excel": "Michael De Araújo Medeiros",
+    "expected_sponsor_id": "4706b805-ca7e-46bf-a7a7-2ad5bc8c0438",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-0000009025e5",
+    "nome": "Nadja Alves",
+    "cpf": "766.136.404-25",
+    "indicador_excel": "Alessandra Rosa de Araújo",
+    "expected_sponsor_id": "00000000-0000-4000-a000-000000164ea3",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-0000005fd61c",
+    "nome": "João Vieira Borges",
+    "cpf": "703.684.149-49",
+    "indicador_excel": "joão josé oliveira miranda",
+    "expected_sponsor_id": "034051dc-8742-4df4-85ff-36a01844c612",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-000000850974",
+    "nome": "Josias Arruda Coimbra",
+    "cpf": "544.943.031-00",
+    "indicador_excel": "Joao Medeiros",
+    "expected_sponsor_id": "00000000-0000-4000-a000-0000005442a4",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-0000005a35f6",
+    "nome": "Tiago Santos Miranda",
+    "cpf": "032.088.315-95",
+    "indicador_excel": "RS Prólipsi Empresa",
+    "expected_sponsor_id": "89c000c0-7a39-4e1e-8dee-5978d846fa89",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-0000005b1631",
+    "nome": "Jean Farias",
+    "cpf": "511.287.053-20",
+    "indicador_excel": "joão josé oliveira miranda",
+    "expected_sponsor_id": "034051dc-8742-4df4-85ff-36a01844c612",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-00000040855e",
+    "nome": "Antônio Geraldo",
+    "cpf": "034.743.236-01",
+    "indicador_excel": "Emanuel Mendes Claro",
+    "expected_sponsor_id": "179d44cd-3351-4cdb-ad1e-78ac274108c2",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-00000040ab68",
+    "nome": "Pillsr Gama",
+    "cpf": "121.268.137-11",
+    "indicador_excel": "Michael De Araújo Medeiros",
+    "expected_sponsor_id": "4706b805-ca7e-46bf-a7a7-2ad5bc8c0438",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-0000005754e0",
+    "nome": "José Sebastião aves brito",
+    "cpf": "468.430.355-15",
+    "indicador_excel": "fernanda pereira dos santos",
+    "expected_sponsor_id": "57a8002d-0084-4a5a-83f0-f5b7f8240049",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-0000002ca06f",
+    "nome": "Leonel Rodrigues",
+    "cpf": "022.520.677-30",
+    "indicador_excel": "Emanuel Mendes Claro",
+    "expected_sponsor_id": "179d44cd-3351-4cdb-ad1e-78ac274108c2",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-0000006756c4",
+    "nome": "Joel Almeida Lara",
+    "cpf": "583.914.109-78",
+    "indicador_excel": "Jean Farias",
+    "expected_sponsor_id": "00000000-0000-4000-a000-0000005b1631",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-000000846d5e",
+    "nome": "Sidney Cunha",
+    "cpf": "031.855.869-64",
+    "indicador_excel": "jose costa dos santos",
+    "expected_sponsor_id": "0e43ad8e-3c82-4f29-b3a0-55d0f7fe6e84",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-0000007077a4",
+    "nome": "Myrna Lorena Celste Wilson",
+    "cpf": "069.097.130-36",
+    "indicador_excel": "Michael De Araújo Medeiros",
+    "expected_sponsor_id": "4706b805-ca7e-46bf-a7a7-2ad5bc8c0438",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-000000575c0b",
+    "nome": "Oséias Soares pinto",
+    "cpf": "183.819.818-08",
+    "indicador_excel": "Luiz Queiroz",
+    "expected_sponsor_id": "da5db6da-14c1-492c-9ca2-e9fe03c2e88a",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-000000677b3d",
+    "nome": "Lucimari Oliveira",
+    "cpf": "721.345.770-53",
+    "indicador_excel": "Emanuel Mendes Claro",
+    "expected_sponsor_id": "179d44cd-3351-4cdb-ad1e-78ac274108c2",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-0000004853b8",
+    "nome": "Odair Luna",
+    "cpf": "001.234.384-62",
+    "indicador_excel": "RS Prólipsi Empresa",
+    "expected_sponsor_id": "89c000c0-7a39-4e1e-8dee-5978d846fa89",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-0000005b78f2",
+    "nome": "Geiza Rodrigues santos",
+    "cpf": "044.960.395-40",
+    "indicador_excel": "Tiago Santos Miranda",
+    "expected_sponsor_id": "00000000-0000-4000-a000-0000005a35f6",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-0000008383a4",
+    "nome": "José Carlos",
+    "cpf": "342.328.850-72",
+    "indicador_excel": "joao vicente jordao",
+    "expected_sponsor_id": "fd6ac021-b8ab-4e0e-8ce4-178156417948",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-0000001648b4",
+    "nome": "Fabiano Guizoni",
+    "cpf": "020.127.889-80",
+    "indicador_excel": "Lucimari Oliveira",
+    "expected_sponsor_id": "00000000-0000-4000-a000-000000677b3d",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-00000004ff3b",
+    "nome": "Joziel Conceição da silva",
+    "cpf": "003.784.771-61",
+    "indicador_excel": "Michael De Araújo Medeiros",
+    "expected_sponsor_id": "4706b805-ca7e-46bf-a7a7-2ad5bc8c0438",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-00000040523c",
+    "nome": "Valter dos Santos nascimento",
+    "cpf": "661.784.525-00",
+    "indicador_excel": "Tiago Santos Miranda",
+    "expected_sponsor_id": "00000000-0000-4000-a000-0000005a35f6",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-0000002c93f1",
+    "nome": "Edner Guimarães de Andrade",
+    "cpf": "002.777.060-50",
+    "indicador_excel": "Tiago Santos Miranda",
+    "expected_sponsor_id": "00000000-0000-4000-a000-0000005a35f6",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-00000058202d",
+    "nome": "Jorgenei Mendes da Silva",
+    "cpf": "830.315.102-91",
+    "indicador_excel": "Tiago Santos Miranda",
+    "expected_sponsor_id": "00000000-0000-4000-a000-0000005a35f6",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-0000004ea8d8",
+    "nome": "Silvia Terezinha de Almeida",
+    "cpf": "655.114.259-15",
+    "indicador_excel": "Alaor Garcia da Silva",
+    "expected_sponsor_id": "2e65f464-2b85-4c97-a285-fc1ab31c8789",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-000000251d11",
+    "nome": "Denilson Souza de lima",
+    "cpf": "781.456.942-72",
+    "indicador_excel": "Luiz Queiroz",
+    "expected_sponsor_id": "da5db6da-14c1-492c-9ca2-e9fe03c2e88a",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-00000079dfef",
+    "nome": "JORGE HENRIQUE NUNES DE OLIVEIRA",
+    "cpf": "159.138.208-43",
+    "indicador_excel": "Emanuel Mendes Claro",
+    "expected_sponsor_id": "179d44cd-3351-4cdb-ad1e-78ac274108c2",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-000000626218",
+    "nome": "CLAUDIA SUZANE BRUM",
+    "cpf": "934.287.239-53",
+    "indicador_excel": "JORGE HENRIQUE NUNES DE OLIVEIRA",
+    "expected_sponsor_id": "00000000-0000-4000-a000-00000079dfef",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-00000096f051",
+    "nome": "Claudenir Augusto da Silva",
+    "cpf": "028.631.069-45",
+    "indicador_excel": "Jose Maria Figueiredo dos Santos",
+    "expected_sponsor_id": "3c6672ef-8256-48c9-bb6c-4b07aa239816",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-000000605e2d",
+    "nome": "Hamilton José da Rosa zorzenao",
+    "cpf": "163.479.490-75",
+    "indicador_excel": "Alaor Garcia da Silva",
+    "expected_sponsor_id": "2e65f464-2b85-4c97-a285-fc1ab31c8789",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-00000049d832",
+    "nome": "Maura Rodrigues da Silva ermelino",
+    "cpf": "611.373.249-53",
+    "indicador_excel": "Jose Maria Figueiredo dos Santos",
+    "expected_sponsor_id": "3c6672ef-8256-48c9-bb6c-4b07aa239816",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-00000067315a",
+    "nome": "Firmino Figueiredo dos Santos",
+    "cpf": "698.843.408-97",
+    "indicador_excel": "Jose Maria Figueiredo dos Santos",
+    "expected_sponsor_id": "3c6672ef-8256-48c9-bb6c-4b07aa239816",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-00000056d184",
+    "nome": "Cassio Natel",
+    "cpf": "080.553.169-61",
+    "indicador_excel": "Jose Maria Figueiredo dos Santos",
+    "expected_sponsor_id": "3c6672ef-8256-48c9-bb6c-4b07aa239816",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-00000079e19e",
+    "nome": "Willer Batista",
+    "cpf": "387.840.138-85",
+    "indicador_excel": "Tiago Santos Miranda",
+    "expected_sponsor_id": "00000000-0000-4000-a000-0000005a35f6",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-0000001c3278",
+    "nome": "Jocelito Carvalho do Prado",
+    "cpf": "913.509.210-68",
+    "indicador_excel": "Hamilton José da Rosa zorzenao",
+    "expected_sponsor_id": "00000000-0000-4000-a000-00000067c4cc",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-00000052c291",
+    "nome": "ernani lima pereira",
+    "cpf": "392.642.629-20",
+    "indicador_excel": "Alaor Garcia da Silva",
+    "expected_sponsor_id": "2e65f464-2b85-4c97-a285-fc1ab31c8789",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-0000007bd839",
+    "nome": "Aparicio Monteiro",
+    "cpf": "542.404.259-72",
+    "indicador_excel": "ernani lima pereira",
+    "expected_sponsor_id": "00000000-0000-4000-a000-00000052c291",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-00000016ea45",
+    "nome": "Rubens Solarevicz",
+    "cpf": "696.698.809-04",
+    "indicador_excel": "ernani lima pereira",
+    "expected_sponsor_id": "00000000-0000-4000-a000-00000052c291",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-0000003bdad6",
+    "nome": "Thais Alves",
+    "cpf": "091.368.389-26",
+    "indicador_excel": "ingrid padilha miranda",
+    "expected_sponsor_id": "1e2c83f8-5c2e-4699-8fe6-33da6f702216",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-0000003ea539",
+    "nome": "Jose Carlos messias dos santos",
+    "cpf": "572.046.169-87",
+    "indicador_excel": "jose costa dos santos",
+    "expected_sponsor_id": "0e43ad8e-3c82-4f29-b3a0-55d0f7fe6e84",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-0000000b6607",
+    "nome": "pedro paulista prado",
+    "cpf": "836.346.900-97",
+    "indicador_excel": "Jose Carlos messias dos santos",
+    "expected_sponsor_id": "00000000-0000-4000-a000-0000003ea539",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-0000008f14c9",
+    "nome": "Pedro de sousa barros",
+    "cpf": "799.953.812-49",
+    "indicador_excel": "Tiago Santos Miranda",
+    "expected_sponsor_id": "00000000-0000-4000-a000-0000005a35f6",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-00000067c4cc",
+    "nome": "Hamilton José da Rosa zorzenao",
+    "cpf": "787.407.209-00",
+    "indicador_excel": "Geraldo renato Alves de solza",
+    "expected_sponsor_id": "4685d42c-2ae7-465d-9c52-035cfc3dde9e",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-000000217c63",
+    "nome": "Rogerio Tavares da Veiga",
+    "cpf": "922.325.079-04",
+    "indicador_excel": "Hamilton José da Rosa zorzenao",
+    "expected_sponsor_id": "00000000-0000-4000-a000-00000067c4cc",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-0000008ee4bf",
+    "nome": "Alciones luis Rissardi",
+    "cpf": "855.210.869-00",
+    "indicador_excel": "joão josé oliveira miranda",
+    "expected_sponsor_id": "034051dc-8742-4df4-85ff-36a01844c612",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-000000290359",
+    "nome": "Romualdo Bezerra da Silva",
+    "cpf": "692.677.311-49",
+    "indicador_excel": "mauricio pereira de carvalho",
+    "expected_sponsor_id": "a68386df-6838-478a-b398-b42c3e7c32c4",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-0000008fd104",
+    "nome": "Alirio Moro",
+    "cpf": "752.505.519-04",
+    "indicador_excel": "Romualdo Bezerra da Silva",
+    "expected_sponsor_id": "00000000-0000-4000-a000-000000290359",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-00000067428e",
+    "nome": "Manoel Matos Oliveira",
+    "cpf": "912.205.562-20",
+    "indicador_excel": "Emanuel Mendes Claro",
+    "expected_sponsor_id": "179d44cd-3351-4cdb-ad1e-78ac274108c2",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-00000075e9f0",
+    "nome": "Sara Bezerra da Silva",
+    "cpf": "061.143.301-02",
+    "indicador_excel": "Romualdo Bezerra da Silva",
+    "expected_sponsor_id": "00000000-0000-4000-a000-000000290359",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-000000799328",
+    "nome": "José jose Rodrigues",
+    "cpf": "459.641.210-39",
+    "indicador_excel": "Willer Batista",
+    "expected_sponsor_id": "00000000-0000-4000-a000-00000079e19e",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-000000482491",
+    "nome": "Maria José Santos de Ávila",
+    "cpf": "168.358.478-32",
+    "indicador_excel": "Alirio Moro",
+    "expected_sponsor_id": "00000000-0000-4000-a000-0000008fd104",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-0000004f34c4",
+    "nome": "Everton Magnus Cardoso",
+    "cpf": "012.885.500-22",
+    "indicador_excel": "Manoel Matos Oliveira",
+    "expected_sponsor_id": "00000000-0000-4000-a000-00000067428e",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-00000073507b",
+    "nome": "Helida Alves Farias",
+    "cpf": "014.288.171-66",
+    "indicador_excel": "Érica Farias de Araújo",
+    "expected_sponsor_id": "62cab044-f855-4a0d-8f93-8b59a0308073",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-0000006f86bd",
+    "nome": "Luciano Lopes Sena",
+    "cpf": "164.571.848-47",
+    "indicador_excel": "Tiago Santos Miranda",
+    "expected_sponsor_id": "00000000-0000-4000-a000-0000005a35f6",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-0000005097fd",
+    "nome": "Andreia Pacheco da Silva",
+    "cpf": "082.906.237-80",
+    "indicador_excel": "Emanuel Mendes Claro",
+    "expected_sponsor_id": "179d44cd-3351-4cdb-ad1e-78ac274108c2",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-0000000407c4",
+    "nome": "Paola Emanuelle Figueiredo",
+    "cpf": "053.723.389-03",
+    "indicador_excel": "joão josé oliveira miranda",
+    "expected_sponsor_id": "034051dc-8742-4df4-85ff-36a01844c612",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-000000074da5",
+    "nome": "Urbano Barreto",
+    "cpf": "046.690.611-00",
+    "indicador_excel": "Emanoel Souza",
+    "expected_sponsor_id": "00000000-0000-4000-a000-0000003781c4",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-0000008e2899",
+    "nome": "Josué Cabral da Luz",
+    "cpf": "717.508.519-20",
+    "indicador_excel": "ernani lima pereira",
+    "expected_sponsor_id": "00000000-0000-4000-a000-00000052c291",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-0000004622d6",
+    "nome": "Odenir Paulo de Oliveira",
+    "cpf": "964.138.409-00",
+    "indicador_excel": "ernani lima pereira",
+    "expected_sponsor_id": "00000000-0000-4000-a000-00000052c291",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-0000000af977",
+    "nome": "Marcos Da Silva",
+    "cpf": "815.827.300-91",
+    "indicador_excel": "joão josé oliveira miranda",
+    "expected_sponsor_id": "034051dc-8742-4df4-85ff-36a01844c612",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-00000000408f",
+    "nome": "Gledison Roberto",
+    "cpf": "759.813.432-49",
+    "indicador_excel": "mauricio pereira de carvalho",
+    "expected_sponsor_id": "a68386df-6838-478a-b398-b42c3e7c32c4",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-000000753cf9",
+    "nome": "Ezequiel Alves da Fonseca",
+    "cpf": "034.435.804-67",
+    "indicador_excel": "Michael De Araújo Medeiros",
+    "expected_sponsor_id": "4706b805-ca7e-46bf-a7a7-2ad5bc8c0438",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-000000783499",
+    "nome": "Chagas pinto",
+    "cpf": "231.868.102-30",
+    "indicador_excel": "Michael De Araújo Medeiros",
+    "expected_sponsor_id": "4706b805-ca7e-46bf-a7a7-2ad5bc8c0438",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-0000004e3d9f",
+    "nome": "carlos gomes cavalcante",
+    "cpf": "784.384.899-15",
+    "indicador_excel": "João Alves Algarrão",
+    "expected_sponsor_id": "52ee705b-6069-4bb4-884c-887de665c035",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-000000585d1e",
+    "nome": "Jardel Rubem Gaioso Carneiro",
+    "cpf": "780.759.044-00",
+    "indicador_excel": "Tiago Santos Miranda",
+    "expected_sponsor_id": "00000000-0000-4000-a000-0000005a35f6",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-0000002eb4f3",
+    "nome": "João Nazaré do Socorro Ferreira",
+    "cpf": "133.654.792-87",
+    "indicador_excel": "Jardel Rubem Gaioso Carneiro",
+    "expected_sponsor_id": "00000000-0000-4000-a000-000000585d1e",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-00000022d0b8",
+    "nome": "José Rene Lira de Queiroz",
+    "cpf": "009.648.264-88",
+    "indicador_excel": "Jardel Rubem Gaioso Carneiro",
+    "expected_sponsor_id": "00000000-0000-4000-a000-000000585d1e",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-0000007abe21",
+    "nome": "Antônio Marcos Costa",
+    "cpf": "031.635.774-07",
+    "indicador_excel": "João Nazaré do Socorro Ferreira",
+    "expected_sponsor_id": "00000000-0000-4000-a000-0000002eb4f3",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-0000001e2da8",
+    "nome": "Osmar pererira de godoy",
+    "cpf": "008.826.088-78",
+    "indicador_excel": "joao vicente jordao",
+    "expected_sponsor_id": "fd6ac021-b8ab-4e0e-8ce4-178156417948",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-0000008b0e96",
+    "nome": "Emanuel Davi",
+    "cpf": "062.593.149-14",
+    "indicador_excel": "Emanuel Mendes Claro",
+    "expected_sponsor_id": "179d44cd-3351-4cdb-ad1e-78ac274108c2",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-00000002a360",
+    "nome": "Mauro Bellinel",
+    "cpf": "876.048.339-34",
+    "indicador_excel": "joão josé oliveira miranda",
+    "expected_sponsor_id": "034051dc-8742-4df4-85ff-36a01844c612",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-00000048504e",
+    "nome": "Lediane Gonçalves santos",
+    "cpf": "237.341.148-29",
+    "indicador_excel": "Michael De Araújo Medeiros",
+    "expected_sponsor_id": "4706b805-ca7e-46bf-a7a7-2ad5bc8c0438",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-0000008df04c",
+    "nome": "Izaac Pinheiro da Silva Filho",
+    "cpf": "444.488.302-25",
+    "indicador_excel": "Manoel Domingos Bruno da Silva",
+    "expected_sponsor_id": "5985f75e-1419-4aba-8870-fdd00a529a30",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-00000089e06a",
+    "nome": "Luis Fernando Ilário Rodrigues",
+    "cpf": "082.206.589-40",
+    "indicador_excel": "Érica Farias de Araújo",
+    "expected_sponsor_id": "62cab044-f855-4a0d-8f93-8b59a0308073",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-00000009f197",
+    "nome": "Wagner Oliveira",
+    "cpf": "705.650.312-87",
+    "indicador_excel": "Emanuel Mendes Claro",
+    "expected_sponsor_id": "179d44cd-3351-4cdb-ad1e-78ac274108c2",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-000000719f20",
+    "nome": "Abismael Belo",
+    "cpf": "394.419.974-04",
+    "indicador_excel": "Michael De Araújo Medeiros",
+    "expected_sponsor_id": "4706b805-ca7e-46bf-a7a7-2ad5bc8c0438",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-00000047cc08",
+    "nome": "José Marcio",
+    "cpf": "839.152.066-87",
+    "indicador_excel": "Emanuel Mendes Claro",
+    "expected_sponsor_id": "179d44cd-3351-4cdb-ad1e-78ac274108c2",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-0000006a38ba",
+    "nome": "Salvador  dos Reus",
+    "cpf": "468.969.969-00",
+    "indicador_excel": "RS Prólipsi Empresa",
+    "expected_sponsor_id": "89c000c0-7a39-4e1e-8dee-5978d846fa89",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-000000765b2a",
+    "nome": "Alisson Breno Ribeiro",
+    "cpf": "122.978.899-92",
+    "indicador_excel": "celso lopes da rosa",
+    "expected_sponsor_id": "b9822794-e382-42f1-ae07-bd02f04532ed",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-000000537b05",
+    "nome": "Helenice Moreno de Oliveira",
+    "cpf": "146.901.188-33",
+    "indicador_excel": "Emanuel Mendes Claro",
+    "expected_sponsor_id": "179d44cd-3351-4cdb-ad1e-78ac274108c2",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-000000107f54",
+    "nome": "Francisco das chagas Pereira Araujo",
+    "cpf": "064.776.333-88",
+    "indicador_excel": "RS Prólipsi Empresa",
+    "expected_sponsor_id": "89c000c0-7a39-4e1e-8dee-5978d846fa89",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-0000005b84a2",
+    "nome": "Mauricio Martins Viana",
+    "cpf": "336.579.129-91",
+    "indicador_excel": "Rubens Solarevicz",
+    "expected_sponsor_id": "00000000-0000-4000-a000-00000016ea45",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-00000061742f",
+    "nome": "Rozangela Bodi Santana",
+    "cpf": "063.401.899-03",
+    "indicador_excel": "leonina silva dias",
+    "expected_sponsor_id": "8454c825-a66a-4f37-a450-10de5bbaced2",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-000000487ec3",
+    "nome": "Sonia Maria de Carvalho",
+    "cpf": "202.244.351-91",
+    "indicador_excel": "Helenice Moreno de Oliveira",
+    "expected_sponsor_id": "00000000-0000-4000-a000-000000537b05",
+    "status": "Mapeado"
+  },
+  {
+    "id": "e27e76e4-151e-417a-afb3-059a025048af",
+    "nome": "",
+    "cpf": "",
+    "indicador_excel": "segredodasaude",
+    "expected_sponsor_id": "00000000-0000-4000-a000-000000537b05",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-00000019dc9b",
+    "nome": "Nara Timm Vianna",
+    "cpf": "593.042.780-15",
+    "indicador_excel": "Helenice Moreno de Oliveira",
+    "expected_sponsor_id": "00000000-0000-4000-a000-000000537b05",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-00000082cb3e",
+    "nome": "Andréia Bigas de lima",
+    "cpf": "613.582.401-59",
+    "indicador_excel": "Helenice Moreno de Oliveira",
+    "expected_sponsor_id": "00000000-0000-4000-a000-000000537b05",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-00000034984a",
+    "nome": "Izaías Vieira Costa",
+    "cpf": "106.526.228-01",
+    "indicador_excel": "Helenice Moreno de Oliveira",
+    "expected_sponsor_id": "00000000-0000-4000-a000-000000537b05",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-000000360585",
+    "nome": "Rosineia Aparecida Rodrigues",
+    "cpf": "041.128.039-23",
+    "indicador_excel": "joão josé oliveira miranda",
+    "expected_sponsor_id": "034051dc-8742-4df4-85ff-36a01844c612",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-00000085949a",
+    "nome": "Jose Vidal",
+    "cpf": "607.501.899-91",
+    "indicador_excel": "Michael De Araújo Medeiros",
+    "expected_sponsor_id": "4706b805-ca7e-46bf-a7a7-2ad5bc8c0438",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-00000062c29c",
+    "nome": "Nagila Marques Martins de Souza",
+    "cpf": "215.918.808-58",
+    "indicador_excel": "Helenice Moreno de Oliveira",
+    "expected_sponsor_id": "00000000-0000-4000-a000-000000537b05",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-0000008a256c",
+    "nome": "Sergio Filgueiras magalhaes",
+    "cpf": "866.386.704-25",
+    "indicador_excel": "Emanuel Mendes Claro",
+    "expected_sponsor_id": "179d44cd-3351-4cdb-ad1e-78ac274108c2",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-0000004df73d",
+    "nome": "anderson fabre",
+    "cpf": "037.745.829-55",
+    "indicador_excel": "joão josé oliveira miranda",
+    "expected_sponsor_id": "034051dc-8742-4df4-85ff-36a01844c612",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-00000036ce64",
+    "nome": "Maria Sarmento",
+    "cpf": "808.196.482-72",
+    "indicador_excel": "Amelia Oliveira Ribeiro",
+    "expected_sponsor_id": "00000000-0000-4000-a000-0000000f92bd",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-00000062ad8a",
+    "nome": "Analia Silvana Marques Martins",
+    "cpf": "000.636.971-57",
+    "indicador_excel": "Nagila Marques Martins de Souza",
+    "expected_sponsor_id": "00000000-0000-4000-a000-00000062c29c",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-00000059ba71",
+    "nome": "Jaira Marques de Oliveira",
+    "cpf": "321.602.831-34",
+    "indicador_excel": "Nagila Marques Martins de Souza",
+    "expected_sponsor_id": "00000000-0000-4000-a000-00000062c29c",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-00000080cc4e",
+    "nome": "Israel Santana",
+    "cpf": "518.261.945-68",
+    "indicador_excel": "Michael De Araújo Medeiros",
+    "expected_sponsor_id": "4706b805-ca7e-46bf-a7a7-2ad5bc8c0438",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-000000845662",
+    "nome": "Vital érg -- Corporation --",
+    "cpf": "545.012.539-91",
+    "indicador_excel": "joão josé oliveira miranda",
+    "expected_sponsor_id": "034051dc-8742-4df4-85ff-36a01844c612",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-00000093c31b",
+    "nome": "Murilo Henrique Amaral Vieira",
+    "cpf": "125.572.739-02",
+    "indicador_excel": "Ewerton camargo simer",
+    "expected_sponsor_id": "665fec92-125e-4f00-bedd-22572741779e",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-0000002463ca",
+    "nome": "Gilmara dos santos de lima",
+    "cpf": "036.796.779-01",
+    "indicador_excel": "Murilo Henrique Amaral Vieira",
+    "expected_sponsor_id": "00000000-0000-4000-a000-00000093c31b",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-00000047782f",
+    "nome": "Jhulia Almeida",
+    "cpf": "058.640.961-05",
+    "indicador_excel": "Helenice Moreno de Oliveira",
+    "expected_sponsor_id": "00000000-0000-4000-a000-000000537b05",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-000000583b16",
+    "nome": "Maria Alice Pimentel",
+    "cpf": "018.960.449-21",
+    "indicador_excel": "Murilo Henrique Amaral Vieira",
+    "expected_sponsor_id": "00000000-0000-4000-a000-00000093c31b",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-0000008226d9",
+    "nome": "Nivaldo Estevão",
+    "cpf": "372.767.191-20",
+    "indicador_excel": "Helenice Moreno de Oliveira",
+    "expected_sponsor_id": "00000000-0000-4000-a000-000000537b05",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-00000093ab97",
+    "nome": "Adelir Roberto",
+    "cpf": "798.246.179-49",
+    "indicador_excel": "adilson fernandes borges",
+    "expected_sponsor_id": "3355cfbd-fbd8-4e72-a769-ef67298b959c",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-00000028e7fd",
+    "nome": "Lilian De Jesus",
+    "cpf": "636.017.292-53",
+    "indicador_excel": "Amelia Oliveira Ribeiro",
+    "expected_sponsor_id": "00000000-0000-4000-a000-0000000f92bd",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-0000005c876b",
+    "nome": "pablo douglas",
+    "cpf": "770.694.392-53",
+    "indicador_excel": "Amelia Oliveira Ribeiro",
+    "expected_sponsor_id": "00000000-0000-4000-a000-0000000f92bd",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-000000120231",
+    "nome": "Valdival Ribeiro Braga",
+    "cpf": "332.639.572-87",
+    "indicador_excel": "Amelia Oliveira Ribeiro",
+    "expected_sponsor_id": "00000000-0000-4000-a000-0000000f92bd",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-0000004aba6d",
+    "nome": "Sonia Maria Pantosa",
+    "cpf": "511.958.281-87",
+    "indicador_excel": "Helenice Moreno de Oliveira",
+    "expected_sponsor_id": "00000000-0000-4000-a000-000000537b05",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-00000060d93c",
+    "nome": "daniel sa",
+    "cpf": "630.106.589-15",
+    "indicador_excel": "joão josé oliveira miranda",
+    "expected_sponsor_id": "034051dc-8742-4df4-85ff-36a01844c612",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-0000002227b3",
+    "nome": "Maria Aparecida da Silva Cordeiro",
+    "cpf": "286.728.951-34",
+    "indicador_excel": "Izaías Vieira Costa",
+    "expected_sponsor_id": "00000000-0000-4000-a000-00000034984a",
+    "status": "Mapeado"
+  },
+  {
+    "id": "00000000-0000-4000-a000-000000197400",
+    "nome": "nilza coelho",
+    "cpf": "404.597.211-00",
+    "indicador_excel": "Maria Aparecida da Silva Cordeiro",
+    "expected_sponsor_id": "00000000-0000-4000-a000-0000002227b3",
+    "status": "Mapeado"
+  }
+]

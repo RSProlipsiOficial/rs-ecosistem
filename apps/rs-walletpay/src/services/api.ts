@@ -49,40 +49,40 @@ api.interceptors.response.use(
 
 export const walletAPI = {
   // Saldo
-  getBalance: (userId: string) => 
+  getBalance: (userId: string) =>
     api.get(`/wallet/balance/${userId}`),
-  
+
   // Transações
-  getTransactions: (userId: string, params?: any) => 
+  getTransactions: (userId: string, params?: any) =>
     api.get(`/wallet/transactions/${userId}`, { params }),
-  
+
   // Extrato
-  getStatement: (userId: string, startDate: string, endDate: string) => 
+  getStatement: (userId: string, startDate: string, endDate: string) =>
     api.get(`/wallet/statement/${userId}`, { params: { start_date: startDate, end_date: endDate } }),
-  
+
   // Saques
-  requestWithdraw: (data: any) => 
+  requestWithdraw: (data: any) =>
     api.post('/wallet/withdraw', data),
-  
-  getWithdrawals: (userId: string) => 
+
+  getWithdrawals: (userId: string) =>
     api.get(`/wallet/withdrawals/${userId}`),
-  
+
   // Transferências
-  transfer: (data: any) => 
+  transfer: (data: any) =>
     api.post('/wallet/transfer', data),
-  
+
   // PIX
-  createPixKey: (data: any) => 
+  createPixKey: (data: any) =>
     api.post('/wallet/pix/create', data),
-  
-  listPixKeys: (userId: string) => 
+
+  listPixKeys: (userId: string) =>
     api.get(`/wallet/pix/list/${userId}`),
-  
-  deletePixKey: (id: string) => 
+
+  deletePixKey: (id: string) =>
     api.delete(`/wallet/pix/${id}`),
-  
+
   // Depósitos
-  createDeposit: (data: any) => 
+  createDeposit: (data: any) =>
     api.post('/wallet/deposit', data),
 };
 
@@ -92,28 +92,28 @@ export const walletAPI = {
 
 export const sigmaAPI = {
   // Rede
-  getNetwork: (userId: string) => 
+  getNetwork: (userId: string) =>
     api.get(`/sigma/network/${userId}`),
-  
-  getMatrix: (userId: string) => 
+
+  getMatrix: (userId: string) =>
     api.get(`/sigma/matrix/${userId}`),
-  
-  getDownlines: (userId: string) => 
+
+  getDownlines: (userId: string) =>
     api.get(`/sigma/downlines/${userId}`),
-  
+
   // Ciclos
-  getCycles: (userId: string) => 
+  getCycles: (userId: string) =>
     api.get(`/sigma/cycles/${userId}`),
-  
-  getCycleStatus: (userId: string) => 
+
+  getCycleStatus: (userId: string) =>
     api.get(`/sigma/cycle/status/${userId}`),
-  
+
   // Bônus
-  getDepthBonus: (userId: string) => 
+  getDepthBonus: (userId: string) =>
     api.get(`/sigma/depth/${userId}`),
-  
+
   // Estatísticas
-  getStats: (userId: string) => 
+  getStats: (userId: string) =>
     api.get(`/sigma/stats/${userId}`),
 };
 
@@ -123,25 +123,25 @@ export const sigmaAPI = {
 
 export const careerAPI = {
   // Nível
-  getLevel: (userId: string) => 
+  getLevel: (userId: string) =>
     api.get(`/career/level/${userId}`),
-  
-  getProgress: (userId: string) => 
+
+  getProgress: (userId: string) =>
     api.get(`/career/progress/${userId}`),
-  
-  getNextLevel: (userId: string) => 
+
+  getNextLevel: (userId: string) =>
     api.get(`/career/next/${userId}`),
-  
+
   // VMEC
-  calculateVMEC: (userId: string) => 
+  calculateVMEC: (userId: string) =>
     api.get(`/career/vmec/${userId}`),
-  
+
   // Bônus
-  getCareerBonus: (userId: string) => 
+  getCareerBonus: (userId: string) =>
     api.get(`/career/bonus/${userId}`),
-  
+
   // Ranking
-  getRanking: () => 
+  getRanking: () =>
     api.get('/career/ranking'),
 };
 
@@ -151,24 +151,24 @@ export const careerAPI = {
 
 export const marketplaceAPI = {
   // Produtos
-  listProducts: (params?: any) => 
+  listProducts: (params?: any) =>
     api.get('/marketplace/products', { params }),
-  
-  getProduct: (id: string) => 
+
+  getProduct: (id: string) =>
     api.get(`/marketplace/products/${id}`),
-  
+
   // Pedidos
-  createOrder: (data: any) => 
+  createOrder: (data: any) =>
     api.post('/marketplace/orders', data),
-  
-  getUserOrders: (userId: string) => 
+
+  getUserOrders: (userId: string) =>
     api.get(`/marketplace/orders/${userId}`),
-  
+
   // Afiliação
-  generateAffiliateLink: (data: any) => 
+  generateAffiliateLink: (data: any) =>
     api.post('/marketplace/affiliate/link', data),
-  
-  getCommissions: (userId: string) => 
+
+  getCommissions: (userId: string) =>
     api.get(`/marketplace/commission/${userId}`),
 };
 
@@ -178,27 +178,27 @@ export const marketplaceAPI = {
 
 export const studioAPI = {
   // Chat
-  sendMessage: (data: any) => 
+  sendMessage: (data: any) =>
     api.post('/studio/chat', data),
-  
-  getChatHistory: (userId: string) => 
+
+  getChatHistory: (userId: string) =>
     api.get(`/studio/chat/history/${userId}`),
-  
+
   // Treinamentos
-  listTrainings: (params?: any) => 
+  listTrainings: (params?: any) =>
     api.get('/studio/trainings', { params }),
-  
-  getTraining: (id: string) => 
+
+  getTraining: (id: string) =>
     api.get(`/studio/trainings/${id}`),
-  
-  updateProgress: (data: any) => 
+
+  updateProgress: (data: any) =>
     api.post('/studio/training/progress', data),
-  
+
   // Conteúdo
-  generateImage: (data: any) => 
+  generateImage: (data: any) =>
     api.post('/studio/content/generate/image', data),
-  
-  generateText: (data: any) => 
+
+  generateText: (data: any) =>
     api.post('/studio/content/generate/text', data),
 };
 
@@ -207,17 +207,38 @@ export const studioAPI = {
 // ================================================
 
 export const authAPI = {
-  login: (email: string, password: string) => 
+  login: (email: string, password: string) =>
     api.post('/auth/login', { email, password }),
-  
-  register: (data: any) => 
+
+  register: (data: any) =>
     api.post('/auth/register', data),
-  
-  logout: () => 
+
+  logout: () =>
     api.post('/auth/logout'),
-  
-  refreshToken: () => 
+
+  refreshToken: () =>
     api.post('/auth/refresh'),
+
+  forgotPassword: (email: string) =>
+    api.post('/auth/forgot-password', { email }),
+};
+
+// ================================================
+// ADMIN ENDPOINTS
+// ================================================
+
+export const adminAPI = {
+  // Crédito Manual
+  creditUser: (data: { userId: string; amount: number; description?: string; type?: string }) =>
+    api.post('/wallet/admin/credit', data),
+
+  // Débito Manual
+  debitUser: (data: { userId: string; amount: number; description?: string }) =>
+    api.post('/wallet/admin/debit', data),
+
+  // Listar Todas Transações
+  getAllTransactions: (params?: any) =>
+    api.get('/wallet/admin/transactions', { params }),
 };
 
 export default api;

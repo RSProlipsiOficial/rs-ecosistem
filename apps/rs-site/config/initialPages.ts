@@ -293,6 +293,132 @@ export const initialPages: EditablePage[] = [
       metaDescription: 'Fique por dentro das últimas novidades, promoções e oportunidades da RS Prólipsi com nossas campanhas ativas.',
     },
   },
+  {
+    id: 'page_glicolipsi',
+    slug: 'glicolipsi',
+    route: 'glicolipsi',
+    title: 'GlicoLipsi',
+    showInNav: true,
+    linkedProductId: 'prod-glicolipsi',
+    isStatic: false,
+    containers: [
+      {
+        id: 'glicolipsi_hero',
+        type: 'hero',
+        title: 'A CHAVE PARA O EQUILÍBRIO METABÓLICO',
+        interstitialText: 'QUE VOCÊ',
+        subtitle: 'SEMPRE BUSCOU',
+        content: 'Recupere sua vitalidade e mantenha sua glicose sob controle com a potência dos ativos naturais do GlicoLipsi. Ciência, segurança e resultados reais.',
+        ctaText: 'Quero o Equilíbrio Agora',
+        ctaLink: '#ofertas',
+        styles: {
+          minHeight: '90vh',
+          backgroundImage: "url('https://images.unsplash.com/photo-1505751172876-fa1923c5c528?w=1920&q=80')",
+          textColor: '#fff',
+        }
+      },
+      {
+        id: 'glicolipsi_problem',
+        type: 'text',
+        title: 'Cansado das montanhas-russas de energia?',
+        content: '<p class="text-xl text-center mb-12">Oscilações na glicose não são apenas números; elas roubam seus dias, causam fadiga extrema e colocam sua saúde em risco silencioso.</p>',
+        styles: {
+          backgroundColor: 'var(--color-background)',
+          textAlign: 'center',
+        }
+      },
+      {
+        id: 'glicolipsi_problems_grid',
+        type: 'differentiators',
+        features: [
+          { 
+            iconSvg: '<path stroke="currentColor" fill="none" stroke-width="1.5" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />', 
+            title: 'Picos Pós-Refeição', 
+            description: 'Aquele sono incontrolável e a sensação de peso após comer são sinais de que seu corpo precisa de suporte.' 
+          },
+          { 
+            iconSvg: '<path stroke="currentColor" fill="none" stroke-width="1.5" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />', 
+            title: 'Quedas de Energia', 
+            description: 'O cansaço que surge do nada no meio do dia, dificultando o foco e a produtividade no trabalho.' 
+          },
+          { 
+            iconSvg: '<path stroke="currentColor" fill="none" stroke-width="1.5" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23-.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5" />', 
+            title: 'Saúde a Longo Prazo', 
+            description: 'Ignorar o equilíbrio metabólico hoje pode levar a complicações sérias no futuro que poderiam ser evitadas.' 
+          },
+        ],
+        styles: {
+          backgroundColor: '#000',
+        }
+      },
+      {
+        id: 'glicolipsi_ingredients',
+        type: 'textImage',
+        title: 'A Fórmula Definitiva',
+        content: '<p class="text-xl mb-6">O GlicoLipsi combina os 4 pilares da natureza para o seu bem-estar metabólico:</p><ul class="space-y-4 text-lg"><li class="flex items-start"><span class="text-accent mr-3 text-2xl">✓</span><div><strong>Feno-grego:</strong> O suporte natural mais potente para a sensibilidade à insulina.</div></li><li class="flex items-start"><span class="text-accent mr-3 text-2xl">✓</span><div><strong>Cúrcuma:</strong> Atua no combate ao estresse oxidativo e inflamação celular.</div></li><li class="flex items-start"><span class="text-accent mr-3 text-2xl">✓</span><div><strong>Magnésio Dimalato:</strong> O combustível essencial para a regulação energética diária.</div></li><li class="flex items-start"><span class="text-accent mr-3 text-2xl">✓</span><div><strong>Alho em Pó:</strong> Proteção cardiovascular e equilíbrio do colesterol LDL.</div></li></ul>',
+        imageUrl: '/assets/glicolipsi-ingredients.png',
+        altText: 'Ingredientes Ativos GlicoLipsi',
+        layout: 'image-left',
+        ctaText: 'Ver Ofertas Especiais',
+        ctaLink: '#ofertas',
+        styles: {
+          backgroundColor: 'var(--color-background)',
+        }
+      },
+      {
+        id: 'glicolipsi_benefits',
+        type: 'textImage',
+        title: 'O que você vai sentir com o uso contínuo?',
+        content: '<ul class="space-y-4 text-lg"><li class="flex items-start"><span class="text-accent mr-3 text-2xl">✓</span><div>Níveis de glicose mais estáveis e previsíveis.</div></li><li class="flex items-start"><span class="text-accent mr-3 text-2xl">✓</span><div>Muito mais energia física e clareza mental.</div></li><li class="flex items-start"><span class="text-accent mr-3 text-2xl">✓</span><div>Melhor digestão e metabolismo de carboidratos.</div></li><li class="flex items-start"><span class="text-accent mr-3 text-2xl">✓</span><div>A tranquilidade de estar cuidando do seu corpo.</div></li></ul>',
+        imageUrl: '/assets/glicolipsi-benefits.png',
+        altText: 'Benefícios GlicoLipsi',
+        layout: 'image-right',
+        styles: {
+          backgroundColor: 'var(--color-base-light)',
+        }
+      },
+      {
+        id: 'glicolipsi_pricing',
+        type: 'text',
+        title: 'Escolha o Melhor Tratamento para Você',
+        content: '<p class="text-center text-xl mb-12">Recomendamos o tratamento de 3 a 6 meses para resultados consolidados.</p><div id="ofertas"></div>',
+        styles: {
+          backgroundColor: 'var(--color-background)',
+          textAlign: 'center',
+        }
+      },
+      {
+        id: 'glicolipsi_products',
+        type: 'productsCarousel',
+        productIds: ['prod-glicolipsi'],
+        styles: {
+          backgroundColor: 'var(--color-background)',
+        }
+      },
+      {
+        id: 'glicolipsi_guarantee',
+        type: 'text',
+        title: 'Sua Compra é 100% Segura',
+        content: '<div class="text-center max-w-3xl mx-auto"><div class="text-6xl mb-6">🛡️</div><p class="text-lg">Adquira o GlicoLipsi com a garantia de qualidade RS Prólipsi. Seus dados estão protegidos por criptografia de ponta a ponta e a entrega é garantida em todo o território nacional.</p></div>',
+        styles: {
+          backgroundColor: 'var(--color-surface)',
+          textAlign: 'center',
+        }
+      },
+      {
+        id: 'glicolipsi_legal',
+        type: 'text',
+        content: '<div class="bg-surface border border-accent/20 rounded-2xl p-8"><p class="text-sm text-text-secondary"><strong class="text-accent">⚠️ AVISO LEGAL:</strong> GlicoLipsi é um suplemento alimentar legítimo. Este produto não é um medicamento e não substitui tratamentos médicos convencionais para diabetes ou qualquer outra condição. Os resultados podem variar conforme o organismo. Gestantes, lactantes e crianças devem consultar um médico. Mantenha hábitos de vida saudáveis.</p></div>',
+        styles: {
+          backgroundColor: 'var(--color-background)',
+        }
+      },
+    ],
+    seo: {
+      metaTitle: 'GlicoLipsi | Equilíbrio Metabólico e Vitalidade Diária',
+      metaDescription: 'Recupere sua vitalidade e mantenha sua glicose sob controle com a potência dos ativos naturais do GlicoLipsi. Ciência, segurança e resultados reais.',
+    },
+  },
   // --- Dynamic (User-created) Pages ---
   {
     id: 'page_diferenciais_1',

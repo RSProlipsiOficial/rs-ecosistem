@@ -24,7 +24,9 @@ import consultantsProfile from './routes/consultantsProfile';
 import v1Routes from './routes/v1';
 import path from 'path';
 const walletApiRoutes = require('./routes/wallet.routes');
+const adminWalletRoutes = require('./routes/admin.wallet.routes');
 const shippingRoutes = require('./routes/shipping.routes');
+const checkoutRoutes = require('./routes/checkout.routes');
 
 const app = express();
 
@@ -33,16 +35,19 @@ console.log("🚀 Iniciando RS Prólipsi API...\n");
 validatePlanOrThrow(); // Valida config/marketingRules
 validateAllRules(); // Valida regras operacionais
 
-// Middlewares globais
-app.use(cors());
-app.use(express.json({ limit: "1mb" }));
-app.use(logger);
-
-// Debug Middleware - Log all requests
+// Debug Middleware - Log all requests (MOVED UP)
 app.use((req, res, next) => {
-  console.log(`[DEBUG] Request received: ${req.method} ${req.url}`);
+  if (req.url.includes('/overview')) {
+    console.log(`[DEBUG_OVERVIEW] ${req.method} ${req.url} - Headers:`, req.headers.authorization ? 'Auth Present' : 'No Auth');
+  }
   next();
 });
+
+// Middlewares globais
+app.use(cors());
+app.use(express.json({ limit: "50mb" }));
+app.use(express.urlencoded({ limit: "50mb", extended: true }));
+app.use(logger);
 
 // Rotas de Pagamento (Mover para cima para evitar conflito)
 console.log('[DEBUG] Mounting payment routes at /api/payment');
@@ -65,7 +70,9 @@ app.use(linksRoutes);
 app.use(cdsRoutes);
 app.use(consultantsProfile);
 app.use('/api/wallet', walletApiRoutes);
+app.use('/api/wallet/admin', adminWalletRoutes);
 app.use('/api/shipping', shippingRoutes);
+app.use('/api/checkout', checkoutRoutes);
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 // Rotas V1 - API Oficial
@@ -76,7 +83,7 @@ app.use(errorHandler);
 
 import { getEnvNumber } from 'rs-ops-config';
 
-const PORT = getEnvNumber('PORT', 8080);
+const PORT = getEnvNumber('PORT', 4000);
 app.listen(PORT, () => {
   console.log(`API on http://localhost:${PORT}`);
 });

@@ -1,0 +1,14 @@
+{
+  "name": "gicolipsi-landing-page",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --port 3035",
+    "build": "vite build",
+    "preview": "vite preview --port 3035"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0"
+  }
+}

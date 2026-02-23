@@ -72,6 +72,24 @@ const CareerPlanPage: React.FC = () => {
         loadPins();
     }, []);
 
+    // 14 PINs Reais do Banco (Backup Hardcoded Exato)
+    const DEFAULT_PINS: PinLevel[] = [
+        { id: '8b446a86-7786-4f36-9b6f-6f9479b12204', pin: 'Iniciante', cycles: 0, minLines: 0, vmec: '—', bonus: 'R$ 0,00', image: 'https://rptkhrboejbwexseikuo.supabase.co/storage/v1/object/public/pins/pin_1769287532356_lmdqv.png' },
+        { id: 'bf2d4fec-9c00-4f07-b411-2ccde89480e0', pin: 'Bronze', cycles: 5, minLines: 0, vmec: '—', bonus: 'R$ 13,50', image: 'https://rptkhrboejbwexseikuo.supabase.co/storage/v1/object/public/pins/pin_1769287536392_5sry8c.png' },
+        { id: '1980d23a-7ed2-44a7-a22d-c2aee9a25577', pin: 'Prata', cycles: 15, minLines: 1, vmec: '100 %', bonus: 'R$ 40,50', image: 'https://rptkhrboejbwexseikuo.supabase.co/storage/v1/object/public/pins/pin_1769287539000_ksfznk.png' },
+        { id: 'ec81ccb4-fd9b-4f92-bebc-136f191db23d', pin: 'Ouro', cycles: 70, minLines: 1, vmec: '100 %', bonus: 'R$ 189,00', image: 'https://rptkhrboejbwexseikuo.supabase.co/storage/v1/object/public/pins/pin_1769287542177_2f1cpm.png' },
+        { id: '0a935c4a-bea8-4d48-be58-2b916d6c1d2d', pin: 'Safira', cycles: 150, minLines: 2, vmec: '60 / 40', bonus: 'R$ 405,00', image: 'https://rptkhrboejbwexseikuo.supabase.co/storage/v1/object/public/pins/pin_1769287601779_2cnkwx.png' },
+        { id: 'ec3eeaa3-6fa0-4f83-9640-a85f81d82892', pin: 'Esmeralda', cycles: 300, minLines: 2, vmec: '60 / 40', bonus: 'R$ 810,00', image: 'https://rptkhrboejbwexseikuo.supabase.co/storage/v1/object/public/pins/pin_1769287597909_agnnz8.png' },
+        { id: '518ce60c-b658-4791-8ff1-39cb347df90b', pin: 'Topázio', cycles: 500, minLines: 2, vmec: '60 / 40', bonus: 'R$ 1.350,00', image: 'https://rptkhrboejbwexseikuo.supabase.co/storage/v1/object/public/pins/pin_1769287593430_hx24vt.png' },
+        { id: '3d93ca39-b146-4bc0-ba79-7de1786fc401', pin: 'Rubi', cycles: 750, minLines: 3, vmec: '50 / 30 / 20', bonus: 'R$ 2.025,00', image: 'https://rptkhrboejbwexseikuo.supabase.co/storage/v1/object/public/pins/pin_1769287550418_ul7cj8.png' },
+        { id: '77fac779-f124-4666-ac0d-bf11bd52dfec', pin: 'Diamante', cycles: 1500, minLines: 3, vmec: '50 / 30 / 20', bonus: 'R$ 4.050,00', image: 'https://rptkhrboejbwexseikuo.supabase.co/storage/v1/object/public/pins/pin_1769287556626_troc4p.png' },
+        { id: 'a91a4575-11df-491e-81d5-4c1dc447ac77', pin: 'Duplo Diamante', cycles: 3000, minLines: 4, vmec: '40 / 30 / 20 / 10', bonus: 'R$ 18.450,00', image: 'https://rptkhrboejbwexseikuo.supabase.co/storage/v1/object/public/pins/pin_1769287560759_6h4825o.png' },
+        { id: 'f86fcd6e-7a4a-4431-96ae-f02fc30ad994', pin: 'Triplo Diamante', cycles: 5000, minLines: 5, vmec: '35 / 25 / 20 / 10 / 10', bonus: 'R$ 36.450,00', image: 'https://rptkhrboejbwexseikuo.supabase.co/storage/v1/object/public/pins/pin_1769287566743_o5aw6i.png' },
+        { id: '6e90ec56-403e-479b-b941-7a8b551dcf09', pin: 'Diamante Red', cycles: 15000, minLines: 6, vmec: '30 / 20 / 18 / 12 / 10 / 10 / 1', bonus: 'R$ 67.500,00', image: 'https://rptkhrboejbwexseikuo.supabase.co/storage/v1/object/public/pins/pin_1769287572317_cnsvn5v.png' },
+        { id: '9a84b018-9837-4f8e-a4a8-a31008144824', pin: 'Diamante Blue', cycles: 25000, minLines: 6, vmec: '30 / 20 / 18 / 12 / 10 / 10 / 1', bonus: 'R$ 105.300,00', image: 'https://rptkhrboejbwexseikuo.supabase.co/storage/v1/object/public/pins/pin_1769287588777_scb9l.png' },
+        { id: '6de50486-9fbc-4be4-a608-39c512e37f2b', pin: 'Diamante Black', cycles: 50000, minLines: 6, vmec: '30 / 20 / 18 / 12 / 10 / 10 / 1', bonus: 'R$ 135.000,00', image: 'https://rptkhrboejbwexseikuo.supabase.co/storage/v1/object/public/pins/pin_1769287577207_7fmtb.png' }
+    ];
+
     const loadPins = async () => {
         try {
             setLoading(true);
@@ -79,7 +97,7 @@ const CareerPlanPage: React.FC = () => {
 
             const response = await careerPlanAPI.getLevels();
 
-            if (response?.data?.success && response.data.levels) {
+            if (response?.data?.success && response.data.levels && response.data.levels.length > 0) {
                 // Mapear dados da API para formato do componente
                 const mappedPins = response.data.levels.map((pin: any) => ({
                     id: pin.id,
@@ -92,10 +110,16 @@ const CareerPlanPage: React.FC = () => {
                 }));
 
                 setCareerData(mappedPins);
+            } else {
+                console.warn('API retornou lista vazia. Usando backup local.');
+                setCareerData(DEFAULT_PINS);
             }
         } catch (err) {
             console.error('Erro ao carregar PINs:', err);
-            setError('Erro ao carregar PINs.');
+            // Em vez de mostrar erro, carrega o backup para não travar a tela do usuário
+            console.warn('Falha na API. Carregando dados de backup.');
+            setCareerData(DEFAULT_PINS);
+            // setError('Erro ao carregar PINs. Dados locais carregados.'); // Opcional: avisar que está offline
         } finally {
             setLoading(false);
         }

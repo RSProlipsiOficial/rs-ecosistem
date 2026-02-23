@@ -1,8 +1,8 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import type { User, MasterApiState, RobotInstance, TradingParameters } from '../App';
 
-const supabaseUrl = process.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 let supabase: SupabaseClient | null = null;
 
@@ -18,19 +18,16 @@ export function getSupabaseClient(): SupabaseClient {
   return supabase;
 }
 
-// Type definitions for Supabase data structures
 export interface SupabaseUser {
-  id: string; // Corresponds to User.id
+  id: string;
+  id_auth?: string;
+  user_id: string;
   email: string;
-  name: string;
-  doc: string;
-  plan: User['plan'];
-  subscription_end_date: string; // ISO string
-  is_admin: boolean;
-  binance_api_key?: string;
-  binance_api_secret?: string;
-  binance_api_validated: boolean;
-  profile_photo_url?: string;
+  nome: string; // Map to name
+  cpf: string;  // Map to doc
+  pin_atual: string; // Map to plan
+  data_ativacao: string; // Map to subscription_end_date
+  status: string;
   created_at: string;
 }
 
@@ -61,17 +58,14 @@ export async function supabaseCreateUser(
   masterApiState: MasterApiState,
 ): Promise<SupabaseUser | null> {
   const supabase = getSupabaseClient();
-  const { data, error } = await supabase.from('users').insert({
+  const { data, error } = await supabase.from('consultores').insert({
     email: userData.email,
-    name: userData.name,
-    doc: userData.doc,
-    plan: userData.plan,
-    subscription_end_date: userData.subscriptionEndDate,
-    is_admin: userData.isAdmin,
-    binance_api_key: masterApiState.apiKey,
-    binance_api_secret: masterApiState.apiSecret,
-    binance_api_validated: masterApiState.isValidated,
-    profile_photo_url: null, // No profile photo on registration
+    nome: userData.name,
+    cpf: userData.doc,
+    pin_atual: userData.plan,
+    data_ativacao: userData.subscriptionEndDate,
+    status: 'ativo',
+    // fields binance_api_key etc. are not in consultores - might need a separate table later
   }).select().single();
 
   if (error) {
@@ -88,7 +82,7 @@ export async function supabaseCreateUser(
  */
 export async function supabaseGetUserByEmail(email: string): Promise<SupabaseUser | null> {
   const supabase = getSupabaseClient();
-  const { data, error } = await supabase.from('users').select('*').eq('email', email).single();
+  const { data, error } = await supabase.from('consultores').select('*').eq('email', email).single();
 
   if (error && error.code !== 'PGRST116') { // PGRST116 means "no rows found"
     console.error('Supabase getUserByEmail error:', error.message);
@@ -105,7 +99,7 @@ export async function supabaseGetUserByEmail(email: string): Promise<SupabaseUse
  */
 export async function supabaseUpdateUser(userId: string, updates: Partial<SupabaseUser>): Promise<SupabaseUser | null> {
   const supabase = getSupabaseClient();
-  const { data, error } = await supabase.from('users').update(updates).eq('id', userId).select().single();
+  const { data, error } = await supabase.from('consultores').update(updates).eq('id', userId).select().single();
 
   if (error) {
     console.error('Supabase updateUser error:', error.message);
@@ -122,17 +116,26 @@ export async function supabaseUpdateUser(userId: string, updates: Partial<Supaba
  */
 export async function supabaseSaveMasterApiState(userId: string, apiState: MasterApiState): Promise<SupabaseUser | null> {
   const supabase = getSupabaseClient();
-  const { data, error } = await supabase.from('users').update({
-    binance_api_key: apiState.apiKey,
-    binance_api_secret: apiState.apiSecret,
-    binance_api_validated: apiState.isValidated,
-  }).eq('id', userId).select().single();
+
+  // Salvar na tabela user_api_keys
+  const { data, error } = await supabase
+    .from('user_api_keys')
+    .upsert({
+      user_id: userId,
+      binance_api_key: apiState.apiKey,
+      binance_api_secret: apiState.apiSecret,
+      binance_api_validated: apiState.isValidated,
+    })
+    .select()
+    .single();
 
   if (error) {
     console.error('Supabase saveMasterApiState error:', error.message);
     throw new Error(`Falha ao salvar chaves API: ${error.message}`);
   }
-  return data;
+
+  console.log('✅ Credenciais da API Binance salvas com sucesso!');
+  return null; // Retorna null pois não estamos atualizando o usuário
 }
 
 /**
@@ -142,10 +145,25 @@ export async function supabaseSaveMasterApiState(userId: string, apiState: Maste
  */
 export async function supabaseGetMasterApiState(userId: string): Promise<MasterApiState> {
   const supabase = getSupabaseClient();
-  const { data, error } = await supabase.from('users').select('binance_api_key, binance_api_secret, binance_api_validated').eq('id', userId).single();
+
+  // Buscar da tabela user_api_keys
+  const { data, error } = await supabase
+    .from('user_api_keys')
+    .select('*')
+    .eq('user_id', userId)
+    .single();
 
   if (error && error.code !== 'PGRST116') {
     console.error('Supabase getMasterApiState error:', error.message);
+    // Se não encontrar, retornar valores vazios (primeira vez do usuário)
+    if (error.code === 'PGRST116' || error.message.includes('0 rows')) {
+      console.log('⚠️ Nenhuma credencial de API encontrada para este usuário.');
+      return {
+        apiKey: '',
+        apiSecret: '',
+        isValidated: false,
+      };
+    }
     throw new Error(`Falha ao buscar chaves API: ${error.message}`);
   }
 
@@ -166,7 +184,7 @@ export async function supabaseSaveRobotInstance(robot: RobotInstance & { user_id
   const supabase = getSupabaseClient();
   const { data, error } = await supabase.from('robot_instances').upsert({
     id: robot.id,
-    user_id: robot.user_id, 
+    user_id: robot.user_id,
     type: robot.type,
     symbol: robot.symbol,
     timeframe: robot.timeframe,
@@ -196,6 +214,11 @@ export async function supabaseGetRobotInstances(userId: string): Promise<RobotIn
 
   if (error) {
     console.error('Supabase getRobotInstances error:', error.message);
+    // Se for erro de cache de esquema, retornar array vazio silenciosamente
+    if (error.message.includes('schema cache') || error.code === 'PGRST116') {
+      console.warn('⚠️ Tabela robot_instances não encontrada no cache. Retornando lista vazia. Isso pode ser temporário.');
+      return [];
+    }
     throw new Error(`Falha ao buscar robôs: ${error.message}`);
   }
 

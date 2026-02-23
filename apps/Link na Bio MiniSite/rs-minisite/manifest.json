@@ -1,0 +1,22 @@
+
+{
+  "name": "RS MiniSite",
+  "short_name": "RS MiniSite",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#D4AF37",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/10834/10834323.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/10834/10834323.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ]
+}

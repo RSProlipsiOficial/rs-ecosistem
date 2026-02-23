@@ -1,19 +1,18 @@
-FROM node:20-alpine AS builder
+FROM node:20-alpine
+
 WORKDIR /app
 
-COPY package.json pnpm-lock.yaml ./
-RUN corepack enable && pnpm install --frozen-lockfile
+# Copiar package.json
+COPY package.json ./
 
+# Instalar dependências
+RUN npm install
+
+# Copiar código
 COPY . .
-RUN pnpm build
 
-FROM node:20-alpine AS runner
-WORKDIR /app
+# Expor porta
+EXPOSE 5001
 
-COPY --from=builder /app .
-RUN corepack enable && pnpm i -g serve
-
-ENV PORT=3001
-EXPOSE 3001
-
-CMD ["serve","-s","dist","-l","${PORT}"]
+# Comando de inicialização
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "5001"]

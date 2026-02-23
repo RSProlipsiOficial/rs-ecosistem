@@ -9,14 +9,84 @@ import { ClipboardDocumentListIcon, UsersIcon, MagnifyingGlassIcon, ShareIcon, C
 import OrderDetailModal from './marketplace/OrderDetailModal';
 import GoalsAndPerformancePage from './GoalsAndPerformancePage';
 import NetworkExplorer from './NetworkExplorer';
+import NetworkTreeView from './NetworkTreeView';
+import FinancialAuditTab from './FinancialAuditTab';
+
+const TreeIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A4.833 4.833 0 0118 9.75c-1.25 0-2.45.35-3.5.966-1.05-.616-2.25-.966-3.5-.966s-2.45.35-3.5.966c-1.05-.616-2.25-.966-3.5-.966a4.836 4.836 0 00-1.5.25v10.5h18z" />
+    </svg>
+);
 
 // Cleared mock data
 const mockOrders: Order[] = [];
 const detailedMockConsultants: Consultant[] = [];
 
+// Helper para gerar dados financeiros de teste se a API não retornar
+const generateMockFinancialData = (consultants: Consultant[]): Consultant[] => {
+    return consultants.map(c => {
+        // Se já tiver dados, mantém
+        if (c.purchaseHistory && c.purchaseHistory.length > 0) return c;
 
-const ConsultantsPage: React.FC = () => {
-    const [activeTab, setActiveTab] = useState('list');
+        // Gera 2-5 compras fictícias para cada consultor ativo
+        const numPurchases = c.status === 'Ativo' ? Math.floor(Math.random() * 4) + 2 : 0;
+        const mockPurchases: PurchaseEvent[] = [];
+
+        for (let i = 0; i < numPurchases; i++) {
+            const date = new Date();
+            date.setDate(date.getDate() - Math.floor(Math.random() * 60)); // Últimos 60 dias
+
+            const total = Math.floor(Math.random() * 500) + 150;
+            const hasBonus = Math.random() > 0.3; // 70% chance de gerar bônus
+
+            mockPurchases.push({
+                id: `PED-${Math.floor(Math.random() * 10000)}`,
+                date: date.toISOString(),
+                description: 'Pedido de Ativação Mensal',
+                totalValue: total,
+                items: [
+                    { name: 'Kit Essencial', qty: 1 },
+                    { name: 'Perfume Gold', qty: 2 }
+                ],
+                uplinePayments: hasBonus && c.sponsor ? [
+                    {
+                        recipientId: typeof c.sponsor.id === 'string' ? parseInt(c.sponsor.id) : c.sponsor.id,
+                        recipientName: c.sponsor.name,
+                        bonusType: 'Plano de Carreira',
+                        theoreticalLevel: 1,
+                        effectiveLevel: 1,
+                        amount: total * 0.10 // 10%
+                    }
+                ] : []
+            });
+        }
+
+        return {
+            ...c,
+            purchaseHistory: mockPurchases,
+            // Também mocka comissões recebidas se estiver vazio
+            commissionHistory: c.commissionHistory.length > 0 ? c.commissionHistory : [
+                {
+                    id: `COM-${Math.floor(Math.random() * 10000)}`,
+                    date: new Date().toISOString(),
+                    bonusType: 'Plano de Carreira',
+                    description: 'Bônus de Indicação',
+                    points: 50,
+                    amount: 150.00,
+                    status: 'Pago'
+                }
+            ]
+        };
+    });
+};
+
+const ConsultantsPage: React.FC<{ initialTab?: string }> = ({ initialTab = 'hierarchy' }) => {
+    const [activeTab, setActiveTab] = useState(initialTab);
+
+    useEffect(() => {
+        if (initialTab) setActiveTab(initialTab);
+    }, [initialTab]);
+
     const [consultants, setConsultants] = useState(detailedMockConsultants);
     const [isModalOpen, setModalOpen] = useState(false);
     const [selectedConsultantForEdit, setSelectedConsultantForEdit] = useState<Consultant | null>(null);
@@ -34,17 +104,124 @@ const ConsultantsPage: React.FC = () => {
         try {
             setLoading(true);
             setError('');
-            const response = await consultantsAPI.getAll();
-            if (response?.data?.success) {
-                setConsultants(response.data.consultants || detailedMockConsultants);
+
+            // Try API first
+            try {
+                const response = await consultantsAPI.getAll();
+                console.log('[DEBUG] API Response for consultants:', response);
+                const responseData = response.data as any; // Force cast to avoid type errors with generic ApiResponse
+                if (responseData?.success || Array.isArray(responseData)) {
+                    const loadedConsultants = (responseData.consultants || responseData) || [];
+                    // REMOVIDO: generateMockFinancialData (causava confusão com dados falsos)
+                    // const enriched = generateMockFinancialData(loadedConsultants);
+                    setConsultants(loadedConsultants);
+                    setLoading(false);
+                    return;
+                    setLoading(false);
+                    return;
+                } else {
+                    console.error('[DEBUG] API returned success=false:', response?.data);
+                }
+            } catch (apiErr: any) {
+                console.warn('API falhou, tentando Supabase direto:', apiErr);
+                console.error('[DEBUG] API Connection Error Details:', {
+                    message: apiErr.message,
+                    url: apiErr.config?.url,
+                    status: apiErr.status
+                });
+            }
+
+            // Fallback: buscar diretamente do Supabase
+            const { supabase } = await import('../src/services/supabase');
+            const { data: consultoresDB, error: sbError } = await supabase
+                .from('consultores')
+                .select(`
+                    id,
+                    nome,
+                    email,
+                    cpf,
+                    status,
+                    pin_atual,
+                    total_ciclos,
+                    whatsapp,
+                    cidade,
+                    estado,
+                    patrocinador_id,
+                    nivel_profundidade,
+                    created_at
+                `)
+                .order('created_at', { ascending: true });
+
+            if (sbError) {
+                console.error('Erro Supabase:', sbError);
+                setError('Erro ao carregar consultores');
+            } else {
+                // Transformar dados do Supabase para formato esperado
+                let transformed = (consultoresDB || []).map((c: any) => ({
+                    id: c.id,
+                    uuid: c.id,
+                    name: c.nome,
+                    contact: {
+                        email: c.email || '',
+                        phone: c.whatsapp || '',
+                    },
+                    address: {
+                        city: c.cidade || '',
+                        state: c.estado || '',
+                        country: 'Brasil',
+                        street: '',
+                        zip: ''
+                    },
+                    bankInfo: {
+                        bank: '',
+                        agency: '',
+                        account: '',
+                        pixType: 'CPF',
+                        pixKey: ''
+                    },
+                    status: c.status === 'ativo' ? 'Ativo' : 'Inativo',
+                    pin: c.pin_atual || '',
+                    digitalPin: c.pin_digital || 'RS One Star', // Default para testes, ajustar conforme real
+                    sponsor: null,
+                    salesHistory: [],
+                    commissionHistory: [],
+                    purchaseHistory: [],
+                    avatar: (!c.avatar_url || c.avatar_url.includes('0aa67016')) ? `/logo-rs.png` : c.avatar_url,
+                    // Permissions (Default) - Added
+                    permissions: {
+                        personalDataLocked: false,
+                        bankDataLocked: true,
+                        bonus_cycle: true,
+                        bonus_fidelity: true,
+                        bonus_matrix_fidelity: true,
+                        bonus_leadership: true,
+                        bonus_career: true, // Novo
+                        bonus_digital: true, // Novo
+                        access_platform: true
+                    },
+                    cycle: c.total_ciclos || 0,
+                    networkDetails: {
+                        directs: 0
+                    },
+                    walletStatement: [],
+                    activationHistory: []
+                }));
+
+                // REMOVIDO: generateMockFinancialData (causava confusão com dados falsos)
+                // transformed = generateMockFinancialData(transformed);
+
+                setConsultants(transformed);
+                setSuccess(`✅ ${transformed.length} consultores carregados do Supabase`);
+                setTimeout(() => setSuccess(''), 3000);
             }
         } catch (err) {
             console.error('Erro ao carregar consultores:', err);
-            setError('Erro ao carregar. Usando dados padrão.');
+            setError('Erro ao carregar consultores');
         } finally {
             setLoading(false);
         }
     };
+
 
 
     const [resettingConsultant, setResettingConsultant] = useState<Consultant | null>(null);
@@ -131,18 +308,36 @@ const ConsultantsPage: React.FC = () => {
 
             <div className="border-b border-gray-800 mb-6">
                 <nav className="-mb-px flex space-x-6 overflow-x-auto">
-                    <TabButton tabId="list" label="Lista de Consultores" icon={<UsersIcon className="w-5 h-5" />} />
-                    <TabButton tabId="report" label="Relatório de Usuários" icon={<ClipboardDocumentListIcon className="w-5 h-5" />} />
-                    <TabButton tabId="network" label="Visualizador de Rede" icon={<ShareIcon className="w-5 h-5" />} />
-                    <TabButton tabId="goals" label="Metas e Desempenho" icon={<TrophyIcon className="w-5 h-5" />} />
-                    <TabButton tabId="create" label="Cadastrar Consultor" icon={<UserCircleIcon className="w-5 h-5" />} />
+                    <TabButton tabId="hierarchy" label="Rede Inteligente" icon={<TreeIcon className="w-5 h-5" />} />
+                    <TabButton tabId="audit" label="Auditoria Financeira" icon={<CurrencyDollarIcon className="w-5 h-5" />} />
+                    <TabButton tabId="management" label="Gestão & Performance" icon={<TrophyIcon className="w-5 h-5" />} />
+                    <TabButton tabId="create" label="Novo Cadastro" icon={<UserCircleIcon className="w-5 h-5" />} />
                 </nav>
             </div>
 
-            {activeTab === 'list' && <ConsultantListTab consultants={consultants} onEdit={handleEdit} onResetPassword={handleOpenResetModal} />}
-            {activeTab === 'report' && <UserReportTab consultants={consultants} selectedId={selectedId} setSelectedId={setSelectedId} />}
-            {activeTab === 'network' && <NetworkExplorer consultants={consultants} onSelectConsultant={setSelectedId} selectedId={selectedId} />}
-            {activeTab === 'goals' && <GoalsAndPerformancePage consultants={consultants} selectedConsultantId={selectedId} onSelectConsultant={setSelectedId} onUpdateConsultant={handleUpdateConsultant} />}
+            {activeTab === 'hierarchy' && (
+                <NetworkTreeView
+                    initialId={selectedId?.toString() || '1'}
+                    consultants={consultants}
+                    onEdit={handleEdit}
+                    onResetPassword={handleOpenResetModal}
+                    onSelect={handleEdit}
+                />
+            )}
+
+            {activeTab === 'audit' && (
+                <FinancialAuditTab consultants={consultants} />
+            )}
+
+            {activeTab === 'management' && (
+                <GoalsAndPerformancePage
+                    consultants={consultants}
+                    selectedConsultantId={selectedId}
+                    onSelectConsultant={setSelectedId}
+                    onUpdateConsultant={handleUpdateConsultant}
+                />
+            )}
+
             {activeTab === 'create' && <ConsultantCreateTab onCreated={loadConsultants} />}
 
             <ConsultantDetailModal
@@ -271,7 +466,11 @@ const UserReportTab: React.FC<{ consultants: Consultant[], selectedId: number | 
         if (!query) {
             return consultants;
         }
-        return consultants.filter(c => c.name.toLowerCase().includes(query));
+        return consultants.filter(c =>
+            c.name.toLowerCase().includes(query) ||
+            (c.code && c.code.toLowerCase().includes(query)) ||
+            (c.username && c.username.toLowerCase().includes(query))
+        );
     }, [consultants, searchQuery]);
 
     const selectedConsultant = useMemo(() => consultants.find(c => c.id === selectedId), [consultants, selectedId]);
@@ -306,11 +505,12 @@ const UserReportTab: React.FC<{ consultants: Consultant[], selectedId: number | 
                 </div>
                 <div className="flex-1 overflow-y-auto space-y-2 pr-2">
                     {filteredConsultants.length > 0 ? filteredConsultants.map(c => (
-                        <button key={c.id} onClick={() => setSelectedId(c.id)} className={`w-full p-3 rounded-lg text-left transition-colors border ${selectedId === c.id ? 'bg-yellow-500/10 border-yellow-500/30' : 'border-transparent hover:bg-gray-700/50'}`}>
+                        <button key={c.id} onClick={() => setSelectedId(Number(c.id))} className={`w-full p-3 rounded-lg text-left transition-colors border ${selectedId === Number(c.id) ? 'bg-yellow-500/10 border-yellow-500/30' : 'border-transparent hover:bg-gray-700/50'}`}>
                             <div className="flex items-center gap-3">
                                 <img src={c.avatar} alt={c.name} className="w-12 h-12 rounded-full object-cover flex-shrink-0" />
                                 <div className="flex-1 min-w-0">
-                                    <p className={`font-bold truncate ${selectedId === c.id ? 'text-yellow-400' : 'text-white'}`}>{c.id} - {c.name}</p>
+                                    <p className={`font-bold truncate ${selectedId === c.id ? 'text-yellow-400' : 'text-white'}`}>{c.code || c.id} - {c.name}</p>
+                                    {c.username && <p className="text-[10px] text-yellow-500/80 -mt-1 font-mono uppercase">MMN ID: {c.username}</p>}
                                     <div className="flex items-center flex-wrap gap-x-3 gap-y-1 text-xs text-gray-400 mt-1">
                                         <span>PIN: <span className="font-semibold text-yellow-500">{c.pin}</span></span>
                                         <span>Status: <span className={`font-semibold ${c.status === 'Ativo' ? 'text-green-400' : c.status === 'Inativo' ? 'text-red-400' : 'text-yellow-400'}`}>{c.status}</span></span>
@@ -433,10 +633,12 @@ const ReportDetailView: React.FC<{ consultant: Consultant, onViewOrder: (orderId
 
     const getDownlineIds = (consultantId: number, allConsultants: Consultant[]): number[] => {
         const downline: number[] = [];
-        const directs = allConsultants.filter(c => c.sponsor?.id === consultantId);
+        // Ensure type compatibility for ID comparison
+        const directs = allConsultants.filter(c => c.sponsor && Number(c.sponsor.id) === consultantId);
         for (const direct of directs) {
-            downline.push(direct.id);
-            downline.push(...getDownlineIds(direct.id, allConsultants));
+            const directId = Number(direct.id);
+            downline.push(directId);
+            downline.push(...getDownlineIds(directId, allConsultants));
         }
         return downline;
     };
@@ -461,8 +663,8 @@ const ReportDetailView: React.FC<{ consultant: Consultant, onViewOrder: (orderId
     }, [consultant.commissionHistory]);
 
     const pinComposition = useMemo(() => {
-        const downlineIds = getDownlineIds(consultant.id, allConsultants);
-        const downlineConsultants = allConsultants.filter(c => downlineIds.includes(c.id));
+        const downlineIds = getDownlineIds(Number(consultant.id), allConsultants);
+        const downlineConsultants = allConsultants.filter(c => downlineIds.includes(Number(c.id)));
         // FIX: The initial value for reduce was an untyped empty object `{}`, causing a type error on `acc[c.pin]`. Casting the initial value to `Record<string, number>` correctly types the accumulator.
         return downlineConsultants.reduce((acc, c) => {
             acc[c.pin] = (acc[c.pin] || 0) + 1;
@@ -483,10 +685,12 @@ const ReportDetailView: React.FC<{ consultant: Consultant, onViewOrder: (orderId
                 <div>
                     <h2 className="text-2xl font-bold text-white">{consultant.name}</h2>
                     <div className="flex items-center gap-4 text-sm text-gray-300">
+                        <span>ID: <span className="font-semibold text-yellow-400">{consultant.code || consultant.id}</span></span>
+                        {consultant.username && <span>MMN ID: <span className="font-semibold text-yellow-400 uppercase">{consultant.username}</span></span>}
                         <span>PIN: <span className="font-semibold text-yellow-400">{consultant.pin}</span></span>
                         <span>Status: <span className={`font-semibold ${statusClasses[consultant.status]}`}>{consultant.status}</span></span>
                     </div>
-                    {consultant.sponsor && <p className="text-sm text-gray-400 flex items-center gap-1.5 mt-1"><ShareIcon className="w-4 h-4" /> Patrocinador(a): <button onClick={() => onConsultantClick(consultant.sponsor!.id)} className="hover:underline text-yellow-400">{consultant.sponsor.name}</button></p>}
+                    {consultant.sponsor && <p className="text-sm text-gray-400 flex items-center gap-1.5 mt-1"><ShareIcon className="w-4 h-4" /> Patrocinador(a): <button onClick={() => onConsultantClick(Number(consultant.sponsor!.id))} className="hover:underline text-yellow-400">{consultant.sponsor.name}</button></p>}
                 </div>
             </header>
 

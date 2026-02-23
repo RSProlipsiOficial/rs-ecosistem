@@ -22,7 +22,7 @@ const Transferencias: React.FC = () => {
             try {
                 const userId = localStorage.getItem('userId') || 'demo-user';
                 const response = await walletAPI.getBalance(userId);
-                
+
                 if (response?.data?.success) {
                     setAvailableBalance(response.data.balance.available * 100);
                 }
@@ -30,7 +30,7 @@ const Transferencias: React.FC = () => {
                 console.error('Erro ao carregar saldo:', error);
             }
         };
-        
+
         loadBalance();
     }, []);
 
@@ -53,7 +53,7 @@ const Transferencias: React.FC = () => {
                     const txs: LedgerEntry[] = res.data.transactions || [];
                     setTransferHistoryData(
                         txs.filter(entry => entry.type === LedgerEventType.TRANSFER)
-                           .sort((a, b) => new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime())
+                            .sort((a, b) => new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime())
                     );
                 }
             } catch (err) {
@@ -74,18 +74,18 @@ const Transferencias: React.FC = () => {
             alert("Saldo insuficiente.");
             return;
         }
-        
+
         try {
             setLoading(true);
             const userId = localStorage.getItem('userId');
-            
+
             const response = await walletAPI.transfer({
                 from_user_id: userId,
                 to_user_id: recipientId,
                 amount: numericAmount,
                 note: note
             });
-            
+
             if (response?.data?.success) {
                 setModalOpen(true);
                 setAmount('');
@@ -107,7 +107,7 @@ const Transferencias: React.FC = () => {
             <div className="bg-card p-6 sm:p-8 rounded-2xl border border-border">
                 <h2 className="text-xl font-bold text-text-title">Transferir Saldo</h2>
                 <p className="text-text-soft mt-1">Envie saldo para outro consultor da rede RS Prólipsi.</p>
-                
+
                 <div className="my-6 bg-surface p-4 rounded-lg border border-border">
                     <p className="text-sm text-text-soft">Saldo disponível para transferência</p>
                     <p className="text-3xl font-bold text-gold">{formatCurrency(availableBalance)}</p>
@@ -124,11 +124,11 @@ const Transferencias: React.FC = () => {
                                 className="w-full px-4 py-3 rounded-lg bg-surface border border-border focus:outline-none focus:ring-2 focus:ring-gold/25"
                                 required
                             />
-                             {recipientName && (
+                            {recipientName && (
                                 <p className={`text-sm mt-2 ${recipientName === 'Consultor não encontrado' ? 'text-danger' : 'text-success'}`}>{recipientName}</p>
                             )}
                         </div>
-                         <div>
+                        <div>
                             <label htmlFor="amount" className="block text-sm font-medium text-text-body mb-2">Valor</label>
                             <input
                                 type="text" id="amount" value={amount}
@@ -155,7 +155,7 @@ const Transferencias: React.FC = () => {
             <div className="bg-card p-6 rounded-2xl border border-border">
                 <h3 className="text-lg font-bold text-text-title mb-4">Histórico de Transferências</h3>
                 <div className="overflow-x-auto">
-                     <table className="w-full text-left">
+                    <table className="w-full text-left">
                         <thead className="text-xs text-text-soft uppercase">
                             <tr>
                                 <th className="py-2 px-3">Data</th>
@@ -165,7 +165,7 @@ const Transferencias: React.FC = () => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border">
-                           {transferHistoryData.length > 0 ? transferHistoryData.map(item => (
+                            {transferHistoryData.length > 0 ? transferHistoryData.map(item => (
                                 <tr key={item.seq}>
                                     <td className="py-3 px-3 text-sm">{new Date(item.occurredAt).toLocaleString('pt-BR')}</td>
                                     <td className="py-3 px-3 text-sm">{item.description}</td>
@@ -185,7 +185,7 @@ const Transferencias: React.FC = () => {
             <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title="Confirmação">
                 <div className="text-center">
                     <p>Transferência enviada com sucesso!</p>
-                     <button onClick={() => setModalOpen(false)} className="mt-4 w-full text-center py-2 px-4 bg-gold text-card font-semibold rounded-lg">Ok</button>
+                    <button onClick={() => setModalOpen(false)} className="mt-4 w-full text-center py-2 px-4 bg-gold text-card font-semibold rounded-lg">Ok</button>
                 </div>
             </Modal>
         </div>

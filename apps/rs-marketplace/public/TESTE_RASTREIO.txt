@@ -1,0 +1,2 @@
+ESTE É O PROJETO APPS/RS-MARKETPLACE (A PASTA RAIZ)
+Se você consegue ler isso em localhost:3003, então o projeto correto é este.

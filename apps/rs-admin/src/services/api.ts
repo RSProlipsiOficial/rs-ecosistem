@@ -45,6 +45,14 @@ export const consultantsAPI = {
   getById: (id: string): Promise<ApiResponse> =>
     apiServices.consultants.get(id),
 
+  getNetworkTree: (id: string, depth: number = 4): Promise<ApiResponse<{ tree: any }>> =>
+    apiUtils.get(`/v1/admin/network/tree/${id}?depth=${depth}`),
+
+  getNetworkChildren: (id: string): Promise<ApiResponse<{ children: any[] }>> =>
+    apiUtils.get(`/v1/admin/network/children/${id}`),
+  getNetworkRoot: (): Promise<ApiResponse<{ root: any }>> =>
+    apiUtils.get(`/v1/admin/network/root`),
+
   create: (data: any): Promise<ApiResponse> =>
     apiServices.consultants.create(data),
 
@@ -94,7 +102,10 @@ export const sigmaConfigAPI = {
     apiUtils.get('/v1/admin/sigma/commissions/config'),
 
   updateCommissionConfig: (data: any): Promise<ApiResponse> =>
-    apiUtils.put('/v1/admin/sigma/commissions/config', data)
+    apiUtils.put('/v1/admin/sigma/commissions/config', data),
+
+  getMatrixTree: (id: string, depth: number = 3): Promise<ApiResponse<{ tree: any }>> =>
+    apiUtils.get(`/v1/matrix/tree/${id}?depth=${depth}`)
 };
 
 // ============================================
@@ -112,6 +123,12 @@ export const settingsAPI = {
 
   updateNotificationSettings: (data: any): Promise<ApiResponse> =>
     apiUtils.put('/v1/admin/settings/notifications', data),
+
+  syncNetwork: (): Promise<ApiResponse> =>
+    apiUtils.post('/v1/ops/sync-network'),
+
+  recalcBonuses: (period: string = 'daily'): Promise<ApiResponse> =>
+    apiUtils.post('/v1/ops/recalc-bonuses', { period }),
 
   getAllSettings: async (): Promise<ApiResponse> => {
     const [general, notifications] = await Promise.all([
@@ -255,8 +272,35 @@ export const careerPlanAPI = {
     apiUtils.delete(`/v1/admin/career/levels/${id}`)
 };
 
+export const digitalCareerAPI = {
+  getLevels: (): Promise<ApiResponse> =>
+    apiUtils.get('/v1/admin/career/digital-levels'),
+
+  updateLevel: (id: string | number, data: any): Promise<ApiResponse> =>
+    apiUtils.put(`/v1/admin/career/digital-levels/${id}`, data),
+
+  createLevel: (data: any): Promise<ApiResponse> =>
+    apiUtils.post('/v1/admin/career/digital-levels', data),
+
+  uploadImage: (file: File): Promise<ApiResponse> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return apiUtils.post('/v1/upload/pin', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+  },
+
+  deleteLevel: (id: string | number): Promise<ApiResponse> =>
+    apiUtils.delete(`/v1/admin/career/digital-levels/${id}`)
+};
+
 export const sigmaPinsAPI = {
   getPins: (): Promise<ApiResponse> =>
+    apiUtils.get('/v1/admin/sigma/pins'),
+
+  getAll: (): Promise<ApiResponse> => // Alias for component compatibility
     apiUtils.get('/v1/admin/sigma/pins'),
 
   updatePin: (id: number, data: any): Promise<ApiResponse> =>
@@ -334,6 +378,10 @@ export const pinsVisibilityAPI = {
     apiUtils.get('/v1/admin/sigma/pins/visibility'),
 
   updateVisibility: (data: any): Promise<ApiResponse> =>
+    apiUtils.put('/v1/admin/sigma/pins/visibility', data),
+
+  // Alias para compatibilidade com DashboardEditorFull.tsx
+  update: (data: any): Promise<ApiResponse> =>
     apiUtils.put('/v1/admin/sigma/pins/visibility', data)
 };
 
@@ -355,6 +403,17 @@ export const reportsAPI = {
 
   exportReport: (type: string, filters?: any): Promise<ApiResponse> =>
     apiUtils.post(API_URLS.REPORTS.EXPORT, { type, ...filters })
+};
+
+// ============================================
+// 🔄 CYCLE CLOSING API - Fechamento de Ciclos
+// ============================================
+export const cycleClosingAPI = {
+  close: (type: 'MENSAL' | 'TRIMESTRAL'): Promise<ApiResponse> =>
+    apiUtils.post('/v1/admin/cycle/close', { type }),
+
+  getHistory: (): Promise<ApiResponse<{ history: any[] }>> =>
+    apiUtils.get('/v1/admin/cycle/history')
 };
 
 // Export types para uso externo

@@ -27,93 +27,77 @@ const navSections = [
       { to: '/app/cards', icon: IconCard, label: 'Cartões' },
     ]
   },
-  {
-    title: 'VENDAS',
-    items: [
-      { to: '/app/sales', icon: IconShoppingBag, label: 'Clientes & Vendas' },
-    ]
-  },
-  {
-    title: 'REDE & MARKETING',
-    items: [
-        { to: '/app/network', icon: IconUsers, label: 'Minha Rede' },
-        { to: '/app/marketing', icon: IconSparkles, label: 'Marketing' },
-    ]
-  },
 ];
 
 const NavItem: React.FC<{ to: string, icon: React.FC<{ className?: string }>, label: string, onClick: () => void }> = ({ to, icon: Icon, label, onClick }) => (
-    <NavLink
-      to={to}
-      onClick={onClick}
-      className={({ isActive }) =>
-        `flex items-center p-3 my-1 rounded-lg transition-colors duration-200 ${
-          isActive
-            ? 'bg-gold/10 text-gold'
-            : 'text-text-body hover:bg-surface hover:text-text-title'
-        }`
-      }
-    >
-      <Icon className="w-5 h-5" />
-      <span className="ml-4 font-medium">{label}</span>
-    </NavLink>
+  <NavLink
+    to={to}
+    onClick={onClick}
+    className={({ isActive }) =>
+      `flex items-center p-3 my-1 rounded-lg transition-colors duration-200 ${isActive
+        ? 'bg-gold/10 text-gold'
+        : 'text-text-body hover:bg-surface hover:text-text-title'
+      }`
+    }
+  >
+    <Icon className="w-5 h-5" />
+    <span className="ml-4 font-medium">{label}</span>
+  </NavLink>
 );
 
-const CollapsibleNavItem: React.FC<{ 
-    icon: React.FC<{ className?: string }>;
-    label: string;
-    subItems: { to: string, label: string }[];
-    onClick: () => void;
+const CollapsibleNavItem: React.FC<{
+  icon: React.FC<{ className?: string }>;
+  label: string;
+  subItems: { to: string, label: string }[];
+  onClick: () => void;
 }> = ({ icon: Icon, label, subItems, onClick }) => {
-    const { pathname } = useLocation();
-    const isParentActive = subItems.some(item => pathname.startsWith(item.to));
-    const [isOpen, setIsOpen] = useState(isParentActive);
+  const { pathname } = useLocation();
+  const isParentActive = subItems.some(item => pathname.startsWith(item.to));
+  const [isOpen, setIsOpen] = useState(isParentActive);
 
-    const handleToggle = (e: React.MouseEvent) => {
-        e.preventDefault();
-        setIsOpen(!isOpen);
-    };
+  const handleToggle = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsOpen(!isOpen);
+  };
 
-    return (
-        <>
-            <a
-                href="#"
-                onClick={handleToggle}
-                className={`flex items-center justify-between p-3 my-1 rounded-lg transition-colors duration-200 ${
-                    isParentActive
-                        ? 'bg-gold/10 text-gold'
-                        : 'text-text-body hover:bg-surface hover:text-text-title'
-                }`}
-            >
-                <div className="flex items-center">
-                    <Icon className="w-5 h-5" />
-                    <span className="ml-4 font-medium">{label}</span>
-                </div>
-                <svg className={`w-4 h-4 transition-transform duration-200 ${isOpen ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path></svg>
-            </a>
-            {isOpen && (
-                <ul className="pl-8 border-l border-border ml-5 py-1">
-                    {subItems.map(item => (
-                        <li key={item.to}>
-                            <NavLink
-                                to={item.to}
-                                onClick={onClick} // This will close the mobile sidebar
-                                className={({ isActive }) =>
-                                    `flex items-center py-2 px-3 my-1 text-sm rounded-md transition-colors ${
-                                    isActive
-                                        ? 'text-gold font-semibold'
-                                        : 'text-text-body hover:bg-surface hover:text-text-title'
-                                    }`
-                                }
-                            >
-                                {item.label}
-                            </NavLink>
-                        </li>
-                    ))}
-                </ul>
-            )}
-        </>
-    );
+  return (
+    <>
+      <a
+        href="#"
+        onClick={handleToggle}
+        className={`flex items-center justify-between p-3 my-1 rounded-lg transition-colors duration-200 ${isParentActive
+          ? 'bg-gold/10 text-gold'
+          : 'text-text-body hover:bg-surface hover:text-text-title'
+          }`}
+      >
+        <div className="flex items-center">
+          <Icon className="w-5 h-5" />
+          <span className="ml-4 font-medium">{label}</span>
+        </div>
+        <svg className={`w-4 h-4 transition-transform duration-200 ${isOpen ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path></svg>
+      </a>
+      {isOpen && (
+        <ul className="pl-8 border-l border-border ml-5 py-1">
+          {subItems.map(item => (
+            <li key={item.to}>
+              <NavLink
+                to={item.to}
+                onClick={onClick} // This will close the mobile sidebar
+                className={({ isActive }) =>
+                  `flex items-center py-2 px-3 my-1 text-sm rounded-md transition-colors ${isActive
+                    ? 'text-gold font-semibold'
+                    : 'text-text-body hover:bg-surface hover:text-text-title'
+                  }`
+                }
+              >
+                {item.label}
+              </NavLink>
+            </li>
+          ))}
+        </ul>
+      )}
+    </>
+  );
 };
 
 const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen, setSidebarOpen }) => {
@@ -155,9 +139,20 @@ const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen, setSidebarOpen }) => {
           ))}
         </nav>
         <div className="p-4 border-t border-border">
-           <NavItem to="/app/settings" icon={IconSettings} label="Configurações" onClick={() => setSidebarOpen(false)} />
-          <button 
-            onClick={() => setShowComingSoon(true)}
+          <NavItem to="/app/settings" icon={IconSettings} label="Perfil" onClick={() => setSidebarOpen(false)} />
+          <button
+            onClick={() => {
+              // Limpar dados locais
+              localStorage.removeItem('token');
+              localStorage.removeItem('userId');
+              localStorage.removeItem('userName');
+              localStorage.removeItem('userEmail');
+              localStorage.removeItem('autoLogin');
+              localStorage.removeItem('loginSource');
+
+              // Redirecionar para login
+              window.location.href = '/#/login';
+            }}
             className="w-full text-left flex items-center p-3 mt-1 rounded-lg hover:bg-surface hover:text-gold transition-colors text-text-body"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
@@ -165,7 +160,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen, setSidebarOpen }) => {
           </button>
         </div>
       </aside>
-      <ComingSoonModal isOpen={showComingSoon} onClose={() => setShowComingSoon(false)} featureName="Sair" />
     </>
   );
 };

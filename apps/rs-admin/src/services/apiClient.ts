@@ -1,8 +1,17 @@
 import axios, { AxiosResponse } from 'axios';
 import { API_URLS } from '../config/apiUrls';
 
-// Base URL da API
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+// Base URL da API corrigida para suportar acesso via IP de rede local
+const getBaseUrl = () => {
+  if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
+  // Se estiver acessando por IP (ex: 192.168...), tenta o mesmo IP na porta 4000
+  if (window.location.hostname !== 'localhost') {
+    return `http://${window.location.hostname}:4000`;
+  }
+  return 'http://localhost:4000';
+};
+
+const API_BASE_URL = getBaseUrl();
 
 // Timeout padrão
 const TIMEOUT = 30000;

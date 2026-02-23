@@ -16,6 +16,10 @@ export interface NetworkNode {
   };
   children?: NetworkNode[];
   isEmpty?: boolean;
+  name?: string;
+  pin?: string;
+  status?: string;
+  hasPurchased?: boolean;
 }
 
 export interface CDProduct {

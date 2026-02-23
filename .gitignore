@@ -1,52 +1,11 @@
-# Root ignore for RS Ecosystem
-
-# Node artifacts
-node_modules/
 **/node_modules/
-dist/
-**/dist/
-.turbo/
-**/coverage/
-
-# Node artifacts
-node_modules/
-**/node_modules/
-dist/
-**/dist/
-dist-ssr/
-
-# Local env files (do not commit secrets)
 .env
-.env.*
-!.env.example
-!.env.example
-
-# OS/editor noise# OS
+**/dist/
 .DS_Store
-Thumbs.db
-
-# Heavy External Sources (monorepo should utilize packages, not source dumps)
-apps/rs-studio/n8n-master/
-apps/rs-studio/evolution-api-main/
-apps/rs-studio/bolt.diy-main/
-
-# Archives
-*.zip
-*.tar.gz
-*.rar
-
-# Backups and temporary files
-apps/rs-marketplace/backup-producao.js/
-apps/rs-marketplace/dist_backup_/
-apps/rs-marketplace/VERSAO-BOA-*.js
-apps/rs-marketplace/App.tsx.BACKUP*
-apps/rs-marketplace/*.ultimo-deploy
-vscode/
-!.vscode/extensions.json
-.idea/
 *.log
-logs/
-
-# Documentation with credentials (keep out of VCS)
-Documentação RS Prólipsi (Ver Sempre)/
-**/Documentação RS Prólipsi (Ver Sempre)/**
+**/.pnpm-store/
+**/.next/
+**/.turbo/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml

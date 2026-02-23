@@ -1,0 +1,98 @@
+version: "3.9"
+
+services:
+  rs-api:
+    container_name: rs-api
+    build:
+      context: ./apps/rs-api
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    environment:
+      - PORT=5004
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+    ports:
+      - "5004:5004"
+    networks:
+      - rs-network
+    volumes:
+      - ./apps/rs-api:/app
+      - /app/node_modules
+
+  rs-admin:
+    container_name: rs-admin
+    build:
+      context: ./apps/rs-admin
+      dockerfile: Dockerfile
+    environment:
+      - PORT=5001
+      - VITE_API_URL=${VITE_API_URL:-http://localhost:5004}
+    ports:
+      - "5001:5001"
+    depends_on:
+      - rs-api
+    networks:
+      - rs-network
+    volumes:
+      - ./apps/rs-admin:/app
+      - /app/node_modules
+
+  rs-consultor:
+    container_name: rs-consultor
+    build:
+      context: ./apps/rs-consultor
+      dockerfile: Dockerfile
+    environment:
+      - PORT=5002
+      - VITE_API_URL=${VITE_API_URL:-http://localhost:5004}
+    ports:
+      - "5002:5002"
+    depends_on:
+      - rs-api
+    networks:
+      - rs-network
+    volumes:
+      - ./apps/rs-consultor:/app
+      - /app/node_modules
+
+  rs-walletpay:
+    container_name: rs-walletpay
+    build:
+      context: ./apps/rs-walletpay
+      dockerfile: Dockerfile
+    environment:
+      - PORT=5006
+      - VITE_API_URL=${VITE_API_URL:-http://localhost:5004}
+    ports:
+      - "5006:5006"
+    depends_on:
+      - rs-api
+    networks:
+      - rs-network
+    volumes:
+      - ./apps/rs-walletpay:/app
+      - /app/node_modules
+
+  rs-marketplace:
+    container_name: rs-marketplace
+    build:
+      context: ./apps/rs-marketplace/Marketplace/RS-CDS.-Oficial
+      dockerfile: Dockerfile
+    environment:
+      - PORT=5007
+      - VITE_API_URL=${VITE_API_URL:-http://localhost:5004}
+    ports:
+      - "5007:5007"
+    depends_on:
+      - rs-api
+    networks:
+      - rs-network
+    volumes:
+      - ./apps/rs-marketplace/Marketplace/RS-CDS.-Oficial:/app
+      - /app/node_modules
+
+networks:
+  rs-network:
+    driver: bridge

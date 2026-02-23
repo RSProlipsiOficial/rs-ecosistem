@@ -1,6 +1,6 @@
 
 import express from 'express';
-import { supabase } from '../../lib/supabaseClient';
+import { supabase, supabaseAdmin } from '../../lib/supabaseClient';
 import { supabaseAuth, requireRole, ROLES } from '../../middlewares/supabaseAuth';
 
 const router = express.Router();
@@ -24,20 +24,24 @@ const getConfig = async (key: string, defaultValue: any) => {
 // Helper to save config to DB
 const saveConfig = async (key: string, value: any) => {
     try {
-        // Try to update first
-        const { data, error } = await supabase
+        console.log(`[DashboardAPI] Persisting config for ${key}...`);
+        const { data, error } = await supabaseAdmin
             .from('app_configs')
-            .upsert({ key, value })
+            .upsert({
+                key,
+                value,
+                updated_at: new Date().toISOString()
+            })
             .select();
 
         if (error) {
-            // If table doesn't exist, we can't save. Return success to frontend to avoid crash.
-            console.warn(`Failed to save config for ${key}:`, error.message);
+            console.error(`[DashboardAPI] CRITICAL DATABASE ERROR saving config for ${key}:`, error.message, error.details);
             return false;
         }
+        console.log(`[DashboardAPI] Config ${key} saved successfully.`);
         return true;
     } catch (e) {
-        console.error(`Exception saving config for ${key}:`, e);
+        console.error(`[DashboardAPI] UNEXPECTED EXCEPTION saving config for ${key}:`, e);
         return false;
     }
 };
@@ -54,18 +58,29 @@ const DEFAULT_CONSULTANT_CONFIG = {
     ],
     links: [
         { label: 'Link de Indicação', source: 'linkIndicacao', icon: 'IconLink' }
+    ],
+    promoBanners: [
+        {
+            id: 'banner-default-rs',
+            preTitle: 'Oficial',
+            title: 'RS Prólipsi',
+            price: 0,
+            imageUrl: 'https://github.com/user-attachments/assets/bf61e389-9e8c-4f9e-a0e1-7e81084d59de',
+            ctaText: 'Ver Novidades'
+        }
     ]
 };
 
 const DEFAULT_MARKETPLACE_CONFIG = {
-    // Similar default for marketplace
     bonusCards: [],
     userInfo: [],
-    links: []
+    links: [],
+    promoBanners: []
 };
 
 // GET /v1/admin/dashboard/layout/consultant
-router.get('/layout/consultant', supabaseAuth, requireRole([ROLES.ADMIN, 'super_admin', 'superadmin']), async (req, res) => {
+// [SÊNIOR] Permitimos que 'consultor' também leia seu layout, mas apenas ADMIN edite (PUT)
+router.get('/layout/consultant', supabaseAuth, requireRole([ROLES.ADMIN, 'super_admin', 'superadmin', 'consultor']), async (req, res) => {
     const config = await getConfig('dashboard_layout_consultant', DEFAULT_CONSULTANT_CONFIG);
     res.json({ success: true, config });
 });
@@ -73,12 +88,15 @@ router.get('/layout/consultant', supabaseAuth, requireRole([ROLES.ADMIN, 'super_
 // PUT /v1/admin/dashboard/layout/consultant
 router.put('/layout/consultant', supabaseAuth, requireRole([ROLES.ADMIN, 'super_admin', 'superadmin']), async (req, res) => {
     const config = req.body;
-    await saveConfig('dashboard_layout_consultant', config);
+    const success = await saveConfig('dashboard_layout_consultant', config);
+    if (!success) {
+        return res.status(500).json({ success: false, error: 'Falha ao gravar configuração no banco de dados' });
+    }
     res.json({ success: true, config });
 });
 
 // GET /v1/admin/dashboard/layout/marketplace
-router.get('/layout/marketplace', supabaseAuth, requireRole([ROLES.ADMIN, 'super_admin', 'superadmin']), async (req, res) => {
+router.get('/layout/marketplace', supabaseAuth, requireRole([ROLES.ADMIN, 'super_admin', 'superadmin', 'consultor']), async (req, res) => {
     const config = await getConfig('dashboard_layout_marketplace', DEFAULT_MARKETPLACE_CONFIG);
     res.json({ success: true, config });
 });
@@ -86,24 +104,33 @@ router.get('/layout/marketplace', supabaseAuth, requireRole([ROLES.ADMIN, 'super
 // PUT /v1/admin/dashboard/layout/marketplace
 router.put('/layout/marketplace', supabaseAuth, requireRole([ROLES.ADMIN, 'super_admin', 'superadmin']), async (req, res) => {
     const config = req.body;
-    await saveConfig('dashboard_layout_marketplace', config);
+    const success = await saveConfig('dashboard_layout_marketplace', config);
+    if (!success) {
+        return res.status(500).json({ success: false, error: 'Falha ao gravar configuração no banco de dados' });
+    }
     res.json({ success: true, config });
 });
 
 // Legacy/Generic endpoints
-router.get('/layout', supabaseAuth, requireRole([ROLES.ADMIN, 'super_admin', 'superadmin']), async (req, res) => {
+router.get('/layout', supabaseAuth, requireRole([ROLES.ADMIN, 'super_admin', 'superadmin', 'consultor']), async (req, res) => {
     const config = await getConfig('dashboard_layout_consultant', DEFAULT_CONSULTANT_CONFIG);
     res.json({ success: true, config });
 });
 
 router.put('/layout', supabaseAuth, requireRole([ROLES.ADMIN, 'super_admin', 'superadmin']), async (req, res) => {
     const config = req.body;
-    await saveConfig('dashboard_layout_consultant', config);
+    const success = await saveConfig('dashboard_layout_consultant', config);
+    if (!success) {
+        return res.status(500).json({ success: false, error: 'Falha ao gravar configuração no banco de dados' });
+    }
     res.json({ success: true, config });
 });
 
 router.post('/layout/reset', supabaseAuth, requireRole([ROLES.ADMIN, 'super_admin', 'superadmin']), async (req, res) => {
-    await saveConfig('dashboard_layout_consultant', DEFAULT_CONSULTANT_CONFIG);
+    const success = await saveConfig('dashboard_layout_consultant', DEFAULT_CONSULTANT_CONFIG);
+    if (!success) {
+        return res.status(500).json({ success: false, error: 'Falha ao resetar configuração' });
+    }
     res.json({ success: true, config: DEFAULT_CONSULTANT_CONFIG });
 });
 

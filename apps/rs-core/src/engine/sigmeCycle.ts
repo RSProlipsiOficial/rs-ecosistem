@@ -64,7 +64,7 @@ export async function processSale(sale: SaleData): Promise<CycleResult> {
 
     // 2. Buscar ou criar ciclo aberto
     let cycle = await findOpenCycle(sale.buyer_id);
-    
+
     if (!cycle) {
       cycle = await createNewCycle(sale.buyer_id);
     }
@@ -74,17 +74,17 @@ export async function processSale(sale: SaleData): Promise<CycleResult> {
     // 3. Preencher próximo slot disponível
     const nextSlot = cycle.slots_filled + 1;
     await fillCycleSlot(cycle.cycle_id, nextSlot, saleRecord.sale_id);
-    
+
     result.cycle_updated = true;
     result.slots_filled = nextSlot;
 
     // 4. Verificar se ciclo completou (6/6)
     if (nextSlot === 6) {
       result.cycle_completed = true;
-      
+
       // 4a. Marcar ciclo como completo
       await completeCycle(cycle.cycle_id);
-      
+
       // 4b. Distribuir bônus
       const cfg = await getSigmaConfigCore();
       const bonuses = await distributeAllBonuses({
@@ -94,15 +94,15 @@ export async function processSale(sale: SaleData): Promise<CycleResult> {
       });
       result.bonuses_distributed = bonuses;
       result.payout = cfg.cycle.payoutValue;
-      
+
       // 4c. Atribuir ponto de carreira
       await awardCareerPoint(sale.buyer_id, cycle.cycle_id);
       result.career_point_awarded = true;
-      
+
       // 4d. Criar novo ciclo (reentrada automática)
       const newCycle = await createNewCycle(sale.buyer_id);
       result.new_cycle_id = newCycle.cycle_id;
-      
+
       // 4e. Registrar evento de ciclo completado
       await logCycleEvent({
         cycle_id: cycle.cycle_id,
@@ -167,10 +167,10 @@ export async function calculateCareerPoints(consultorId: string): Promise<{
   try {
     // Buscar dados do consultor
     const consultor = await getConsultorData(consultorId);
-    
+
     // Buscar ciclos de cada linha direta
     const linhasCiclos = await getCyclesByDirectLines(consultorId);
-    
+
     // Aplicar VMEC conforme PIN atual
     const cfg = await getSigmaConfigCore();
     const pinCfg = cfg.career.pins.find(p => p.orderIndex === consultor.pin_nivel);
@@ -179,10 +179,10 @@ export async function calculateCareerPoints(consultorId: string): Promise<{
       percentuais: String(pinCfg.vmecDistribution).split(/[\/|,]/).map(s => parseFloat(String(s).trim())).filter(n => !isNaN(n))
     } : { linhas_requeridas: 0, percentuais: [] };
     const ciclosValidos = calculateValidCycles(linhasCiclos, vmec);
-    
+
     // Buscar próxima graduação
     const proximaGraduacao = await getNextGraduation(consultor.pin_nivel, ciclosValidos);
-    
+
     return {
       ciclos_totais: linhasCiclos.reduce((sum, l) => sum + l.ciclos, 0),
       ciclos_validos_vmec: ciclosValidos,
@@ -204,23 +204,23 @@ export async function calculateCareerPoints(consultorId: string): Promise<{
 export async function checkAndUpgradePin(consultorId: string): Promise<boolean> {
   try {
     const pontos = await calculateCareerPoints(consultorId);
-    
+
     if (pontos.progresso >= 100) {
       // Consultor atingiu meta!
       await upgradePin(consultorId, pontos.proximo_pin);
-      
+
       // Buscar recompensa do novo PIN
       const recompensa = await getPinReward(pontos.proximo_pin);
-      
+
       // Creditar recompensa na wallet
       await creditWallet(consultorId, recompensa, `Recompensa PIN ${pontos.proximo_pin}`);
-      
+
       // Notificar consultor
       await notifyPinUpgrade(consultorId, pontos.proximo_pin, recompensa);
-      
+
       return true;
     }
-    
+
     return false;
 
   } catch (error) {
@@ -234,38 +234,134 @@ export async function checkAndUpgradePin(consultorId: string): Promise<boolean> 
 // ================================================
 
 async function registerSale(sale: SaleData): Promise<{ sale_id: string }> {
-  // TODO: Implementar INSERT no Supabase
-  console.log('📝 Registrando venda:', sale);
-  return { sale_id: sale.sale_id };
+  const url = process.env.SUPABASE_URL!;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY!;
+  const supabase = createClient(url, key);
+
+  const { data, error } = await supabase
+    .from('sales')
+    .insert({
+      buyer_id: sale.buyer_id,
+      buyer_type: 'consultor', // Simplificado
+      product_id: sale.product_id,
+      product_name: 'Kit Ativação SIGMA', // Snapshot ou buscar
+      price_final: sale.price_final,
+      quantity: sale.quantity,
+      total_amount: sale.price_final * sale.quantity,
+      payment_status: 'completed',
+      paid_at: new Date().toISOString()
+    })
+    .select('id')
+    .single();
+
+  if (error) throw error;
+  return { sale_id: data.id };
 }
 
 async function findOpenCycle(consultorId: string): Promise<CycleStatus | null> {
-  // TODO: SELECT no Supabase
-  console.log('🔍 Buscando ciclo aberto para:', consultorId);
-  return null;
+  const url = process.env.SUPABASE_URL!;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY!;
+  const supabase = createClient(url, key);
+
+  const { data, error } = await supabase
+    .from('matriz_cycles')
+    .select('id, consultor_id, slots_filled, slots_total, status')
+    .eq('consultor_id', consultorId)
+    .eq('status', 'open')
+    .order('opened_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) return null;
+
+  return {
+    cycle_id: data.id,
+    consultor_id: data.consultor_id,
+    slots_filled: data.slots_filled,
+    slots_total: data.slots_total,
+    status: data.status,
+    completed: data.status === 'completed'
+  };
 }
 
 async function createNewCycle(consultorId: string): Promise<CycleStatus> {
-  // TODO: INSERT no Supabase
-  console.log('➕ Criando novo ciclo para:', consultorId);
+  const url = process.env.SUPABASE_URL!;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY!;
+  const supabase = createClient(url, key);
+
+  // Buscar último número de ciclo
+  const { data: lastCycle } = await supabase
+    .from('matriz_cycles')
+    .select('cycle_number')
+    .eq('consultor_id', consultorId)
+    .order('cycle_number', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const nextNumber = (lastCycle?.cycle_number || 0) + 1;
+
+  const { data, error } = await supabase
+    .from('matriz_cycles')
+    .insert({
+      consultor_id: consultorId,
+      cycle_number: nextNumber,
+      status: 'open',
+      slots_filled: 0,
+      slots_total: 6,
+      opened_at: new Date().toISOString()
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+
   return {
-    cycle_id: 'new-cycle-id',
-    consultor_id: consultorId,
-    slots_filled: 0,
-    slots_total: 6,
-    status: 'open',
-    completed: false
+    cycle_id: data.id,
+    consultor_id: data.consultor_id,
+    slots_filled: data.slots_filled,
+    slots_total: data.slots_total,
+    status: data.status,
+    completed: data.status === 'completed'
   };
 }
 
 async function fillCycleSlot(cycleId: string, slot: number, saleId: string): Promise<void> {
-  // TODO: UPDATE no Supabase
-  console.log(`📍 Preenchendo slot ${slot} do ciclo ${cycleId}`);
+  const url = process.env.SUPABASE_URL!;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY!;
+  const supabase = createClient(url, key);
+
+  const updateData: any = {
+    slots_filled: slot,
+    updated_at: new Date().toISOString()
+  };
+
+  // Mapear slot para a coluna correta (slot_1_sale_id, etc)
+  updateData[`slot_${slot}_sale_id`] = saleId;
+
+  const { error } = await supabase
+    .from('matriz_cycles')
+    .update(updateData)
+    .eq('id', cycleId);
+
+  if (error) throw error;
 }
 
 async function completeCycle(cycleId: string): Promise<void> {
-  // TODO: UPDATE status='completed' no Supabase
-  console.log('✅ Ciclo completado:', cycleId);
+  const url = process.env.SUPABASE_URL!;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY!;
+  const supabase = createClient(url, key);
+
+  const { error } = await supabase
+    .from('matriz_cycles')
+    .update({
+      status: 'completed',
+      completed_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', cycleId);
+
+  if (error) throw error;
 }
 
 async function awardCareerPoint(consultorId: string, cycleId: string): Promise<void> {
@@ -289,18 +385,61 @@ async function awardCareerPoint(consultorId: string, cycleId: string): Promise<v
 }
 
 async function logCycleEvent(event: any): Promise<void> {
-  // TODO: INSERT em cycle_events
-  console.log('📊 Evento registrado:', event);
+  const url = process.env.SUPABASE_URL!;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY!;
+  const supabase = createClient(url, key);
+
+  const { error } = await supabase
+    .from('cycle_events')
+    .insert({
+      cycle_id: event.cycle_id,
+      consultor_id: event.consultor_id,
+      event_type: event.event_type,
+      event_data: event.event_data,
+      created_at: new Date().toISOString()
+    });
+
+  if (error) throw error;
 }
 
 async function getAllOpenCycles(): Promise<CycleStatus[]> {
-  // TODO: SELECT no Supabase
-  return [];
+  const url = process.env.SUPABASE_URL!;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY!;
+  const supabase = createClient(url, key);
+
+  const { data, error } = await supabase
+    .from('matriz_cycles')
+    .select('id, consultor_id, slots_filled, slots_total, status')
+    .eq('status', 'open');
+
+  if (error) throw error;
+  return (data || []).map(d => ({
+    cycle_id: d.id,
+    consultor_id: d.consultor_id,
+    slots_filled: d.slots_filled,
+    slots_total: d.slots_total,
+    status: d.status,
+    completed: false
+  }));
 }
 
 async function getDaysSinceLastSale(cycleId: string): Promise<number> {
-  // TODO: Calcular diferença de datas
-  return 0;
+  const url = process.env.SUPABASE_URL!;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY!;
+  const supabase = createClient(url, key);
+
+  const { data, error } = await supabase
+    .from('matriz_cycles')
+    .select('updated_at')
+    .eq('id', cycleId)
+    .single();
+
+  if (error) throw error;
+  if (!data.updated_at) return 0;
+
+  const lastUpdate = new Date(data.updated_at).getTime();
+  const now = new Date().getTime();
+  return Math.floor((now - lastUpdate) / (1000 * 60 * 60 * 24));
 }
 
 async function notifyNearCompletion(consultorId: string, slotsFilled: number): Promise<void> {
@@ -312,12 +451,18 @@ async function notifyStagnantCycle(consultorId: string, days: number): Promise<v
 }
 
 async function getConsultorData(consultorId: string): Promise<any> {
-  // TODO: SELECT no Supabase
-  return {
-    id: consultorId,
-    pin_atual: 'Safira',
-    pin_nivel: 4
-  };
+  const url = process.env.SUPABASE_URL!;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY!;
+  const supabase = createClient(url, key);
+
+  const { data, error } = await supabase
+    .from('consultores')
+    .select('id, pin_atual, pin_nivel')
+    .eq('id', consultorId)
+    .single();
+
+  if (error) throw error;
+  return data;
 }
 
 async function getCyclesByDirectLines(consultorId: string): Promise<{ linha: number; ciclos: number }[]> {
@@ -370,28 +515,86 @@ async function getCyclesByDirectLines(consultorId: string): Promise<{ linha: num
 
 function getVMECConfig() { return { linhas_requeridas: 0, percentuais: [] } }
 
-async function getNextGraduation(currentPin: number, ciclosAtuais: number): Promise<any> {
-  // TODO: Buscar em carreira.json
-  const graduacoes: Record<number, any> = {
-    4: { pin: 'Esmeralda', ciclos_necessarios: 300 },
-    5: { pin: 'Topázio', ciclos_necessarios: 500 }
+async function getNextGraduation(currentPinLevel: number, ciclosValidos: number): Promise<any> {
+  const cfg = await getSigmaConfigCore();
+  const nextPin = cfg.career.pins.find(p => p.orderIndex === currentPinLevel + 1);
+
+  if (!nextPin) {
+    // Já está no PIN máximo
+    return { pin: 'MAX', ciclos_necessarios: 0 };
+  }
+
+  return {
+    pin: nextPin.name,
+    ciclos_necessarios: nextPin.cyclesRequired
   };
-  return graduacoes[currentPin + 1] || graduacoes[currentPin];
 }
 
 async function upgradePin(consultorId: string, novoPin: string): Promise<void> {
+  const url = process.env.SUPABASE_URL!;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY!;
+  const supabase = createClient(url, key);
+
+  const cfg = await getSigmaConfigCore();
+  const pinCfg = cfg.career.pins.find(p => p.name === novoPin);
+
+  const { error } = await supabase
+    .from('consultores')
+    .update({
+      pin_atual: novoPin,
+      pin_nivel: pinCfg?.orderIndex || 1,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', consultorId);
+
+  if (error) throw error;
   console.log(`🎖️ Upgrade de PIN: ${consultorId} → ${novoPin}`);
 }
 
 async function getPinReward(pin: string): Promise<number> {
-  const rewards: Record<string, number> = {
-    'Esmeralda': 810.00,
-    'Topázio': 1350.00
-  };
-  return rewards[pin] || 0;
+  const cfg = await getSigmaConfigCore();
+  const pinCfg = cfg.career.pins.find(p => p.name === pin);
+  return pinCfg?.rewardValue || 0;
 }
 
 async function creditWallet(consultorId: string, valor: number, descricao: string): Promise<void> {
+  const url = process.env.SUPABASE_URL!;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY!;
+  const supabase = createClient(url, key);
+
+  // 1. Atualizar saldo disponível na tabela wallets
+  const { data: wallet } = await supabase
+    .from('wallets')
+    .select('balance')
+    .eq('consultor_id', consultorId)
+    .single();
+
+  const currentBalance = Number(wallet?.balance || 0);
+  const newBalance = currentBalance + valor;
+
+  await supabase
+    .from('wallets')
+    .update({
+      balance: newBalance,
+      updated_at: new Date().toISOString()
+    })
+    .eq('consultor_id', consultorId);
+
+  // 2. Registrar transação
+  await supabase
+    .from('transactions')
+    .insert({
+      consultor_id: consultorId,
+      wallet_id: wallet?.id,
+      tipo: 'bonus_carreira',
+      valor: valor,
+      balance_before: currentBalance,
+      balance_after: newBalance,
+      status: 'completed',
+      descricao: descricao,
+      created_at: new Date().toISOString()
+    });
+
   console.log(`💰 Creditar ${valor} para ${consultorId}: ${descricao}`);
 }
 

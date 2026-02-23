@@ -75,7 +75,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, sites, clients = [],
             state: user.address?.state || '',
             zip: user.address?.zip || ''
         },
-        referralLink: user.referralLink || ''
+        referralLink: user.referralLink || '',
+        consultantId: user.consultantId || '',
+        idNumerico: user.idNumerico || 1
     });
 
     const [isSyncing, setIsSyncing] = useState(false);
@@ -125,7 +127,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, sites, clients = [],
                 state: user.address?.state || '',
                 zip: user.address?.zip || ''
             },
-            referralLink: user.referralLink || ''
+            referralLink: user.referralLink || '',
+            consultantId: user.consultantId || '',
+            idNumerico: user.idNumerico || 1
         });
     }, [user]);
 
@@ -784,27 +788,27 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, sites, clients = [],
 
                 {/* Analytics Section (Visible on Dashboard Tab) */}
                 {showAnalytics && (
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8 animate-fade-in">
-                        <div className="bg-white dark:bg-rs-dark p-6 rounded-xl border border-gray-200 dark:border-rs-gray shadow-sm">
-                            <div className="flex justify-between items-start mb-2">
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8 animate-fade-in">
+                        <div className="bg-white dark:bg-rs-dark p-6 rounded-xl border border-gray-200 dark:border-rs-gray shadow-sm hover:shadow-md transition-shadow group/card">
+                            <div className="flex justify-between items-start mb-2 text-rs-gold group-hover/card:scale-110 transition-transform">
                                 <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">Visualizações</p>
-                                <BarChart3 size={18} className="text-rs-gold" />
+                                <BarChart3 size={18} />
                             </div>
                             <h3 className="text-2xl font-bold text-gray-900 dark:text-white">{analyticsData.totalViews.toLocaleString()}</h3>
                             <p className="text-[10px] text-green-500 mt-1 flex items-center gap-1"><TrendingUp size={10} /> +12% vs mês anterior</p>
                         </div>
-                        <div className="bg-white dark:bg-rs-dark p-6 rounded-xl border border-gray-200 dark:border-rs-gray shadow-sm">
-                            <div className="flex justify-between items-start mb-2">
+                        <div className="bg-white dark:bg-rs-dark p-6 rounded-xl border border-gray-200 dark:border-rs-gray shadow-sm hover:shadow-md transition-shadow group/card">
+                            <div className="flex justify-between items-start mb-2 text-blue-500 group-hover/card:scale-110 transition-transform">
                                 <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">Cliques Totais</p>
-                                <MousePointer2 size={18} className="text-blue-500" />
+                                <MousePointer2 size={18} />
                             </div>
                             <h3 className="text-2xl font-bold text-gray-900 dark:text-white">{analyticsData.totalClicks.toLocaleString()}</h3>
                             <p className="text-[10px] text-gray-400 mt-1">Interações nos botões</p>
                         </div>
-                        <div className="bg-white dark:bg-rs-dark p-6 rounded-xl border border-gray-200 dark:border-rs-gray shadow-sm">
-                            <div className="flex justify-between items-start mb-2">
+                        <div className="bg-white dark:bg-rs-dark p-6 rounded-xl border border-gray-200 dark:border-rs-gray shadow-sm hover:shadow-md transition-shadow group/card">
+                            <div className="flex justify-between items-start mb-2 text-green-500 group-hover/card:scale-110 transition-transform">
                                 <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">Leads (WhatsApp)</p>
-                                <MessageCircle size={18} className="text-green-500" />
+                                <MessageCircle size={18} />
                             </div>
                             <h3 className="text-2xl font-bold text-gray-900 dark:text-white">{analyticsData.totalLeads.toLocaleString()}</h3>
                             <p className="text-[10px] text-gray-400 mt-1">Cliques em contato</p>
@@ -844,10 +848,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, sites, clients = [],
                                 onClick={handleCreateClick}
                                 className="group relative h-64 rounded-2xl border-2 border-dashed border-gray-300 dark:border-rs-gray hover:border-rs-goldDark dark:hover:border-rs-gold bg-gray-50 dark:bg-transparent flex flex-col items-center justify-center gap-4 transition-all hover:bg-rs-gold/5"
                             >
-                                <div className="w-16 h-16 rounded-full bg-gray-200 dark:bg-rs-gray flex items-center justify-center group-hover:scale-110 transition-transform group-hover:bg-rs-gold group-hover:text-black text-gray-400">
+                                <div className="w-16 h-16 rounded-full bg-gray-200 dark:bg-rs-gray flex items-center justify-center group-hover:scale-110 group-hover:rotate-90 transition-all duration-500 group-hover:bg-rs-gold group-hover:text-black text-gray-400 shadow-inner">
                                     {isLimitReached ? <Crown size={32} /> : <Plus size={32} />}
                                 </div>
-                                <div className="text-center">
+                                <div className="text-center group-hover:translate-y-[-4px] transition-transform duration-300">
                                     <h3 className="font-bold text-gray-900 dark:text-white group-hover:text-rs-goldDark dark:group-hover:text-rs-gold transition-colors">Criar Novo MiniSite</h3>
                                     <p className="text-xs text-gray-500 px-8 mt-1">
                                         {isLimitReached ? 'Limite atingido. Faça upgrade.' : 'Comece do zero ou use um template.'}
@@ -875,7 +879,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, sites, clients = [],
                                     {/* Content */}
                                     <div className="p-6 relative">
                                         {/* Overlapping Avatar */}
-                                        <div className="absolute -top-8 left-6 w-16 h-16 rounded-full border-4 border-white dark:border-rs-dark bg-black flex items-center justify-center text-rs-gold font-serif font-bold text-xl shadow-lg">
+                                        <div className="absolute -top-8 left-6 w-16 h-16 rounded-full border-4 border-white dark:border-rs-dark bg-black flex items-center justify-center text-rs-gold font-serif font-bold text-xl shadow-lg group-hover:scale-110 group-hover:-rotate-6 transition-all duration-300">
                                             {site.name.charAt(0)}
                                         </div>
 
@@ -1067,8 +1071,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, sites, clients = [],
                 {isAgency && dashboardTab === 'finance' && !selectedClientId && (
                     <div className="space-y-6 animate-fade-in">
                         {/* Financial KPIs */}
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                            <div className="bg-white dark:bg-rs-dark p-6 rounded-xl border border-gray-200 dark:border-rs-gray shadow-sm">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div className="bg-white dark:bg-rs-dark p-6 rounded-xl border border-gray-200 dark:border-rs-gray shadow-sm hover:shadow-md transition-shadow">
                                 <div className="flex justify-between items-start mb-2">
                                     <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">Receita Bruta (Projetada)</p>
                                     <DollarSign size={18} className="text-green-500" />
@@ -1602,7 +1606,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, sites, clients = [],
                                                     <ShieldCheck size={10} /> VERIFICADO
                                                 </div>
                                             </div>
-                                            <p className="text-sm text-gray-400 font-mono">ID: {user.id.substr(0, 12).toUpperCase()}</p>
+                                            <p className="text-sm text-gray-400 font-mono tracking-tighter uppercase font-bold">ID RS PRÓLIPSI: <span className="text-rs-gold">{profileForm.consultantId || user.consultantId || 'rsprolipsi'}</span></p>
                                         </div>
                                     </div>
 

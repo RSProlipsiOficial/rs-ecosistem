@@ -6,50 +6,114 @@ const router = Router();
 router.get('/v1/cds', async (req: Request, res: Response) => {
   try {
     const { tenantId } = req.query;
-    if (!tenantId) return res.status(400).json({ success: false, error: 'tenantId requerido' });
-    const { data, error } = await supabase
-      .from('distribution_centers')
+    // [RS-SYNC] - Se não for passado tenantId ou for o padrão, buscamos os CDs globais da minisite_profiles
+    let query = supabase
+      .from('minisite_profiles')
       .select('*')
-      .eq('tenant_id', tenantId)
+      .or('type.ilike.cd,type.ilike.franquia,type.ilike.proprio,type.ilike.hibrido,type.ilike.%sede%')
       .order('created_at', { ascending: false });
+
+    // Se houver um tenantId específico (diferente do padrão de zeros), poderíamos filtrar aqui.
+    // Mas por enquanto, o ecossistema RS usa minisite_profiles para todos os CDs.
+
+    const { data, error } = await query;
+
     if (error) return res.status(500).json({ success: false, error: error.message });
-    res.json({ success: true, data });
+
+    // [RS-MAP] - Mapear campos da minisite_profiles para o formato esperado pelo Marketplace/CDRegistry
+    const mapped = (data || []).map((p: any) => ({
+      id: p.id,
+      name: p.name,
+      owner_name: p.manager_name || p.name,
+      cnpj_cpf: p.cpf || '',
+      email: p.email || '',
+      phone: p.phone || '',
+      // Campos de endereço
+      address_street: p.address_street,
+      address_number: p.address_number,
+      address_neighborhood: p.address_neighborhood,
+      address_city: p.address_city,
+      address_state: p.address_state,
+      address_zip: p.address_zip,
+      type: p.type,
+      // Se a coluna status não existir, assumimos active para não bloquear o marketplace
+      is_active: p.status === 'active' || p.status === undefined || p.status === null
+    }));
+
+    res.json({ success: true, data: mapped });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
+// [RS-FIX] Criar CD: insere em minisite_profiles (mesma tabela que GET lê)
 router.post('/v1/cds', async (req: Request, res: Response) => {
   try {
     const body = req.body;
-    if (!body.tenantId) return res.status(400).json({ success: false, error: 'tenantId requerido' });
-    const payload = {
-      tenant_id: body.tenantId,
+    if (!body.name) return res.status(400).json({ success: false, error: 'name é requerido' });
+
+    const payload: any = {
       name: body.name,
-      owner_name: body.owner_name,
-      cnpj_cpf: body.cnpj_cpf,
-      email: body.email,
-      phone: body.phone,
+      type: body.type || 'cd',
+      email: body.email || null,
+      phone: body.phone || null,
+      cpf: body.cnpj_cpf || body.cpf || null,
+      manager_name: body.owner_name || body.name,
+      // Endereço
+      address_street: body.address_street || null,
+      address_number: body.address_number || null,
+      address_neighborhood: body.address_neighborhood || null,
+      address_city: body.address_city || null,
+      address_state: body.address_state || null,
+      address_zip: body.address_zip || null,
+      // Consultor vinculado (se fornecido)
+      consultant_id: body.consultant_id || null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     };
-    const { data, error } = await supabase.from('distribution_centers').insert([payload]).select().single();
+
+    const { data, error } = await supabase
+      .from('minisite_profiles')
+      .insert([payload])
+      .select()
+      .single();
+
     if (error) return res.status(500).json({ success: false, error: error.message });
+
+    console.log(`[RS-API] ✅ CD criado em minisite_profiles: ${data.id} (${data.name})`);
     res.json({ success: true, data });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
+// [RS-FIX] Atualizar CD: usa minisite_profiles
 router.put('/v1/cds/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const body = req.body;
     const updates: any = { updated_at: new Date().toISOString() };
     if (body.name) updates.name = body.name;
-    if (body.owner_name) updates.owner_name = body.owner_name;
-    if (body.cnpj_cpf) updates.cnpj_cpf = body.cnpj_cpf;
+    if (body.owner_name) updates.manager_name = body.owner_name;
+    if (body.cnpj_cpf || body.cpf) updates.cpf = body.cnpj_cpf || body.cpf;
     if (body.email) updates.email = body.email;
     if (body.phone) updates.phone = body.phone;
-    const { data, error } = await supabase.from('distribution_centers').update(updates).eq('id', id).select().single();
+    if (body.type) updates.type = body.type;
+    // Endereço
+    if (body.address_street) updates.address_street = body.address_street;
+    if (body.address_number) updates.address_number = body.address_number;
+    if (body.address_neighborhood) updates.address_neighborhood = body.address_neighborhood;
+    if (body.address_city) updates.address_city = body.address_city;
+    if (body.address_state) updates.address_state = body.address_state;
+    if (body.address_zip) updates.address_zip = body.address_zip;
+
+    const { data, error } = await supabase
+      .from('minisite_profiles')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+
     if (error) return res.status(500).json({ success: false, error: error.message });
     res.json({ success: true, data });
   } catch (err: any) {
@@ -57,10 +121,15 @@ router.put('/v1/cds/:id', async (req: Request, res: Response) => {
   }
 });
 
+// [RS-FIX] Deletar CD: usa minisite_profiles
 router.delete('/v1/cds/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { error } = await supabase.from('distribution_centers').delete().eq('id', id);
+    const { error } = await supabase
+      .from('minisite_profiles')
+      .delete()
+      .eq('id', id);
+
     if (error) return res.status(500).json({ success: false, error: error.message });
     res.json({ success: true });
   } catch (err: any) {

@@ -1,171 +1,162 @@
-import React, { useState, useMemo } from 'react';
-import { LedgerEntry, LedgerEventType, LedgerState, User } from '../types';
-// FIX: Corrected import from MOCK_ADMIN_LEDGER_ENTRIES to MOCK_LEDGER_ENTRIES to match exported constant.
-import { MOCK_LEDGER_ENTRIES, IconWhatsApp } from '../constants';
+import React, { useState, useEffect, useMemo } from 'react';
 import DataTable from '../components/DataTable';
 import StatusBadge from '../components/StatusBadge';
 import Modal from '../components/Modal';
-import ActionMenu from '../components/ActionMenu';
-import ComingSoonModal from '../components/ComingSoonModal';
+import { adminAPI } from '../src/services/api'; // Importar API Real
+import { LedgerEntry, LedgerEventType } from '../types';
 
 const formatCurrency = (value: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value / 100);
 
 const typeLabels: { [key in LedgerEventType]?: string } = {
-  [LedgerEventType.COMMISSION_SHOP]: "Comissão Loja",
-  [LedgerEventType.COMMISSION_REFERRAL]: "Comissão Indicação",
-  [LedgerEventType.BONUS]: "Bônus",
-  [LedgerEventType.PURCHASE]: "Compra",
-  [LedgerEventType.WITHDRAWAL]: "Saque",
-  [LedgerEventType.TRANSFER]: "Transferência",
-  [LedgerEventType.FEES]: "Taxa",
-  [LedgerEventType.ADJUSTMENT]: "Ajuste Manual",
-  [LedgerEventType.CHARGEBACK]: "Estorno",
-  [LedgerEventType.PAYMENT_RECEIVED]: "Pagamento Recebido"
+    [LedgerEventType.COMMISSION_SHOP]: "Comissão Loja",
+    [LedgerEventType.COMMISSION_REFERRAL]: "Comissão Indicação",
+    [LedgerEventType.BONUS]: "Bônus",
+    [LedgerEventType.PURCHASE]: "Compra",
+    [LedgerEventType.WITHDRAWAL]: "Saque",
+    [LedgerEventType.TRANSFER]: "Transferência",
+    [LedgerEventType.FEES]: "Taxa",
+    [LedgerEventType.ADJUSTMENT]: "Ajuste Manual",
+    [LedgerEventType.CHARGEBACK]: "Estorno",
+    [LedgerEventType.PAYMENT_RECEIVED]: "Pagamento Recebido"
 };
 
 const AdminLedger: React.FC = () => {
+    const [transactions, setTransactions] = useState<LedgerEntry[]>([]);
+    const [loading, setLoading] = useState(false);
     const [filter, setFilter] = useState('');
-    const [modal, setModal] = useState<{ isOpen: boolean; content: React.ReactNode; title: string; }>({ isOpen: false, content: null, title: '' });
-    const [comingSoonFeature, setComingSoonFeature] = useState<string | null>(null);
 
-    const handleCloseModal = () => setModal({ isOpen: false, content: null, title: '' });
+    // Modal States
+    const [isCreditModalOpen, setIsCreditModalOpen] = useState(false);
+    const [isDebitModalOpen, setIsDebitModalOpen] = useState(false);
 
-    const handleOpenUserModal = (user: User) => {
-        const whatsappLink = user.phoneE164 ? `https://wa.me/${user.phoneE164.replace(/\D/g, '')}` : null;
-        setModal({
-            isOpen: true,
-            title: "Detalhes do Consultor",
-            content: (
-                <div className="space-y-4">
-                     <div className="space-y-2">
-                        <div className="flex justify-between py-2 border-b border-border/50">
-                            <span className="text-text-soft">Nome</span>
-                            <span className="font-semibold text-text-title">{user.name}</span>
-                        </div>
-                        <div className="flex justify-between py-2 border-b border-border/50">
-                            <span className="text-text-soft">ID</span>
-                            <span className="font-semibold text-text-title">{user.id}</span>
-                        </div>
-                        <div className="flex justify-between py-2 border-b border-border/50">
-                            <span className="text-text-soft">Email</span>
-                            <span className="font-semibold text-text-title">{user.email}</span>
-                        </div>
-                        <div className="flex justify-between py-2 border-b border-border/50">
-                            <span className="text-text-soft">Telefone</span>
-                            <span className="font-semibold text-text-title">{user.phoneE164 || 'N/A'}</span>
-                        </div>
-                    </div>
-                    {whatsappLink && (
-                        <a href={whatsappLink} target="_blank" rel="noopener noreferrer" className="w-full flex items-center justify-center text-center py-3 px-6 bg-green-500 text-white text-base hover:bg-green-600 font-semibold rounded-lg transition-colors duration-200">
-                           <IconWhatsApp className="w-5 h-5 mr-2" /> Iniciar Conversa
-                        </a>
-                    )}
-                </div>
-            )
-        })
+    // Form States
+    const [formData, setFormData] = useState({ userId: '', amount: '', description: '' });
+    const [actionLoading, setActionLoading] = useState(false);
+
+    const fetchTransactions = async () => {
+        setLoading(true);
+        try {
+            const res = await adminAPI.getAllTransactions();
+            if (res.data?.success) {
+                setTransactions(res.data.transactions);
+            }
+        } catch (error) {
+            console.error("Erro ao buscar transações:", error);
+            alert("Erro ao carregar transações. Verifique se você é admin.");
+        } finally {
+            setLoading(false);
+        }
     };
 
-    const handleOpenStatusModal = (entry: LedgerEntry) => {
-        setModal({
-            isOpen: true,
-            title: "Alterar Status do Pagamento",
-            content: (
-                <div>
-                    <p className="text-text-body mb-4">Alterar status para o lançamento <span className="font-bold text-gold">{entry.refId}</span> de {entry.user?.name}.</p>
-                    <div className="space-y-2">
-                        {Object.values(LedgerState).map(status => (
-                            <label key={status} className="flex items-center p-3 rounded-lg hover:bg-surface cursor-pointer">
-                                <input type="radio" name="status" value={status} className="form-radio h-4 w-4 text-gold bg-surface border-border focus:ring-gold" defaultChecked={entry.state === status} />
-                                <span className="ml-3 text-text-body">{status}</span>
-                            </label>
-                        ))}
-                    </div>
-                    <button onClick={handleCloseModal} className="mt-4 w-full text-center py-2 px-4 bg-gold text-base text-card hover:bg-gold-hover font-semibold rounded-lg transition-colors">Salvar Alterações</button>
-                </div>
-            )
-        })
+    useEffect(() => {
+        fetchTransactions();
+    }, []);
+
+    const handleAction = async (type: 'credit' | 'debit') => {
+        if (!formData.userId || !formData.amount) return alert("Preencha ID e Valor");
+
+        setActionLoading(true);
+        try {
+            const payload = {
+                userId: formData.userId,
+                amount: Math.round(parseFloat(formData.amount.replace(',', '.')) * 100), // Convert to cents
+                description: formData.description
+            };
+
+            if (type === 'credit') {
+                await adminAPI.creditUser(payload);
+                alert("Crédito realizado com sucesso!");
+            } else {
+                await adminAPI.debitUser(payload);
+                alert("Débito realizado com sucesso!");
+            }
+
+            setIsCreditModalOpen(false);
+            setIsDebitModalOpen(false);
+            setFormData({ userId: '', amount: '', description: '' });
+            fetchTransactions(); // Refresh list
+
+        } catch (error: any) {
+            console.error("Erro na ação:", error);
+            alert(error.response?.data?.error || "Erro ao processar ação.");
+        } finally {
+            setActionLoading(false);
+        }
     };
 
     const columns = useMemo(() => [
         {
-            header: 'Pessoa',
+            header: 'Usuário',
             accessor: 'user',
-            render: (item: LedgerEntry) => item.user ? (
-                <button onClick={() => handleOpenUserModal(item.user!)} className="font-semibold text-text-title hover:text-gold hover:underline">
-                    {item.user.name}
-                </button>
-            ) : 'N/A'
-        },
-        { header: 'Tipo', accessor: 'type', render: (item: LedgerEntry) => <span className="text-sm text-text-body">{typeLabels[item.type] || item.type}</span>},
-        { header: 'Origem', accessor: 'origin', render: (item: LedgerEntry) => <span className="capitalize">{item.origin}</span>},
-        { header: 'Valor', accessor: 'amount', render: (item: LedgerEntry) => <span className={`font-semibold ${item.amount > 0 ? 'text-success' : 'text-danger'}`}>{formatCurrency(item.amount)}</span>},
-        { header: 'Status', accessor: 'state', render: (item: LedgerEntry) => <StatusBadge status={item.state} />},
-        { header: 'Referência', accessor: 'refId'},
-        { header: 'Data', accessor: 'occurredAt', render: (item: LedgerEntry) => new Date(item.occurredAt).toLocaleString('pt-BR', {dateStyle: 'short', timeStyle: 'short'})},
-        {
-            header: 'Ações',
-            accessor: 'actions' as keyof LedgerEntry,
-            render: (item: LedgerEntry) => (
-                <div className="text-right">
-                    <ActionMenu actions={[
-                        { label: 'Ver Detalhes', onClick: () => item.user && handleOpenUserModal(item.user), disabled: !item.user },
-                        { label: 'Contato WhatsApp', onClick: () => item.user?.phoneE164 && window.open(`https://wa.me/${item.user.phoneE164.replace(/\D/g, '')}`, '_blank'), disabled: !item.user?.phoneE164, icon: <IconWhatsApp className="w-4 h-4" /> },
-                        { label: 'Alterar Status', onClick: () => handleOpenStatusModal(item) },
-                        { label: 'Imprimir', onClick: () => setComingSoonFeature(`Comprovante ${item.refId}`) }
-                    ]} />
+            render: (item: any) => (
+                <div>
+                    <p className="font-bold text-text-title">{item.user?.name || 'Desconhecido'}</p>
+                    <p className="text-xs text-text-soft">{item.user?.email || item.user_id}</p>
                 </div>
             )
-        }
+        },
+        { header: 'Tipo', accessor: 'type', render: (item: any) => <span className="text-sm text-text-body">{typeLabels[item.type] || item.type}</span> },
+        { header: 'Valor', accessor: 'amount', render: (item: any) => <span className={`font-semibold ${item.type === 'debit' || item.amount < 0 ? 'text-danger' : 'text-success'}`}>{formatCurrency(item.amount)}</span> },
+        { header: 'Descrição', accessor: 'description' },
+        { header: 'Data', accessor: 'created_at', render: (item: any) => new Date(item.created_at).toLocaleString('pt-BR') },
     ], []);
 
-    const filteredData = MOCK_LEDGER_ENTRIES.filter(entry => {
-        const search = filter.toLowerCase();
-        return (
-            entry.user?.name.toLowerCase().includes(search) ||
-            entry.refId.toLowerCase().includes(search) ||
-            entry.user?.id.toLowerCase().includes(search)
-        )
-    });
-
-    const totals = useMemo(() => {
-        return filteredData.reduce((acc, item) => {
-            if (item.amount > 0) acc.credits += item.amount;
-            else acc.debits += item.amount;
-            acc.fees += item.fee;
-            return acc;
-        }, { credits: 0, debits: 0, fees: 0 });
-    }, [filteredData]);
+    const filteredData = transactions.filter(t =>
+        JSON.stringify(t).toLowerCase().includes(filter.toLowerCase())
+    );
 
     return (
         <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="bg-card p-4 rounded-xl border border-border"><h4 className="text-sm text-text-soft">Total de Créditos</h4><p className="text-2xl font-bold text-success">{formatCurrency(totals.credits)}</p></div>
-                <div className="bg-card p-4 rounded-xl border border-border"><h4 className="text-sm text-text-soft">Total de Débitos</h4><p className="text-2xl font-bold text-danger">{formatCurrency(totals.debits)}</p></div>
-                <div className="bg-card p-4 rounded-xl border border-border"><h4 className="text-sm text-text-soft">Total de Taxas</h4><p className="text-2xl font-bold text-warning">{formatCurrency(totals.fees)}</p></div>
-                <div className="bg-card p-4 rounded-xl border border-border"><h4 className="text-sm text-text-soft">Líquido</h4><p className="text-2xl font-bold text-text-title">{formatCurrency(totals.credits + totals.debits - totals.fees)}</p></div>
-            </div>
-
-            <div className="bg-card p-4 rounded-2xl border border-border">
-                 <div className="relative">
-                    <span className="absolute inset-y-0 left-0 flex items-center pl-3">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-text-body" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                    </span>
-                    <input
-                        type="text"
-                        placeholder="Filtrar por nome, ID ou Ref ID..."
-                        className="w-full pl-10 pr-4 py-2 rounded-lg bg-surface border border-border focus:outline-none focus:ring-2 focus:ring-gold/25 focus:border-transparent transition-all"
-                        value={filter}
-                        onChange={(e) => setFilter(e.target.value)}
-                    />
+            <div className="flex justify-between items-center">
+                <div>
+                    <h1 className="text-3xl font-bold text-text-title">Admin Ledger</h1>
+                    <p className="text-text-body">Gestão Global de Saldos</p>
+                </div>
+                <div className="flex gap-2">
+                    <button onClick={() => setIsCreditModalOpen(true)} className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-bold">
+                        + Crédito Manual
+                    </button>
+                    <button onClick={() => setIsDebitModalOpen(true)} className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-bold">
+                        - Débito Manual
+                    </button>
                 </div>
             </div>
 
-            <DataTable columns={columns} data={filteredData} />
-            
-            <Modal isOpen={modal.isOpen} onClose={handleCloseModal} title={modal.title}>
-                {modal.content}
+            <div className="bg-card p-4 rounded-xl border border-border">
+                <input
+                    type="text"
+                    placeholder="Filtrar..."
+                    value={filter}
+                    onChange={e => setFilter(e.target.value)}
+                    className="w-full bg-surface border border-border rounded-lg px-4 py-2 text-text-body"
+                />
+            </div>
+
+            {loading ? <p>Carregando...</p> : <DataTable columns={columns} data={filteredData} />}
+
+            {/* Modal Crédito */}
+            <Modal isOpen={isCreditModalOpen} onClose={() => setIsCreditModalOpen(false)} title="Adicionar Crédito">
+                <div className="space-y-4">
+                    <input className="w-full p-2 bg-surface border border-border rounded" placeholder="ID do Usuário (UUID)" value={formData.userId} onChange={e => setFormData({ ...formData, userId: e.target.value })} />
+                    <input className="w-full p-2 bg-surface border border-border rounded" placeholder="Valor (R$)" type="number" value={formData.amount} onChange={e => setFormData({ ...formData, amount: e.target.value })} />
+                    <input className="w-full p-2 bg-surface border border-border rounded" placeholder="Descrição" value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} />
+                    <button onClick={() => handleAction('credit')} disabled={actionLoading} className="w-full bg-green-600 text-white py-2 rounded font-bold">
+                        {actionLoading ? 'Processando...' : 'Confirmar Crédito'}
+                    </button>
+                </div>
             </Modal>
-            <ComingSoonModal isOpen={!!comingSoonFeature} onClose={() => setComingSoonFeature(null)} featureName={comingSoonFeature || ''} />
+
+            {/* Modal Débito */}
+            <Modal isOpen={isDebitModalOpen} onClose={() => setIsDebitModalOpen(false)} title="Remover Saldo">
+                <div className="space-y-4">
+                    <input className="w-full p-2 bg-surface border border-border rounded" placeholder="ID do Usuário (UUID)" value={formData.userId} onChange={e => setFormData({ ...formData, userId: e.target.value })} />
+                    <input className="w-full p-2 bg-surface border border-border rounded" placeholder="Valor (R$)" type="number" value={formData.amount} onChange={e => setFormData({ ...formData, amount: e.target.value })} />
+                    <input className="w-full p-2 bg-surface border border-border rounded" placeholder="Descrição" value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} />
+                    <button onClick={() => handleAction('debit')} disabled={actionLoading} className="w-full bg-red-600 text-white py-2 rounded font-bold">
+                        {actionLoading ? 'Processando...' : 'Confirmar Débito'}
+                    </button>
+                </div>
+            </Modal>
         </div>
     );
 };

@@ -2,7 +2,7 @@
 
 import type { MarketType } from '../App';
 import type { AIStrategy } from './aiStrategies';
-import type { GroundingChunk } from '@google/genai'; // Import GroundingChunk
+import { callOpenRouter } from './openrouter';
 
 
 // The backend server is expected to be running on the same origin as the
@@ -10,85 +10,52 @@ import type { GroundingChunk } from '@google/genai'; // Import GroundingChunk
 // requests will be made with relative paths (e.g., '/config'), ensuring they
 // are correctly routed to the backend via the proxy, regardless of the
 // development or production environment's domain.
-const API_BASE_URL = '';
+const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000';
 
 
-// This will hold the initialized AI client instance.
-// Using `any` because the type is from a dynamically imported module.
-let ai: any = null;
 
-/**
- * Dynamically imports the Google AI module and initializes the client.
- * This function is designed to be called only when an AI feature is used,
- * preventing the AI SDK from blocking the initial app load.
- */
-async function getAiClient() {
-  // Return the existing client if already initialized.
-  if (ai) {
-    return ai;
-  }
-
-  try {
-    // Dynamically import the GoogleGenAI class from the module.
-    const { GoogleGenAI } = await import('@google/genai');
-
-    const apiKey = process.env.API_KEY;
-    if (!apiKey) {
-      console.error("API_KEY for Gemini is not set in environment variables.");
-      throw new Error("A chave da API Gemini não está configurada. Não é possível usar os recursos de IA.");
-    }
-    
-    // Create and cache the client instance.
-    ai = new GoogleGenAI({ apiKey });
-    return ai;
-
-  } catch (error) {
-    console.error("Failed to dynamically import or initialize @google/genai:", error);
-    throw new Error("Não foi possível carregar o módulo de IA. Verifique sua conexão com a internet.");
-  }
-}
 
 
 async function fetchAPI(url: string, options: RequestInit = {}) {
-  try {
-    const response = await fetch(`${API_BASE_URL}${url}`, {
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
-      ...options,
-    });
-    
-    // If the response is 204 No Content, there's no body to parse.
-    if (response.status === 204) {
-      return {}; // Return an empty object for successful no-content responses
-    }
-
-    const responseText = await response.text();
-    let responseData: any = null;
     try {
-        if (!responseText.trim()) { // Check for effectively empty string after trim
-            // Treat empty response as a specific error or default empty object, depending on API contract
-            // For now, let's treat it as a parsing error if JSON was expected but not received.
-            responseData = { msg: `Resposta vazia recebida do servidor, esperava JSON.` };
-        } else {
-            responseData = JSON.parse(responseText);
-        }
-    } catch (parseError) {
-        responseData = { msg: `Resposta não é um JSON válido: "${responseText.substring(0, 100)}${responseText.length > 100 ? '...' : ''}".` };
-    }
+        const response = await fetch(`${API_BASE_URL}${url}`, {
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers,
+            },
+            ...options,
+        });
 
-    if (!response.ok) {
-        throw new Error(responseData.msg || `Falha na requisição com status: ${response.status}`);
+        // If the response is 204 No Content, there's no body to parse.
+        if (response.status === 204) {
+            return {}; // Return an empty object for successful no-content responses
+        }
+
+        const responseText = await response.text();
+        let responseData: any = null;
+        try {
+            if (!responseText.trim()) { // Check for effectively empty string after trim
+                // Treat empty response as a specific error or default empty object, depending on API contract
+                // For now, let's treat it as a parsing error if JSON was expected but not received.
+                responseData = { msg: `Resposta vazia recebida do servidor, esperava JSON.` };
+            } else {
+                responseData = JSON.parse(responseText);
+            }
+        } catch (parseError) {
+            responseData = { msg: `Resposta não é um JSON válido: "${responseText.substring(0, 100)}${responseText.length > 100 ? '...' : ''}".` };
+        }
+
+        if (!response.ok) {
+            throw new Error(responseData.msg || `Falha na requisição com status: ${response.status}`);
+        }
+        return responseData;
+    } catch (error) {
+        console.error(`API Error on ${url}:`, error);
+        if (error instanceof Error) {
+            throw new Error(error.message || 'Erro de conexão com o backend.');
+        }
+        throw new Error('Ocorreu um erro desconhecido.');
     }
-    return responseData;
-  } catch (error) {
-    console.error(`API Error on ${url}:`, error);
-    if (error instanceof Error) {
-        throw new Error(error.message || 'Erro de conexão com o backend.');
-    }
-    throw new Error('Ocorreu um erro desconhecido.');
-  }
 }
 
 // Config
@@ -121,23 +88,10 @@ export const fetchMarketOverview = () => fetchAPI('/market_overview');
 // Account Data
 export const fetchAccountInfo = () => fetchAPI('/account');
 export const verifyBinanceAccount = async (apiKey: string, userDoc: string): Promise<{ isValid: boolean; reason?: string }> => {
-    console.log(`Verifying API key "${apiKey}" for document "${userDoc}"`);
-    await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate network delay
-  
-    // In a real app, you'd call the Binance API to get account info
-    // and compare the document number. Here, we simulate it.
-    const MOCK_VALID_API_KEY = "VALID_BINANCE_KEY_123";
-    const MOCK_ACCOUNT_DOC = "12.345.678/0001-90";
-  
-    if (apiKey !== MOCK_VALID_API_KEY) {
-      return { isValid: false, reason: "A chave de API é inválida ou não existe." };
-    }
-  
-    if (userDoc !== MOCK_ACCOUNT_DOC) {
-      return { isValid: false, reason: "O CPF/CNPJ da conta Binance não corresponde ao ao documento cadastrado." };
-    }
-  
-    return { isValid: true };
+    return fetchAPI('/verify_binance', {
+        method: 'POST',
+        body: JSON.stringify({ apiKey, userDoc })
+    });
 };
 
 
@@ -154,36 +108,28 @@ export const runBacktest = (symbol: string, strategy: AIStrategy, startDate: str
 };
 
 // AI Functions
-export const askAI = async (prompt: string): Promise<{ text: string, citations: GroundingChunk[] }> => {
+export const askAI = async (prompt: string): Promise<{ text: string, citations: any[] }> => {
     try {
-        const client = await getAiClient();
-        const response = await client.models.generateContent({
-            model: 'gemini-2.5-pro',
-            contents: prompt,
-            config: {
-                tools: [{googleSearch: {}}]
-            }
-        });
+        const text = await callOpenRouter([{ role: 'user', content: prompt }]);
         return {
-            // FIX: Per Gemini API guidelines, response.text is a property, not a method.
-            text: response.text,
-            citations: response.candidates?.[0]?.groundingMetadata?.groundingChunks ?? []
+            text: text,
+            citations: []
         };
-    } catch(e) {
-        console.error("Gemini API Error (askAI):", e);
+    } catch (e) {
+        console.error("OpenRouter API Error (askAI):", e);
         if (e instanceof Error) throw new Error(`Falha na comunicação com a IA: ${e.message}`);
         throw new Error("Ocorreu um erro desconhecido ao contatar a IA.");
     }
 }
 
-export const analyzeChartAI = async (symbol: string, forBot: boolean = false, strategy: string = 'AI_AUTO_SELECT') => {
+export const analyzeChartAI = async (symbol: string, forBot: boolean = false, strategy: AIStrategy = 'AI_AUTO_SELECT') => {
     try {
         // Assuming '1h' as a default for general analysis
         const ohlcv = await fetchOhlcv(symbol, '1h');
         if (!ohlcv || !ohlcv.candles || ohlcv.candles.length === 0) {
             throw new Error("Não foi possível obter dados do gráfico para análise.");
         }
-        
+
         const recentCandles = ohlcv.candles.slice(-200);
         const ohlcvString = recentCandles.map((c: any[]) => `T: ${new Date(c[0]).toISOString()}, O: ${c[1]}, H: ${c[2]}, L: ${c[3]}, C: ${c[4]}`).join('\n');
 
@@ -213,13 +159,13 @@ export const analyzeChartAI = async (symbol: string, forBot: boolean = false, st
     \`\`\`json
     { "signal": "none" }
     \`\``;
-        
+
         const humanMarkdownInstructions = `**Saída Esperada:** Forneça um resumo conciso em markdown da sua análise. Organize por padrão encontrado. Se nenhum padrão for encontrado, declare isso claramente.`;
 
         let strategyPrompt;
         const availableStrategiesForAuto = `"SMART_MONEY", "ELLIOTT_WAVE_3", "TOPS_BOTTOMS_REVERSAL", "PULLBACK_REVERSAL", "SUPPLY_DEMAND", "BREAKOUT_RETEST"`;
 
-        switch(strategy) {
+        switch (strategy) {
             case 'AI_AUTO_SELECT':
                 strategyPrompt = `Você é um trader de elite e analista quantitativo. Sua tarefa é analisar o contexto do mercado para o ativo ${symbol} e, em seguida, selecionar a estratégia MAIS ADEQUADA para o momento atual e aplicá-la para encontrar um trade de alta probabilidade.
 
@@ -238,7 +184,7 @@ ${forBot ? botJsonInstructions : humanMarkdownInstructions}`;
                 break;
 
             case 'TOPS_BOTTOMS_REVERSAL':
-                 strategyPrompt = `Você é um trader especialista em Price Action, focado em operações de reversão em topos e fundos. Sua tarefa é identificar setups de exaustão ou falsos rompimentos no ativo ${symbol}.
+                strategyPrompt = `Você é um trader especialista em Price Action, focado em operações de reversão em topos e fundos. Sua tarefa é identificar setups de exaustão ou falsos rompimentos no ativo ${symbol}.
 
 **Framework Operacional Estrito:**
 1.  **Identifique Níveis Chave:** Encontre um topo ou fundo significativo. Para o trade, inclua um desenho \`{ "type": "HORIZONTAL_LINE", "price": <preço_do_nível>, "label": "Pivô Chave" }\`.
@@ -249,7 +195,7 @@ ${forBot ? botJsonInstructions : humanMarkdownInstructions}`;
                 break;
 
             case 'PULLBACK_REVERSAL':
-                 strategyPrompt = `Você é um trader especialista em seguir tendências, operando reversões em pullbacks. Sua tarefa é identificar pontos de entrada de baixo risco a favor da tendência principal para o ativo ${symbol}.
+                strategyPrompt = `Você é um trader especialista em seguir tendências, operando reversões em pullbacks. Sua tarefa é identificar pontos de entrada de baixo risco a favor da tendência principal para o ativo ${symbol}.
 
 **Framework Operacional Estrito:**
 1.  **Identifique a Tendência Principal:** Confirme a tendência (topos/fundos ascendentes ou descendentes).
@@ -270,7 +216,7 @@ ${forBot ? botJsonInstructions : humanMarkdownInstructions}`;
 
 ${forBot ? botJsonInstructions : humanMarkdownInstructions}`;
                 break;
-            
+
             case 'BREAKOUT_RETEST':
                 strategyPrompt = `Você é um analista técnico especialista em Price Action, com foco em Rompimento e Reteste. Sua tarefa é identificar setups de alta probabilidade para o ativo ${symbol}.
 
@@ -298,7 +244,7 @@ ${forBot ? botJsonInstructions : humanMarkdownInstructions}`;
 
 ${forBot ? botJsonInstructions : humanMarkdownInstructions}`;
                 break;
-            
+
             case 'SMART_MONEY':
                 strategyPrompt = `Você é um trader especialista em Smart Money Concepts (SMC/ICT). Sua tarefa é identificar setups de alta probabilidade para o ativo ${symbol} baseados em Order Blocks (OB) e Fair Value Gaps (FVG).
 
@@ -314,7 +260,7 @@ ${forBot ? botJsonInstructions : humanMarkdownInstructions}`;
 
             case 'KAGI_REVERSAL':
             default:
-                 strategyPrompt = `Você é um analista técnico de trading de elite. Sua tarefa é analisar os dados de candlestick fornecidos para o símbolo ${symbol} e identificar padrões de reversão ou continuação com foco em um framework operacional (swing trade).
+                strategyPrompt = `Você é um analista técnico de trading de elite. Sua tarefa é analisar os dados de candlestick fornecidos para o símbolo ${symbol} e identificar padrões de reversão ou continuação com foco em um framework operacional (swing trade).
 
 **Padrões de Análise:**
 1.  **Ranges de Negociação (Consolidações):** Marque as zonas de suporte e resistência que definem um range.
@@ -327,17 +273,11 @@ ${forBot ? botJsonInstructions : humanMarkdownInstructions}`;
 
 
         const finalPrompt = `${strategyPrompt}\n\n**Dados do Gráfico (Últimas 200 Velas OHLCV para ${symbol}):**\n${ohlcvString}`;
-        
-        const client = await getAiClient();
-        const response = await client.models.generateContent({
-            model: 'gemini-2.5-pro',
-            contents: finalPrompt,
-        });
 
-        // FIX: Per Gemini API guidelines, response.text is a property, not a method.
-        return response.text;
-    } catch(e) {
-        console.error("Gemini API Error (analyzeChartAI):", e);
+        const response = await callOpenRouter([{ role: 'user', content: finalPrompt }]);
+        return response;
+    } catch (e) {
+        console.error("OpenRouter API Error (analyzeChartAI):", e);
         if (e instanceof Error) throw new Error(`Falha na análise da IA: ${e.message}`);
         throw new Error("Ocorreu um erro desconhecido ao analisar o gráfico com a IA.");
     }
@@ -351,7 +291,7 @@ export const setFocusSymbol = async (symbol: string) => {
         if (!response.ok) {
             throw new Error('Falha ao definir o símbolo de foco.');
         }
-    } catch(e) {
+    } catch (e) {
         console.error("Failed to set focus symbol", e);
         if (e instanceof Error) throw e;
     }

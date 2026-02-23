@@ -20,15 +20,15 @@ const supabase = createClient(
 exports.getLevel = async (req, res) => {
   try {
     const { userId } = req.params;
-    
+
     const { data, error } = await supabase
       .from('consultores')
-      .select('nivel_carreira, ciclos_completados, diretos_ativos')
+      .select('pin_atual, pin_nivel, total_ciclos, ciclos_acumulados_trimestre')
       .eq('id', userId)
       .single();
-    
+
     if (error) throw error;
-    
+
     res.json({
       success: true,
       level: data
@@ -47,13 +47,13 @@ exports.getLevel = async (req, res) => {
 exports.getProgress = async (req, res) => {
   try {
     const { userId } = req.params;
-    
+
     const { data, error } = await supabase.rpc('get_career_progress', {
       p_user_id: userId
     });
-    
+
     if (error) throw error;
-    
+
     res.json({
       success: true,
       progress: data
@@ -72,15 +72,15 @@ exports.getProgress = async (req, res) => {
 exports.getRequirements = async (req, res) => {
   try {
     const { pin } = req.params;
-    
+
     const { data, error } = await supabase
       .from('career_levels')
       .select('*')
       .eq('pin', pin)
       .single();
-    
+
     if (error) throw error;
-    
+
     res.json({
       success: true,
       requirements: data
@@ -99,13 +99,13 @@ exports.getRequirements = async (req, res) => {
 exports.getNextLevel = async (req, res) => {
   try {
     const { userId } = req.params;
-    
+
     const { data, error } = await supabase.rpc('get_next_level', {
       p_user_id: userId
     });
-    
+
     if (error) throw error;
-    
+
     res.json({
       success: true,
       next_level: data
@@ -128,14 +128,14 @@ exports.getNextLevel = async (req, res) => {
 exports.runAppraisal = async (req, res) => {
   try {
     const { quarter, year } = req.body;
-    
+
     const { data, error } = await supabase.rpc('run_career_appraisal', {
       p_quarter: quarter,
       p_year: year
     });
-    
+
     if (error) throw error;
-    
+
     res.json({
       success: true,
       appraisal: data,
@@ -155,13 +155,13 @@ exports.runAppraisal = async (req, res) => {
 exports.calculateVMEC = async (req, res) => {
   try {
     const { userId } = req.params;
-    
+
     const { data, error } = await supabase.rpc('calculate_vmec_for_user', {
       p_user_id: userId
     });
-    
+
     if (error) throw error;
-    
+
     res.json({
       success: true,
       vmec: data
@@ -180,13 +180,13 @@ exports.calculateVMEC = async (req, res) => {
 exports.getVMECByLines = async (req, res) => {
   try {
     const { userId } = req.params;
-    
+
     const { data, error } = await supabase.rpc('get_vmec_by_lines', {
       p_user_id: userId
     });
-    
+
     if (error) throw error;
-    
+
     res.json({
       success: true,
       vmec_lines: data
@@ -209,15 +209,15 @@ exports.getVMECByLines = async (req, res) => {
 exports.getCareerBonus = async (req, res) => {
   try {
     const { userId } = req.params;
-    
+
     const { data, error } = await supabase
       .from('career_bonus')
       .select('*')
       .eq('user_id', userId)
       .order('created_at', { ascending: false });
-    
+
     if (error) throw error;
-    
+
     res.json({
       success: true,
       bonus: data
@@ -236,14 +236,14 @@ exports.getCareerBonus = async (req, res) => {
 exports.distributeCareerBonus = async (req, res) => {
   try {
     const { quarter, year } = req.body;
-    
+
     const { data, error } = await supabase.rpc('distribute_career_bonus', {
       p_quarter: quarter,
       p_year: year
     });
-    
+
     if (error) throw error;
-    
+
     res.json({
       success: true,
       distribution: data,
@@ -268,13 +268,13 @@ exports.getRanking = async (req, res) => {
   try {
     const { data, error } = await supabase
       .from('consultores')
-      .select('id, nome, nivel_carreira, ciclos_completados, diretos_ativos')
-      .order('nivel_carreira', { ascending: false })
-      .order('ciclos_completados', { ascending: false })
+      .select('id, nome, pin_atual, pin_nivel, total_ciclos')
+      .order('pin_nivel', { ascending: false })
+      .order('total_ciclos', { ascending: false })
       .limit(100);
-    
+
     if (error) throw error;
-    
+
     res.json({
       success: true,
       ranking: data
@@ -293,13 +293,13 @@ exports.getRanking = async (req, res) => {
 exports.getStats = async (req, res) => {
   try {
     const { userId } = req.params;
-    
+
     const { data, error } = await supabase.rpc('get_career_stats', {
       p_user_id: userId
     });
-    
+
     if (error) throw error;
-    
+
     res.json({
       success: true,
       stats: data

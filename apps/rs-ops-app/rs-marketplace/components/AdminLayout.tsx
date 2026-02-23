@@ -74,8 +74,19 @@ const navGroups = [
             { label: 'Pagamentos', view: 'managePayments' as View },
             { label: 'Frete', view: 'manageShipping' as View },
         ]
+    },
+    { isSeparator: true, title: "ECOSSISTEMA" },
+    {
+        main: { icon: BuildingStorefrontIcon, label: "Centros (RS-CD)", view: "rsCD" as View }
+    },
+    {
+        main: { icon: ShoppingBagIcon, label: "Market / Drop", view: "rsControleDrop" as View }
+    },
+    {
+        main: { icon: WalletIcon, label: "Finanças / WalletPay", view: "walletOverview" as View }
     }
 ];
+
 
 const NavItem: React.FC<{
     item: { main: { icon: React.ElementType; label: string; view: View; }, subLinks?: { label: string; view: View; }[] };
@@ -279,30 +290,9 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ title, children, curre
                             return <NavItem key={index} item={group} isCollapsed={!isSidebarOpen} currentView={currentView} onNavigate={onNavigate} />;
                         }
                     })}
-                    {hasCDAccess && (
-                        <button onClick={() => window.open(RS_CDS_URL, '_blank')} className={`w-full flex items-center justify-between text-left px-3 rounded-md text-sm font-medium transition-all duration-200 h-11 relative group text-[rgb(var(--color-brand-text-dim))] hover:bg-[rgb(var(--color-brand-gray-light))] hover:text-white`}>
-                            <div className="flex items-center gap-4">
-                                <BuildingStorefrontIcon className="h-6 w-6 text-[rgb(var(--color-brand-text-dim))] group-hover:text-[rgb(var(--color-brand-gold))]" />
-                                {!(!isSidebarOpen) && <span className="truncate">CDs (RS-CD)</span>}
-                            </div>
-                            {!(!isSidebarOpen) && <ArrowTopRightOnSquareIcon className="h-4 w-4" />}
-                        </button>
-                    )}
-                    <button onClick={() => window.open(RS_DROP_URL, '_blank')} className={`w-full flex items-center justify-between text-left px-3 rounded-md text-sm font-medium transition-all duration-200 h-11 relative group text-[rgb(var(--color-brand-text-dim))] hover:bg-[rgb(var(--color-brand-gray-light))] hover:text-white`}>
-                        <div className="flex items-center gap-4">
-                            <ShoppingBagIcon className="h-6 w-6 text-[rgb(var(--color-brand-text-dim))] group-hover:text-[rgb(var(--color-brand-gold))]" />
-                            {!(!isSidebarOpen) && <span className="truncate">Market / Drop / Afiliado</span>}
-                        </div>
-                        {!(!isSidebarOpen) && <ArrowTopRightOnSquareIcon className="h-4 w-4" />}
-                    </button>
-                    <button onClick={() => window.open(WALLETPAY_URL, '_blank')} className={`w-full flex items-center justify-between text-left px-3 rounded-md text-sm font-medium transition-all duration-200 h-11 relative group text-[rgb(var(--color-brand-text-dim))] hover:bg-[rgb(var(--color-brand-gray-light))] hover:text-white`}>
-                        <div className="flex items-center gap-4">
-                            <WalletIcon className="h-6 w-6 text-[rgb(var(--color-brand-text-dim))] group-hover:text-[rgb(var(--color-brand-gold))]" />
-                            {!(!isSidebarOpen) && <span className="truncate">WalletPay</span>}
-                        </div>
-                        {!(!isSidebarOpen) && <ArrowTopRightOnSquareIcon className="h-4 w-4" />}
-                    </button>
+                    {/* Botões do ecossistema foram movidos para o navGroups principal */}
                 </nav>
+
 
                 <div className="flex-shrink-0 mt-auto pt-4 space-y-2">
                     <button onClick={onLogout} className={`w-full flex items-center gap-3 px-3 py-3 rounded-md text-sm font-medium text-[rgb(var(--color-brand-text-dim))] hover:bg-[rgb(var(--color-brand-gray-light))] hover:text-white ${!isSidebarOpen ? 'justify-center' : ''}`}>

@@ -152,6 +152,6 @@ export async function updateSigmaSettings(payload: SigmaConfig): Promise<void> {
       order_index: p.orderIndex
     })))
   }
-  cached = null
-  cachedAt = 0
+  cached = null;
+  cachedAt = 0;
 }

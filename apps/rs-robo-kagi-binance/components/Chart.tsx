@@ -34,236 +34,270 @@ const createPriceLine = (price: number, color: string, title: string, style: Lin
 const FIB_LEVELS = [-0.5];
 const TIMEFRAMES = ['5m', '15m', '30m', '1h', '4h', '1D'];
 
-const Chart: React.FC<ChartProps> = ({ 
-    focusSymbol, 
+const Chart: React.FC<ChartProps> = ({
+    focusSymbol,
     timeframe,
     onTimeframeChange,
-    wsStatus, 
-    alerts, 
-    accountState, 
-    fibTarget = 1.618, 
+    wsStatus,
+    alerts,
+    accountState,
+    fibTarget = 1.618,
     aiAnalyses = [],
     isActive,
     onClick,
     isMainChart = false,
     latestPrice
 }) => {
-  const ref = useRef<HTMLDivElement>(null);
-  const chartRef = useRef<IChartApi | null>(null);
-  const priceSeries = useRef<ISeriesApi<'Candlestick'> | null>(null);
-  const kagiSeries = useRef<ISeriesApi<'Line'> | null>(null);
-  const priceLinesRef = useRef<Map<string, IPriceLine>>(new Map());
-  const drawnObjectsRef = useRef<Map<number, RemovableChartObject[]>>(new Map());
-  
-  const [chartError, setChartError] = useState<string | null>(null);
-  const [currentSetup, setCurrentSetup] = useState<Alert | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [activePosition, setActivePosition] = useState(accountState?.positions.find(p => p.symbol === focusSymbol) || null);
-  const [lastCandle, setLastCandle] = useState<CandlestickData | null>(null);
+    const ref = useRef<HTMLDivElement>(null);
+    const chartRef = useRef<IChartApi | null>(null);
+    const priceSeries = useRef<ISeriesApi<'Candlestick'> | null>(null);
+    const kagiSeries = useRef<ISeriesApi<'Line'> | null>(null);
+    const priceLinesRef = useRef<Map<string, IPriceLine>>(new Map());
+    const drawnObjectsRef = useRef<Map<number, RemovableChartObject[]>>(new Map());
 
-  useEffect(() => {
-    const setup = alerts.find(a => a.symbol === focusSymbol) || null;
-    setCurrentSetup(setup);
-  }, [alerts, focusSymbol]);
+    const [chartError, setChartError] = useState<string | null>(null);
+    const [currentSetup, setCurrentSetup] = useState<Alert | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
+    const [activePosition, setActivePosition] = useState(accountState?.positions.find(p => p.symbol === focusSymbol) || null);
+    const [lastCandle, setLastCandle] = useState<CandlestickData | null>(null);
 
-  useEffect(() => {
-    const position = accountState?.positions.find(p => p.symbol === focusSymbol) || null;
-    setActivePosition(position);
-  }, [accountState, focusSymbol]);
+    useEffect(() => {
+        const setup = alerts.find(a => a.symbol === focusSymbol) || null;
+        setCurrentSetup(setup);
+    }, [alerts, focusSymbol]);
 
-  useEffect(() => {
-    if (!ref.current) return;
-    const chart = createChart(ref.current, {
-      width: ref.current.clientWidth,
-      height: ref.current.clientHeight,
-      layout: { 
-          background: { color: '#18181b' }, 
-          textColor: '#e4e4e7',
-          fontSize: 12,
-      },
-      grid: { 
-          vertLines: { color: '#27272a' }, 
-          horzLines: { color: '#27272a' } 
-      },
-      timeScale: {
-        timeVisible: true,
-        secondsVisible: true,
-        borderColor: '#3f3f46',
-      },
-      rightPriceScale: {
-        borderColor: '#3f3f46',
-      },
-      crosshair: {
-        mode: 1, // Magnet
-      }
-    });
-    
-    priceSeries.current = chart.addCandlestickSeries({
-        upColor: '#22c55e',
-        downColor: '#ef4444',
-        borderDownColor: '#ef4444',
-        borderUpColor: '#22c55e',
-        wickDownColor: '#ef4444',
-        wickUpColor: '#22c55e',
-    });
-    kagiSeries.current = chart.addLineSeries({ color: '#f59e0b', lineWidth: 2 });
-    
-    chartRef.current = chart;
+    useEffect(() => {
+        const position = accountState?.positions.find(p => p.symbol === focusSymbol) || null;
+        setActivePosition(position);
+    }, [accountState, focusSymbol]);
 
-    const resizeObserver = new ResizeObserver(entries => {
-        const entry = entries[0];
-        if (entry) {
-            const { width, height } = entry.contentRect;
-            requestAnimationFrame(() => {
-                chart.resize(width, height);
-            });
-        }
-    });
+    useEffect(() => {
+        if (!ref.current) return;
+        const chart = createChart(ref.current, {
+            width: ref.current.clientWidth,
+            height: ref.current.clientHeight,
+            layout: {
+                background: { color: '#18181b' },
+                textColor: '#e4e4e7',
+                fontSize: 12,
+            },
+            grid: {
+                vertLines: { color: '#27272a' },
+                horzLines: { color: '#27272a' }
+            },
+            timeScale: {
+                timeVisible: true,
+                secondsVisible: true,
+                borderColor: '#3f3f46',
+            },
+            rightPriceScale: {
+                borderColor: '#3f3f46',
+            },
+            crosshair: {
+                mode: 1, // Magnet
+            }
+        });
 
-    resizeObserver.observe(ref.current);
+        priceSeries.current = chart.addCandlestickSeries({
+            upColor: '#22c55e',
+            downColor: '#ef4444',
+            borderDownColor: '#ef4444',
+            borderUpColor: '#22c55e',
+            wickDownColor: '#ef4444',
+            wickUpColor: '#22c55e',
+        });
+        kagiSeries.current = chart.addLineSeries({ color: '#f59e0b', lineWidth: 2 });
 
-    return () => {
-      resizeObserver.disconnect();
-      chart.remove();
-    };
-  }, []);
+        chartRef.current = chart;
 
-  const updateChartData = useCallback(async () => {
-    if (wsStatus !== 'connected' || !priceSeries.current || !focusSymbol) {
-        if (wsStatus === 'disconnected') {
-            priceSeries.current?.setData([]);
-            kagiSeries.current?.setData([]);
-            setChartError(`Backend desconectado. Aguardando reconexão...`);
-        }
-        return;
-    }
-    
-    setIsLoading(true);
-    setLastCandle(null); // Reset last candle on full refresh
-    try {
-      setChartError(null);
-      const [oc, kg] = await Promise.all([
-        fetchOhlcv(focusSymbol, timeframe),
-        fetchKagi(focusSymbol, timeframe)
-      ]);
+        const resizeObserver = new ResizeObserver(entries => {
+            const entry = entries[0];
+            if (entry) {
+                const { width, height } = entry.contentRect;
+                requestAnimationFrame(() => {
+                    chart.resize(width, height);
+                });
+            }
+        });
 
-      if (priceSeries.current && oc.candles) {
-        const data: CandlestickData[] = oc.candles.map((c: any[]) => ({ time: c[0] / 1000, open: c[1], high: c[2], low: c[3], close: c[4] }));
-        priceSeries.current.setData(data);
-        if (data.length > 0) {
-            setLastCandle(data[data.length - 1]);
-        }
-      }
-      if (kagiSeries.current && kg.kagi) {
-        const data: LineData[] = kg.kagi.map((p: any[]) => ({ time: p[0] / 1000, value: p[1] }));
-        kagiSeries.current.setData(data);
-      }
-      if (oc.candles.length > 0) {
-        chartRef.current?.timeScale().fitContent();
-      }
-      
-    } catch (e) {
-      setChartError(`Falha ao carregar dados do gráfico para ${focusSymbol}.`);
-    } finally {
-        setIsLoading(false);
-    }
-  }, [focusSymbol, wsStatus, timeframe]);
-  
-  useEffect(() => {
-    if(!focusSymbol || wsStatus !== 'connected') return;
-    updateChartData(); 
-  }, [updateChartData, focusSymbol, wsStatus]);
+        resizeObserver.observe(ref.current);
 
-  // Real-time price update effect
-  useEffect(() => {
-    if (latestPrice && priceSeries.current && lastCandle) {
-        if (latestPrice.time >= (lastCandle.time as number)) {
-            const newCandle = { ...lastCandle };
-            newCandle.close = latestPrice.price;
-            newCandle.high = Math.max(newCandle.high, latestPrice.price);
-            newCandle.low = Math.min(newCandle.low, latestPrice.price);
-            priceSeries.current.update(newCandle);
-        }
-    }
-  }, [latestPrice, lastCandle]);
-  
-  const drawPriceLine = useCallback((series: ISeriesApi<'Candlestick'>, id: string, options: PriceLineOptions) => {
-    if (priceLinesRef.current.has(id)) {
-        const existingLine = priceLinesRef.current.get(id);
-        if (existingLine) {
-            existingLine.applyOptions(options);
+        return () => {
+            try {
+                // Limpar price lines primeiro
+                priceLinesRef.current.forEach(line => {
+                    try {
+                        if (priceSeries.current) {
+                            priceSeries.current.removePriceLine(line);
+                        }
+                    } catch (e) {
+                        // Ignorar erros de remoção de price lines
+                    }
+                });
+                priceLinesRef.current.clear();
+
+                // Limpar objetos desenhados
+                drawnObjectsRef.current.forEach(objects => {
+                    objects.forEach(obj => {
+                        try {
+                            obj.remove();
+                        } catch (e) {
+                            // Ignorar erros de remoção de objetos
+                        }
+                    });
+                });
+                drawnObjectsRef.current.clear();
+
+                // Desconectar observer
+                resizeObserver.disconnect();
+
+                // Remover chart por último
+                if (chart && typeof chart.remove === 'function') {
+                    chart.remove();
+                }
+            } catch (error) {
+                console.warn('Erro ao limpar chart (não crítico):', error);
+                // Não propagar o erro para não quebrar o app
+            }
+        };
+    }, []);
+
+    const updateChartData = useCallback(async () => {
+        if (wsStatus !== 'connected' || !priceSeries.current || !focusSymbol) {
+            if (wsStatus === 'disconnected') {
+                priceSeries.current?.setData([]);
+                kagiSeries.current?.setData([]);
+                setChartError(`Backend desconectado. Aguardando reconexão...`);
+            }
             return;
         }
-    }
-    const newLine = series.createPriceLine(options);
-    priceLinesRef.current.set(id, newLine);
-  }, []);
 
-  const removePriceLine = useCallback((series: ISeriesApi<'Candlestick'>, id: string) => {
-    if (priceLinesRef.current.has(id)) {
-        const line = priceLinesRef.current.get(id);
-        if (line) series.removePriceLine(line);
-        priceLinesRef.current.delete(id);
-    }
-  }, []);
-  
-  useEffect(() => {
-    if (!priceSeries.current) return;
-    const series = priceSeries.current;
-    
-    const allLineIds = new Set<string>();
+        setIsLoading(true);
+        setLastCandle(null); // Reset last candle on full refresh
+        try {
+            setChartError(null);
+            const [oc, kg] = await Promise.all([
+                fetchOhlcv(focusSymbol, timeframe),
+                fetchKagi(focusSymbol, timeframe)
+            ]);
 
-    if (activePosition) {
-        const id = 'position-entry';
-        allLineIds.add(id);
-        drawPriceLine(series, id, createPriceLine(activePosition.entryPrice, '#a78bfa', 'Preço Entrada', LineStyle.Solid, 2));
-    }
+            if (priceSeries.current && oc.candles) {
+                const data: CandlestickData[] = oc.candles.map((c: any[]) => ({ time: c[0] / 1000, open: c[1], high: c[2], low: c[3], close: c[4] }));
+                priceSeries.current.setData(data);
+                if (data.length > 0) {
+                    setLastCandle(data[data.length - 1]);
+                }
+            }
+            if (kagiSeries.current && kg.kagi) {
+                const data: LineData[] = kg.kagi.map((p: any[]) => ({ time: p[0] / 1000, value: p[1] }));
+                kagiSeries.current.setData(data);
+            }
+            if (oc.candles.length > 0) {
+                chartRef.current?.timeScale().fitContent();
+            }
 
-    if (currentSetup) {
-        const { signal, entry, stop } = currentSetup;
-        
-        const entryId = 'setup-entry';
-        const stopId = 'setup-stop';
-        allLineIds.add(entryId);
-        allLineIds.add(stopId);
-
-        drawPriceLine(series, entryId, createPriceLine(entry, '#facc15', 'Gatilho (0%)', LineStyle.Dashed, 2));
-        drawPriceLine(series, stopId, createPriceLine(stop, '#ef4444', 'Stop Loss (100%)', LineStyle.Dashed, 2));
-        
-        const range = Math.abs(entry - stop);
-        const fibColor = '#60a5fa'; // Light blue
-        
-        FIB_LEVELS.forEach(level => {
-            const id = `fib-${level}`;
-            allLineIds.add(id);
-            const price = signal === 'buy' ? entry - (range * level) : entry + (range * level);
-            drawPriceLine(series, id, createPriceLine(price, fibColor, `Alvo (${level})`, LineStyle.Dotted));
-        });
-        if (fibTarget) {
-            const targetId = 'fib-target';
-            allLineIds.add(targetId);
-            const targetPrice = signal === 'buy' ? entry + (range * fibTarget) : entry - (range * fibTarget);
-            drawPriceLine(series, targetId, createPriceLine(targetPrice, '#3b82f6', `Alvo (${fibTarget})`, LineStyle.Dashed, 2));
+        } catch (e) {
+            setChartError(`Falha ao carregar dados do gráfico para ${focusSymbol}.`);
+        } finally {
+            setIsLoading(false);
         }
-    }
+    }, [focusSymbol, wsStatus, timeframe]);
 
-    if(aiAnalyses) {
-        aiAnalyses.forEach((analysis) => {
-            const id = `ai-analysis-${analysis.time}`;
-            allLineIds.add(id);
-            drawPriceLine(series, id, createPriceLine(analysis.entry, '#0ea5e9', `IA: ${analysis.reason}`, LineStyle.Solid, 1));
-        });
-    }
+    useEffect(() => {
+        if (!focusSymbol || wsStatus !== 'connected') return;
+        updateChartData();
+    }, [updateChartData, focusSymbol, wsStatus]);
 
-    priceLinesRef.current.forEach((_, id) => {
-        if (!allLineIds.has(id)) {
-            removePriceLine(series, id);
+    // Real-time price update effect
+    useEffect(() => {
+        if (latestPrice && priceSeries.current && lastCandle) {
+            if (latestPrice.time >= (lastCandle.time as number)) {
+                const newCandle = { ...lastCandle };
+                newCandle.close = latestPrice.price;
+                newCandle.high = Math.max(newCandle.high, latestPrice.price);
+                newCandle.low = Math.min(newCandle.low, latestPrice.price);
+                priceSeries.current.update(newCandle);
+            }
         }
-    });
+    }, [latestPrice, lastCandle]);
 
-  }, [currentSetup, activePosition, fibTarget, aiAnalyses, drawPriceLine, removePriceLine]);
+    const drawPriceLine = useCallback((series: ISeriesApi<'Candlestick'>, id: string, options: PriceLineOptions) => {
+        if (priceLinesRef.current.has(id)) {
+            const existingLine = priceLinesRef.current.get(id);
+            if (existingLine) {
+                existingLine.applyOptions(options);
+                return;
+            }
+        }
+        const newLine = series.createPriceLine(options);
+        priceLinesRef.current.set(id, newLine);
+    }, []);
 
-  useEffect(() => {
+    const removePriceLine = useCallback((series: ISeriesApi<'Candlestick'>, id: string) => {
+        if (priceLinesRef.current.has(id)) {
+            const line = priceLinesRef.current.get(id);
+            if (line) series.removePriceLine(line);
+            priceLinesRef.current.delete(id);
+        }
+    }, []);
+
+    useEffect(() => {
+        if (!priceSeries.current) return;
+        const series = priceSeries.current;
+
+        const allLineIds = new Set<string>();
+
+        if (activePosition) {
+            const id = 'position-entry';
+            allLineIds.add(id);
+            drawPriceLine(series, id, createPriceLine(activePosition.entryPrice, '#a78bfa', 'Preço Entrada', LineStyle.Solid, 2));
+        }
+
+        if (currentSetup) {
+            const { signal, entry, stop } = currentSetup;
+
+            const entryId = 'setup-entry';
+            const stopId = 'setup-stop';
+            allLineIds.add(entryId);
+            allLineIds.add(stopId);
+
+            drawPriceLine(series, entryId, createPriceLine(entry, '#facc15', 'Gatilho (0%)', LineStyle.Dashed, 2));
+            drawPriceLine(series, stopId, createPriceLine(stop, '#ef4444', 'Stop Loss (100%)', LineStyle.Dashed, 2));
+
+            const range = Math.abs(entry - stop);
+            const fibColor = '#60a5fa'; // Light blue
+
+            FIB_LEVELS.forEach(level => {
+                const id = `fib-${level}`;
+                allLineIds.add(id);
+                const price = signal === 'buy' ? entry - (range * level) : entry + (range * level);
+                drawPriceLine(series, id, createPriceLine(price, fibColor, `Alvo (${level})`, LineStyle.Dotted));
+            });
+            if (fibTarget) {
+                const targetId = 'fib-target';
+                allLineIds.add(targetId);
+                const targetPrice = signal === 'buy' ? entry + (range * fibTarget) : entry - (range * fibTarget);
+                drawPriceLine(series, targetId, createPriceLine(targetPrice, '#3b82f6', `Alvo (${fibTarget})`, LineStyle.Dashed, 2));
+            }
+        }
+
+        if (aiAnalyses) {
+            aiAnalyses.forEach((analysis) => {
+                const id = `ai-analysis-${analysis.time}`;
+                allLineIds.add(id);
+                drawPriceLine(series, id, createPriceLine(analysis.entry, '#0ea5e9', `IA: ${analysis.reason}`, LineStyle.Solid, 1));
+            });
+        }
+
+        priceLinesRef.current.forEach((_, id) => {
+            if (!allLineIds.has(id)) {
+                removePriceLine(series, id);
+            }
+        });
+
+    }, [currentSetup, activePosition, fibTarget, aiAnalyses, drawPriceLine, removePriceLine]);
+
+    useEffect(() => {
         const chart = chartRef.current;
         const priceSeriesApi = priceSeries.current;
         if (!chart || !priceSeriesApi) return;
@@ -320,7 +354,7 @@ const Chart: React.FC<ChartProps> = ({
                 }
             });
             if (newObjects.length > 0) {
-              drawnObjectsRef.current.set(analysis.time, newObjects);
+                drawnObjectsRef.current.set(analysis.time, newObjects);
             }
         });
 
@@ -339,49 +373,49 @@ const Chart: React.FC<ChartProps> = ({
 
     }, [aiAnalyses]);
 
-  return (
-    <div 
-        className={`bg-zinc-900 rounded-lg p-2 relative flex flex-col min-h-0 border-2 transition-colors ${isActive ? 'border-amber-500/50' : 'border-transparent'}`}
-        onClick={onClick}
-    >
-      <div className="flex items-center justify-between px-2 py-1 flex-shrink-0">
-        <div className={`text-amber-300 font-bold ${isMainChart ? 'text-base' : 'text-sm'}`}>{focusSymbol}</div>
-        <div className="flex items-center gap-1">
-            {TIMEFRAMES.map(tf => (
-                <button 
-                    key={tf}
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        onTimeframeChange(tf);
-                    }}
-                    className={`px-2 py-0.5 text-xs font-semibold rounded ${timeframe === tf ? 'bg-amber-500 text-black' : 'bg-zinc-700 text-zinc-300 hover:bg-zinc-600'}`}
-                >
-                    {tf}
-                </button>
-            ))}
+    return (
+        <div
+            className={`bg-zinc-900 rounded-lg p-2 relative flex flex-col min-h-0 border-2 transition-colors ${isActive ? 'border-amber-500/50' : 'border-transparent'}`}
+            onClick={onClick}
+        >
+            <div className="flex items-center justify-between px-2 py-1 flex-shrink-0">
+                <div className={`text-amber-300 font-bold ${isMainChart ? 'text-base' : 'text-sm'}`}>{focusSymbol}</div>
+                <div className="flex items-center gap-1">
+                    {TIMEFRAMES.map(tf => (
+                        <button
+                            key={tf}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onTimeframeChange(tf);
+                            }}
+                            className={`px-2 py-0.5 text-xs font-semibold rounded ${timeframe === tf ? 'bg-amber-500 text-black' : 'bg-zinc-700 text-zinc-300 hover:bg-zinc-600'}`}
+                        >
+                            {tf}
+                        </button>
+                    ))}
+                </div>
+            </div>
+            <div ref={ref} className="w-full relative flex-grow">
+                {isLoading && (
+                    <div className="absolute inset-0 bg-zinc-900 bg-opacity-80 flex flex-col items-center justify-center z-10">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-400"></div>
+                        <p className="text-zinc-400 mt-3 text-xs">Carregando {timeframe}...</p>
+                    </div>
+                )}
+                {wsStatus === 'connecting' && !isLoading && !chartError && (
+                    <div className="absolute inset-0 bg-zinc-900 bg-opacity-80 flex flex-col items-center justify-center z-10">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-400"></div>
+                        <p className="text-zinc-400 mt-3 text-xs">Conectando...</p>
+                    </div>
+                )}
+                {chartError && !isLoading && (
+                    <div className="absolute inset-0 bg-zinc-900 bg-opacity-80 flex items-center justify-center z-10">
+                        <p className="text-red-400 text-center p-4 text-xs">{chartError}</p>
+                    </div>
+                )}
+            </div>
         </div>
-      </div>
-      <div ref={ref} className="w-full relative flex-grow">
-        {isLoading && (
-            <div className="absolute inset-0 bg-zinc-900 bg-opacity-80 flex flex-col items-center justify-center z-10">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-400"></div>
-                <p className="text-zinc-400 mt-3 text-xs">Carregando {timeframe}...</p>
-            </div>
-        )}
-        {wsStatus === 'connecting' && !isLoading && !chartError && (
-             <div className="absolute inset-0 bg-zinc-900 bg-opacity-80 flex flex-col items-center justify-center z-10">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-400"></div>
-                <p className="text-zinc-400 mt-3 text-xs">Conectando...</p>
-            </div>
-        )}
-        {chartError && !isLoading && (
-            <div className="absolute inset-0 bg-zinc-900 bg-opacity-80 flex items-center justify-center z-10">
-                <p className="text-red-400 text-center p-4 text-xs">{chartError}</p>
-            </div>
-        )}
-      </div>
-    </div>
-  );
+    );
 };
 
 export default Chart;

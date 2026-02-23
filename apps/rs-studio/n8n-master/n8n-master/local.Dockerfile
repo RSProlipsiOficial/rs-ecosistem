@@ -1,0 +1,6 @@
+FROM node:18-alpine
+RUN npm i -g n8n
+ENV N8N_PORT=5678
+ENV N8N_PROTOCOL=http
+EXPOSE 5678
+CMD ["n8n"]

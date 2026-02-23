@@ -1,0 +1,58 @@
+PRB – Plano de Regras de Negócio
+RS Prólipsi – Sistema Star (Drop, Digital e Multinível)
+
+Este documento define as regras oficiais do ecossistema RS Prólipsi, integrando:
+- Plano de carreira Star
+- Produtos físicos RS
+- Produtos digitais RS
+- Produtos físicos afiliados
+- Produtos digitais afiliados
+- Ativação do multinível
+- Sustentação financeira e premiações
+
+1. PLANO DE CARREIRA STAR
+
+Níveis:
+RS One Star
+RS Two Star
+RS Three Star
+RS Pro Star
+RS Prime Star
+RS Elite Star
+RS Legend Star
+
+Metas por ciclo (3 meses):
+10.000 | 100.000 | 250.000 | 500.000 | 1.000.000 | 2.000.000 | 5.000.000
+
+Premiações acumulativas:
+One Star: Placa
+Two Star: Headset Premium + Placa
+Three Star: Kit Creator + Placa
+Pro Star: PC i9 + Placa
+Prime Star: Cruzeiro + Kit RS + Placa
+Elite Star: Viagem Internacional + Placa
+Legend Star: Carro 0km + Placa Legend
+
+2. PRODUTO FÍSICO RS
+Comissão: 27% a 38%
+
+3. PRODUTO DIGITAL RS
+Comissão: 30% a 60%
+
+4. PRODUTO FÍSICO AFILIADO
+Comissão: 8% a 15%
+
+5. PRODUTO DIGITAL AFILIADO
+Modelos:
+Essencial (40%)
+Profissional (45%)
+Premium (50%)
+
+6. ATIVAÇÃO DO MULTINÍVEL
+Base: R$ 60 líquidos
+Regras por tipo de produto conforme PRB
+
+7. FUNDO DE PREMIAÇÃO
+4% sobre faturamento incremental
+
+Documento oficial RS Prólipsi
