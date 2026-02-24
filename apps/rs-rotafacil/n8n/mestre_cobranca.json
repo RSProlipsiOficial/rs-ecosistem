@@ -1,0 +1,130 @@
+{
+    "name": "Mestre de Cobrança RS Auto",
+    "nodes": [
+        {
+            "parameters": {
+                "rule": {
+                    "interval": [
+                        {
+                            "field": "cronExpression",
+                            "expression": "0 8 * * *"
+                        }
+                    ]
+                }
+            },
+            "id": "trigger",
+            "name": "Schedule",
+            "type": "n8n-nodes-base.scheduleTrigger",
+            "typeVersion": 1,
+            "position": [
+                250,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "method": "GET",
+                "url": "=http://localhost:8080/api/pagamentos-pendentes",
+                "authentication": "predefined",
+                "headerParameters": {
+                    "parameters": [
+                        {
+                            "name": "apikey",
+                            "value": "sua_chave_aqui"
+                        }
+                    ]
+                }
+            },
+            "id": "supabase_fetch",
+            "name": "Buscar Pagamentos",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 2,
+            "position": [
+                450,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "boolean": [
+                        {
+                            "value1": "={{ $json.dias_vencimento }}",
+                            "value2": 0
+                        }
+                    ]
+                }
+            },
+            "id": "check_vencimento",
+            "name": "Vencendo Hoje?",
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 1,
+            "position": [
+                650,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "=http://localhost:8081/message/sendText/RS-Auto",
+                "sendBody": true,
+                "bodyParameters": {
+                    "parameters": [
+                        {
+                            "name": "number",
+                            "value": "={{ $json.whatsapp }}"
+                        },
+                        {
+                            "name": "text",
+                            "value": "=Olá {{ $json.nome }}, sua mensalidade ROTA FÁCIL vence hoje ({{ $json.valor }}). Use o Pix: {{ $json.pix }}"
+                        }
+                    ]
+                }
+            },
+            "id": "send_whatsapp",
+            "name": "Enviar WhatsApp",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 2,
+            "position": [
+                850,
+                200
+            ]
+        }
+    ],
+    "connections": {
+        "Schedule": {
+            "main": [
+                [
+                    {
+                        "node": "Buscar Pagamentos",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Buscar Pagamentos": {
+            "main": [
+                [
+                    {
+                        "node": "Vencendo Hoje?",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Vencendo Hoje?": {
+            "main": [
+                [
+                    {
+                        "node": "Enviar WhatsApp",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    }
+}

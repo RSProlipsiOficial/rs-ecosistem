@@ -1,0 +1,220 @@
+
+PRD – RS-DROP STAR REWARDS SYSTEM
+Versão 1.0 – Documento Técnico Oficial
+
+========================================================
+1. VISÃO GERAL
+========================================================
+O RS-DROP Star Rewards System é o sistema oficial de premiações, progressão, comissionamento e reconhecimento do ecossistema RS Prólipsi. Ele recompensa consultores que vendem produtos RS (alta margem) e produtos de lojistas/afiliados (margem 30%).
+
+O sistema é totalmente ACUMULATIVO: cada nível conquistado libera TODOS os prêmios correspondentes, incluindo itens físicos, placas, viagens, kits e upgrades de comissão. Todo o modelo é sustentado financeiramente por um fundo de 4% aplicado sobre os trechos de faturamento.
+
+========================================================
+2. OBJETIVOS DO SISTEMA
+========================================================
+1. Criar motivação contínua para consultores.
+2. Recompensar performance de forma escalável e sustentável.
+3. Garantir que cada prêmio seja coberto financeiramente.
+4. Oferecer prêmios reais, fortes e emocionalmente impactantes.
+5. Integrar porcentagens progressivas nos produtos RS e Afiliados.
+6. Construir uma escada de carreira clara, visual e permanente.
+7. Tornar o RS-Drop superior a plataformas como AppMax, CartPanda e Shopify.
+
+========================================================
+3. REGRAS DO SISTEMA
+========================================================
+3.1 Ciclo
+O ciclo de avaliação é trimestral (3 meses).
+
+3.2 Fundo de premiação
+Cada trecho entre dois níveis gera um fundo:
+fundo = trecho * 0.04
+
+3.3 Comissionamento
+Produto RS: 25% a 38%  
+Produto Afiliado: 7% a 15%
+
+3.4 Acúmulo
+O consultor recebe TODOS os prêmios dos níveis conquistados ao longo da jornada.
+
+3.5 Permanência
+Níveis e porcentagens nunca retrocedem.
+
+========================================================
+4. ESCADA DE NÍVEIS – RS STAR SYSTEM (FINAL)
+========================================================
+
+--------------------------------------------------------
+NÍVEL 1 — RS ONE STAR (1?)
+--------------------------------------------------------
+Meta: 10.000  
+Trecho: 10.000  
+Fundo: 400  
+
+PRÊMIO:  
+- Placa RS One Star
+
+COMISSÃO APÓS NÍVEL:
+- RS: 27%
+- Afiliado: 8%
+
+
+--------------------------------------------------------
+NÍVEL 2 — RS TWO STAR (2?)
+--------------------------------------------------------
+Meta: 100.000  
+Trecho: 90.000  
+Fundo: 3.600  
+
+PRÊMIO:  
+- Headset Gamer Premium  
+- Placa RS Two Star
+
+COMISSÃO APÓS NÍVEL:
+- RS: 30%
+- Afiliado: 10%
+
+
+--------------------------------------------------------
+NÍVEL 3 — RS THREE STAR (3?)
+--------------------------------------------------------
+Meta: 250.000  
+Trecho: 150.000  
+Fundo: 6.000  
+
+PRÊMIO — KIT CREATOR LIGHT:
+- Teclado mecânico premium
+- Mouse gamer premium
+- Microfone condensador profissional
+- Ring Light 30cm
+- Braço articulado
+- Placa RS Three Star
+
+COMISSÃO APÓS NÍVEL:
+- RS: 33%
+- Afiliado: 12%
+
+
+--------------------------------------------------------
+NÍVEL 4 — RS PRO STAR (4?)
+--------------------------------------------------------
+Meta: 500.000  
+Trecho: 250.000  
+Fundo: 10.000  
+
+PRÊMIO — PC i9 PRO BUILDER:
+- Intel i9 (10900F/11900F)
+- 16GB RAM
+- SSD 512GB
+- Fonte 600W real
+- Gabinete RGB
+- Placa RS Pro Star
+
+COMISSÃO APÓS NÍVEL:
+- RS: 35%
+- Afiliado: 12%
+
+
+--------------------------------------------------------
+NÍVEL 5 — RS PRIME STAR (5?)
+--------------------------------------------------------
+Meta: 1.000.000  
+Trecho: 500.000  
+Fundo: 20.000  
+
+PRÊMIO — CRUZEIRO RS PREMIUM PACK:
+- Cruzeiro internacional (2 pessoas)
+- Kit RS Prime:
+  - Mochila RS
+  - Camiseta RS Prime
+  - Boné RS
+  - Copo térmico RS
+- Placa RS Prime Star
+
+COMISSÃO APÓS NÍVEL:
+- RS: 35–36%  
+- Afiliado: 15% (máximo)
+
+
+--------------------------------------------------------
+NÍVEL 6 — RS ELITE STAR (6?)
+--------------------------------------------------------
+Meta: 2.000.000  
+Trecho: 1.000.000  
+Fundo: 40.000  
+
+PRÊMIO — ELITE TRAVEL PACK:
+- Viagem internacional (2 pessoas)
+- Agasalho RS completo
+- Camiseta RS Elite
+- Placa RS Elite Star
+
+COMISSÃO APÓS NÍVEL:
+- RS: 37%
+- Afiliado: 15%
+
+
+--------------------------------------------------------
+NÍVEL 7 — RS LEGEND STAR (7?)
+--------------------------------------------------------
+Meta: 5.000.000  
+Trecho: 3.000.000  
+Fundo: 120.000  
+
+PRÊMIO — THE LEGEND PACK:
+- Carro 0 km (80k–100k)
+- Placa RS Legend Star (preta com dourado)
+
+COMISSÃO APÓS NÍVEL:
+- RS: 38%
+- Afiliado: 15%
+
+
+========================================================
+5. TABELA TÉCNICA (BANCO DE DADOS)
+========================================================
+
+Tabela: rs_drop_niveis
+
+Campos:
+- id_nivel (int)
+- nome_exibicao (varchar)
+- estrelas (int)
+- meta_faturamento (decimal)
+- trecho (decimal)
+- pct_comissao_rs (decimal)
+- pct_comissao_afiliado (decimal)
+- descricao_premio (text)
+- valor_estimado_premio (decimal)
+- ativo (boolean)
+
+
+========================================================
+6. LÓGICA DE PREMIAÇÃO (ACUMULATIVA)
+========================================================
+
+6.1 Consultor atinge nível N  
+6.2 Sistema verifica níveis 1…N  
+6.3 Todos os prêmios de 1…N são liberados (se ainda não entregues)  
+6.4 % de comissão é atualizada permanentemente  
+6.5 Fundo total acumulado sobre 5 milhões = 200.000  
+6.6 Prêmios totais (~140.000) cabem perfeitamente dentro do fundo  
+
+
+========================================================
+7. FLUXO DO SISTEMA
+========================================================
+1. Sistema coleta faturamento trimestral.
+2. Verifica maior nível atingido.
+3. Verifica todos os níveis anteriores.
+4. Libera automaticamente TODOS os prêmios ainda não recebidos.
+5. Atualiza % RS e Afiliado.
+6. Registra premiação.
+7. Gera placa correspondente.
+8. Notifica consultor.
+9. Atualiza painel do consultor.
+10. Registra auditoria e log.
+
+========================================================
+FIM DO PRD OFICIAL — RS-DROP STAR SYSTEM
+========================================================
