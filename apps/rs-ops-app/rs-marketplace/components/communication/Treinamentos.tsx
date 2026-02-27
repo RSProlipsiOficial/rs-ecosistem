@@ -171,7 +171,7 @@ const Treinamentos: React.FC = () => {
                                             </div>
                                             {lesson.videoId && (
                                                 <a href={`https://www.youtube.com/watch?v=${lesson.videoId}`} target="_blank" rel="noopener noreferrer" className="flex items-center space-x-2 text-sm bg-gray-700 px-3 py-1.5 rounded-md hover:bg-gray-800 transition-colors font-semibold">
-                                                    <YouTubeIcon size={16} className="text-red-500" />
+                                                    <YouTubeIcon className="w-4 h-4 text-red-500" />
                                                     <span>Assistir</span>
                                                 </a>
                                             )}
@@ -196,7 +196,7 @@ const Treinamentos: React.FC = () => {
             </div>
             {courses.length === 0 ? (
                 <div className="text-center py-10 text-gray-500">
-                    <BookOpenIcon size={40} className="mx-auto" />
+                    <BookOpenIcon className="w-10 h-10 mx-auto text-gray-600" />
                     <p className="mt-2 text-gray-400">Nenhum treinamento disponível no momento.</p>
                 </div>
             ) : (
@@ -207,7 +207,7 @@ const Treinamentos: React.FC = () => {
                         return (
                             <div key={course.id} onClick={() => setSelectedCourse(course)} className="bg-[#1E1E1E] border border-gray-800 rounded-xl cursor-pointer h-full flex flex-col text-left p-0 bg-brand-gray-light hover:border-yellow-500/50 transition-colors">
                                 <div className="p-6">
-                                    <Icon size={40} className="text-yellow-500 mb-4" />
+                                    <Icon className="w-10 h-10 text-yellow-500 mb-4" />
                                     <h3 className="text-xl font-bold text-white h-14">{course.title}</h3>
                                     <p className="text-sm text-gray-400 mt-2 h-20 overflow-hidden">{course.description}</p>
                                 </div>

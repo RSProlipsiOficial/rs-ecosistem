@@ -1,4 +1,3 @@
-
 import { CDProfile } from '../types';
 
 export interface ShippingQuote {
@@ -10,73 +9,108 @@ export interface ShippingQuote {
     isPickup?: boolean;
 }
 
+/**
+ * Motor de frete do RS-CDS vinculado à Matriz SIGME.
+ * Tenta a API real (porta 4000). Em caso de falha, usa os
+ * valores-base oficiais da Matriz (PAC/SEDEX Correios).
+ */
 export const shippingService = {
-    /**
-     * Calcula o frete seguindo a lógica da Matriz SIGME/API
-     */
-    async calculateShipping(profile: CDProfile, cart: any[]): Promise<ShippingQuote[]> {
-        const destinationCep = profile.address?.cep?.replace(/\D/g, '') || '';
-        const originCep = '83301010'; // CEP da Fábrica/Sede (Exemplo baseado no código da API)
+    async calculateShipping(profile: CDProfile | null, cart: any[]): Promise<ShippingQuote[]> {
+        const rawCep = profile?.address?.cep?.replace(/\D/g, '') || '';
+        const originCep = '82210100'; // CEP da Sede RS Prólipsi
 
-        if (!destinationCep) {
-            console.warn("[ShippingService] CEP de destino não informado.");
-            return [];
+        // Detectar região local (Curitiba/Piraquara — frete grátis por retirada)
+        const isLocal = rawCep.startsWith('80') || rawCep.startsWith('81') ||
+            rawCep.startsWith('82') || rawCep.startsWith('83');
+
+        // Calcular peso total dos itens do carrinho
+        const totalWeight = cart.reduce((acc, item) => acc + ((item.product?.weightKg || 0.5) * (item.quantity || 1)), 0);
+        const totalItems = cart.reduce((acc, item) => acc + (item.quantity || 1), 0);
+
+        // === TENTATIVA 1: API Real (Porta 4000 - Melhor Envio) ===
+        if (rawCep) {
+            try {
+                const controller = new AbortController();
+                const timeout = setTimeout(() => controller.abort(), 3000); // 3s timeout
+
+                const response = await fetch('http://localhost:4000/api/shipping/calculate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    signal: controller.signal,
+                    body: JSON.stringify({
+                        from: { postal_code: originCep },
+                        to: { postal_code: rawCep },
+                        products: cart.map(item => ({
+                            weight: item.product?.weightKg || 0.5,
+                            height: item.product?.dimensions?.heightCm || 10,
+                            width: item.product?.dimensions?.widthCm || 10,
+                            length: item.product?.dimensions?.lengthCm || 10,
+                            quantity: item.quantity || 1,
+                            insurance_value: item.product?.costPrice || 50
+                        }))
+                    })
+                });
+
+                clearTimeout(timeout);
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const mapped: ShippingQuote[] = Array.isArray(data) ? data
+                        .filter((opt: any) => !opt.error && opt.price != null)
+                        .map((opt: any) => ({
+                            id: String(opt.id),
+                            service: opt.custom ? 'PICKUP' :
+                                (String(opt.name).toLowerCase().includes('express') || String(opt.name).toLowerCase().includes('sedex') ? 'EXPRESS' : 'STANDARD'),
+                            carrier: opt.name || opt.company?.name || 'Transportadora',
+                            price: parseFloat(String(opt.price).replace(',', '.')),
+                            delivery_time: opt.delivery_time || 5,
+                            isPickup: !!opt.custom
+                        })) : [];
+
+                    if (mapped.length > 0) {
+                        console.log('[ShippingService] ✅ Cotações reais da API:', mapped);
+                        return mapped;
+                    }
+                }
+            } catch (err: any) {
+                console.warn('[ShippingService] API indisponível, usando Matriz Base.', err?.message || err);
+            }
         }
 
-        const totalWeight = cart.reduce((acc, item) => acc + (item.quantity * (item.product.weightKg || 0.5)), 0);
-        const subtotal = cart.reduce((acc, item) => acc + (item.product.costPrice * item.quantity), 0);
-
-        // [LOGÍSTICA SIGME] Regra de Retirada Grátis
-        // Faixas PR (Curitiba/Piraquara): 80-83
-        const isLocal = destinationCep.startsWith('80') ||
-            destinationCep.startsWith('81') ||
-            destinationCep.startsWith('82') ||
-            destinationCep.startsWith('83');
-
-        // Em uma implementação real, chamaríamos: ${process.env.VITE_API_URL}/v1/shipping/calculate
-        // Como o Roberto quer ver a lógica "vínculada", vamos replicar o motor da API aqui para o simualdo ser PRECISO
-
-        await new Promise(resolve => setTimeout(resolve, 1200));
-
-        // Mágica dos cálculos baseados na API (shipping.routes.js)
-        // Fallbacks oficiais da API: PAC (12.90) e SEDEX (15.90) + Adicionais de Peso
-        const basePAC = 12.90;
-        const baseSEDEX = 15.90;
-        const weightAddon = totalWeight * 4.5; // Fator de peso SIGME
-        const insuranceAddon = subtotal * 0.01; // 1% de seguro
+        // === FALLBACK: Matriz SIGME Base (sempre garante valores) ===
+        const weightAddon = parseFloat((totalWeight * 1.8).toFixed(2));
+        const itemAddon = parseFloat((totalItems * 0.50).toFixed(2));
 
         const quotes: ShippingQuote[] = [];
 
-        // 1. Retirada (Se local)
         if (isLocal) {
             quotes.push({
                 id: 'pickup',
                 service: 'PICKUP',
-                carrier: 'Retirada na Fábrica (SIGME)',
+                carrier: 'Retirada na Fábrica (Piraquara)',
                 price: 0,
                 delivery_time: 0,
                 isPickup: true
             });
         }
 
-        // 2. Transportadora (Standard/PAC)
         quotes.push({
             id: 'standard',
             service: 'STANDARD',
-            carrier: 'PAC (Correios)',
-            price: basePAC + weightAddon + insuranceAddon,
+            carrier: 'Correios PAC',
+            price: parseFloat((12.90 + weightAddon + itemAddon).toFixed(2)),
             delivery_time: 5
         });
 
-        // 3. Expressa (SEDEX)
         quotes.push({
             id: 'express',
             service: 'EXPRESS',
-            carrier: 'SEDEX (Correios)',
-            price: baseSEDEX + weightAddon + (insuranceAddon * 1.5),
+            carrier: 'SEDEX',
+            price: parseFloat((15.90 + weightAddon + itemAddon + 4.00).toFixed(2)),
             delivery_time: 2
         });
 
+        console.log('[ShippingService] 📦 Usando Matriz Base SIGME:', quotes);
         return quotes;
     }
 };

@@ -54,25 +54,29 @@ router.get('/v1/communications/announcements', async (req: Request, res: Respons
     const { tenantId, audience, limit = 20 } = req.query as any;
     if (!tenantId) return res.status(400).json({ success: false, error: 'tenantId requerido' });
 
-    let q = supabase.from('announcements').select('*').order('created_at', { ascending: false }).limit(Number(limit));
-    // Filtro por tenant; se coluna ausente, retorna sem filtro
-    let { data, error } = await q.eq('tenant_id', tenantId);
-    if (error && String(error.message).toLowerCase().includes('permission denied')) {
+    let q = supabase
+      .from('announcements')
+      .select('*')
+      .eq('tenant_id', tenantId)
+      .eq('is_published', true)
+      .order('created_at', { ascending: false })
+      .limit(Number(limit));
+
+    let { data, error } = await q;
+
+    if (error) {
+      console.warn('[WARN] Erro ao buscar comunicados:', error.message);
       return res.status(200).json({ success: true, data: [] });
     }
-    if (error && String(error.message).toLowerCase().includes('column')) {
-      const { data: fallback, error: fbErr } = await supabase.from('announcements').select('*').order('created_at', { ascending: false }).limit(Number(limit));
-      if (fbErr) return res.status(500).json({ success: false, error: fbErr.message });
-      // Aplicar audience localmente se necessário
-      let out = fallback;
-      if (audience) out = out.filter((row: any) => Array.isArray(row.audience) ? row.audience.includes(String(audience)) : true);
-      return res.json({ success: true, data: out });
-    }
 
-    if (error) return res.status(500).json({ success: false, error: error.message });
-    // audience
-    let out = data || [];
-    if (audience) out = out.filter((row: any) => Array.isArray(row.audience) ? row.audience.includes(String(audience)) : true);
+    // Filtrar por audience e mapear campo message -> content
+    let out = (data || []).map((row: any) => ({
+      ...row,
+      content: row.content ?? row.message ?? '', // Compatibilidade frontend
+    }));
+    if (audience) out = out.filter((row: any) =>
+      Array.isArray(row.audience) ? row.audience.includes(String(audience)) : true
+    );
     res.json({ success: true, data: out });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
@@ -136,19 +140,15 @@ const createResourceEndpoints = (resourceName: string, tableName: string) => {
 
       let { data, error } = await q.eq('tenant_id', String(tenantId));
 
-      // Se houver QUALQUER erro (ex: coluna inexistente, erro de permissão, etc), tenta fallback sem filtro
+      // Se houver erro no filtro, retorna array vazio (nunca vazar dados de outros tenants)
       if (error) {
-        console.warn(`[WARN] Failed to filter ${resourceName} by tenantId. Falling back to all data. Error:`, error.message);
-        const { data: fallback, error: fbErr } = await supabase.from(tableName).select('*').order('created_at', { ascending: false });
-
-        if (fbErr) {
-          console.error(`[ERROR] Fallback failed for ${resourceName}:`, fbErr);
-          return res.status(500).json({ success: false, error: fbErr.message });
-        }
-        return res.json({ success: true, data: fallback });
+        console.warn(`[WARN] Erro ao filtrar ${resourceName} por tenantId (${tenantId}):`, error.message);
+        return res.status(200).json({ success: true, data: [] });
       }
 
-      res.json({ success: true, data });
+      // Filtro adicional por is_published se coluna existir
+      const safeData = (data || []).filter((row: any) => row.is_published !== false);
+      res.json({ success: true, data: safeData });
 
 
     } catch (err: any) {

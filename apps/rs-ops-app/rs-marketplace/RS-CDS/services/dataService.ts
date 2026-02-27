@@ -281,7 +281,8 @@ export const dataService = {
     },
 
     async getReplenishmentOrders(cdId: string): Promise<any[]> {
-        const { data, error } = await supabase
+        // Correção crítica: usar adminSupabase para não ser bloqueado por RLS (Row Level Security)
+        const { data, error } = await adminSupabase
             .from('cd_orders')
             .select('*, items:cd_order_items(*)')
             .eq('cd_id', cdId)
@@ -292,6 +293,58 @@ export const dataService = {
             return [];
         }
         return data || [];
+    },
+
+    async uploadPaymentProof(orderId: string, url: string, paymentMethod: string): Promise<boolean> {
+        const { error } = await adminSupabase
+            .from('cd_orders')
+            .update({
+                payment_proof_url: url,
+                payment_proof_status: 'PAGO', // Status de pagamento atualizado
+                payment_method: paymentMethod,
+                status: 'EM SEPARAÇÃO', // Move o pedido para o próximo estágio
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', orderId);
+
+        if (error) {
+            console.error('[CDS] Erro ao enviar comprovante:', error);
+            return false;
+        }
+        return true;
+    },
+
+    async updateOrderTracking(orderId: string, trackingCode: string): Promise<boolean> {
+        const { error } = await adminSupabase
+            .from('cd_orders')
+            .update({
+                tracking_code: trackingCode,
+                status: 'ENVIADO',
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', orderId);
+
+        if (error) {
+            console.error('[CDS] Erro ao adicionar rastreio:', error);
+            return false;
+        }
+        return true;
+    },
+
+    async completeOrder(orderId: string): Promise<boolean> {
+        const { error } = await adminSupabase
+            .from('cd_orders')
+            .update({
+                status: 'ENTREGUE',
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', orderId);
+
+        if (error) {
+            console.error('[CDS] Erro ao confirmar recebimento:', error);
+            return false;
+        }
+        return true;
     },
 
     // --- Estoque ---

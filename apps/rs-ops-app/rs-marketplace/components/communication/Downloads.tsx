@@ -23,7 +23,7 @@ const DownloadCard: React.FC<{ asset: Material }> = ({ asset }) => {
                 {asset.icon_type === 'photo' && asset.file_url ? (
                     <img src={asset.file_url} alt={asset.title} className="w-full h-full object-cover" />
                 ) : (
-                    <Icon size={48} className="text-gray-600" />
+                    <Icon className="w-12 h-12 text-gray-600" />
                 )}
             </div>
             <div className="mt-4 flex-grow">
@@ -37,7 +37,7 @@ const DownloadCard: React.FC<{ asset: Material }> = ({ asset }) => {
                 rel="noopener noreferrer"
                 className="mt-4 w-full flex items-center justify-center gap-2 bg-yellow-500 text-black font-bold py-2 px-4 rounded-lg hover:bg-yellow-400 transition-colors"
             >
-                <ArrowDownTrayIcon size={18} />
+                <ArrowDownTrayIcon className="w-5 h-5" />
                 <span>Baixar</span>
             </a>
         </div>

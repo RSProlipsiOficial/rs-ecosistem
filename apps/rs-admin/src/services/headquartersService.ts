@@ -191,18 +191,47 @@ export const headquartersService = {
             requestDate: order.created_at,
             date: order.created_at,
             expectedDelivery: order.updated_at,
-            marketplace_order_id: order.marketplace_order_id
+            marketplace_order_id: order.marketplace_order_id,
+            trackingCode: order.tracking_code || '',
+            paymentProofUrl: order.payment_proof_url || '',
+            paymentProofStatus: order.payment_proof_status || '',
+            shippingMethod: order.shipping_method || 'Transportadora'
         }));
     },
 
-    async updateReplenishmentOrderStatus(orderId: string, status: string): Promise<boolean> {
+    async updateReplenishmentOrderStatus(orderId: string, status: string, trackingCode?: string): Promise<boolean> {
+        const updateData: any = { status: status.toUpperCase(), updated_at: new Date().toISOString() };
+        if (trackingCode !== undefined) {
+            updateData.tracking_code = trackingCode;
+        }
+
         const { error } = await supabase
             .from('cd_orders')
-            .update({ status: status.toUpperCase(), updated_at: new Date().toISOString() })
+            .update(updateData)
             .eq('id', orderId);
 
         if (error) {
             console.error('[HQ] Erro ao atualizar status do pedido:', error);
+            return false;
+        }
+        return true;
+    },
+
+    async confirmPaymentProof(orderId: string, isApproved: boolean): Promise<boolean> {
+        const newStatus = isApproved ? 'PAGO' : 'AGUARDANDO PAGAMENTO';
+        const newProofStatus = isApproved ? 'CONFIRMADO' : 'REJEITADO';
+
+        const { error } = await supabase
+            .from('cd_orders')
+            .update({
+                status: newStatus,
+                payment_proof_status: newProofStatus,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', orderId);
+
+        if (error) {
+            console.error('[HQ] Erro ao confirmar comprovante:', error);
             return false;
         }
         return true;

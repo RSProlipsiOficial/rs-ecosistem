@@ -2,22 +2,18 @@ import React, { useState, useEffect, useMemo } from 'react';
 import communicationAPI from '../services/communicationAPI';
 import { MegaphoneIcon } from './icons/MegaphoneIcon';
 import { BookOpenIcon } from './icons/BookOpenIcon';
-import { PhotoIcon } from './icons/PhotoIcon';
 import { DocumentTextIcon } from './icons/DocumentTextIcon';
 import { DownloadIcon } from './icons/DownloadIcon';
 import { CalendarIcon } from './icons/CalendarIcon';
 import { UserPlusIcon } from './icons/UserPlusIcon';
 import { StarIcon } from './icons/StarIcon';
 import { TrophyIcon } from './icons/TrophyIcon';
-import { UserIcon } from './icons/UserIcon';
-import { mockDeepNetwork } from '../data/network';
-import { NetworkNode, UserProfile } from '../types';
 
 import Treinamentos from './communication/Treinamentos';
 import Catalogo from './communication/Catalogo';
 import Downloads from './communication/Downloads';
 
-// --- TYPES ---
+// --- TIPOS ---
 interface Announcement {
     id: string;
     type: 'alert' | 'info' | 'promo';
@@ -35,14 +31,13 @@ interface AgendaItem {
     content: string;
 }
 
-// --- UTILITY FUNCTIONS ---
+// --- FUNÇÕES UTILITÁRIAS ---
 const getIcon = (type: string, className: string = 'w-6 h-6') => {
     const props = { className };
     switch (type) {
         case 'alert': return <MegaphoneIcon {...props} />;
         case 'info': return <MegaphoneIcon {...props} />;
         case 'promo': return <MegaphoneIcon {...props} />;
-        case 'photo': return <PhotoIcon {...props} />;
         case 'presentation': return <DocumentTextIcon {...props} />;
         case 'catalog': return <DocumentTextIcon {...props} />;
         case 'document': return <DocumentTextIcon {...props} />;
@@ -50,67 +45,11 @@ const getIcon = (type: string, className: string = 'w-6 h-6') => {
         case 'Aniversariantes': return <TrophyIcon {...props} />;
         case 'PINs': return <StarIcon {...props} />;
         case 'Datas Comemorativas': return <CalendarIcon {...props} />;
-        case 'Network': return <UserIcon {...props} />;
         default: return null;
     }
 };
 
-const getNetworkDownline = (node: NetworkNode, maxLevel: number): UserProfile[] => {
-    const downline: UserProfile[] = [];
-    const queue: NetworkNode[] = [...node.children];
-
-    while (queue.length > 0) {
-        const currentNode = queue.shift();
-        if (currentNode && !currentNode.isEmpty && currentNode.level <= maxLevel) {
-            downline.push(currentNode);
-            if (currentNode.children) {
-                queue.push(...currentNode.children);
-            }
-        }
-    }
-    return downline;
-};
-
-const BirthdayCard: React.FC<{ member: UserProfile }> = ({ member }) => {
-    const birthDate = (member as any).birthDate || '1990-01-01';
-    const [, month, day] = birthDate.split('-');
-
-    const handleSendWhatsApp = () => {
-        const message = `Olá, ${member.name}! 🎉 Muitas felicidades, saúde e sucesso neste seu dia especial. Que seja um novo ciclo de grandes realizações! Um grande abraço da equipe RS Prólipsi.`;
-        const phone = (member as any).phone || '';
-        const phoneNumber = phone.replace(/\D/g, '');
-        const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
-        window.open(url, '_blank');
-    };
-
-    return (
-        <div className="flex items-center justify-between p-4 bg-dark-900 border border-dark-800 rounded-lg">
-            <div className="flex items-center space-x-4">
-                <div className="relative">
-                    <img src={member.avatarUrl} alt={member.name} className="h-12 w-12 rounded-full border-2 border-gold-500/30" />
-                    <div className="absolute -bottom-1 -right-1 bg-gold-500 rounded-full p-1">
-                        <CalendarIcon className="w-2.5 h-2.5 text-black" />
-                    </div>
-                </div>
-                <div>
-                    <p className="font-bold text-white mb-0.5">{member.name}</p>
-                    <p className="text-[10px] font-bold text-gold-500 uppercase tracking-widest opacity-80">{member.graduation}</p>
-                </div>
-            </div>
-            <div className="text-right flex flex-col items-end">
-                <p className="text-lg font-black text-white">{day}/{month}</p>
-                <button
-                    onClick={handleSendWhatsApp}
-                    className="text-[10px] mt-1.5 bg-dark-800 text-gold-500 border border-gold-500/20 px-3 py-1.5 rounded-md hover:bg-gold-500 hover:text-black transition-all font-bold uppercase tracking-tighter"
-                >
-                    Felicitar
-                </button>
-            </div>
-        </div>
-    );
-};
-
-// Mapeadores
+// Mapeadores de dados da API
 const mapAnnouncement = (it: any): Announcement => ({
     id: String(it.id ?? ''),
     type: String(it.type ?? 'info') as any,
@@ -127,7 +66,7 @@ const mapAgendaItem = (it: any): AgendaItem => ({
     content: String(it.content ?? it.message ?? ''),
 });
 
-// --- TAB COMPONENTS ---
+// --- COMPONENTES DAS ABAS ---
 const AnnouncementsTab: React.FC<{ announcements: Announcement[] }> = ({ announcements }) => (
     <div className="space-y-4">
         {announcements.length > 0 ? announcements.map((item) => (
@@ -167,20 +106,6 @@ const AgendaComemorativaTab: React.FC<{ items: AgendaItem[] }> = ({ items }) => 
         }, {} as Record<AgendaCategory, AgendaItem[]>);
     }, [items]);
 
-    const currentMonth = new Date().getMonth() + 1;
-    const downline = getNetworkDownline(mockDeepNetwork, 5);
-    const birthdaysThisMonth = downline
-        .filter(member => {
-            const bDate = (member as any).birthDate;
-            if (!bDate) return false;
-            return parseInt(bDate.split('-')[1]) === currentMonth;
-        })
-        .sort((a, b) => {
-            const dayA = parseInt(((a as any).birthDate || '').split('-')[2] || '0');
-            const dayB = parseInt(((b as any).birthDate || '').split('-')[2] || '0');
-            return dayA - dayB;
-        });
-
     return (
         <div className="space-y-8">
             <div>
@@ -214,29 +139,11 @@ const AgendaComemorativaTab: React.FC<{ items: AgendaItem[] }> = ({ items }) => 
                     </div>
                 )}
             </div>
-
-            <div className="space-y-4 pt-4 border-t border-dark-800">
-                <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                    {getIcon('Network', 'w-6 h-6 text-gold-500')} Aniversariantes da Rede
-                </h2>
-                {birthdaysThisMonth.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {birthdaysThisMonth.map(member => (
-                            <BirthdayCard key={member.id} member={member} />
-                        ))}
-                    </div>
-                ) : (
-                    <div className="text-center py-10 text-gray-500 border border-dark-800 border-dashed rounded-lg">
-                        <TrophyIcon className="w-12 h-12 mx-auto opacity-20" />
-                        <p className="mt-2">Nenhum aniversário este mês na sua rede (até 5ª geração).</p>
-                    </div>
-                )}
-            </div>
         </div>
     );
 };
 
-// --- MAIN COMPONENT ---
+// --- COMPONENTE PRINCIPAL ---
 const CommunicationCenter: React.FC = () => {
     const [activeTab, setActiveTab] = useState<'announcements' | 'agenda' | 'training' | 'materials'>('announcements');
     const [loading, setLoading] = useState(true);
@@ -319,6 +226,5 @@ const CommunicationCenter: React.FC = () => {
         </div>
     );
 };
-
 
 export default CommunicationCenter;

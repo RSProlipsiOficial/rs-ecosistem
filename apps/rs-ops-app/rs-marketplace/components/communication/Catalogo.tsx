@@ -26,7 +26,7 @@ const Catalogo: React.FC = () => {
     if (catalogs.length === 0) {
         return (
             <div className="animate-fade-in text-center py-16 text-gray-500">
-                <ShopIcon size={48} className="mx-auto text-yellow-500" />
+                <ShopIcon className="w-12 h-12 mx-auto text-yellow-500" />
                 <h2 className="text-2xl font-bold text-white mt-4">Catálogos</h2>
                 <p className="mt-2 max-w-lg mx-auto">Nenhum caderno ou catálogo disponível no momento.</p>
             </div>
@@ -42,7 +42,7 @@ const Catalogo: React.FC = () => {
                             <img src={catalog.cover_image} alt={catalog.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                         ) : (
                             <div className="w-full h-full flex items-center justify-center text-gray-600">
-                                <DocumentTextIcon size={64} />
+                                <DocumentTextIcon className="w-16 h-16 text-gray-600" />
                             </div>
                         )}
                         <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -52,7 +52,7 @@ const Catalogo: React.FC = () => {
                                 rel="noopener noreferrer"
                                 className="bg-yellow-500 text-black px-4 py-2 rounded-lg font-bold flex items-center gap-2 transform translate-y-4 group-hover:translate-y-0 transition-transform"
                             >
-                                <ArrowTopRightOnSquareIcon size={20} />
+                                <ArrowTopRightOnSquareIcon className="w-5 h-5" />
                                 Visualizar
                             </a>
                         </div>

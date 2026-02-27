@@ -81,15 +81,10 @@ const Inventory: React.FC<InventoryProps> = ({ products: initialProducts, wallet
     // Derived Totals
     const subtotal = requestCart.reduce((acc, item) => acc + (item.product.costPrice * item.quantity), 0);
 
-    const getShippingCost = (subtotal: number, option: ShippingOption) => {
+    const getShippingCost = (_subtotal: number, option: ShippingOption) => {
         if (option === 'PICKUP') return 0;
         const quote = shippingQuotes.find(q => q.service === option);
-        if (quote) return quote.price;
-
-        // Fallback if no quote selected but option is not pickup
-        if (option === 'STANDARD') return (subtotal * 0.05) + 45.00;
-        if (option === 'EXPRESS') return (subtotal * 0.10) + 80.00;
-        return 0;
+        return quote ? quote.price : 0;
     };
 
     const calculateRealShipping = async () => {
@@ -113,10 +108,11 @@ const Inventory: React.FC<InventoryProps> = ({ products: initialProducts, wallet
     };
 
     useEffect(() => {
-        if (requestStep === 'CHECKOUT' && shippingOption !== 'PICKUP' && shippingQuotes.length === 0) {
+        // Calcula frete sempre que entra no checkout com carrinho e perfil disponíveis
+        if (requestStep === 'CHECKOUT' && requestCart.length > 0 && shippingQuotes.length === 0) {
             calculateRealShipping();
         }
-    }, [requestStep, shippingOption]);
+    }, [requestStep, requestCart.length]);
 
     const shippingCost = getShippingCost(subtotal, shippingOption);
     const totalOrder = subtotal + shippingCost;
@@ -618,7 +614,13 @@ const Inventory: React.FC<InventoryProps> = ({ products: initialProducts, wallet
                                                     </div>
                                                 </div>
                                                 <span className="text-white font-bold text-sm">
-                                                    {isCalculatingShipping ? '...' : `R$ ${getShippingCost(subtotal, 'STANDARD').toFixed(2)}`}
+                                                    {isCalculatingShipping ? (
+                                                        <span className="animate-pulse text-gold-400">Cotando...</span>
+                                                    ) : (
+                                                        shippingQuotes.length > 0
+                                                            ? `R$ ${(shippingQuotes.find(q => q.service === 'STANDARD')?.price ?? 0).toFixed(2)}`
+                                                            : '--'
+                                                    )}
                                                 </span>
                                             </label>
 
@@ -632,7 +634,13 @@ const Inventory: React.FC<InventoryProps> = ({ products: initialProducts, wallet
                                                     </div>
                                                 </div>
                                                 <span className="text-white font-bold text-sm">
-                                                    {isCalculatingShipping ? '...' : `R$ ${getShippingCost(subtotal, 'EXPRESS').toFixed(2)}`}
+                                                    {isCalculatingShipping ? (
+                                                        <span className="animate-pulse text-gold-400">Cotando...</span>
+                                                    ) : (
+                                                        shippingQuotes.length > 0
+                                                            ? `R$ ${(shippingQuotes.find(q => q.service === 'EXPRESS')?.price ?? 0).toFixed(2)}`
+                                                            : '--'
+                                                    )}
                                                 </span>
                                             </label>
                                         </div>

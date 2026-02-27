@@ -240,6 +240,7 @@ const HeadquartersPanel: React.FC<HeadquartersPanelProps> = ({ activeTab: initia
                                         <thead>
                                             <tr className="bg-black/40 text-[10px] text-gray-500 font-bold uppercase tracking-widest">
                                                 <th className="px-6 py-4">Data</th>
+                                                <th className="px-6 py-4">ID</th>
                                                 <th className="px-6 py-4">CD Origem</th>
                                                 <th className="px-6 py-4">Itens</th>
                                                 <th className="px-6 py-4">Total</th>
@@ -255,37 +256,77 @@ const HeadquartersPanel: React.FC<HeadquartersPanelProps> = ({ activeTab: initia
                                             ) : (
                                                 orders.map((order) => (
                                                     <tr key={order.id} className="hover:bg-white/5 transition-colors">
-                                                        <td className="px-6 py-5 text-gray-300 text-xs">{new Date(order.date).toLocaleDateString('pt-BR')}</td>
+                                                        <td className="px-6 py-5 text-gray-300 text-xs">{new Date(order.date).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}</td>
+                                                        <td className="px-6 py-5">
+                                                            <span className="text-xs font-mono text-gray-300 bg-white/5 px-2 py-1 rounded border border-gray-800">
+                                                                AC-{order.id.split('-')[0].toUpperCase()}
+                                                            </span>
+                                                        </td>
                                                         <td className="px-6 py-5 text-white font-bold">{order.cdName}</td>
                                                         <td className="px-6 py-5 text-gray-400 text-xs">{order.itemCount} itens</td>
                                                         <td className="px-6 py-5 text-yellow-500 font-bold">R$ {order.totalValue.toLocaleString('pt-BR')}</td>
                                                         <td className="px-6 py-5">
                                                             <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${order.status === 'APROVADO' ? 'bg-green-500/10 text-green-500 border-green-500/20' :
-                                                                    order.status === 'SAIU PARA ENTREGA' || order.status === 'ENVIADO' ? 'bg-blue-500/10 text-blue-500 border-blue-500/20' :
-                                                                        order.status === 'PAGO' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' :
-                                                                            'bg-yellow-500/10 text-yellow-500 border-yellow-500/20'
+                                                                order.status === 'SAIU PARA ENTREGA' || order.status === 'ENVIADO' ? 'bg-blue-500/10 text-blue-500 border-blue-500/20' :
+                                                                    order.status === 'PAGO' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' :
+                                                                        'bg-yellow-500/10 text-yellow-500 border-yellow-500/20'
                                                                 }`}>{order.status}</span>
+                                                            {order.paymentProofUrl && (
+                                                                <a href={order.paymentProofUrl} target="_blank" rel="noopener noreferrer" className="block mt-2 text-[10px] text-blue-400 hover:text-blue-300 underline font-semibold">
+                                                                    Visualizar Comprovante
+                                                                </a>
+                                                            )}
+                                                            {order.trackingCode && (
+                                                                <span className="block mt-1 text-[10px] text-gray-400 font-mono">
+                                                                    Rastreio: {order.trackingCode}
+                                                                </span>
+                                                            )}
                                                         </td>
+
                                                         <td className="px-6 py-5">
                                                             <div className="flex justify-end gap-2">
                                                                 {order.status === 'PENDENTE' && (
                                                                     <button
-                                                                        onClick={() => handleUpdateOrderStatus(order.id, 'APROVADO')}
+                                                                        onClick={() => handleUpdateOrderStatus(order.id, 'AGUARDANDO PAGAMENTO')}
                                                                         disabled={processingOrderId === order.id}
-                                                                        className="px-3 py-1 bg-green-500/20 text-green-500 text-xs font-bold rounded hover:bg-green-500/30 transition-colors"
-                                                                        title="Aprovar Pedido"
+                                                                        className="px-3 py-1 bg-yellow-500/20 text-yellow-500 text-xs font-bold rounded hover:bg-yellow-500/30 transition-colors"
+                                                                        title="Aguardar Pagamento"
                                                                     >
-                                                                        {processingOrderId === order.id ? '...' : 'Aprovar'}
+                                                                        {processingOrderId === order.id ? '...' : 'Cobrar'}
                                                                     </button>
                                                                 )}
-                                                                {(order.status === 'APROVADO' || order.status === 'PAGO') && (
+                                                                {order.status === 'EM SEPARAÇÃO' && (
                                                                     <button
-                                                                        onClick={() => handleUpdateOrderStatus(order.id, 'SAIU PARA ENTREGA')}
+                                                                        onClick={async () => {
+                                                                            // Confirma o comprovante e finaliza status Pago (opcional mas bom para registro duplo)
+                                                                            await headquartersService.confirmPaymentProof(order.id, true);
+                                                                            fetchData();
+                                                                        }}
+                                                                        disabled={processingOrderId === order.id}
+                                                                        className="px-3 py-1 bg-green-500/20 text-green-500 text-xs font-bold rounded hover:bg-green-500/30 transition-colors"
+                                                                        title="Confirmar Comprovante"
+                                                                    >
+                                                                        {processingOrderId === order.id ? '...' : 'Confirmar Pgto'}
+                                                                    </button>
+                                                                )}
+                                                                {(order.status === 'APROVADO' || order.status === 'PAGO' || order.status === 'EM SEPARAÇÃO') && (
+                                                                    <button
+                                                                        onClick={async () => {
+                                                                            const tracking = window.prompt("Informe o Código de Rastreio (se houver):");
+                                                                            if (tracking !== null) {
+                                                                                setProcessingOrderId(order.id);
+                                                                                const success = await headquartersService.updateReplenishmentOrderStatus(order.id, 'ENVIADO', tracking);
+                                                                                if (success) {
+                                                                                    setOrders(orders.map(o => o.id === order.id ? { ...o, status: 'ENVIADO', trackingCode: tracking } : o));
+                                                                                }
+                                                                                setProcessingOrderId(null);
+                                                                            }
+                                                                        }}
                                                                         disabled={processingOrderId === order.id}
                                                                         className="px-3 py-1 bg-blue-500/20 text-blue-500 text-xs font-bold rounded hover:bg-blue-500/30 transition-colors"
-                                                                        title="Marcar como Enviado"
+                                                                        title="Despachar Pedido"
                                                                     >
-                                                                        {processingOrderId === order.id ? '...' : 'Enviar'}
+                                                                        {processingOrderId === order.id ? '...' : 'Despachar'}
                                                                     </button>
                                                                 )}
                                                             </div>

@@ -116,20 +116,13 @@ type ApiResponse<T> = {
 };
 
 const communicationAPI = {
-    // COMUNICADOS (READ-ONLY)
+    // COMUNICADOS (READ-ONLY) — Fonte única: /v1/communications/*
     announcements: {
         getAll: async (): Promise<ApiResponse<Announcement[]>> => {
             try {
-                // Tenta v1 primeiro pois é onde o Admin salva
-                let r: any = await apiFetch(`/v1/communications/announcements?tenantId=${TENANT_ID}&audience=marketplace`);
-                let data = r?.data || r;
-
-                // Fallback para consultor se vazio
-                if (!Array.isArray(data) || data.length === 0) {
-                    r = await apiFetch(`/consultor/communications/announcements?tenantId=${TENANT_ID}`);
-                    data = r?.data || r;
-                }
-                return { success: true, data };
+                const r = await apiFetch(`/v1/communications/announcements?tenantId=${TENANT_ID}&audience=marketplace`);
+                const data = r?.data || r;
+                return { success: true, data: Array.isArray(data) ? data : [] };
             } catch (error: any) {
                 return { success: false, error: error.message };
             }
@@ -144,44 +137,36 @@ const communicationAPI = {
         },
     },
 
-    // AGENDA (READ-ONLY)
+    // AGENDA (READ-ONLY) — Fonte única: /v1/communications/*
     agendaItems: {
         getAll: async (): Promise<ApiResponse<AgendaItem[]>> => {
             try {
-                let r: any = await apiFetch(`/v1/communications/agenda?tenantId=${TENANT_ID}`);
-                let data = r?.data || r;
-                if (!Array.isArray(data) || data.length === 0) {
-                    r = await apiFetch(`/consultor/communications/agenda?tenantId=${TENANT_ID}`);
-                    data = r?.data || r;
-                }
-                return { success: true, data };
+                const r = await apiFetch(`/v1/communications/agenda?tenantId=${TENANT_ID}`);
+                const data = r?.data || r;
+                return { success: true, data: Array.isArray(data) ? data : [] };
             } catch (error: any) {
                 return { success: false, error: error.message };
             }
         },
     },
 
-    // TREINAMENTOS (READ-ONLY)
+    // TREINAMENTOS (READ-ONLY) — Fonte única: /v1/communications/*
     trainings: {
         getAll: async (): Promise<ApiResponse<Training[]>> => {
             try {
-                let primary = await apiFetch(`/consultor/communications/trainings?tenantId=${TENANT_ID}`);
-                let data = primary?.data || primary;
-                return { success: true, data };
+                const r = await apiFetch(`/v1/communications/trainings?tenantId=${TENANT_ID}`);
+                const data = r?.data || r;
+                return { success: true, data: Array.isArray(data) ? data : [] };
             } catch (error: any) {
-                try {
-                    const alt = await apiFetch(`/v1/communications/trainings?tenantId=${TENANT_ID}`);
-                    return { success: true, data: alt?.data || alt };
-                } catch (err2: any) {
-                    return { success: false, error: error.message };
-                }
+                return { success: false, error: error.message };
             }
         },
         getModules: async (trainingId?: string): Promise<ApiResponse<any[]>> => {
             try {
                 const qs = trainingId ? `&trainingId=${encodeURIComponent(trainingId)}` : '';
                 const r = await apiFetch(`/v1/communications/training-modules?tenantId=${TENANT_ID}${qs}`);
-                return { success: true, data: r?.data || r };
+                const data = r?.data || r;
+                return { success: true, data: Array.isArray(data) ? data : [] };
             } catch (error: any) {
                 return { success: false, error: error.message };
             }
@@ -191,15 +176,16 @@ const communicationAPI = {
                 const qsT = trainingId ? `&trainingId=${encodeURIComponent(trainingId)}` : '';
                 const qsM = moduleId ? `&moduleId=${encodeURIComponent(moduleId)}` : '';
                 const r = await apiFetch(`/v1/communications/lessons?tenantId=${TENANT_ID}${qsT}${qsM}`);
-                return { success: true, data: r?.data || r };
+                const data = r?.data || r;
+                return { success: true, data: Array.isArray(data) ? data : [] };
             } catch (error: any) {
                 return { success: false, error: error.message };
             }
         },
         completeLesson: async (lessonId: string, userId: string, trainingId?: string): Promise<ApiResponse<null>> => {
             try {
-                const qs = `${trainingId ? `&trainingId=${encodeURIComponent(trainingId)}` : ''}`;
-                await apiFetch(`/consultor/communications/lessons/${encodeURIComponent(lessonId)}/complete?tenantId=${TENANT_ID}&userId=${encodeURIComponent(userId)}${qs}`, { method: 'POST' });
+                const qs = trainingId ? `&trainingId=${encodeURIComponent(trainingId)}` : '';
+                await apiFetch(`/v1/communications/lessons/${encodeURIComponent(lessonId)}/complete?tenantId=${TENANT_ID}&userId=${encodeURIComponent(userId)}${qs}`, { method: 'POST' });
                 return { success: true };
             } catch (error: any) {
                 return { success: false, error: error.message };
@@ -207,17 +193,13 @@ const communicationAPI = {
         },
     },
 
-    // CATÁLOGOS (READ-ONLY)
+    // CATÁLOGOS (READ-ONLY) — Fonte única: /v1/communications/*
     catalogs: {
         getAll: async (): Promise<ApiResponse<Catalog[]>> => {
             try {
-                let r: any = await apiFetch(`/consultor/communications/catalogs?tenantId=${TENANT_ID}`);
-                let data = r?.data || r;
-                if (!Array.isArray(data) || data.length === 0) {
-                    r = await apiFetch(`/v1/communications/catalogs?tenantId=${TENANT_ID}`);
-                    data = r?.data || r;
-                }
-                return { success: true, data };
+                const r = await apiFetch(`/v1/communications/catalogs?tenantId=${TENANT_ID}`);
+                const data = r?.data || r;
+                return { success: true, data: Array.isArray(data) ? data : [] };
             } catch (error: any) {
                 return { success: false, error: error.message };
             }
@@ -233,18 +215,14 @@ const communicationAPI = {
         },
     },
 
-    // MATERIAIS DE DOWNLOAD (READ-ONLY)
+    // MATERIAIS DE DOWNLOAD (READ-ONLY) — Fonte única: /v1/communications/*
     downloadMaterials: {
         getAll: async (iconType?: string): Promise<ApiResponse<DownloadMaterial[]>> => {
             try {
                 const filter = iconType && iconType !== 'all' ? `&iconType=${encodeURIComponent(iconType)}` : '';
-                let r: any = await apiFetch(`/consultor/communications/materials?tenantId=${TENANT_ID}${filter}`);
-                let data = r?.data || r;
-                if (!Array.isArray(data) || data.length === 0) {
-                    r = await apiFetch(`/v1/communications/materials?tenantId=${TENANT_ID}${filter}`);
-                    data = r?.data || r;
-                }
-                return { success: true, data };
+                const r = await apiFetch(`/v1/communications/materials?tenantId=${TENANT_ID}${filter}`);
+                const data = r?.data || r;
+                return { success: true, data: Array.isArray(data) ? data : [] };
             } catch (error: any) {
                 return { success: false, error: error.message };
             }
