@@ -73,7 +73,8 @@ router.post('/v1/marketplace/products', async (req: Request, res: Response) => {
       specifications: body.specifications || {},
       seo_title: body.seoTitle,
       seo_description: body.seoDescription,
-      seo_keywords: body.seoKeywords
+      seo_keywords: body.seoKeywords,
+      member_price: body.memberPrice
     };
 
     const { data, error } = await supabase
@@ -99,6 +100,7 @@ router.put('/v1/marketplace/products/:id', async (req: Request, res: Response) =
     if (body.name) productData.name = body.name;
     if (body.description) productData.description = body.description;
     if (body.price !== undefined) productData.price = body.price;
+    if (body.memberPrice !== undefined) productData.member_price = body.memberPrice;
     if (body.originalPrice !== undefined) productData.compare_price = body.originalPrice;
     if (body.stock !== undefined) productData.stock_quantity = body.stock;
     if (body.sku) productData.sku = body.sku;

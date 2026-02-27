@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { MARKETPLACE_URL, MARKETPLACE_ADMIN_DASHBOARD_EDITOR_URL, WALLETPAY_URL, CONSULTOR_DASHBOARD_URL } from '@/src/config/urls';
 import ExternalLinkItem from './ExternalLinkItem';
+import { settingsAPI } from '../src/services/api';
 import {
   DashboardIcon, UsersIcon, CycleIcon, CareerIcon, WalletIcon, SettingsIcon,
   ChevronRightIcon, StarIcon, TruckIcon, BuildingStorefrontIcon,
@@ -24,6 +25,45 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen, setSidebarOpen, setActiveView, activeView }) => {
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({});
+  const [branding, setBranding] = useState<{ logo: string | null; companyName: string }>({
+    logo: '/logo-rs.png',
+    companyName: 'RS Prólipsi'
+  });
+
+  const fetchBranding = async () => {
+    try {
+      const res = await settingsAPI.getGeneralSettings();
+      // [RS-MAPPING] Nested data support
+      const brandingData = res.data?.data || res.data;
+      if (brandingData) {
+        setBranding({
+          logo: brandingData.logo || '/logo-rs.png',
+          companyName: brandingData.companyName || 'RS Prólipsi'
+        });
+      }
+    } catch (err) {
+      console.error("[Sidebar] Failed to fetch branding:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchBranding();
+
+    // Listen for updates from SettingsPage
+    const handleSettingsUpdate = () => fetchBranding();
+    window.addEventListener('rs-admin:settings-updated', handleSettingsUpdate);
+
+    // Listen for cross-tab branding updates
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'rs-branding-update') fetchBranding();
+    };
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('rs-admin:settings-updated', handleSettingsUpdate);
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
 
   const handleMenuClick = (menu: string) => {
     setOpenMenus(prev => ({ ...prev, [menu]: !prev[menu] }));
@@ -161,8 +201,27 @@ const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen, setSidebarOpen, setAct
     <>
       <div className={`fixed inset-0 z-20 bg-black/50 transition-opacity md:hidden ${isSidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} onClick={() => setSidebarOpen(false)}></div>
       <aside className={`fixed top-0 left-0 z-30 w-64 h-full bg-[#1E1E1E] border-r border-[#2A2A2A] flex flex-col transition-transform duration-300 ease-in-out md:relative md:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <div className="flex items-center justify-center h-16 border-b border-[#2A2A2A] bg-[#121212]">
-          <h1 className="text-xl font-bold text-[#FFD700]">RS Prólipsi</h1>
+        <div className="flex items-center justify-center h-16 border-b border-[#2A2A2A] bg-[#121212] overflow-hidden px-4">
+          {branding.logo ? (
+            <img
+              src={branding.logo}
+              alt={branding.companyName}
+              className="h-8 w-auto object-contain cursor-pointer hover:scale-105 transition-transform"
+              onClick={() => handleViewChange('Dashboard')}
+              onError={(e) => {
+                e.currentTarget.style.display = 'none';
+                const parent = e.currentTarget.parentElement;
+                if (parent && !parent.querySelector('.dynamic-title')) {
+                  const title = document.createElement('h1');
+                  title.className = 'text-xl font-bold text-[#FFD700] dynamic-title text-center truncate';
+                  title.innerText = branding.companyName;
+                  parent.appendChild(title);
+                }
+              }}
+            />
+          ) : (
+            <h1 className="text-xl font-bold text-[#FFD700] truncate">{branding.companyName}</h1>
+          )}
         </div>
         <nav className="flex-1 px-4 py-4 overflow-y-auto">
           <ul className="space-y-1">

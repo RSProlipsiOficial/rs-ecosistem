@@ -56,8 +56,15 @@ const navGroups = [
             { label: 'Upsell', view: 'manageUpsell' as View },
             { label: 'Carrinhos Abandonados', view: 'manageAbandonedCarts' as View },
             { label: 'Avaliações', view: 'manageReviews' as View },
-            { label: 'Afiliados', view: 'manageAffiliates' as View },
+            { label: 'Links de Indicação', view: 'manageAffiliates' as View },
         ]
+    },
+    { isSeparator: true, title: "CARREIRA & ENSINO" },
+    {
+        main: { icon: UserIcon, label: "SIGME & Graduação", view: "compensationPlan" as View }
+    },
+    {
+        main: { icon: DocumentTextIcon, label: "Treinamentos", view: "manageTrainings" as View }
     },
     { isSeparator: true, title: "APARÊNCIA" },
     {

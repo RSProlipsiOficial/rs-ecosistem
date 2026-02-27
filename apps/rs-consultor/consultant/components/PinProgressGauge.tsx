@@ -3,42 +3,27 @@ import { IconAward } from '../../components/icons';
 import { SigmaConfig } from '../services/sigmaApi';
 
 interface PinProgressGaugeProps {
-    user: any;
-    apiConfig: SigmaConfig | null;
-    pinLogos: Record<string, string>;
+    currentValue: number;
+    currentPin: { name: string; value: number; imageUrl?: string };
+    nextPin: { name: string; value: number; imageUrl?: string };
+    unitLabel: string; // Ex: "DE VOLUME" ou "CICLOS"
     size?: 'sm' | 'lg';
+    valueFormatter?: (val: number) => string;
 }
 
-const PinProgressGauge: FC<PinProgressGaugeProps> = ({ user, apiConfig, pinLogos, size = 'sm' }) => {
-    const pinTable = useMemo(() => {
-        if (!apiConfig) return [];
-        return apiConfig.career.pins.map(p => ({
-            pin: p.name,
-            cycles: p.cyclesRequired,
-            iconColor: '#0f52ba',
-            imageUrl: p.imageUrl
-        }));
-    }, [apiConfig]);
-
-    const currentCycles = user.totalCycles || 0;
-
-    let currentPinIndex = -1;
-    for (let i = pinTable.length - 1; i >= 0; i--) {
-        if (currentCycles >= pinTable[i].cycles) {
-            currentPinIndex = i;
-            break;
-        }
-    }
-
-    // Nome correto: Consultor
-    const currentPin = currentPinIndex !== -1 ? pinTable[currentPinIndex] : { pin: 'Consultor', cycles: 0, iconColor: '#9ca3af', imageUrl: undefined };
-    const nextPin = currentPinIndex < pinTable.length - 1 ? pinTable[currentPinIndex + 1] : (pinTable[0] || { pin: 'Bronze', cycles: 5, iconColor: '#CD7F32' });
-
-    const startCycles = (currentPin as any).cycles || 0;
-    const endCycles = (nextPin as any).cycles || 5;
-    const range = endCycles - startCycles;
-    const progressInCycles = currentCycles - startCycles;
-    const progress = range > 0 ? Math.min(100, (progressInCycles / range) * 100) : (currentCycles >= endCycles ? 100 : 0);
+const PinProgressGauge: FC<PinProgressGaugeProps> = ({
+    currentValue = 0,
+    currentPin = { name: 'Consultor', value: 0 },
+    nextPin = { name: 'Próximo', value: 10000 },
+    unitLabel,
+    size = 'sm',
+    valueFormatter
+}) => {
+    const startValue = currentPin?.value || 0;
+    const endValue = nextPin?.value || 0;
+    const range = endValue - startValue;
+    const progressInValue = currentValue - startValue;
+    const progress = range > 0 ? Math.min(100, (progressInValue / range) * 100) : (currentValue >= endValue ? 100 : 0);
 
     const radius = 150;
     const strokeWidth = 25;
@@ -58,16 +43,17 @@ const PinProgressGauge: FC<PinProgressGaugeProps> = ({ user, apiConfig, pinLogos
     const progressAngle = startAngle + (progress / 100) * totalAngle;
     const progressPos = getPoint(progressAngle, radius);
 
-    const currentPinName = currentPin.pin;
-    const nextPinName = nextPin.pin;
+    const currentPinName = currentPin.name;
+    const nextPinName = nextPin.name;
 
-    const renderPinIcon = (pinName: string, isCurrent: boolean) => {
-        const logo = pinLogos[pinName] || (isCurrent ? (currentPin as any).imageUrl : (nextPin as any).imageUrl);
+    const renderPinIcon = (pin: { name: string; imageUrl?: string }, isCurrent: boolean) => {
+        const logo = pin?.imageUrl;
+        const name = pin?.name || '';
         const iconSize = size === 'lg' ? 'h-56 w-56' : 'h-16 w-16';
 
-        if (logo) return <img src={logo} alt={pinName} className={`${iconSize} object-contain drop-shadow-[0_25px_25px_rgba(0,0,0,0.6)] animate-float`} />;
+        if (logo) return <img src={logo} alt={name} className={`${iconSize} object-contain drop-shadow-[0_25px_25px_rgba(0,0,0,0.6)] animate-float`} />;
 
-        if (pinName === 'Consultor') {
+        if (name === 'Consultor') {
             return (
                 <div className={`relative flex items-center justify-center ${iconSize} rounded-full bg-gradient-to-br from-gray-700 to-gray-900 border-4 border-brand-gray-light shadow-2xl overflow-hidden`}>
                     <IconAward size={size === 'lg' ? 120 : 32} className="text-gray-400 opacity-60" />
@@ -76,17 +62,17 @@ const PinProgressGauge: FC<PinProgressGaugeProps> = ({ user, apiConfig, pinLogos
             );
         }
 
-        return <IconAward className={`${iconSize} drop-shadow-lg`} style={{ color: isCurrent ? currentPin.iconColor : (nextPin as any).iconColor }} />;
+        return <IconAward className={`${iconSize} drop-shadow-lg`} style={{ color: isCurrent ? '#FFD700' : '#4B5563' }} />;
     };
 
     return (
         <div className={`relative flex items-center justify-center ${size === 'lg' ? 'w-[700px] min-h-[400px]' : 'w-[320px] min-h-[220px]'} mx-auto animate-fade-in`}>
             {/* PIN ATUAL */}
             <div className={`absolute ${size === 'lg' ? '-left-72' : '-left-16'} flex flex-col items-center z-20`}>
-                {renderPinIcon(currentPinName, true)}
+                {renderPinIcon(currentPin, true)}
                 <div className={`${size === 'lg' ? 'mt-12' : 'mt-2'} bg-black/70 px-6 py-2 rounded-xl border border-white/10 shadow-3xl`}>
                     <p className={`font-black text-white uppercase tracking-[0.3em] ${size === 'lg' ? 'text-lg' : 'text-[10px]'} whitespace-nowrap`}>
-                        {currentPinName}
+                        {currentPin?.name}
                     </p>
                 </div>
             </div>
@@ -113,6 +99,8 @@ const PinProgressGauge: FC<PinProgressGaugeProps> = ({ user, apiConfig, pinLogos
                     strokeLinecap="round"
                     className="opacity-40"
                 />
+
+                {/* Os PINs já estão sendo renderizados via divs absolutas acima. Removendo foreignObject duplicado para evitar confusão e erros extras */}
 
                 {/* Progress */}
                 {progress > 0 && (
@@ -147,7 +135,7 @@ const PinProgressGauge: FC<PinProgressGaugeProps> = ({ user, apiConfig, pinLogos
 
                 {/* Labels Centrais */}
                 <text x="200" y="170" textAnchor="middle" className="fill-gray-400 text-[11px] font-black tracking-[0.3em] uppercase opacity-60">
-                    {currentCycles} / {endCycles} CICLOS
+                    META: {valueFormatter ? valueFormatter(endValue) : endValue}
                 </text>
                 <text x="200" y="235" textAnchor="middle" className="fill-white text-7xl font-black tracking-tighter drop-shadow-2xl">
                     {Math.round(progress)}%
@@ -159,10 +147,10 @@ const PinProgressGauge: FC<PinProgressGaugeProps> = ({ user, apiConfig, pinLogos
 
             {/* PRÓXIMO PIN */}
             <div className={`absolute ${size === 'lg' ? '-right-72' : '-right-16'} flex flex-col items-center z-20`}>
-                {renderPinIcon(nextPinName, false)}
+                {renderPinIcon(nextPin, false)}
                 <div className={`${size === 'lg' ? 'mt-12' : 'mt-2'} bg-black/70 px-6 py-2 rounded-xl border border-white/10 shadow-3xl`}>
                     <p className={`font-black text-white uppercase tracking-[0.3em] ${size === 'lg' ? 'text-lg' : 'text-[10px]'} whitespace-nowrap`}>
-                        {nextPinName}
+                        {nextPin?.name}
                     </p>
                 </div>
             </div>

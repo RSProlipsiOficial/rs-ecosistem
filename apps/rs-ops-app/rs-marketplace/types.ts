@@ -5,6 +5,7 @@ export interface Product {
   name: string;
   seller: string;
   price: number;
+  memberPrice?: number;
   costPerItem?: number;
   compareAtPrice?: number;
   currency: string;

@@ -1,5 +1,6 @@
 import { supabase, adminSupabase } from './supabaseClient';
 import { CDProfile, Order, Product, Transaction, Customer } from '../types';
+import { products as initialProducts } from '../../data/products';
 
 export const dataService = {
     // --- Perfil e Configurações ---
@@ -166,6 +167,125 @@ export const dataService = {
             return false;
         }
         return true;
+    },
+
+    // --- Catálogo Global (Sede) ---
+    async getGlobalCatalog(): Promise<Product[]> {
+        const { data, error } = await adminSupabase
+            .from('products')
+            .select('*')
+            .or('status.eq.active,status.eq.published');
+
+        if (error) {
+            console.error('[CDS] Erro ao buscar catálogo global:', error);
+        }
+
+        // Filtra apenas produtos da RS Prólipsi da API
+        const apiProducts = (data || []).filter(p => p.seller === 'RS Prólipsi' || (p.name && p.name.toLowerCase().includes('lipsi')));
+
+        // Calcula desconto CD: Prioriza Preço Consultor (memberPrice) e aplica -15.2%
+        // Se não houver memberPrice (legado), aplica 50% e depois 15.2%
+        const applyDiscount = (price: number, memberPrice?: number) => {
+            const base = memberPrice || (price * 0.50);
+            return base * (1 - 0.152);
+        };
+
+        const mappedInitial = initialProducts.map(p => {
+            const retailPrice = Number(p.price) || 0;
+            const consultantPrice = (p as any).memberPrice || (retailPrice * 0.50);
+            const cdCostPrice = consultantPrice * (1 - 0.152); // -15.2% sobre o consultor
+
+            console.log(`[CDS-MOCK] ${p.name}: Varejo=${retailPrice} | Consultor=${consultantPrice} | Custo CD=${cdCostPrice}`);
+
+            return {
+                id: p.id,
+                sku: p.sku || 'N/A',
+                name: p.name,
+                category: p.category || 'Geral',
+                stockLevel: p.inventory || 0,
+                minStock: 0,
+                price: retailPrice,
+                memberPrice: consultantPrice,
+                costPrice: cdCostPrice,
+                points: 0,
+                status: 'OK' as const
+            };
+        });
+
+        const mappedApi = apiProducts.map(p => {
+            const retailPrice = Number(p.price) || 0;
+            const consultantPrice = Number(p.member_price) || (retailPrice * 0.50);
+            const cdCostPrice = consultantPrice * (1 - 0.152);
+
+            console.log(`[CDS-API] ${p.name}: Varejo=${retailPrice} | Consultor=${consultantPrice} | Custo CD=${cdCostPrice}`);
+
+            return {
+                id: p.id,
+                sku: p.sku || 'N/A',
+                name: p.name,
+                category: p.category_id || p.category || 'Geral',
+                stockLevel: p.inventory || 0,
+                minStock: 0,
+                price: retailPrice,
+                memberPrice: consultantPrice,
+                costPrice: cdCostPrice,
+                points: p.points || 0,
+                status: 'OK' as const
+            };
+        });
+
+        // Remove duplicados da API caso já estejam nos iniciais (pelo ID)
+        const premiumIds = new Set(mappedInitial.map(p => String(p.id)));
+        const filteredApi = mappedApi.filter(p => !premiumIds.has(String(p.id)));
+
+        return [...mappedInitial, ...filteredApi];
+    },
+
+    async createReplenishmentOrder(cdId: string, items: any[], totalValue: number): Promise<boolean> {
+        const payload = {
+            cd_id: cdId,
+            items_count: items.reduce((acc, i) => acc + i.quantity, 0),
+            total: totalValue,
+            total_points: 0, // CD orders usually don't generate VP for the CD itself on buying stock, depends on rules
+            status: 'PENDENTE',
+            type: 'ABASTECIMENTO',
+            order_date: new Date().toISOString().split('T')[0],
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+        };
+
+        const { data, error } = await adminSupabase.from('cd_orders').insert([payload]).select().single();
+        if (error) {
+            console.error('[CDS] Erro ao criar pedido de abastecimento:', error);
+            return false;
+        }
+
+        if (data && data.id && items.length > 0) {
+            const itemsPayload = items.map(item => ({
+                order_id: data.id,
+                product_id: item.product.id,
+                product_name: item.product.name,
+                quantity: item.quantity,
+                unit_price: item.product.costPrice,
+                points: item.product.points || 0
+            }));
+            await adminSupabase.from('cd_order_items').insert(itemsPayload);
+        }
+        return true;
+    },
+
+    async getReplenishmentOrders(cdId: string): Promise<any[]> {
+        const { data, error } = await supabase
+            .from('cd_orders')
+            .select('*, items:cd_order_items(*)')
+            .eq('cd_id', cdId)
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            console.error('[CDS] Erro ao buscar histórico de abastecimento:', error);
+            return [];
+        }
+        return data || [];
     },
 
     // --- Estoque ---

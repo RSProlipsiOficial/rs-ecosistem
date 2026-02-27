@@ -3,7 +3,30 @@
  * Interface de comunicação com o backend para o módulo SIGME
  */
 
-import { apiClient } from './apiClient';
+import { apiClient, ApiResponse } from './apiClient';
+
+export interface DigitalLevel {
+    id: string;
+    name: string;
+    requiredVolume: number;
+    commissionPhysicalRs: number;
+    commissionRsDigital: number;
+    commissionPhysicalAffiliate: number;
+    commissionAffiliateDigitalEssential: number;
+    commissionAffiliateDigitalProfessional: number;
+    commissionAffiliateDigitalPremium: number;
+    award: string;
+    imageUrl?: string;
+    displayOrder: number;
+}
+
+export interface DigitalStats {
+    currentVolume: number;
+    nextLevelVolume: number;
+    currentPin: string;
+    nextPin: string;
+    progressPercentage: number;
+}
 
 export interface SigmaLevel {
     level: number;
@@ -44,7 +67,11 @@ export interface SigmaConfig {
             imageUrl?: string;
         }[];
     };
+    digitalCareer?: {
+        pins: DigitalLevel[];
+    };
     matrix: {
+        idMestre?: string;
         activationValue: number;
         reentryValue: number;
     };
@@ -113,6 +140,94 @@ const mockSigmaConfig: SigmaConfig = {
             { name: 'Diamante Black', cyclesRequired: 50, minLinesRequired: 5, vmecDistribution: ' 20/20/20/20/20', rewardValue: 5000, orderIndex: 5, imageUrl: 'https://api.sigma.rsprolipsi.com.br/assets/pins/diamante-black.png' }
         ]
     },
+    digitalCareer: {
+        pins: [
+            {
+                id: 'd1',
+                name: 'RS One Star',
+                requiredVolume: 10000,
+                commissionPhysicalRs: 27,
+                commissionRsDigital: 30,
+                commissionAffiliateDigitalEssential: 8,
+                commissionAffiliateDigitalProfessional: 35,
+                commissionAffiliateDigitalPremium: 35,
+                award: 'Placa RS One Star',
+                imageUrl: 'https://dqofezpmpiazhutofukn.supabase.co/storage/v1/object/public/logos/pin-digital-1.png'
+            },
+            {
+                id: 'd2',
+                name: 'RS Two Star',
+                requiredVolume: 100000,
+                commissionPhysicalRs: 30,
+                commissionRsDigital: 35,
+                commissionAffiliateDigitalEssential: 9,
+                commissionAffiliateDigitalProfessional: 36,
+                commissionAffiliateDigitalPremium: 36,
+                award: 'Headset Gamer Premium',
+                imageUrl: 'https://dqofezpmpiazhutofukn.supabase.co/storage/v1/object/public/logos/pin-digital-2.png'
+            },
+            {
+                id: 'd3',
+                name: 'RS Three Star',
+                requiredVolume: 250000,
+                commissionPhysicalRs: 33,
+                commissionRsDigital: 40,
+                commissionAffiliateDigitalEssential: 10,
+                commissionAffiliateDigitalProfessional: 37,
+                commissionAffiliateDigitalPremium: 37,
+                award: 'Kit Creator Light (Teclado)',
+                imageUrl: 'https://dqofezpmpiazhutofukn.supabase.co/storage/v1/object/public/logos/pin-digital-3.png'
+            },
+            {
+                id: 'd4',
+                name: 'RS Pro Star',
+                requiredVolume: 500000,
+                commissionPhysicalRs: 35,
+                commissionRsDigital: 45,
+                commissionAffiliateDigitalEssential: 11,
+                commissionAffiliateDigitalProfessional: 38,
+                commissionAffiliateDigitalPremium: 38,
+                award: 'PC i9 PRO BUILDER (i9/16GB/1TB)',
+                imageUrl: 'https://dqofezpmpiazhutofukn.supabase.co/storage/v1/object/public/logos/pin-digital-4.png'
+            },
+            {
+                id: 'd5',
+                name: 'RS Prime Star',
+                requiredVolume: 1000000,
+                commissionPhysicalRs: 36,
+                commissionRsDigital: 50,
+                commissionAffiliateDigitalEssential: 12,
+                commissionAffiliateDigitalProfessional: 39,
+                commissionAffiliateDigitalPremium: 40,
+                award: 'Cruzeiro RS Premium Pacific',
+                imageUrl: 'https://dqofezpmpiazhutofukn.supabase.co/storage/v1/object/public/logos/pin-digital-5.png'
+            },
+            {
+                id: 'd6',
+                name: 'RS Elite Star',
+                requiredVolume: 2000000,
+                commissionPhysicalRs: 37,
+                commissionRsDigital: 55,
+                commissionAffiliateDigitalEssential: 13,
+                commissionAffiliateDigitalProfessional: 40,
+                commissionAffiliateDigitalPremium: 43,
+                award: 'Elite Travel Pack (Viagem)',
+                imageUrl: 'https://dqofezpmpiazhutofukn.supabase.co/storage/v1/object/public/logos/pin-digital-6.png'
+            },
+            {
+                id: 'd7',
+                name: 'RS Legend Star',
+                requiredVolume: 5000000,
+                commissionPhysicalRs: 38,
+                commissionRsDigital: 60,
+                commissionAffiliateDigitalEssential: 15,
+                commissionAffiliateDigitalProfessional: 40,
+                commissionAffiliateDigitalPremium: 45,
+                award: 'THE LEGEND PACK (Carro)',
+                imageUrl: 'https://dqofezpmpiazhutofukn.supabase.co/storage/v1/object/public/logos/pin-digital-7.png'
+            }
+        ]
+    },
     matrix: {
         idMestre: 'master',
         activationValue: 60.00,
@@ -134,6 +249,42 @@ export const sigmaApi = {
             return {
                 success: true,
                 data: mockSigmaConfig
+            };
+        }
+    },
+
+    /**
+     * Busca os níveis da Carreira Digital (Drop/Afiliado)
+     */
+    getDigitalLevels: async () => {
+        try {
+            return await apiClient.get<DigitalLevel[]>('/v1/career/digital-levels');
+        } catch (error) {
+            console.warn('API Digital Levels falhou, usando mock:', error);
+            return {
+                success: true,
+                data: mockSigmaConfig.digitalCareer?.pins || []
+            };
+        }
+    },
+
+    /**
+     * Busca as estatísticas de volume digital do consultor
+     */
+    getDigitalStats: async () => {
+        try {
+            return await apiClient.get<DigitalStats>('/v1/career/digital-stats');
+        } catch (error) {
+            console.warn('API Digital Stats falhou, usando mock:', error);
+            return {
+                success: true,
+                data: {
+                    currentVolume: 1250, // Exemplo: Começando a jornada
+                    nextLevelVolume: 10000,
+                    currentPin: 'Consultor',
+                    nextPin: 'RS One Star',
+                    progressPercentage: 12.5
+                }
             };
         }
     },
@@ -374,9 +525,9 @@ export const sigmaApi = {
      */
     getWalletBalance: async (userId: string) => {
         try {
-            const result = await apiClient.get(`/api/wallet/balance/${userId}`);
-            if (result.success && result.balance) {
-                return { success: true, data: result.balance.available };
+            const result = await apiClient.get<any>(`/api/wallet/balance/${userId}`);
+            if (result.success && result.data?.available !== undefined) {
+                return { success: true, data: result.data.available };
             }
             return { success: false, data: 0 };
         } catch (error) {

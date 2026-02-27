@@ -30,45 +30,46 @@ import CheckoutModal from './components/CheckoutModal';
 import { OffersProvider } from './context/OffersContext';
 import { AbandonedCartProvider } from './context/AbandonedCartContext';
 import { OrdersProvider } from './context/OrdersContext';
+import { brandingApi } from './services/brandingApi';
 
 const EditWrapper: React.FC<{ children: React.ReactNode; onEdit: () => void; areaLabel: string }> = ({ children, onEdit, areaLabel }) => {
-    const { isAdmin, isEditMode } = useAdmin();
+  const { isAdmin, isEditMode } = useAdmin();
 
-    if (isAdmin && isEditMode) {
-        return (
-            <div className="relative group editable-section-wrapper">
-                {children}
-                <div className="absolute inset-0 border-2 border-dashed border-transparent group-hover:border-accent transition-all pointer-events-none rounded-lg"></div>
-                <button
-                    onClick={onEdit}
-                    className="absolute top-4 right-4 w-8 h-8 bg-accent text-button-text rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-[51]"
-                    aria-label={areaLabel}
-                >
-                    <PencilSquareIcon className="w-5 h-5" />
-                </button>
-            </div>
-        );
-    }
-    return <>{children}</>;
+  if (isAdmin && isEditMode) {
+    return (
+      <div className="relative group editable-section-wrapper">
+        {children}
+        <div className="absolute inset-0 border-2 border-dashed border-transparent group-hover:border-accent transition-all pointer-events-none rounded-lg"></div>
+        <button
+          onClick={onEdit}
+          className="absolute top-4 right-4 w-8 h-8 bg-accent text-button-text rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-[51]"
+          aria-label={areaLabel}
+        >
+          <PencilSquareIcon className="w-5 h-5" />
+        </button>
+      </div>
+    );
+  }
+  return <>{children}</>;
 };
 
 const SiteLayout: React.FC = () => {
-    const { page } = useNavigation();
-    const { pages } = usePageBuilder();
-    
-    // Find the active page data (static or custom)
-    const activePageData = pages.find(p => p.slug === page);
+  const { page } = useNavigation();
+  const { pages } = usePageBuilder();
 
-    // If no page is found (e.g., on first load with page='home'), default to the home page.
-    const pageToRender = activePageData || pages.find(p => p.route === 'home');
+  // Find the active page data (static or custom)
+  const activePageData = pages.find(p => p.slug === page);
 
-    if (pageToRender) {
-        return <PageRenderer page={pageToRender} />;
-    }
+  // If no page is found (e.g., on first load with page='home'), default to the home page.
+  const pageToRender = activePageData || pages.find(p => p.route === 'home');
 
-    // Fallback if no page is found at all.
-    const defaultHomePageData = pages.find(p => p.route === 'home');
-    return defaultHomePageData ? <PageRenderer page={defaultHomePageData} /> : <div>Page not found</div>;
+  if (pageToRender) {
+    return <PageRenderer page={pageToRender} />;
+  }
+
+  // Fallback if no page is found at all.
+  const defaultHomePageData = pages.find(p => p.route === 'home');
+  return defaultHomePageData ? <PageRenderer page={defaultHomePageData} /> : <div>Page not found</div>;
 };
 
 const AppContent: React.FC = () => {
@@ -78,6 +79,30 @@ const AppContent: React.FC = () => {
   const { pages } = usePageBuilder();
   const { settings: bannerSettings } = useBanner();
   const { theme } = useTheme();
+
+  useEffect(() => {
+    const fetchBranding = async () => {
+      try {
+        const res = await brandingApi.getBranding();
+        if (res.success && res.data) {
+          const { favicon } = res.data;
+          if (favicon) {
+            const link = document.querySelector("link[rel*='icon']") as HTMLLinkElement;
+            if (link) link.href = favicon;
+          }
+        }
+      } catch (error) {
+        console.error("[AppContent] Failed to fetch branding:", error);
+      }
+    };
+
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'rs-branding-update') fetchBranding();
+    };
+    window.addEventListener('storage', handleStorageChange);
+    fetchBranding();
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   // Find the active page data
   const activePageData = pages.find(p => p.slug === page) || pages.find(p => p.route === page);
@@ -90,11 +115,11 @@ const AppContent: React.FC = () => {
   // Determine which banner to use: page-specific takes priority over global
   const pageBanner = activePageData?.backgroundBanner;
   const globalBanner = bannerSettings.backgroundBanner;
-  
-  const bannerToUse = (pageBanner?.enabled && pageBanner?.imageUrl) 
-    ? pageBanner 
+
+  const bannerToUse = (pageBanner?.enabled && pageBanner?.imageUrl)
+    ? pageBanner
     : globalBanner;
-  
+
   // The background banner is only visible if it's enabled AND the current page doesn't have a hero with its own background.
   const isBgBannerVisible = bannerToUse.enabled && bannerToUse.imageUrl && !pageHasHeroWithBackground;
   const isSideBannerVisible = bannerSettings.sideBanner.enabled && bannerSettings.sideBanner.imageUrl;
@@ -119,7 +144,7 @@ const AppContent: React.FC = () => {
     // Find a static page by route or a custom page by slug
     const currentPageData = pages.find(p => p.slug === page) || pages.find(p => p.route === page);
     const metaDescriptionTag = document.getElementById('meta-description');
-    
+
     if (currentPageData?.seo?.metaTitle) {
       document.title = currentPageData.seo.metaTitle;
     } else {
@@ -127,21 +152,21 @@ const AppContent: React.FC = () => {
     }
 
     if (metaDescriptionTag) {
-        if (currentPageData?.seo?.metaDescription) {
-            metaDescriptionTag.setAttribute('content', currentPageData.seo.metaDescription);
-        } else {
-            metaDescriptionTag.setAttribute('content', 'A corporate website for RS Prólipsi, a company that fuses digital marketing with multi-level marketing to create a unique global ecosystem.');
-        }
+      if (currentPageData?.seo?.metaDescription) {
+        metaDescriptionTag.setAttribute('content', currentPageData.seo.metaDescription);
+      } else {
+        metaDescriptionTag.setAttribute('content', 'A corporate website for RS Prólipsi, a company that fuses digital marketing with multi-level marketing to create a unique global ecosystem.');
+      }
     }
   }, [page, pages]);
-  
+
   return (
     <>
       {isBgBannerVisible && (
         <>
-          <div 
-            className="fixed inset-0 -z-10 bg-cover bg-center" 
-            style={{ 
+          <div
+            className="fixed inset-0 -z-10 bg-cover bg-center"
+            style={{
               backgroundImage: `url('${bannerToUse.imageUrl}')`,
               opacity: bannerToUse.opacity,
             }}
@@ -152,7 +177,7 @@ const AppContent: React.FC = () => {
 
       <div className={`${isBgBannerVisible ? 'bg-transparent' : ''} min-h-screen font-sans`}>
         {isSideBannerVisible && (
-          <aside 
+          <aside
             className="fixed z-40 hidden lg:block"
             style={{
               width: `${bannerSettings.sideBanner.width}px`,
@@ -165,19 +190,19 @@ const AppContent: React.FC = () => {
             </a>
           </aside>
         )}
-        
+
         {isAdmin && isEditMode && <AdminPanel />}
-        <div 
+        <div
           className="relative"
         >
           <EditWrapper onEdit={() => setOpenAdminSection('pages', 'global_header')} areaLabel="Edit Header">
-              <Header />
+            <Header />
           </EditWrapper>
           <main>
             <SiteLayout />
           </main>
-           <EditWrapper onEdit={() => setOpenAdminSection('pages', 'global_footer')} areaLabel="Edit Footer">
-              <Footer />
+          <EditWrapper onEdit={() => setOpenAdminSection('pages', 'global_footer')} areaLabel="Edit Footer">
+            <Footer />
           </EditWrapper>
           {!isEditMode && <Chatbot />}
         </div>

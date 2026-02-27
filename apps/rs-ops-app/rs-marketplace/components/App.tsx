@@ -18,7 +18,7 @@ import CustomerChatWidget from './components/CustomerChatWidget';
 import ManageReturns from './components/ManageReturns';
 import ReturnDetail from './components/ReturnDetail';
 import ManageDropshippingOrders from './components/ManageDropshippingOrders';
-import StoreBannerEditor from './components/AnalyticsDashboard'; 
+import StoreBannerEditor from './components/AnalyticsDashboard';
 import ManagePromotions from './components/ManagePromotions';
 import AddEditCoupon from './components/AddEditCoupon';
 import VirtualOfficeMarketplace from './components/VirtualOfficeMarketplace';
@@ -110,39 +110,39 @@ import { distributors as initialDistributors } from './data/distributors';
 
 const initialDashboardBanners: Banner[] = [
     {
-      id: 'dash-banner-1',
-      desktopImage: 'https://picsum.photos/seed/launch/1200/400',
-      mobileImage: 'https://picsum.photos/seed/launch-m/400/300',
-      link: '#',
+        id: 'dash-banner-1',
+        desktopImage: 'https://picsum.photos/seed/launch/1200/400',
+        mobileImage: 'https://picsum.photos/seed/launch-m/400/300',
+        link: '#',
     },
     {
-      id: 'dash-banner-2',
-      desktopImage: 'https://picsum.photos/seed/logistics/1200/400',
-      mobileImage: 'https://picsum.photos/seed/logistics-m/400/300',
-      link: '#',
+        id: 'dash-banner-2',
+        desktopImage: 'https://picsum.photos/seed/logistics/1200/400',
+        mobileImage: 'https://picsum.photos/seed/logistics-m/400/300',
+        link: '#',
     },
-  ];
+];
 
 const initialDashboardSettings: DashboardSettings = {
-  components: [
-    // Fix: Corrected component types and added 'column' property
-    { id: 'comp-1', column: 'left', type: 'userInfo', enabled: true, visibleFields: { id: true, graduation: true, accountStatus: true, monthlyActivity: true, category: true, referralLink: true, affiliateLink: true } },
-    { id: 'comp-2', column: 'right', type: 'adminBanner', enabled: true },
-    { id: 'comp-3', column: 'right', type: 'bonusCards', enabled: true },
-    { id: 'comp-4', column: 'left', type: 'qualificationProgress', enabled: true, title: 'Qualificação Atual', value: 4500, max: 15000, startLabel: 'Iniciante', endLabel: 'Prata', startIcon: 'StarOutlineIcon', endIcon: 'TrophyIcon' },
-    { id: 'comp-5', column: 'left', type: 'qualificationProgress', enabled: true, title: 'Qualificação do Mês', value: 800, max: 2500, startLabel: 'Base', endLabel: 'Bronze', startIcon: 'UserIcon', endIcon: 'GlobalIcon' },
-    { id: 'comp-6', column: 'right', type: 'incentivesProgram', enabled: true, title: 'Programa de Incentivos e Premiações', content: [{title: 'Viagem Nacional', progress: 60}, {title: 'Carro 0km', progress: 30}] },
-    { id: 'comp-7', column: 'left', type: 'referralLinks', enabled: true },
-    { id: 'comp-8', column: 'right', type: 'networkActivity', enabled: true, title: 'Atividade da Rede' },
-    { id: 'comp-9', column: 'right', type: 'performanceChart', enabled: true, title: 'Bônus Semanal' },
-    { id: 'comp-10', column: 'left', type: 'shortcut', enabled: true, title: 'Gerenciar Produtos', url: 'manageProducts', icon: 'ProductsIcon' },
-    { id: 'comp-11', column: 'left', type: 'shortcut', enabled: true, title: 'Visão Geral WalletPay', url: 'walletOverview', icon: 'WalletIcon' },
-  ],
-  cards: [
-    { id: 'card-1', title: 'Bônus Ciclo Global', icon: 'GlobalIcon', dataKey: 'cycleBonus' },
-    { id: 'card-2', title: 'Bônus Top Sigme', icon: 'TrophyIcon', dataKey: 'topSigmeBonus' },
-    { id: 'card-3', title: 'Bônus Plano de Carreira', icon: 'StarOutlineIcon', dataKey: 'careerPlanBonus' },
-  ]
+    components: [
+        // Fix: Corrected component types and added 'column' property
+        { id: 'comp-1', column: 'left', type: 'userInfo', enabled: true, visibleFields: { id: true, graduation: true, accountStatus: true, monthlyActivity: true, category: true, referralLink: true, affiliateLink: true } },
+        { id: 'comp-2', column: 'right', type: 'adminBanner', enabled: true },
+        { id: 'comp-3', column: 'right', type: 'bonusCards', enabled: true },
+        { id: 'comp-4', column: 'left', type: 'qualificationProgress', enabled: true, title: 'Qualificação Atual', value: 4500, max: 15000, startLabel: 'Iniciante', endLabel: 'Prata', startIcon: 'StarOutlineIcon', endIcon: 'TrophyIcon' },
+        { id: 'comp-5', column: 'left', type: 'qualificationProgress', enabled: true, title: 'Qualificação do Mês', value: 800, max: 2500, startLabel: 'Base', endLabel: 'Bronze', startIcon: 'UserIcon', endIcon: 'GlobalIcon' },
+        { id: 'comp-6', column: 'right', type: 'incentivesProgram', enabled: true, title: 'Programa de Incentivos e Premiações', content: [{ title: 'Viagem Nacional', progress: 60 }, { title: 'Carro 0km', progress: 30 }] },
+        { id: 'comp-7', column: 'left', type: 'referralLinks', enabled: true },
+        { id: 'comp-8', column: 'right', type: 'networkActivity', enabled: true, title: 'Atividade da Rede' },
+        { id: 'comp-9', column: 'right', type: 'performanceChart', enabled: true, title: 'Bônus Semanal' },
+        { id: 'comp-10', column: 'left', type: 'shortcut', enabled: true, title: 'Gerenciar Produtos', url: 'manageProducts', icon: 'ProductsIcon' },
+        { id: 'comp-11', column: 'left', type: 'shortcut', enabled: true, title: 'Visão Geral WalletPay', url: 'walletOverview', icon: 'WalletIcon' },
+    ],
+    cards: [
+        { id: 'card-1', title: 'Bônus Ciclo Global', icon: 'GlobalIcon', dataKey: 'cycleBonus' },
+        { id: 'card-2', title: 'Bônus Top Sigme', icon: 'TrophyIcon', dataKey: 'topSigmeBonus' },
+        { id: 'card-3', title: 'Bônus Plano de Carreira', icon: 'StarOutlineIcon', dataKey: 'careerPlanBonus' },
+    ]
 };
 
 const App: React.FC = () => {
@@ -216,58 +216,58 @@ const App: React.FC = () => {
 
 
     // Scroll to top on view change
-  useEffect(() => {
-      window.scrollTo(0, 0);
-  }, [view]);
+    useEffect(() => {
+        window.scrollTo(0, 0);
+    }, [view]);
 
-  useEffect(() => {
-    (async () => {
-      const prodRes: any = await productsAPI.getAll(true);
-      if (prodRes && prodRes.success !== false && Array.isArray(prodRes.data)) {
-        const mapped: Product[] = prodRes.data.map((it: any) => ({
-          id: String(it.id ?? ''),
-          name: String(it.name ?? it.title ?? 'Produto'),
-          seller: String(it.seller ?? ''),
-          price: Number(it.price ?? it.sale_price ?? 0),
-          costPerItem: Number(it.cost ?? it.cost_per_item ?? 0),
-          currency: String(it.currency ?? 'BRL'),
-          shortDescription: String(it.short_description ?? it.description ?? ''),
-          description: String(it.description ?? ''),
-          images: Array.isArray(it.images) ? it.images : [String(it.image_url ?? '')].filter(Boolean),
-          rating: Number(it.rating ?? 0),
-          reviewCount: Number(it.review_count ?? 0),
-          collectionId: it.collection_id ?? null,
-          status: String(it.status ?? 'Publicado'),
-          inventory: Number(it.inventory ?? 0),
-          type: String(it.type ?? 'Produto'),
-          requiresShipping: Boolean(it.requires_shipping ?? true),
-          trackQuantity: Boolean(it.track_quantity ?? true),
-          chargeTax: Boolean(it.charge_tax ?? true),
-          continueSelling: Boolean(it.continue_selling ?? false),
-          seoTitle: String(it.seo_title ?? it.name ?? ''),
-          seoDescription: String(it.seo_description ?? it.short_description ?? ''),
-          urlHandle: String(it.url_handle ?? ''),
-          options: Array.isArray(it.options) ? it.options : [],
-          variants: Array.isArray(it.variants) ? it.variants : [],
-        }));
-        setProducts(mapped.length > 0 ? mapped : initialProducts);
-      } else {
-        setProducts(initialProducts);
-      }
-      const colRes: any = await collectionsAPI.getAll();
-      if (colRes && colRes.success !== false && Array.isArray(colRes.data)) {
-        const cols: Collection[] = colRes.data.map((c: any) => ({
-          id: String(c.id ?? ''),
-          title: String(c.title ?? c.name ?? 'Coleção'),
-          description: String(c.description ?? ''),
-          imageUrl: String(c.image_url ?? c.banner_url ?? ''),
-        }));
-        setCollections(cols.length > 0 ? cols : initialCollections);
-      } else {
-        setCollections(initialCollections);
-      }
-    })();
-  }, []);
+    useEffect(() => {
+        (async () => {
+            const prodRes: any = await productsAPI.getAll(true);
+            if (prodRes && prodRes.success !== false && Array.isArray(prodRes.data)) {
+                const mapped: Product[] = prodRes.data.map((it: any) => ({
+                    id: String(it.id ?? ''),
+                    name: String(it.name ?? it.title ?? 'Produto'),
+                    seller: String(it.seller ?? ''),
+                    price: Number(it.price ?? it.sale_price ?? 0),
+                    costPerItem: Number(it.cost ?? it.cost_per_item ?? 0),
+                    currency: String(it.currency ?? 'BRL'),
+                    shortDescription: String(it.short_description ?? it.description ?? ''),
+                    description: String(it.description ?? ''),
+                    images: Array.isArray(it.images) ? it.images : [String(it.image_url ?? '')].filter(Boolean),
+                    rating: 0, // Dinâmico via Supabase reviews
+                    reviewCount: 0, // Dinâmico via Supabase reviews
+                    collectionId: it.collection_id ?? null,
+                    status: String(it.status ?? 'Publicado'),
+                    inventory: Number(it.inventory ?? 0),
+                    type: String(it.type ?? 'Produto'),
+                    requiresShipping: Boolean(it.requires_shipping ?? true),
+                    trackQuantity: Boolean(it.track_quantity ?? true),
+                    chargeTax: Boolean(it.charge_tax ?? true),
+                    continueSelling: Boolean(it.continue_selling ?? false),
+                    seoTitle: String(it.seo_title ?? it.name ?? ''),
+                    seoDescription: String(it.seo_description ?? it.short_description ?? ''),
+                    urlHandle: String(it.url_handle ?? ''),
+                    options: Array.isArray(it.options) ? it.options : [],
+                    variants: Array.isArray(it.variants) ? it.variants : [],
+                }));
+                setProducts(mapped.length > 0 ? mapped : initialProducts);
+            } else {
+                setProducts(initialProducts);
+            }
+            const colRes: any = await collectionsAPI.getAll();
+            if (colRes && colRes.success !== false && Array.isArray(colRes.data)) {
+                const cols: Collection[] = colRes.data.map((c: any) => ({
+                    id: String(c.id ?? ''),
+                    title: String(c.title ?? c.name ?? 'Coleção'),
+                    description: String(c.description ?? ''),
+                    imageUrl: String(c.image_url ?? c.banner_url ?? ''),
+                }));
+                setCollections(cols.length > 0 ? cols : initialCollections);
+            } else {
+                setCollections(initialCollections);
+            }
+        })();
+    }, []);
 
     useEffect(() => {
         const favicon = document.getElementById('favicon') as HTMLLinkElement;
@@ -281,7 +281,7 @@ const App: React.FC = () => {
         setCart(prevCart => {
             // Check if an item with the same product ID and variant ID already exists
             const existingItem = prevCart.find(item => item.productId === product.id && item.variantId === selectedVariant.id);
-    
+
             if (existingItem) {
                 return prevCart.map(item =>
                     item.id === existingItem.id // Match by cart item's unique ID
@@ -289,20 +289,20 @@ const App: React.FC = () => {
                         : item
                 );
             }
-            
+
             // Generate a unique ID for the new cart item
             const newCartItemId = `${product.id}-${selectedVariant.id}-${Date.now()}`;
             const variantText = Object.values(selectedVariant.options).join(' / ');
 
-            return [...prevCart, { 
-                id: newCartItemId, 
+            return [...prevCart, {
+                id: newCartItemId,
                 productId: product.id,
                 variantId: selectedVariant.id,
-                name: product.name, 
-                price: selectedVariant.price, 
+                name: product.name,
+                price: selectedVariant.price,
                 image: product.images[0], // Assuming first image is always product image
-                quantity, 
-                variantText 
+                quantity,
+                variantText
             }];
         });
 
@@ -324,7 +324,7 @@ const App: React.FC = () => {
     const handleRemoveFromCart = (cartItemId: string) => {
         setCart(prevCart => prevCart.filter(item => item.id !== cartItemId));
     };
-    
+
     const handleFinalizePurchase = async (order: Order) => {
         try {
             const apiRes: any = await ordersAPI.create(order);
@@ -374,7 +374,7 @@ const App: React.FC = () => {
         }
         if (newView === 'productDetail' && data) {
             const productId = (data as Product).id;
-            setRecentlyViewedIds(prev => 
+            setRecentlyViewedIds(prev =>
                 [productId, ...prev.filter(id => id !== productId)].slice(0, 4)
             );
         }
@@ -403,7 +403,7 @@ const App: React.FC = () => {
             else if (newView === 'addEditTraining') setSelectedTrainingModule(data as Training);
         }
     };
-    
+
     const handleStoreCustomizationChange = (updatedData: Partial<StoreCustomization>) => {
         setStoreCustomization(prev => ({ ...prev, ...updatedData }));
         alert('Aparência da loja atualizada com sucesso!');
@@ -413,7 +413,7 @@ const App: React.FC = () => {
         setDashboardBanners(newBanners);
         alert('Banners do painel atualizados com sucesso!');
     };
-    
+
     const handleDashboardSettingsUpdate = (newSettings: DashboardSettings) => {
         setDashboardSettings(newSettings);
         alert('Painel atualizado com sucesso!');
@@ -423,7 +423,7 @@ const App: React.FC = () => {
         setPaymentSettings(newSettings);
         alert('Configurações de pagamento salvas com sucesso!');
     };
-    
+
     const handleShippingSettingsSave = (newSettings: ShippingSettings) => {
         setShippingSettings(newSettings);
         alert('Configurações de frete salvas com sucesso!');
@@ -433,7 +433,7 @@ const App: React.FC = () => {
         setCompensationSettings(newSettings);
         alert('Plano de compensação salvo com sucesso!');
     };
-    
+
     // @ts-ignore
     const handleProfileUpdate = (updatedProfile: UserProfile) => {
         setUserProfile(updatedProfile);
@@ -479,8 +479,8 @@ const App: React.FC = () => {
                         shortDescription: String(it.short_description ?? it.description ?? ''),
                         description: String(it.description ?? ''),
                         images: Array.isArray(it.images) ? it.images : [String(it.image_url ?? '')].filter(Boolean),
-                        rating: Number(it.rating ?? 0),
-                        reviewCount: Number(it.review_count ?? 0),
+                        rating: 0, // Dinâmico via Supabase reviews
+                        reviewCount: 0, // Dinâmico via Supabase reviews
                         collectionId: it.collection_id ?? null,
                         status: String(it.status ?? 'Publicado'),
                         inventory: Number(it.inventory ?? 0),
@@ -525,12 +525,12 @@ const App: React.FC = () => {
         }
         setProducts(prev => prev.filter(p => !productIds.includes(p.id)));
     };
-    
+
     const handleInventorySave = (updatedProducts: Product[]) => {
         setProducts(updatedProducts);
         alert('Estoque atualizado com sucesso!');
     };
-    
+
     const handleOrderUpdate = (orderId: string, updates: Partial<Order>) => {
         setOrders(prevOrders => prevOrders.map(o => o.id === orderId ? { ...o, ...updates } : o));
     };
@@ -538,7 +538,7 @@ const App: React.FC = () => {
     const handleDropshippingOrderUpdate = (orderId: string, updates: Partial<DropshippingOrder>) => {
         setDropshippingOrders(prevOrders => prevOrders.map(o => o.id === orderId ? { ...o, ...updates } : o));
     };
-    
+
     const handleReturnStatusUpdate = (returnIds: string[], status: ReturnRequest['status']) => {
         setReturns(prev => prev.map(r => returnIds.includes(r.id) ? { ...r, status } : r));
     };
@@ -548,7 +548,7 @@ const App: React.FC = () => {
             setReturns(prev => prev.filter(r => !returnIds.includes(r.id)));
         }
     };
-    
+
     const handleCouponSave = (couponToSave: Coupon) => {
         setCoupons(prevCoupons => {
             const exists = prevCoupons.find(c => c.id === couponToSave.id);
@@ -565,7 +565,7 @@ const App: React.FC = () => {
             setCoupons(prev => prev.filter(c => c.id !== couponId));
         }
     };
-    
+
     const handleCouponStatusToggle = (couponId: string, newStatus: 'Ativo' | 'Inativo') => {
         setCoupons(prev => prev.map(c => c.id === couponId ? { ...c, status: newStatus } : c));
     };
@@ -590,7 +590,7 @@ const App: React.FC = () => {
     const handleMarketingPixelStatusToggle = (pixelId: string) => {
         setMarketingPixels(prev => prev.map(p => p.id === pixelId ? { ...p, status: p.status === 'Ativo' ? 'Inativo' : 'Ativo' } : p));
     };
-    
+
     const handleMarketingPixelDuplicate = (pixelId: string) => {
         const pixelToDuplicate = marketingPixels.find(p => p.id === pixelId);
         if (pixelToDuplicate) {
@@ -602,15 +602,15 @@ const App: React.FC = () => {
             setMarketingPixels(prev => [...prev, newPixel]);
         }
     };
-    
+
     const handlePartnerStoreCommissionChange = (storeId: string, newCommission: number) => {
-        setPartnerStores(prevStores => 
-            prevStores.map(store => 
+        setPartnerStores(prevStores =>
+            prevStores.map(store =>
                 store.id === storeId ? { ...store, commission: newCommission } : store
             )
         );
     };
-            
+
     const handleImportDropshippingProduct = (productToImport: DropshippingProduct) => {
         const newProduct: Product = {
             id: `imported-${productToImport.id}-${Date.now()}`,
@@ -693,21 +693,21 @@ const App: React.FC = () => {
         handleNavigate('manageCollections');
     };
 
-  const handleCollectionDelete = async (collectionId: string) => {
-      if (!window.confirm('Tem certeza que deseja excluir esta coleção?')) return;
-      const res: any = await collectionsAPI.delete(collectionId);
-      if (res && res.success === false) {
-          alert(res.error || 'Falha ao excluir a coleção');
-          return;
-      }
-      setCollections(prev => prev.filter(c => c.id !== collectionId));
-  };
+    const handleCollectionDelete = async (collectionId: string) => {
+        if (!window.confirm('Tem certeza que deseja excluir esta coleção?')) return;
+        const res: any = await collectionsAPI.delete(collectionId);
+        if (res && res.success === false) {
+            alert(res.error || 'Falha ao excluir a coleção');
+            return;
+        }
+        setCollections(prev => prev.filter(c => c.id !== collectionId));
+    };
 
     const handleCustomerLogin = (customer: Customer) => {
         setCurrentCustomer(customer);
         handleNavigate('home');
     };
-    
+
     const handleCustomerRegister = (customerData: Omit<Customer, 'id'>) => {
         const newCustomer: Customer = {
             id: `cust-${Date.now()}`,
@@ -769,7 +769,7 @@ const App: React.FC = () => {
         if (window.confirm(`Tem certeza?`)) setMarketingAssets(prev => prev.filter(a => !ids.includes(a.id)));
     };
     const [selectedMarketingAsset, setSelectedMarketingAsset] = useState<MarketingAsset | null>(null);
-    
+
     const handleToggleLessonComplete = (lessonId: string) => {
         setCompletedLessons(prev => {
             if (prev.includes(lessonId)) {
@@ -820,14 +820,14 @@ const App: React.FC = () => {
         setQuestions(prev => [newQuestion, ...prev]);
         alert('Sua pergunta foi enviada e será respondida em breve.');
     };
-    
+
     const handleAnswerSubmit = (questionId: string, answerData: Omit<Answer, 'id' | 'createdAt'>) => {
         const newAnswer: Answer = {
             ...answerData,
             id: `a-${Date.now()}`,
             createdAt: new Date().toISOString(),
         };
-        setQuestions(prev => prev.map(q => 
+        setQuestions(prev => prev.map(q =>
             q.id === questionId ? { ...q, answers: [...q.answers, newAnswer] } : q
         ));
     };
@@ -857,7 +857,7 @@ const App: React.FC = () => {
         dropshippingCatalog: 'Catálogo Dropshipping',
         managePromotions: 'Cupons de Desconto',
         addEditCoupon: 'Adicionar/Editar Cupom',
-        manageAffiliates: 'Programa de Afiliados',
+        manageAffiliates: 'Links de Indicação',
         storeEditor: 'Aparência da Loja',
         storeBannerEditor: 'Banners da Loja',
         virtualOfficeDropshipping: 'Produtos Dropshipping',
@@ -899,12 +899,12 @@ const App: React.FC = () => {
 
     const renderAdminContent = () => {
         let content;
-        switch(view) {
+        switch (view) {
             case 'consultantStore': content = <ConsultantStore onNavigate={handleNavigate} banners={dashboardBanners} settings={dashboardSettings} userProfile={userProfile} bonuses={bonuses} networkActivity={initialNetworkActivity} userPoints={4500} monthlyUserPoints={800} compensationSettings={compensationSettings} weeklyBonuses={initialWeeklyBonuses} />; break;
             case 'manageProducts': content = <ManageProducts onNavigate={handleNavigate} products={products} onDelete={handleProductDelete} />; break;
             case 'addEditProduct': content = <AddEditProduct product={selectedProduct} collections={collections} onSave={handleProductSave} onCancel={() => handleNavigate('manageProducts')} />; break;
             case 'editDropshippingProduct': content = <AddEditProduct product={selectedProduct} collections={collections} onSave={handleProductSave} onCancel={() => handleNavigate('virtualOfficeDropshipping')} />; break;
-            case 'manageInventory': content = <ManageInventory products={products} onSave={handleInventorySave} onNavigate={handleNavigate}/>; break;
+            case 'manageInventory': content = <ManageInventory products={products} onSave={handleInventorySave} onNavigate={handleNavigate} />; break;
             case 'manageOrders': content = <ManageOrders orders={orders} onNavigate={handleNavigate} />; break;
             case 'orderDetail': content = selectedOrder && <OrderDetail order={selectedOrder} onUpdateOrder={handleOrderUpdate} onBack={() => handleNavigate('manageOrders')} />; break;
             case 'manageReturns': content = <ManageReturns returns={returns} onUpdateStatus={handleReturnStatusUpdate} onDelete={handleReturnDelete} onNavigate={handleNavigate} />; break;
@@ -913,7 +913,7 @@ const App: React.FC = () => {
             case 'dropshippingCatalog': content = <DropshippingCatalog products={dropshippingProducts} onImport={handleImportDropshippingProduct} onEdit={handleNavigateToEditDropshipping} onNavigate={handleNavigate} />; break;
             case 'managePromotions': content = <ManagePromotions coupons={coupons} onNavigate={handleNavigate} onDelete={handleCouponDelete} onStatusToggle={handleCouponStatusToggle} />; break;
             case 'addEditCoupon': content = <AddEditCoupon coupon={selectedCoupon} onSave={handleCouponSave} onCancel={() => handleNavigate('managePromotions')} />; break;
-            case 'manageAffiliates': content = <ManageAffiliates affiliates={initialAffiliates} onNavigate={handleNavigate} />; break;
+            case 'manageAffiliates': content = <ManageAffiliates userProfile={userProfile} />; break;
             case 'storeEditor': content = <VirtualOfficeMarketplace customization={storeCustomization} onUpdate={handleStoreCustomizationChange} />; break;
             case 'storeBannerEditor': content = <StoreBannerEditor customization={storeCustomization} onUpdate={handleStoreCustomizationChange} />; break;
             case 'virtualOfficeDropshipping': content = <VirtualOfficeDropshipping products={dropshippingProducts} onEditProduct={handleNavigateToEditDropshipping} />; break;
@@ -942,30 +942,30 @@ const App: React.FC = () => {
             case 'manageReviews': content = <ManageReviews reviews={reviews} onUpdateStatus={handleReviewUpdateStatus} onDelete={handleReviewDelete} />; break;
             case 'manageAnnouncements': content = <ManageAnnouncements announcements={announcements} onNavigate={handleNavigate} onDelete={handleAnnouncementsDelete} />; break;
             case 'addEditAnnouncement': content = <AddEditAnnouncement announcement={selectedAnnouncement} onSave={handleAnnouncementSave} onCancel={() => handleNavigate('manageAnnouncements')} />; break;
-            case 'manageTrainings': 
-                const updatedSelectedTrainingModule = selectedTrainingModule 
-                    ? trainings.find(t => t.id === selectedTrainingModule.id) 
+            case 'manageTrainings':
+                const updatedSelectedTrainingModule = selectedTrainingModule
+                    ? trainings.find(t => t.id === selectedTrainingModule.id)
                     : null;
-                content = <ManageTrainings trainings={trainings} onNavigate={handleNavigate} completedLessons={completedLessons} />; 
+                content = <ManageTrainings trainings={trainings} onNavigate={handleNavigate} completedLessons={completedLessons} />;
                 break;
-            case 'addEditTraining': 
-                const currentEditTrainingModule = selectedTrainingModule 
-                    ? trainings.find(t => t.id === selectedTrainingModule.id) 
+            case 'addEditTraining':
+                const currentEditTrainingModule = selectedTrainingModule
+                    ? trainings.find(t => t.id === selectedTrainingModule.id)
                     : null;
                 content = <AddEditTraining training={currentEditTrainingModule} onSave={handleTrainingSave} onCancel={() => handleNavigate('manageTrainings')} />;
                 break;
-            case 'trainingModuleDetail': 
-                const currentTrainingModule = selectedTrainingModule 
-                    ? trainings.find(t => t.id === selectedTrainingModule.id) 
+            case 'trainingModuleDetail':
+                const currentTrainingModule = selectedTrainingModule
+                    ? trainings.find(t => t.id === selectedTrainingModule.id)
                     : null;
-                content = currentTrainingModule && <TrainingModuleDetail module={currentTrainingModule} onNavigate={handleNavigate} completedLessons={completedLessons} onToggleLessonComplete={handleToggleLessonComplete} onLikeLesson={handleLikeLesson} />; 
+                content = currentTrainingModule && <TrainingModuleDetail module={currentTrainingModule} onNavigate={handleNavigate} completedLessons={completedLessons} onToggleLessonComplete={handleToggleLessonComplete} onLikeLesson={handleLikeLesson} />;
                 break;
             case 'manageMarketingAssets': content = <ManageMarketingAssets assets={marketingAssets} onNavigate={handleNavigate} onDelete={handleMarketingAssetsDelete} />; break;
             case 'addEditMarketingAsset': content = <AddEditMarketingAsset asset={selectedMarketingAsset} onSave={handleMarketingAssetSave} onCancel={() => handleNavigate('manageMarketingAssets')} />; break;
             default: content = <div>View not found</div>;
         }
         return (
-            <AdminLayout title={adminViewTitles[view]} currentView={view} onNavigate={handleNavigate} onLogout={() => {setCurrentCustomer(null); setView('home');}}>
+            <AdminLayout title={adminViewTitles[view]} currentView={view} onNavigate={handleNavigate} onLogout={() => { setCurrentCustomer(null); setView('home'); }}>
                 {content}
             </AdminLayout>
         );
@@ -974,16 +974,16 @@ const App: React.FC = () => {
     const renderPublicContent = () => {
         const offerProducts = products.filter(p => p.compareAtPrice && p.compareAtPrice > p.price);
         const recentlyViewedProducts = useMemo(() => recentlyViewedIds.map(id => products.find(p => p.id === id)).filter((p): p is Product => Boolean(p)), [recentlyViewedIds, products]);
-        
+
         switch (view) {
             case 'productDetail':
-                return selectedProduct && <ProductDetail 
-                    product={selectedProduct} 
-                    collections={collections} 
-                    onBack={() => handleNavigate('home')} 
-                    onAddToCart={handleAddToCart} 
-                    onNavigate={handleNavigate} 
-                    reviews={reviews} 
+                return selectedProduct && <ProductDetail
+                    product={selectedProduct}
+                    collections={collections}
+                    onBack={() => handleNavigate('home')}
+                    onAddToCart={handleAddToCart}
+                    onNavigate={handleNavigate}
+                    reviews={reviews}
                     onReviewSubmit={handleReviewSubmit}
                     wishlist={wishlist}
                     onToggleWishlist={handleToggleWishlist}
@@ -1007,9 +1007,9 @@ const App: React.FC = () => {
             default:
                 return (
                     <>
-                        <Hero 
-                            content={storeCustomization.hero} 
-                            onBecomeSellerClick={() => handleNavigate('sellerRegistration')} 
+                        <Hero
+                            content={storeCustomization.hero}
+                            onBecomeSellerClick={() => handleNavigate('sellerRegistration')}
                         />
                         <Carousel banners={storeCustomization.carouselBanners} />
                         <FeaturedProducts products={products} onProductClick={(p) => handleNavigate('productDetail', p)} wishlist={wishlist} onToggleWishlist={handleToggleWishlist} />
@@ -1027,16 +1027,16 @@ const App: React.FC = () => {
     const isAuthView = ['consultantLogin', 'sellerRegistration', 'customerLogin', 'customerRegister', 'customerForgotPassword'].includes(view);
     // Fix: Replaced Object.keys(adminViewTitles).includes(view) with explicit list of admin dashboard views
     const isAdminDashboardView = [
-        'consultantStore', 'manageProducts', 'addEditProduct', 'editDropshippingProduct', 'manageInventory', 
-        'manageOrders', 'orderDetail', 'manageReturns', 'returnDetail', 'manageDropshippingOrders', 
-        'dropshippingCatalog', 'managePromotions', 'addEditCoupon', 'manageAffiliates', 'storeEditor', 
-        'storeBannerEditor', 'virtualOfficeDropshipping', 'virtualOfficeAffiliateLinks', 
-        'virtualOfficePixels', 'virtualOfficeLinkShortener', 'addEditMarketingPixel', 'bannerDashboard', 
-        'dashboardEditor', 'managePayments', 'manageShipping', 'compensationPlan', 'manageCollections', 
-        'addEditCollection', 'userProfileEditor', 'walletOverview', 'walletReports', 'walletTransfers', 
+        'consultantStore', 'manageProducts', 'addEditProduct', 'editDropshippingProduct', 'manageInventory',
+        'manageOrders', 'orderDetail', 'manageReturns', 'returnDetail', 'manageDropshippingOrders',
+        'dropshippingCatalog', 'managePromotions', 'addEditCoupon', 'manageAffiliates', 'storeEditor',
+        'storeBannerEditor', 'virtualOfficeDropshipping', 'virtualOfficeAffiliateLinks',
+        'virtualOfficePixels', 'virtualOfficeLinkShortener', 'addEditMarketingPixel', 'bannerDashboard',
+        'dashboardEditor', 'managePayments', 'manageShipping', 'compensationPlan', 'manageCollections',
+        'addEditCollection', 'userProfileEditor', 'walletOverview', 'walletReports', 'walletTransfers',
         'walletCharges', 'walletSettings', 'rsStudio', 'communication', 'manageOrderBump', 'manageUpsell',
-        'manageAbandonedCarts', 'manageReviews', 'manageAnnouncements', 'addEditAnnouncement', 
-        'manageTrainings', 'addEditTraining', 'trainingModuleDetail', 'manageMarketingAssets', 
+        'manageAbandonedCarts', 'manageReviews', 'manageAnnouncements', 'addEditAnnouncement',
+        'manageTrainings', 'addEditTraining', 'trainingModuleDetail', 'manageMarketingAssets',
         'addEditMarketingAsset', 'manageDistributors', 'addEditDistributor'
     ].includes(view);
 
@@ -1050,13 +1050,13 @@ const App: React.FC = () => {
             default: return null; // Should not happen
         }
     }
-    
+
     if (view === 'checkout') {
-         return (
-             <>
+        return (
+            <>
                 <style>{storeCustomization.customCss}</style>
-                <CheckoutView 
-                    cartItems={cart} 
+                <CheckoutView
+                    cartItems={cart}
                     onBack={() => { handleNavigate(viewBeforeCheckout); setIsCartOpen(true); }}
                     onFinalizePurchase={handleFinalizePurchase}
                     currentCustomer={currentCustomer}
@@ -1079,14 +1079,14 @@ const App: React.FC = () => {
             </>
         );
     }
-    
+
     return (
         <>
             <style>{storeCustomization.customCss}</style>
             <div className="bg-[rgb(var(--color-brand-dark))] text-[rgb(var(--color-brand-text-light))] font-sans">
-                <Header 
-                    logoUrl={storeCustomization.logoUrl} 
-                    onLogoClick={() => handleNavigate('home')} 
+                <Header
+                    logoUrl={storeCustomization.logoUrl}
+                    onLogoClick={() => handleNavigate('home')}
                     onConsultantClick={() => handleNavigate(currentCustomer ? 'consultantStore' : 'consultantLogin')}
                     cartItems={cart}
                     onCartClick={() => setIsCartOpen(true)}
@@ -1100,13 +1100,13 @@ const App: React.FC = () => {
                 </main>
                 <Footer logoUrl={storeCustomization.logoUrl} content={storeCustomization.footer} onConsultantClick={() => handleNavigate('consultantLogin')} onNavigate={handleNavigate} />
             </div>
-             {showFloatingCartStatus && cart.length > 0 && (
+            {showFloatingCartStatus && cart.length > 0 && (
                 <FloatingCartStatus cartItems={cart} onViewCart={() => {
                     setIsCartOpen(true);
                     setShowFloatingCartStatus(false);
                 }} />
             )}
-            <CartView 
+            <CartView
                 isOpen={isCartOpen}
                 onClose={() => setIsCartOpen(false)}
                 cartItems={cart}

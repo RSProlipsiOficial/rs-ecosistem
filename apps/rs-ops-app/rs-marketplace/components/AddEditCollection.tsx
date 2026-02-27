@@ -38,7 +38,7 @@ const AddEditCollection: React.FC<AddEditCollectionProps> = ({ collection, produ
             }
         });
     };
-    
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (!formData.title) {
@@ -51,11 +51,11 @@ const AddEditCollection: React.FC<AddEditCollectionProps> = ({ collection, produ
     const handleSaveClick = () => {
         formRef.current?.requestSubmit();
     };
-    
+
     const availableProducts = products.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
 
     return (
-         <div className="space-y-6">
+        <div className="space-y-6">
             <div className="pb-6 mb-6 flex justify-between items-center border-b border-dark-800">
                 <h1 className="text-2xl font-bold text-white">{isEditing ? 'Editar Coleção' : 'Criar Coleção'}</h1>
                 <div className="flex items-center gap-4">
@@ -75,33 +75,37 @@ const AddEditCollection: React.FC<AddEditCollectionProps> = ({ collection, produ
                             <textarea name="description" id="description" value={formData.description} onChange={handleInputChange} rows={4} className="w-full bg-dark-800 border-2 border-dark-700 rounded-md py-2 px-3 text-white" />
                         </div>
                     </div>
-                     <div className="bg-black border border-dark-800 rounded-lg p-6">
+                    <div className="bg-black border border-dark-800 rounded-lg p-6">
                         <h3 className="text-lg font-semibold text-white mb-4">Produtos na Coleção</h3>
-                         <input type="text" placeholder="Buscar produtos para adicionar..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full bg-dark-800 border-2 border-dark-700 rounded-md py-2 px-3 text-white mb-4"/>
-                         <div className="max-h-96 overflow-y-auto space-y-2 pr-2">
-                             {availableProducts.map(product => (
-                                 <label key={product.id} className="flex items-center p-2 bg-dark-800/50 rounded-md cursor-pointer hover:bg-dark-800">
-                                     <input 
+                        <input type="text" placeholder="Buscar produtos para adicionar..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full bg-dark-800 border-2 border-dark-700 rounded-md py-2 px-3 text-white mb-4" />
+                        <div className="max-h-96 overflow-y-auto space-y-2 pr-2">
+                            {availableProducts.map(product => (
+                                <label key={product.id} className="flex items-center p-2 bg-dark-800/50 rounded-md cursor-pointer hover:bg-dark-800">
+                                    <input
                                         type="checkbox"
                                         checked={formData.productIds?.includes(product.id)}
                                         onChange={() => handleProductToggle(product.id)}
                                         className="h-4 w-4 rounded bg-dark-700 border-dark-700 text-gold-500 focus:ring-yellow-600"
-                                     />
-                                     <img src={product.images[0]} alt={product.name} className="w-10 h-10 object-cover rounded-md ml-4"/>
-                                     <span className="ml-3 text-sm text-white">{product.name}</span>
-                                 </label>
-                             ))}
-                         </div>
+                                    />
+                                    <img src={product.images[0]} alt={product.name} className="w-10 h-10 object-cover rounded-md ml-4" />
+                                    <span className="ml-3 text-sm text-white">{product.name}</span>
+                                </label>
+                            ))}
+                        </div>
                     </div>
                 </div>
                 <div className="space-y-8">
                     <div className="bg-black border border-dark-800 rounded-lg p-6">
                         <h3 className="text-lg font-semibold text-white mb-4">Imagem da Coleção</h3>
-                        <ImageUploader
-                            currentImage={formData.imageUrl || ''}
-                            onImageUpload={url => setFormData(prev => ({...prev, imageUrl: url}))}
-                            placeholderText="Imagem da Coleção"
-                        />
+                        <div className="max-w-[180px]">
+                            <ImageUploader
+                                currentImage={formData.imageUrl || ''}
+                                onImageUpload={url => setFormData(prev => ({ ...prev, imageUrl: url }))}
+                                placeholderText="Imagem da Coleção"
+                                aspectRatio="square"
+                            />
+                        </div>
+                        <p className="text-xs text-gray-500 mt-2">Recomendado: 400x400px</p>
                     </div>
                 </div>
             </form>

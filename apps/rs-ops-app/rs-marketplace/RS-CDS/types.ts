@@ -70,7 +70,8 @@ export interface Product {
   category: string;
   stockLevel: number;
   minStock: number;
-  price: number;     // Preço de Venda (Tabela)
+  price: number;     // Preço de Varejo (Venda Tabela)
+  memberPrice?: number; // Preço de Consultor (Base para markup e desconto CD)
   costPrice: number; // Preço de Custo (CD paga à fabrica)
   points: number;    // VP (Volume Points) - Crítico para MMN
   status: 'OK' | 'BAIXO' | 'CRITICO';
@@ -192,4 +193,4 @@ export interface GlobalSalesOrder extends Order {
   cdRegion: string;
 }
 
-export type ViewState = 'DASHBOARD' | 'PEDIDOS' | 'ESTOQUE' | 'FINANCEIRO' | 'IA_ADVISOR' | 'CONFIGURACOES' | 'HISTORICO' | 'HEADQUARTERS';
+export type ViewState = 'DASHBOARD' | 'PEDIDOS' | 'ESTOQUE' | 'FINANCEIRO' | 'IA_ADVISOR' | 'CONFIGURACOES' | 'HISTORICO' | 'ABASTECIMENTOS';

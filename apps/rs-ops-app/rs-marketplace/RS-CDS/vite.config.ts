@@ -6,7 +6,7 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, '.', '');
   return {
     server: {
-      port: 2021,
+      port: 2020,
       host: '0.0.0.0',
     },
 

@@ -66,7 +66,11 @@ const createAxiosInstance = () => {
         // Remove ambos os tokens em caso de não autorizado
         localStorage.removeItem('adminToken');
         localStorage.removeItem('consultorToken');
-        window.location.href = '/login';
+
+        // Evita loop se já estivermos na página de login
+        if (!window.location.pathname.includes('/login')) {
+          window.location.href = '/login';
+        }
       }
 
       const apiError: ApiError = {

@@ -163,7 +163,7 @@ export const headquartersService = {
         const [{ data: orders, error }, { data: cds }, { data: profiles }] = await Promise.all([
             supabase
                 .from('cd_orders')
-                .select('*')
+                .select('*, items:cd_order_items(product_id, product_name, quantity, unit_price)')
                 .order('created_at', { ascending: false })
                 .limit(100),
             supabase.from('cd_profiles').select('id, name'),
@@ -185,7 +185,7 @@ export const headquartersService = {
             cdId: order.cd_id,
             cdName: cdMap.get(order.cd_id) || `CD: ${order.cd_id.substring(0, 8).toUpperCase()}`,
             itemCount: order.items_count || 0,
-            items: [],
+            items: order.items || [],
             totalValue: Number(order.total) || 0,
             status: (order.status || 'PENDENTE').toUpperCase(),
             requestDate: order.created_at,
@@ -193,6 +193,19 @@ export const headquartersService = {
             expectedDelivery: order.updated_at,
             marketplace_order_id: order.marketplace_order_id
         }));
+    },
+
+    async updateReplenishmentOrderStatus(orderId: string, status: string): Promise<boolean> {
+        const { error } = await supabase
+            .from('cd_orders')
+            .update({ status: status.toUpperCase(), updated_at: new Date().toISOString() })
+            .eq('id', orderId);
+
+        if (error) {
+            console.error('[HQ] Erro ao atualizar status do pedido:', error);
+            return false;
+        }
+        return true;
     },
 
     // --- Vendas Globais (todos os pedidos do marketplace) ---

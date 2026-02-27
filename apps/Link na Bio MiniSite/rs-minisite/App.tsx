@@ -10,6 +10,7 @@ import { Login } from './components/Login';
 import { INITIAL_SITES, INITIAL_USER, PLANS, RS_THEME_DARK, RS_THEME_LIGHT } from './constants';
 import { BioSite, ViewMode, UserProfile, UserPlan, AgencyClient, ClientPayment, SystemLog, Agency, PlanDefinition } from './types';
 import { supabase } from './supabaseClient';
+import { brandingApi } from './brandingApi';
 
 if (typeof window !== 'undefined') {
   console.log("[App.tsx] Global initialization...");
@@ -19,6 +20,30 @@ export default function App() {
   // Debug Alert - Remova após confirmação
   useEffect(() => {
     console.log("[App] Component Mounted. Current View:", currentView);
+  }, []);
+
+  useEffect(() => {
+    const fetchBranding = async () => {
+      try {
+        const res = await brandingApi.getBranding();
+        if (res.success && res.data) {
+          const { favicon } = res.data;
+          if (favicon) {
+            const link = document.querySelector("link[rel*='icon']") as HTMLLinkElement;
+            if (link) link.href = favicon;
+          }
+        }
+      } catch (error) {
+        console.error("[App] Failed to fetch branding:", error);
+      }
+    };
+
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'rs-branding-update') fetchBranding();
+    };
+    window.addEventListener('storage', handleStorageChange);
+    fetchBranding();
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
   const [user, setUser] = useState<UserProfile>(INITIAL_USER);
   const [sites, setSites] = useState<BioSite[]>(INITIAL_SITES);

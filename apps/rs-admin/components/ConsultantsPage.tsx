@@ -109,18 +109,17 @@ const ConsultantsPage: React.FC<{ initialTab?: string }> = ({ initialTab = 'hier
             try {
                 const response = await consultantsAPI.getAll();
                 console.log('[DEBUG] API Response for consultants:', response);
-                const responseData = response.data as any; // Force cast to avoid type errors with generic ApiResponse
-                if (responseData?.success || Array.isArray(responseData)) {
-                    const loadedConsultants = (responseData.consultants || responseData) || [];
-                    // REMOVIDO: generateMockFinancialData (causava confusão com dados falsos)
-                    // const enriched = generateMockFinancialData(loadedConsultants);
+                const responseData = response.data as any;
+                // [RS-MAPPING] Nested data support
+                const actualData = responseData?.data || responseData;
+
+                if (actualData?.success || Array.isArray(actualData) || responseData?.success) {
+                    const loadedConsultants = (actualData.consultants || actualData) || [];
                     setConsultants(loadedConsultants);
                     setLoading(false);
                     return;
-                    setLoading(false);
-                    return;
                 } else {
-                    console.error('[DEBUG] API returned success=false:', response?.data);
+                    console.error('[DEBUG] API returned success=false:', actualData);
                 }
             } catch (apiErr: any) {
                 console.warn('API falhou, tentando Supabase direto:', apiErr);

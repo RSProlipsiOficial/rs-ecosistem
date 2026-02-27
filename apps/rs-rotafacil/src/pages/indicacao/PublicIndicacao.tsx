@@ -307,6 +307,23 @@ export default function PublicIndicacao() {
             if (consultorResult.error) console.error("Erro ao criar registro de consultor:", consultorResult.error);
             if (leadResult.error) console.error("Erro ao registrar lead:", leadResult.error);
 
+            // 3. Acionar derramamento no SIGME (MMN) - Protocolo RS
+            // Dispara o motor de rede para posicionar o novo consultor automaticamente
+            try {
+                const { error: sigmaError } = await (supabase as any).rpc('process_spillover', {
+                    p_sponsor_id: sponsorUserId,
+                    p_new_member_id: authData.user.id
+                });
+
+                if (sigmaError) {
+                    console.warn("Aviso Sigma (Spillover):", sigmaError.message);
+                } else {
+                    console.log("🎯 Spillover acionado com sucesso para", authData.user.id);
+                }
+            } catch (sigmaErr) {
+                console.error("Falha crítica ao acionar Sigma:", sigmaErr);
+            }
+
             toast({
                 title: '✅ Cadastro Finalizado!',
                 description: "Seja bem-vindo ao ecossistema RS Prólipsi. Verifique seu e-mail para confirmar a conta.",

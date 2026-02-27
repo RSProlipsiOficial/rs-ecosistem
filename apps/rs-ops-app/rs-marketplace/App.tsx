@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo, Suspense } from 'react';
 import Header from './components/Header';
 import Hero from './components/Hero';
 import FeaturedProducts from './components/FeaturedProducts';
+import FeaturedCollections from './components/FeaturedCollections';
 import CallToAction from './components/CallToAction';
 import Footer from './components/Footer';
 import ProductDetail from './components/ProductDetail';
@@ -107,6 +108,7 @@ import { networkActivity as initialNetworkActivity } from './data/networkActivit
 import { weeklyBonuses as initialWeeklyBonuses } from './data/weeklyBonuses';
 import { initialReviews } from './data/reviews';
 import { initialQuestions } from './data/questions';
+import * as reviewService from './services/reviewService';
 import { announcements as initialAnnouncements, trainings as initialTrainings, marketingAssets as initialMarketingAssets } from './data/communications';
 import { initialAbandonedCarts } from './data/abandonedCarts';
 import { initialCharges } from './data/charges';
@@ -170,18 +172,11 @@ const App: React.FC = () => {
     const [marketingPixels, setMarketingPixels] = useState<MarketingPixel[]>(initialMarketingPixels);
     const [partnerStores, setPartnerStores] = useState<PartnerStore[]>(initialPartnerStores);
     const [shortenedLinks, setShortenedLinks] = useState<ShortenedLink[]>(initialShortenedLinks);
-    const [storeCustomization, setStoreCustomization] = useState<StoreCustomization>(() => {
-        try {
-            const saved = localStorage.getItem('rs-store-customization');
-            if (saved) {
-                const parsed = JSON.parse(saved);
-                return { ...initialStoreCustomization, ...parsed };
-            }
-        } catch (e) {
-            console.error('Erro ao carregar customização salva:', e);
-        }
-        return initialStoreCustomization;
-    });
+    // Limpar localStorage antigo com dados mock e usar dados corretos do código
+    if (typeof window !== 'undefined') {
+        try { localStorage.removeItem('rs-store-customization'); } catch (e) { }
+    }
+    const [storeCustomization, setStoreCustomization] = useState<StoreCustomization>(initialStoreCustomization);
     const [paymentSettings, setPaymentSettings] = useState<PaymentSettings>(initialPaymentSettings);
     const [shippingSettings, setShippingSettings] = useState<ShippingSettings>(initialShippingSettings);
     const [compensationSettings, setCompensationSettings] = useState<CompensationSettings>(initialCompensationSettings);
@@ -192,6 +187,13 @@ const App: React.FC = () => {
     const [currentCustomer, setCurrentCustomer] = useState<Customer | null>(null);
     const [reviews, setReviews] = useState<Review[]>(initialReviews);
     const [questions, setQuestions] = useState<Question[]>(initialQuestions);
+
+    // Load reviews and questions from Supabase on mount
+    useEffect(() => {
+        reviewService.fetchAllReviews().then(data => {
+            if (data.length > 0) setReviews(data);
+        }).catch(() => { });
+    }, []);
     const [announcements, setAnnouncements] = useState<Announcement[]>(initialAnnouncements);
     const [trainings, setTrainings] = useState<Training[]>(initialTrainings);
     const [marketingAssets, setMarketingAssets] = useState<MarketingAsset[]>(initialMarketingAssets);
@@ -203,20 +205,39 @@ const App: React.FC = () => {
 
     const [userProfile, setUserProfile] = useState<UserProfile>(() => {
         const saved = localStorage.getItem('rs-consultant-profile');
-        if (saved) {
-            try { return JSON.parse(saved) as UserProfile; } catch { }
-        }
-        return {
-            name: 'Ana Carolina',
-            id: 'C0000111000000',
+        const currentOrigin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3003';
+
+        let profile: UserProfile = {
+            name: 'RS PRÓLIPSI',
+            id: 'RSPROLIPSI',
+            idConsultor: 'RSPROLIPSI',
             graduation: 'DIAMANTE PRESIDENCIAL',
             accountStatus: 'Ativo',
             monthlyActivity: 'Ativo',
             category: 'DIAMANTE',
-            referralLink: 'https://rsprolipsi.com/register/anacaro',
-            affiliateLink: 'https://rs-shop.com/loja/anacarolina',
-            avatarUrl: 'https://i.pravatar.cc/80?u=anacarolina'
-        } as UserProfile;
+            referralLink: `${currentOrigin}/?ref=RSPROLIPSI`,
+            affiliateLink: `${currentOrigin}/loja/RSPROLIPSI`,
+            avatarUrl: 'https://raw.githubusercontent.com/RS-Prolipsi/assets/main/logo_rs_gold.png'
+        };
+
+        if (saved) {
+            try {
+                const parsed = JSON.parse(saved) as UserProfile;
+                const isMaster = parsed.slug?.toLowerCase() === 'rsprolipsi' || parsed.idConsultor?.toLowerCase() === 'rsprolipsi' || (parsed.email && parsed.email.includes('rsprolipsioficial'));
+                if (isMaster) {
+                    return {
+                        ...parsed,
+                        name: 'RS PRÓLIPSI',
+                        idConsultor: 'rsprolipsi',
+                        slug: 'rsprolipsi',
+                        referralLink: `${currentOrigin}/?ref=rsprolipsi`,
+                        affiliateLink: `${currentOrigin}/loja/rsprolipsi`
+                    };
+                }
+                return parsed;
+            } catch { }
+        }
+        return profile;
     });
     const [bonuses, setBonuses] = useState({
         cycleBonus: 500.00,
@@ -230,6 +251,7 @@ const App: React.FC = () => {
     const [wishlist, setWishlist] = useState<string[]>([]);
     const [lastConfirmedOrder, setLastConfirmedOrder] = useState<Order | null>(null);
     const [recentlyViewedIds, setRecentlyViewedIds] = useState<string[]>([]);
+    const [searchQuery, setSearchQuery] = useState('');
 
     // Cart State
     const [cart, setCart] = useState<CartItem[]>(() => {
@@ -246,9 +268,70 @@ const App: React.FC = () => {
     const offerProducts = useMemo(() => products.filter(p => p.compareAtPrice && p.compareAtPrice > p.price), [products]);
     const recentlyViewedProducts = useMemo(() => recentlyViewedIds.map(id => products.find(p => p.id === id)).filter((p): p is Product => Boolean(p)), [recentlyViewedIds, products]);
 
+    const filteredProducts = useMemo(() => {
+        if (!searchQuery.trim()) return products;
+        const query = searchQuery.toLowerCase();
+        return products.filter(p =>
+            p.name.toLowerCase().includes(query) ||
+            p.description.toLowerCase().includes(query) ||
+            p.category.toLowerCase().includes(query)
+        );
+    }, [products, searchQuery]);
+
     useEffect(() => {
         window.scrollTo(0, 0);
     }, [view]);
+
+    // Master Identity Cleanup & Enforcement
+    useEffect(() => {
+        const isMaster =
+            userProfile.idConsultor === 'RSPROLIPSI' ||
+            userProfile.slug === 'rsprolipsi' ||
+            (userProfile.email && userProfile.email.includes('rsprolipsioficial')) ||
+            userProfile.id === 'rsprolipsioficial';
+
+        if (isMaster) {
+            const currentOrigin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3003';
+            const officialId = 'rsprolipsi';
+            const officialName = 'RS PRÓLIPSI';
+
+            if (userProfile.idConsultor !== officialId || userProfile.name !== officialName) {
+                const updatedProfile = {
+                    ...userProfile,
+                    name: officialName,
+                    id: officialId,
+                    idConsultor: officialId,
+                    slug: officialId,
+                    referralLink: `${currentOrigin}/?ref=${officialId}`,
+                    affiliateLink: `${currentOrigin}/loja/${officialId}`,
+                    avatarUrl: 'https://raw.githubusercontent.com/RS-Prolipsi/assets/main/logo_rs_gold.png'
+                };
+                setUserProfile(updatedProfile);
+                localStorage.setItem('rs-consultant-profile', JSON.stringify(updatedProfile));
+            }
+        }
+    }, [userProfile]);
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const params = new URLSearchParams(window.location.search);
+            const ref = params.get('ref');
+            if (ref && ref.toLowerCase() === 'rsprolipsi' && userProfile.idConsultor !== 'rsprolipsi') {
+                const officialId = 'rsprolipsi';
+                const officialName = 'RS PRÓLIPSI';
+                const updatedProfile = {
+                    ...userProfile,
+                    name: officialName,
+                    id: officialId,
+                    idConsultor: officialId,
+                    slug: officialId,
+                    avatarUrl: 'https://raw.githubusercontent.com/RS-Prolipsi/assets/main/logo_rs_gold.png'
+                };
+                setUserProfile(updatedProfile);
+                localStorage.setItem('rs-consultant-profile', JSON.stringify(updatedProfile));
+            }
+        }
+    }, [userProfile.idConsultor]);
 
     useEffect(() => {
         const isDev = (import.meta as any).env?.DEV ?? true;
@@ -321,8 +404,8 @@ const App: React.FC = () => {
                         shortDescription: String(it.short_description ?? it.description ?? ''),
                         description: String(it.description ?? ''),
                         images: Array.isArray(it.images) ? it.images : [String(it.image_url ?? '')].filter(Boolean),
-                        rating: Number(it.rating ?? 0),
-                        reviewCount: Number(it.review_count ?? 0),
+                        rating: 0, // Dinâmico via Supabase reviews
+                        reviewCount: 0, // Dinâmico via Supabase reviews
                         collectionId: it.collection_id ?? null,
                         status: String(it.status ?? 'Publicado'),
                         inventory: Number(it.inventory ?? 0),
@@ -338,8 +421,21 @@ const App: React.FC = () => {
                         variants: Array.isArray(it.variants) ? it.variants : [],
                         compareAtPrice: it.compare_at_price ?? undefined,
                     }));
-                    setProducts(mapped.length > 0 ? mapped : initialProducts);
+                    // Master Fix: Ensure Premium products (initialProducts) are ALWAYS at the front.
+                    const premiumIds = new Set(initialProducts.map(p => p.id));
+
+                    // Filter: Only allow RS Prólipsi products, removing anything else as requested.
+                    const filteredApiProducts = mapped.filter(mp =>
+                        !premiumIds.has(mp.id) &&
+                        (mp.seller === 'RS Prólipsi' || mp.name.toLowerCase().includes('lipsi'))
+                    );
+
+                    const allProducts = [...initialProducts, ...filteredApiProducts];
+
+                    console.log('🚀 Marketplace Master: Merged', initialProducts.length, 'premium and', filteredApiProducts.length, 'API RS products. Mockups removed.');
+                    setProducts(allProducts);
                 } else {
+                    console.log('⚠️ Marketplace Master: API failed or empty, using premium catalog.');
                     setProducts(initialProducts);
                 }
                 const colRes: any = await collectionsAPI.getAll();
@@ -879,16 +975,33 @@ const App: React.FC = () => {
         handleNavigate('customerLogin');
     };
 
-    const handleReviewUpdateStatus = (ids: string[], status: Review['status']) => setReviews(prev => prev.map(r => ids.includes(r.id) ? { ...r, status } : r));
-    const handleReviewDelete = (ids: string[]) => { if (window.confirm(`Tem certeza?`)) setReviews(prev => prev.filter(r => !ids.includes(r.id))); };
-    const handleReviewSubmit = (reviewData: Omit<Review, 'id' | 'createdAt' | 'status'>) => {
-        const newReview: Review = {
-            ...reviewData,
-            id: `rev-${Date.now()}`,
-            createdAt: new Date().toISOString(),
-            status: 'Pendente'
-        };
-        setReviews(prev => [newReview, ...prev]);
+    const handleReviewUpdateStatus = async (ids: string[], status: Review['status']) => {
+        const isApproved = status === 'Aprovada';
+        for (const id of ids) {
+            await reviewService.updateReviewStatus(id, isApproved);
+        }
+        setReviews(prev => prev.map(r => ids.includes(r.id) ? { ...r, status } : r));
+    };
+    const handleReviewDelete = async (ids: string[]) => {
+        if (window.confirm(`Tem certeza?`)) {
+            await reviewService.deleteReviews(ids);
+            setReviews(prev => prev.filter(r => !ids.includes(r.id)));
+        }
+    };
+    const handleReviewSubmit = async (reviewData: Omit<Review, 'id' | 'createdAt' | 'status'>) => {
+        const saved = await reviewService.submitReview(reviewData);
+        if (saved) {
+            setReviews(prev => [saved, ...prev]);
+        } else {
+            // Fallback local se Supabase não responder
+            const newReview: Review = {
+                ...reviewData,
+                id: `rev-${Date.now()}`,
+                createdAt: new Date().toISOString(),
+                status: 'Pendente'
+            };
+            setReviews(prev => [newReview, ...prev]);
+        }
         alert('Sua avaliação foi enviada para moderação. Obrigado!');
     };
 
@@ -971,26 +1084,38 @@ const App: React.FC = () => {
         });
     };
 
-    const handleQuestionSubmit = (questionData: Omit<Question, 'id' | 'createdAt' | 'answers'>) => {
-        const newQuestion: Question = {
-            ...questionData,
-            id: `q-${Date.now()}`,
-            createdAt: new Date().toISOString(),
-            answers: []
-        };
-        setQuestions(prev => [newQuestion, ...prev]);
+    const handleQuestionSubmit = async (questionData: Omit<Question, 'id' | 'createdAt' | 'answers'>) => {
+        const saved = await reviewService.submitQuestion(questionData);
+        if (saved) {
+            setQuestions(prev => [saved, ...prev]);
+        } else {
+            const newQuestion: Question = {
+                ...questionData,
+                id: `q-${Date.now()}`,
+                createdAt: new Date().toISOString(),
+                answers: []
+            };
+            setQuestions(prev => [newQuestion, ...prev]);
+        }
         alert('Sua pergunta foi enviada e será respondida em breve.');
     };
 
-    const handleAnswerSubmit = (questionId: string, answerData: Omit<Answer, 'id' | 'createdAt'>) => {
-        const newAnswer: Answer = {
-            ...answerData,
-            id: `a-${Date.now()}`,
-            createdAt: new Date().toISOString(),
-        };
-        setQuestions(prev => prev.map(q =>
-            q.id === questionId ? { ...q, answers: [...q.answers, newAnswer] } : q
-        ));
+    const handleAnswerSubmit = async (questionId: string, answerData: Omit<Answer, 'id' | 'createdAt'>) => {
+        const saved = await reviewService.submitAnswer(questionId, answerData);
+        if (saved) {
+            setQuestions(prev => prev.map(q =>
+                q.id === questionId ? { ...q, answers: [...q.answers, saved] } : q
+            ));
+        } else {
+            const newAnswer: Answer = {
+                ...answerData,
+                id: `a-${Date.now()}`,
+                createdAt: new Date().toISOString(),
+            };
+            setQuestions(prev => prev.map(q =>
+                q.id === questionId ? { ...q, answers: [...q.answers, newAnswer] } : q
+            ));
+        }
     };
 
     const handleChargeSave = (chargeData: Omit<Charge, 'id' | 'paymentLink'>): Charge => {
@@ -1017,7 +1142,7 @@ const App: React.FC = () => {
         dropshippingCatalog: 'Catálogo Dropshipping',
         managePromotions: 'Cupons de Desconto',
         addEditCoupon: 'Adicionar/Editar Cupom',
-        manageAffiliates: 'Programa de Afiliados',
+        manageAffiliates: 'Links de Indicação',
         storeEditor: 'Aparência da Loja',
         storeBannerEditor: 'Banners da Loja',
         virtualOfficeDropshipping: 'Produtos Dropshipping',
@@ -1096,7 +1221,7 @@ const App: React.FC = () => {
             case 'dropshippingCatalog': content = <DropshippingCatalog products={dropshippingProducts} onImport={handleImportDropshippingProduct} onEdit={handleNavigateToEditDropshipping} onNavigate={handleNavigate} />; break;
             case 'managePromotions': content = <ManagePromotions coupons={coupons} onNavigate={handleNavigate} onDelete={handleCouponDelete} onStatusToggle={handleCouponStatusToggle} />; break;
             case 'addEditCoupon': content = <AddEditCoupon coupon={selectedCoupon} onSave={handleCouponSave} onCancel={() => handleNavigate('managePromotions')} />; break;
-            case 'manageAffiliates': content = <ManageAffiliates affiliates={initialAffiliates} onNavigate={handleNavigate} />; break;
+            case 'manageAffiliates': content = <ManageAffiliates userProfile={userProfile} />; break;
 
             case 'rsCD': content = (
                 <Suspense fallback={<div className="p-8 text-center text-gold-400">Carregando painel CD...</div>}>
@@ -1130,6 +1255,7 @@ const App: React.FC = () => {
             case 'walletCharges': content = <WalletCharges charges={charges} products={products} onSave={handleChargeSave} />; break;
             case 'walletSettings': content = <WalletSettingsComponent settings={initialWalletSettings} onSave={() => alert('Settings saved!')} paymentSettings={paymentSettings} onNavigate={handleNavigate} />; break;
             case 'rsStudio': content = <RSStudio products={products} onNavigate={handleNavigate} />; break;
+            case 'communication': content = <CommunicationCenter onNavigate={handleNavigate} />; break;
             case 'manageOrderBump': content = <ManageOrderBump settings={storeCustomization.orderBump} products={products} onSave={(s) => handleStoreCustomizationChange({ orderBump: s })} />; break;
             case 'manageUpsell': content = <ManageUpsell settings={storeCustomization.upsell} products={products} onSave={(s) => handleStoreCustomizationChange({ upsell: s })} />; break;
             case 'manageAbandonedCarts': content = <ManageAbandonedCarts carts={abandonedCarts} />; break;
@@ -1197,17 +1323,49 @@ const App: React.FC = () => {
                 return selectedOrder && <OrderStatusView order={selectedOrder} onBack={() => handleNavigate('home')} />;
             case 'home':
             default:
-                console.log('🏠 Rendering HOME view with', products.length, 'products');
                 return (
                     <>
                         <Hero
                             content={storeCustomization.hero}
                         />
                         <Carousel banners={storeCustomization.carouselBanners} />
-                        <FeaturedProducts products={products} onProductClick={(p) => handleNavigate('productDetail', p)} wishlist={wishlist} onToggleWishlist={handleToggleWishlist} />
-                        {offerProducts.length > 0 && <Offers products={offerProducts} onProductClick={(p) => handleNavigate('productDetail', p)} wishlist={wishlist} onToggleWishlist={handleToggleWishlist} />}
-                        <Bestsellers products={products} onProductClick={(p) => handleNavigate('productDetail', p)} orders={orders} wishlist={wishlist} onToggleWishlist={handleToggleWishlist} />
-                        <RecentlyViewed products={recentlyViewedProducts} onProductClick={(p) => handleNavigate('productDetail', p)} wishlist={wishlist} onToggleWishlist={handleToggleWishlist} />
+                        {searchQuery && (
+                            <div className="container mx-auto px-4 mt-8">
+                                <h2 className="text-2xl font-display text-[rgb(var(--color-brand-gold))]">
+                                    Resultados para: "{searchQuery}"
+                                    <span className="ml-4 text-sm font-sans text-[rgb(var(--color-brand-text-dim))] uppercase tracking-widest">
+                                        {filteredProducts.length} {filteredProducts.length === 1 ? 'produto encontrado' : 'produtos encontrados'}
+                                    </span>
+                                </h2>
+                            </div>
+                        )}
+                        {filteredProducts.length > 0 ? (
+                            <>
+                                <FeaturedProducts products={filteredProducts} onProductClick={(p) => handleNavigate('productDetail', p)} wishlist={wishlist} onToggleWishlist={handleToggleWishlist} />
+                                <FeaturedCollections collections={collections} onNavigate={handleNavigate} />
+                                {!searchQuery && (
+                                    <>
+                                        {offerProducts.length > 0 && <Offers products={offerProducts} onProductClick={(p) => handleNavigate('productDetail', p)} wishlist={wishlist} onToggleWishlist={handleToggleWishlist} />}
+                                        <Bestsellers products={products} onProductClick={(p) => handleNavigate('productDetail', p)} orders={orders} wishlist={wishlist} onToggleWishlist={handleToggleWishlist} />
+                                        <RecentlyViewed products={recentlyViewedProducts} onProductClick={(p) => handleNavigate('productDetail', p)} wishlist={wishlist} onToggleWishlist={handleToggleWishlist} />
+                                    </>
+                                )}
+                            </>
+                        ) : (
+                            <div className="container mx-auto px-4 py-20 text-center">
+                                <div className="max-w-md mx-auto bg-[rgb(var(--color-brand-gray))]/[.50] backdrop-blur-md border border-[rgb(var(--color-brand-gold))]/[.20] p-10 rounded-2xl shadow-2xl">
+                                    <div className="text-6xl mb-4">🔍</div>
+                                    <h3 className="text-2xl font-display text-[rgb(var(--color-brand-gold))] mb-2">Ops! Nenhum produto encontrado</h3>
+                                    <p className="text-[rgb(var(--color-brand-text-dim))] mb-6">Não encontramos resultados para "{searchQuery}". Tente usar palavras-chave diferentes ou verifique a ortografia.</p>
+                                    <button
+                                        onClick={() => setSearchQuery('')}
+                                        className="bg-[rgb(var(--color-brand-gold))] text-[rgb(var(--color-brand-dark))] px-8 py-3 rounded-full font-bold hover:shadow-[0_0_20px_rgba(255,215,0,0.4)] transition-all transform hover:scale-105"
+                                    >
+                                        Limpar Busca
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                         <MidPageBanner banner={storeCustomization.midPageBanner} />
                         <CallToAction onConsultantClick={() => handleNavigate('consultantLogin')} onBecomeSellerClick={() => handleNavigate('sellerRegistration')} />
                         <CustomerChatWidget orders={orders} />
@@ -1286,6 +1444,14 @@ const App: React.FC = () => {
         <>
             <style>{storeCustomization.customCss}</style>
             <div className="bg-[rgb(var(--color-brand-dark))] text-[rgb(var(--color-brand-text-light))] font-sans">
+                {userProfile.name && (
+                    <div className="bg-[rgb(var(--color-brand-gray))] border-b border-[rgb(var(--color-brand-gold))]/[.20] py-1.5 text-center relative z-50">
+                        <div className="container mx-auto px-4 flex items-center justify-center gap-2">
+                            <span className="text-[10px] font-bold text-[rgb(var(--color-brand-gold))] uppercase tracking-widest opacity-80">Consultor Oficial:</span>
+                            <span className="text-xs font-black text-white uppercase tracking-tighter">{userProfile.name}</span>
+                        </div>
+                    </div>
+                )}
                 <Header
                     logoUrl={storeCustomization.logoUrl}
                     onLogoClick={() => handleNavigate('home')}
@@ -1296,6 +1462,8 @@ const App: React.FC = () => {
                     onNavigate={handleNavigate}
                     currentCustomer={currentCustomer}
                     onLogout={() => setCurrentCustomer(null)}
+                    searchQuery={searchQuery}
+                    onSearch={setSearchQuery}
                 />
                 <main>
                     {renderPublicContent()}

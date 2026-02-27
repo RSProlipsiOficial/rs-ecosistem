@@ -108,9 +108,11 @@ const MarketplaceProductsPage: React.FC = () => {
     const loadProducts = async () => {
         try {
             setLoading(true);
-            const response = await marketplaceAPI.getAllProducts();
-            if (response?.data?.success) {
-                setProducts(response.data.products || mockProducts);
+            const res = await marketplaceAPI.getAllProducts(); // Changed 'response' to 'res'
+            // [RS-MAPPING] Nested data support
+            const actualData = res.data?.data || res.data; // Uses 'res'
+            if (actualData?.success || actualData?.products) {
+                setProducts(actualData.products || actualData || mockProducts);
             }
         } catch (err) {
             console.error('Erro:', err);
@@ -132,7 +134,7 @@ const MarketplaceProductsPage: React.FC = () => {
         setEditingProduct(product);
         setModalOpen(true);
     };
-    
+
     const handleCloseModal = () => {
         setModalOpen(false);
         setEditingProduct(null);
@@ -144,7 +146,7 @@ const MarketplaceProductsPage: React.FC = () => {
             setProducts(products.map(p => p.id === productToSave.id ? productToSave : p));
         } else {
             // Add new product
-            setProducts([{...productToSave, id: Date.now()}, ...products]);
+            setProducts([{ ...productToSave, id: Date.now() }, ...products]);
         }
         handleCloseModal();
     };
@@ -167,15 +169,15 @@ const MarketplaceProductsPage: React.FC = () => {
                     </button>
                 </div>
             </header>
-            
+
             <div className="mb-6 p-4 bg-black/50 border border-gray-800 rounded-xl">
-                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                     <input type="text" placeholder="Buscar por nome, SKU..." className={baseInputClasses} />
                     <select className={baseInputClasses}><option>Todas as Categorias</option><option>Cuidados Faciais</option><option>Bem-Estar</option><option>Maquiagem</option></select>
                     <select className={baseInputClasses}><option>Todos os Status</option><option>Ativo</option><option>Inativo</option></select>
                 </div>
             </div>
-            
+
             <div className="bg-black/50 border border-gray-800 rounded-xl shadow-lg overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm text-left text-gray-300">
@@ -199,7 +201,7 @@ const MarketplaceProductsPage: React.FC = () => {
                                     </td>
                                     <td className="px-6 py-4 font-mono">{p.sku}</td>
                                     <td className="px-6 py-4">{p.category}</td>
-                                    <td className="px-6 py-4 text-right font-semibold">{p.consultantPrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL'})}</td>
+                                    <td className="px-6 py-4 text-right font-semibold">{p.consultantPrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
                                     <td className="px-6 py-4 text-center">{p.stock > 0 ? p.stock : <span className="text-red-400">Esgotado</span>}</td>
                                     <td className="px-6 py-4 text-center"><span className={`px-2 py-1 text-xs font-semibold rounded-full ${statusClasses[p.status]}`}>{p.status}</span></td>
                                     <td className="px-6 py-4 text-center"><button onClick={() => handleEdit(p)} className="font-medium text-yellow-500 hover:text-yellow-400">Editar</button></td>
@@ -214,7 +216,7 @@ const MarketplaceProductsPage: React.FC = () => {
                 </div>
             </div>
 
-            <ProductDetailModal 
+            <ProductDetailModal
                 isOpen={isModalOpen}
                 product={editingProduct}
                 onClose={handleCloseModal}

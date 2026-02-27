@@ -24,6 +24,7 @@ import {
     supabaseUpdateUser,
     SupabaseUser // Import SupabaseUser for type consistency
 } from './lib/supabase';
+import { brandingApi } from './lib/brandingApi';
 
 
 // Interfaces
@@ -270,6 +271,30 @@ export default function App() {
     const [planToCheckout, setPlanToCheckout] = useState<User['plan'] | null>(null);
     const [pendingRegistration, setPendingRegistration] = useState<RegistrationData | null>(null);
     const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
+
+    useEffect(() => {
+        const fetchBranding = async () => {
+            try {
+                const res = await brandingApi.getBranding();
+                if (res.success && res.data) {
+                    const { favicon } = res.data;
+                    if (favicon) {
+                        const link = document.querySelector("link[rel*='icon']") as HTMLLinkElement;
+                        if (link) link.href = favicon;
+                    }
+                }
+            } catch (error) {
+                console.error("[App] Failed to fetch branding:", error);
+            }
+        };
+
+        const handleStorageChange = (e: StorageEvent) => {
+            if (e.key === 'rs-branding-update') fetchBranding();
+        };
+        window.addEventListener('storage', handleStorageChange);
+        fetchBranding();
+        return () => window.removeEventListener('storage', handleStorageChange);
+    }, []);
 
 
     const activeSymbol = chartStates[activeChartIndex]?.symbol || 'BTC/USDT';

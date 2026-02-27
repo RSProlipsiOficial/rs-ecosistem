@@ -289,7 +289,13 @@ const PlanoCarreira: React.FC = () => {
       <Card className="py-2">
         <h2 className="text-[10px] font-black text-gray-500 mb-0 text-center uppercase tracking-[0.3em]">Status de Evolução</h2>
         <div className="flex justify-center -mt-8 scale-75 md:scale-80">
-          <PinProgressGauge user={{ totalCycles: currentCycles }} apiConfig={apiConfig} pinLogos={config.pinLogos} size="lg" />
+          <PinProgressGauge
+            currentValue={currentCycles}
+            currentPin={{ name: currentPin.pin, value: currentPin.cycles, imageUrl: currentPin.imageUrl }}
+            nextPin={{ name: nextPin.pin, value: nextPin.cycles, imageUrl: nextPin.imageUrl }}
+            unitLabel="CICLOS"
+            size="lg"
+          />
         </div>
         <p className="text-center text-[9px] font-black text-gray-400 -mt-6 uppercase tracking-widest">
           Faltam <span className="text-brand-gold">{Math.max(0, nextPin.cycles - effectiveCyclesTotal).toLocaleString('pt-BR')}</span> ciclos para {nextPin.pin}.

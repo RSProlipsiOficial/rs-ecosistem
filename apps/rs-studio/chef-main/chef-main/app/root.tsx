@@ -22,6 +22,7 @@ import 'allotment/dist/style.css';
 
 import { ErrorDisplay } from './components/ErrorComponent';
 import useVersionNotificationBanner from './components/VersionNotificationBanner';
+import { brandingApi } from './lib/brandingApi';
 
 export async function loader() {
   // These environment variables are available in the client (they aren't secret).
@@ -132,6 +133,30 @@ export function Layout({ children }: { children: React.ReactNode }) {
       // later if we add a cookie banner.
       persistence: 'memory',
     });
+  }, []);
+
+  useEffect(() => {
+    const fetchBranding = async () => {
+      try {
+        const res = await brandingApi.getBranding();
+        if (res.success && res.data) {
+          const { favicon } = res.data;
+          if (favicon) {
+            const link = document.querySelector("link[rel*='icon']") as HTMLLinkElement;
+            if (link) link.href = favicon;
+          }
+        }
+      } catch (error) {
+        console.error("[Root] Failed to fetch branding:", error);
+      }
+    };
+
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'rs-branding-update') fetchBranding();
+    };
+    window.addEventListener('storage', handleStorageChange);
+    fetchBranding();
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
   useVersionNotificationBanner();

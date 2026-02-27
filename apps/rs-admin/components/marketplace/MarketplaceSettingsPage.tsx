@@ -141,8 +141,10 @@ const MarketplaceSettingsPage: React.FC = () => {
             setLoading(true);
             setError('');
             const res = await marketplaceAPI.getMarketplaceConfig();
-            if (res?.data?.success && res.data.config) {
-                setConfig(res.data.config);
+            // [RS-MAPPING] Nested data support
+            const responseData = res.data?.data || res.data;
+            if (responseData?.config) {
+                setConfig(responseData.config);
             }
         } catch (err) {
             console.error('Erro ao carregar:', err);

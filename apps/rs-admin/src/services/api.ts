@@ -344,6 +344,22 @@ export const marketplaceAPI = {
     apiUtils.get(apiUtils.buildUrl('/v1/admin/marketplace/products', filters)),
 
   getInvoices: (filters?: any): Promise<ApiResponse> =>
+    apiUtils.get(apiUtils.buildUrl('/v1/admin/marketplace/invoices', filters)),
+
+  // Aliases for compatibility
+  getMarketplaceConfig: (): Promise<ApiResponse> =>
+    apiUtils.get('/v1/admin/marketplace/settings'),
+
+  updateMarketplaceConfig: (data: any): Promise<ApiResponse> =>
+    apiUtils.put('/v1/admin/marketplace/settings', data),
+
+  getAllOrders: (filters?: any): Promise<ApiResponse> =>
+    apiUtils.get(apiUtils.buildUrl('/v1/admin/marketplace/orders', filters)),
+
+  getAllProducts: (filters?: any): Promise<ApiResponse> =>
+    apiUtils.get(apiUtils.buildUrl('/v1/admin/marketplace/products', filters)),
+
+  getAllInvoices: (filters?: any): Promise<ApiResponse> =>
     apiUtils.get(apiUtils.buildUrl('/v1/admin/marketplace/invoices', filters))
 };
 
@@ -415,9 +431,6 @@ export const cycleClosingAPI = {
   getHistory: (): Promise<ApiResponse<{ history: any[] }>> =>
     apiUtils.get('/v1/admin/cycle/history')
 };
-
-// Export types para uso externo
-export type { ApiResponse, ApiError };
 
 // Export do client base para uso direto quando necessário
 export { apiUtils as api };

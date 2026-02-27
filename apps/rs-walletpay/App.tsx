@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { brandingApi } from './src/services/brandingApi';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import Transactions from './pages/Transactions';
@@ -23,6 +24,33 @@ import SSO from './pages/SSO';
 // Run: npm install react-router-dom recharts
 
 const App: React.FC = () => {
+  useEffect(() => {
+    const fetchBranding = async () => {
+      try {
+        const res = await brandingApi.getBranding();
+        if (res.success && res.data) {
+          const { favicon } = res.data;
+          if (favicon) {
+            const link = document.querySelector("link[rel*='icon']") as HTMLLinkElement;
+            if (link) link.href = favicon;
+          }
+        }
+      } catch (error) {
+        console.error("[App] Failed to fetch branding:", error);
+      }
+    };
+
+    // Listen for cross-tab branding updates
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'rs-branding-update') fetchBranding();
+    };
+    window.addEventListener('storage', handleStorageChange);
+
+    fetchBranding();
+
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
   return (
     <HashRouter>
       <Routes>

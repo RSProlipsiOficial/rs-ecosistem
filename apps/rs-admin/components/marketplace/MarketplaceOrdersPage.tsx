@@ -9,11 +9,11 @@ const mockOrders: Order[] = [];
 
 
 const statusClasses: Record<string, string> = {
-  Pendente: 'bg-yellow-500/20 text-yellow-400',
-  Processando: 'bg-cyan-500/20 text-cyan-400',
-  Enviado: 'bg-blue-600/20 text-blue-400',
-  Entregue: 'bg-green-600/20 text-green-400',
-  Cancelado: 'bg-red-600/20 text-red-400',
+    Pendente: 'bg-yellow-500/20 text-yellow-400',
+    Processando: 'bg-cyan-500/20 text-cyan-400',
+    Enviado: 'bg-blue-600/20 text-blue-400',
+    Entregue: 'bg-green-600/20 text-green-400',
+    Cancelado: 'bg-red-600/20 text-red-400',
 };
 
 const baseInputClasses = "bg-gray-800 border border-gray-700 text-white text-sm rounded-lg focus:ring-yellow-500 focus:border-yellow-500 block w-full p-2.5";
@@ -36,7 +36,11 @@ const MarketplaceOrdersPage: React.FC<MarketplaceOrdersPageProps> = ({ setActive
         try {
             setLoading(true);
             const res = await marketplaceAPI.getAllOrders();
-            if (res?.data?.success) setOrders(res.data.orders || mockOrders);
+            // [RS-MAPPING] Nested data support
+            const actualData = res.data?.data || res.data;
+            if (actualData?.success || actualData?.orders) {
+                setOrders(actualData.orders || actualData || mockOrders);
+            }
         } catch (err) {
             setError('Erro ao carregar pedidos');
         } finally {
@@ -48,7 +52,7 @@ const MarketplaceOrdersPage: React.FC<MarketplaceOrdersPageProps> = ({ setActive
         setSelectedOrder(order);
         setIsModalOpen(true);
     };
-    
+
     const handleCloseModal = () => {
         setIsModalOpen(false);
         setSelectedOrder(null);
@@ -68,12 +72,12 @@ const MarketplaceOrdersPage: React.FC<MarketplaceOrdersPageProps> = ({ setActive
                 <CubeIcon className="w-8 h-8 text-yellow-500" />
                 <h1 className="text-3xl font-bold text-yellow-500 ml-3">Pedidos do Marketplace</h1>
             </header>
-            
+
             <div className="mb-6 p-4 bg-black/50 border border-gray-800 rounded-xl">
-                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                     <input type="text" placeholder="Buscar por pedido, cliente..." className={baseInputClasses} />
                     <select className={baseInputClasses}><option>Todos os Status</option><option>Pendente</option><option>Enviado</option><option>Entregue</option><option>Cancelado</option></select>
-                     <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2">
                         <input type="date" className={baseInputClasses} />
                         <span className="text-gray-400">a</span>
                         <input type="date" className={baseInputClasses} />
@@ -81,7 +85,7 @@ const MarketplaceOrdersPage: React.FC<MarketplaceOrdersPageProps> = ({ setActive
                     <button className="bg-yellow-500 text-black font-bold py-2.5 px-5 rounded-lg hover:bg-yellow-600 transition-colors w-full">Filtrar</button>
                 </div>
             </div>
-            
+
             <div className="bg-black/50 border border-gray-800 rounded-xl shadow-lg overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm text-left text-gray-300">
@@ -105,7 +109,7 @@ const MarketplaceOrdersPage: React.FC<MarketplaceOrdersPageProps> = ({ setActive
                                     </td>
                                     <td className="px-6 py-4">{new Date(o.date).toLocaleDateString('pt-BR')}</td>
                                     <td className="px-6 py-4">{o.payment.method}</td>
-                                    <td className="px-6 py-4 text-right font-semibold">{o.total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL'})}</td>
+                                    <td className="px-6 py-4 text-right font-semibold">{o.total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
                                     <td className="px-6 py-4 text-center"><span className={`px-2 py-1 text-xs font-semibold rounded-full ${statusClasses[o.status]}`}>{o.status}</span></td>
                                     <td className="px-6 py-4 text-center"><button onClick={() => handleViewDetails(o)} className="font-medium text-yellow-500 hover:text-yellow-400">Ver Detalhes</button></td>
                                 </tr>

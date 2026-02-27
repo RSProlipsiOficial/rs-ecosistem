@@ -21,6 +21,18 @@ const HeadquartersPanel: React.FC<HeadquartersPanelProps> = ({ activeTab: initia
     const [editingCD, setEditingCD] = useState<CDRegistry | null>(null);
     const [isEditingRules, setIsEditingRules] = useState(false);
     const [editedRules, setEditedRules] = useState<FranchiseRule | null>(null);
+    const [processingOrderId, setProcessingOrderId] = useState<string | null>(null);
+
+    const handleUpdateOrderStatus = async (orderId: string, newStatus: string) => {
+        setProcessingOrderId(orderId);
+        const success = await headquartersService.updateReplenishmentOrderStatus(orderId, newStatus);
+        if (success) {
+            setOrders(orders.map(o => o.id === orderId ? { ...o, status: newStatus.toUpperCase() } : o));
+        } else {
+            alert('Erro ao atualizar status do pedido.');
+        }
+        setProcessingOrderId(null);
+    };
 
     const handleSaveRules = async () => {
         if (!editedRules) return;
@@ -232,6 +244,7 @@ const HeadquartersPanel: React.FC<HeadquartersPanelProps> = ({ activeTab: initia
                                                 <th className="px-6 py-4">Itens</th>
                                                 <th className="px-6 py-4">Total</th>
                                                 <th className="px-6 py-4">Status</th>
+                                                <th className="px-6 py-4 text-right">Ações</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-gray-800">
@@ -247,7 +260,35 @@ const HeadquartersPanel: React.FC<HeadquartersPanelProps> = ({ activeTab: initia
                                                         <td className="px-6 py-5 text-gray-400 text-xs">{order.itemCount} itens</td>
                                                         <td className="px-6 py-5 text-yellow-500 font-bold">R$ {order.totalValue.toLocaleString('pt-BR')}</td>
                                                         <td className="px-6 py-5">
-                                                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-yellow-500/10 text-yellow-500 border border-yellow-500/20">{order.status}</span>
+                                                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${order.status === 'APROVADO' ? 'bg-green-500/10 text-green-500 border-green-500/20' :
+                                                                    order.status === 'SAIU PARA ENTREGA' || order.status === 'ENVIADO' ? 'bg-blue-500/10 text-blue-500 border-blue-500/20' :
+                                                                        order.status === 'PAGO' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' :
+                                                                            'bg-yellow-500/10 text-yellow-500 border-yellow-500/20'
+                                                                }`}>{order.status}</span>
+                                                        </td>
+                                                        <td className="px-6 py-5">
+                                                            <div className="flex justify-end gap-2">
+                                                                {order.status === 'PENDENTE' && (
+                                                                    <button
+                                                                        onClick={() => handleUpdateOrderStatus(order.id, 'APROVADO')}
+                                                                        disabled={processingOrderId === order.id}
+                                                                        className="px-3 py-1 bg-green-500/20 text-green-500 text-xs font-bold rounded hover:bg-green-500/30 transition-colors"
+                                                                        title="Aprovar Pedido"
+                                                                    >
+                                                                        {processingOrderId === order.id ? '...' : 'Aprovar'}
+                                                                    </button>
+                                                                )}
+                                                                {(order.status === 'APROVADO' || order.status === 'PAGO') && (
+                                                                    <button
+                                                                        onClick={() => handleUpdateOrderStatus(order.id, 'SAIU PARA ENTREGA')}
+                                                                        disabled={processingOrderId === order.id}
+                                                                        className="px-3 py-1 bg-blue-500/20 text-blue-500 text-xs font-bold rounded hover:bg-blue-500/30 transition-colors"
+                                                                        title="Marcar como Enviado"
+                                                                    >
+                                                                        {processingOrderId === order.id ? '...' : 'Enviar'}
+                                                                    </button>
+                                                                )}
+                                                            </div>
                                                         </td>
                                                     </tr>
                                                 ))

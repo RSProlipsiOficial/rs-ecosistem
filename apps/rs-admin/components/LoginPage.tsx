@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { EnvelopeIcon, KeyIcon, SpinnerIcon, EyeIcon, EyeSlashIcon } from './icons';
+import { settingsAPI } from '../src/services/api';
 
 import { supabase } from '../src/services/supabase';
 
@@ -13,6 +14,30 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+    const [branding, setBranding] = useState<{ logo: string | null; companyName: string }>({
+        logo: '/logo-rs.png',
+        companyName: 'RS Prólipsi'
+    });
+
+    useEffect(() => {
+        const fetchBranding = async () => {
+            try {
+                const res = await settingsAPI.getGeneralSettings();
+                // [RS-MAPPING] Branding is nested under .data.data
+                const brandingData = res.data?.data || res.data;
+
+                if (brandingData) {
+                    setBranding({
+                        logo: brandingData.logo || '/logo-rs.png',
+                        companyName: brandingData.companyName || 'RS Prólipsi'
+                    });
+                }
+            } catch (err) {
+                console.error("[Login] Failed to fetch branding:", err);
+            }
+        };
+        fetchBranding();
+    }, []);
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -52,7 +77,25 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
         <div className="flex items-center justify-center min-h-screen bg-[#121212]">
             <div className="w-full max-w-md p-8 space-y-8 bg-[#1E1E1E] rounded-xl border border-[#2A2A2A] shadow-2xl shadow-black/30">
                 <div className="text-center">
-                    <h1 className="text-4xl font-bold text-[#FFD700]">RS Prólipsi</h1>
+                    {branding.logo ? (
+                        <img
+                            src={branding.logo}
+                            alt={branding.companyName}
+                            className="h-16 mx-auto mb-4 object-contain"
+                            onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                                const parent = e.currentTarget.parentElement;
+                                if (parent && !parent.querySelector('.dynamic-title')) {
+                                    const title = document.createElement('h1');
+                                    title.className = 'text-4xl font-bold text-[#FFD700] dynamic-title';
+                                    title.innerText = branding.companyName;
+                                    parent.prepend(title);
+                                }
+                            }}
+                        />
+                    ) : (
+                        <h1 className="text-4xl font-bold text-[#FFD700]">{branding.companyName}</h1>
+                    )}
                     <p className="mt-2 text-gray-400">Painel Administrativo</p>
                 </div>
 

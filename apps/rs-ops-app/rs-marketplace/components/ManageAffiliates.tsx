@@ -1,70 +1,119 @@
-
-import React, { useState, useMemo } from 'react';
-import { Affiliate, View } from '../types';
-import { SearchIcon } from './icons/SearchIcon';
-import { UserPlusIcon } from './icons/UserPlusIcon';
+import React, { useState, useEffect } from 'react';
+import { UserProfile } from '../types';
 
 interface ManageAffiliatesProps {
-    affiliates: Affiliate[];
-    onNavigate: (view: View) => void;
+    userProfile?: UserProfile;
 }
 
-const ManageAffiliates: React.FC<ManageAffiliatesProps> = ({ affiliates, onNavigate }) => {
-    const [searchTerm, setSearchTerm] = useState('');
+const ManageAffiliates: React.FC<ManageAffiliatesProps> = ({ userProfile }) => {
+    const [copiedLink, setCopiedLink] = useState<string | null>(null);
+    const [urls, setUrls] = useState({
+        store: '',
+        referral: '',
+        register: ''
+    });
 
-    const filteredAffiliates = useMemo(() => {
-        return affiliates.filter(a => 
-            a.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            a.email.toLowerCase().includes(searchTerm.toLowerCase())
-        );
-    }, [affiliates, searchTerm]);
+    // O ID amigável (idConsultor/username) é melhor para links - sempre em minúsculas para URLs
+    const userId = (userProfile?.idConsultor || userProfile?.id || 'rsprolipsi').toLowerCase();
+
+    useEffect(() => {
+        // Detecta o ambiente para gerar links corretos
+        const currentOrigin = window.location.origin;
+        const isLocalhost = currentOrigin.includes('localhost');
+
+        // Configura os domínios base
+        const marketplaceDomain = isLocalhost ? 'http://localhost:3003' : 'https://marketplace.rsprolipsi.com.br';
+        const rotaFacilDomain = isLocalhost ? 'http://localhost:3002' : 'https://rotafacil.rsprolipsi.com.br';
+
+        const storeUrl = marketplaceDomain;
+        const referralUrl = `${storeUrl}/?ref=${userId}`;
+        const registerUrl = `${rotaFacilDomain}/indicacao/${userId}`;
+
+        setUrls({
+            store: storeUrl,
+            referral: referralUrl,
+            register: registerUrl
+        });
+    }, [userId]);
+
+    const handleCopy = (link: string, type: string) => {
+        navigator.clipboard.writeText(link);
+        setCopiedLink(type);
+        setTimeout(() => setCopiedLink(null), 2000);
+    };
 
     return (
-        <div className="bg-[rgb(var(--color-brand-dark))] border border-[rgb(var(--color-brand-gray-light))] rounded-lg">
-            <div className="p-4 border-b border-[rgb(var(--color-brand-gray-light))]">
-                <div className="relative max-w-lg">
-                    <input
-                        type="text"
-                        placeholder="Buscar por nome ou e-mail do afiliado..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full bg-[rgb(var(--color-brand-gray))] border-2 border-[rgb(var(--color-brand-gray-light))] rounded-md py-2 pl-10 pr-4 text-[rgb(var(--color-brand-text-light))] placeholder-[rgb(var(--color-brand-text-dim))] focus:outline-none focus:border-[rgb(var(--color-brand-gold))]"
-                    />
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <SearchIcon className="h-5 w-5 text-[rgb(var(--color-brand-text-dim))]" />
+        <div className="space-y-6">
+            <div className="bg-black border border-dark-800 rounded-lg p-6">
+                <h3 className="text-xl font-bold text-white mb-2">Seus Links de Indicação</h3>
+                <p className="text-gray-400 text-sm mb-6">
+                    Copie seus links abaixo para compartilhar com clientes e novos lojistas. Seu ID atual é: <strong className="text-gold-400">{userId}</strong>
+                </p>
+
+                <div className="space-y-6">
+                    {/* Link da Loja Geral */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-400 mb-2">Link da Loja Geral (Marketplace)</label>
+                        <div className="flex gap-2">
+                            <input
+                                type="text"
+                                readOnly
+                                value={urls.store}
+                                className="flex-1 bg-dark-800 border border-dark-700 rounded-md py-2 px-3 text-white text-sm focus:outline-none"
+                            />
+                            <button
+                                onClick={() => handleCopy(urls.store, 'store')}
+                                className="px-4 py-2 bg-dark-700 hover:bg-dark-600 text-white text-sm font-medium rounded-md transition-colors whitespace-nowrap min-w-[120px]"
+                            >
+                                {copiedLink === 'store' ? '✅ Copiado' : '📋 Copiar'}
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Link de Indicação (Afiliado/Consultor) */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-400 mb-2">Seu Link de Indicação (Para Clientes)</label>
+                        <div className="flex gap-2">
+                            <input
+                                type="text"
+                                readOnly
+                                value={urls.referral}
+                                className="flex-1 bg-dark-800 border border-gold-900/50 rounded-md py-2 px-3 text-gold-400 text-sm focus:outline-none"
+                            />
+                            <button
+                                onClick={() => handleCopy(urls.referral, 'referral')}
+                                className="px-4 py-2 bg-gold-500 hover:bg-gold-400 text-black text-sm font-bold rounded-md transition-colors whitespace-nowrap min-w-[120px]"
+                            >
+                                {copiedLink === 'referral' ? '✅ Copiado!' : '📋 Copiar Link'}
+                            </button>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-2">
+                            Envie este link para seus clientes. As compras realizadas através dele garantirão sua comissão.
+                        </p>
+                    </div>
+
+                    {/* Link de Cadastro de Novos Lojistas */}
+                    <div className="pt-4 border-t border-dark-800">
+                        <label className="block text-sm font-medium text-gray-400 mb-2">Link de Cadastro (Para Novos Consultores/Lojistas)</label>
+                        <div className="flex gap-2">
+                            <input
+                                type="text"
+                                readOnly
+                                value={urls.register}
+                                className="flex-1 bg-dark-800 border border-blue-900/50 rounded-md py-2 px-3 text-blue-400 text-sm focus:outline-none"
+                            />
+                            <button
+                                onClick={() => handleCopy(urls.register, 'register')}
+                                className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold rounded-md transition-colors whitespace-nowrap min-w-[120px]"
+                            >
+                                {copiedLink === 'register' ? '✅ Copiado!' : '📋 Copiar Link'}
+                            </button>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-2">
+                            Este link aponta para o sistema **Rota Fácil**, garantindo que o novo parceiro entre na sua rede MMN.
+                        </p>
                     </div>
                 </div>
-            </div>
-
-            <div className="overflow-x-auto">
-                <table className="w-full text-sm text-left text-[rgb(var(--color-brand-text-dim))]">
-                    <thead className="text-xs text-[rgb(var(--color-brand-text-dim))] uppercase bg-[rgb(var(--color-brand-dark))]">
-                        <tr>
-                            <th scope="col" className="px-6 py-3">Afiliado</th>
-                            <th scope="col" className="px-6 py-3 text-center">Comissão</th>
-                            <th scope="col" className="px-6 py-3 text-right">Vendas Totais</th>
-                            <th scope="col" className="px-6 py-3 text-right">Ganhos Totais</th>
-                            <th scope="col" className="px-6 py-3 text-right">Saldo a Pagar</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {filteredAffiliates.map(affiliate => {
-                            const balance = affiliate.totalEarnings - affiliate.paidOut;
-                            return (
-                                <tr key={affiliate.id} className="border-b border-[rgb(var(--color-brand-gray-light))] hover:bg-[rgb(var(--color-brand-gray))]/[.50]">
-                                    <td className="px-6 py-4">
-                                        <p className="font-medium text-[rgb(var(--color-brand-text-light))]">{affiliate.name}</p>
-                                        <p className="text-xs text-[rgb(var(--color-brand-text-dim))]">{affiliate.email}</p>
-                                    </td>
-                                    <td className="px-6 py-4 text-center text-lg font-bold text-[rgb(var(--color-brand-text-light))]">{affiliate.commissionRate}%</td>
-                                    <td className="px-6 py-4 text-right">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(affiliate.totalSales)}</td>
-                                    <td className="px-6 py-4 text-right text-[rgb(var(--color-success))]">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(affiliate.totalEarnings)}</td>
-                                    <td className="px-6 py-4 text-right text-[rgb(var(--color-brand-gold))] font-bold">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(balance)}</td>
-                                </tr>
-                            );
-                        })}
-                    </tbody>
-                </table>
             </div>
         </div>
     );

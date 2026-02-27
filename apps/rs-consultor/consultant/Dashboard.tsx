@@ -8,7 +8,7 @@ import { useUser, useDashboardConfig } from './ConsultantLayout';
 import { Link } from 'react-router-dom';
 import type { NetworkNode } from '../types';
 
-const { IconCopy, IconAward, IconGitFork, IconStar, IconHandCoins, IconChevronLeft, IconChevronRight, IconUsers, IconShop, IconSparkles, IconMessage, IconWallet, IconDashboard } = icons;
+const { IconCopy, IconAward, IconGitFork, IconStar, IconHandCoins, IconChevronLeft, IconChevronRight, IconUsers, IconShop, IconSparkles, IconMessage, IconWallet, IconDashboard, IconUserPlus } = icons;
 
 const formatCurrency = (value: number | string) => {
     const num = typeof value === 'string' ? parseFloat(value) : value;
@@ -55,12 +55,21 @@ const UserInfoCard: FC = () => {
     return (
         <Card>
             <div className="flex items-center space-x-4 mb-6">
-                <img src={user.avatarUrl} alt={user.name} className="h-20 w-20 rounded-full border-4 border-brand-gray-light shadow-lg" />
+                <img
+                    src={user.avatarUrl || 'https://raw.githubusercontent.com/RS-Prolipsi/assets/main/logo_rs_gold.png'}
+                    alt={user.name}
+                    className="h-20 w-20 rounded-full border-4 border-brand-gray-light shadow-lg"
+                    onError={(e) => {
+                        (e.target as HTMLImageElement).src = '/logo-rs.png';
+                    }}
+                />
                 <div>
-                    <h3 className="text-lg font-bold text-brand-text-light">{user.name}</h3>
-                    <p className="text-sm text-brand-text-dim flex items-center gap-1.5">
-                        <span className="opacity-50">ID:</span>
-                        <span className="font-black text-brand-gold uppercase tracking-tighter">{user.idConsultor}</span>
+                    <h3 className="text-lg font-bold text-brand-text-light uppercase tracking-tight">{user.name}</h3>
+                    <p className="text-sm text-brand-text-dim flex items-center gap-1.5 mt-0.5">
+                        <span className="opacity-50 text-[10px] font-bold">PROFISSIONAL ID:</span>
+                        <span className="font-black text-brand-gold lowercase tracking-widest bg-brand-gold/10 px-2 py-0.5 rounded border border-brand-gold/20">
+                            {user.idConsultor?.toLowerCase() || '---'}
+                        </span>
                     </p>
                 </div>
             </div>
@@ -80,11 +89,27 @@ const UserInfoCard: FC = () => {
                 })}
 
                 <div className="!mt-6 pt-6 border-t border-brand-gray-light space-y-4">
+                    <div className="bg-brand-gold/5 border border-brand-gold/20 p-4 rounded-xl">
+                        <p className="text-[10px] text-brand-gold font-bold uppercase tracking-[0.2em] mb-3">Acesso Rápido</p>
+                        <a
+                            href={user.linkCadastro || user.linkIndicacao}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center justify-center gap-2 w-full bg-brand-gold hover:bg-yellow-400 text-brand-dark font-black py-4 rounded-lg transition-all shadow-lg hover:shadow-brand-gold/20 uppercase text-xs tracking-widest"
+                        >
+                            <IconUserPlus size={18} />
+                            Cadastrar Novo Parceiro
+                        </a>
+                        <p className="text-[10px] text-brand-text-dim mt-2 text-center opacity-70 italic">
+                            Sistema Rota Fácil (Porta 3002)
+                        </p>
+                    </div>
+
                     {config.links.map(link => (
                         <CopyableLink
                             key={link.id}
                             label={link.label}
-                            link={user[link.source as keyof typeof user] as string}
+                            link={(user[link.source as keyof typeof user] as string) || ''}
                         />
                     ))}
                 </div>
@@ -266,7 +291,14 @@ const EmbeddedMatrixView: FC = () => {
                         return (
                             <div key={node.id} className="flex flex-col items-center p-4 rounded-2xl bg-gradient-to-b from-white/[0.05] to-transparent border border-white/10 hover:border-brand-gold/50 transition-all group">
                                 <div className="relative">
-                                    <img src={(!node.avatarUrl || node.avatarUrl.includes('0aa67016')) ? '/logo-rs.png' : node.avatarUrl} alt={node.name} className="h-14 w-14 rounded-full border-2 border-brand-gold group-hover:scale-110 transition-transform shadow-lg" />
+                                    <img
+                                        src={(!node.avatarUrl || node.avatarUrl.includes('0aa67016')) ? 'https://raw.githubusercontent.com/RS-Prolipsi/assets/main/logo_rs_gold.png' : node.avatarUrl}
+                                        alt={node.name}
+                                        className="h-14 w-14 rounded-full border-2 border-brand-gold group-hover:scale-110 transition-transform shadow-lg"
+                                        onError={(e) => {
+                                            (e.target as HTMLImageElement).src = 'https://raw.githubusercontent.com/RS-Prolipsi/assets/main/logo_rs_gold.png';
+                                        }}
+                                    />
                                     <div className="absolute -bottom-1 -right-1 h-5 w-5 bg-green-500 rounded-full border-2 border-brand-dark flex items-center justify-center">
                                         <div className="h-2 w-2 bg-white rounded-full"></div>
                                     </div>
@@ -340,7 +372,49 @@ const Dashboard: React.FC = () => {
                         </div>
                         {/* Escala final ajustada para harmonia perfeita e centralização total */}
                         <div className="scale-[0.5] md:scale-[0.6] origin-center -mb-8 transform-gpu transition-all group-hover:scale-[0.52] md:group-hover:scale-[0.62]">
-                            <PinProgressGauge user={user} apiConfig={apiConfig} pinLogos={config.pinLogos} size="lg" />
+                            {(() => {
+                                const currentCycles = user.totalCycles || 0;
+                                const pinTable = apiConfig?.career.pins || [];
+
+                                let currentPinObj = { name: user.pin || 'Consultor', value: 0 };
+                                let nextPinObj = { name: 'RS One Star', value: 10000 };
+
+                                if (pinTable.length > 0) {
+                                    // Encontrar o pin atual na tabela
+                                    const currentIdx = pinTable.findIndex(p => p.name === user.pin);
+                                    if (currentIdx !== -1) {
+                                        currentPinObj = { name: pinTable[currentIdx].name, value: pinTable[currentIdx].cyclesRequired, imageUrl: pinTable[currentIdx].imageUrl };
+                                        const next = pinTable[currentIdx + 1] || pinTable[currentIdx];
+                                        nextPinObj = { name: next.name, value: next.cyclesRequired, imageUrl: next.imageUrl };
+                                    } else {
+                                        // Se não achar o nome do pin, busca por ciclos
+                                        let foundIdx = -1;
+                                        for (let i = pinTable.length - 1; i >= 0; i--) {
+                                            if (currentCycles >= pinTable[i].cyclesRequired) {
+                                                foundIdx = i;
+                                                break;
+                                            }
+                                        }
+                                        if (foundIdx !== -1) {
+                                            currentPinObj = { name: pinTable[foundIdx].name, value: pinTable[foundIdx].cyclesRequired, imageUrl: pinTable[foundIdx].imageUrl };
+                                            const next = pinTable[foundIdx + 1] || pinTable[foundIdx];
+                                            nextPinObj = { name: next.name, value: next.cyclesRequired, imageUrl: next.imageUrl };
+                                        } else {
+                                            nextPinObj = { name: pinTable[0]?.name || 'RS One Star', value: pinTable[0]?.cyclesRequired || 10000, imageUrl: pinTable[0]?.imageUrl };
+                                        }
+                                    }
+                                }
+
+                                return (
+                                    <PinProgressGauge
+                                        currentValue={currentCycles}
+                                        currentPin={currentPinObj}
+                                        nextPin={nextPinObj}
+                                        unitLabel="CICLOS"
+                                        size="lg"
+                                    />
+                                );
+                            })()}
                         </div>
                         <div className="absolute bottom-6 text-[9px] font-bold text-brand-gold uppercase tracking-[0.3em] opacity-0 group-hover:opacity-100 transition-opacity">
                             Ver Detalhes do Plano &rarr;

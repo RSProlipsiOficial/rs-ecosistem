@@ -11,6 +11,7 @@ import {
   IconSparkles, // Added for RS Studio
   IconMic, // Added for new features
 } from '../../components/icons';
+import { useBranding } from '../../App';
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -23,6 +24,7 @@ const sigmeNavItems = [
   { name: 'Bônus de Fidelidade', path: '/consultant/sigme/bonus-fidelidade', icon: IconRepeat },
   { name: 'Bônus Top Sigme', path: '/consultant/sigme/top-sigme', icon: IconStar },
   { name: 'Bônus Plano de Carreira', path: '/consultant/sigme/plano-carreira', icon: IconAward },
+  { name: 'Bônus Drop/Afiliado', path: '/consultant/sigme/plano-carreira-digital', icon: IconStar },
   { name: 'Relatórios de Rede', path: '/consultant/sigme/relatorios-rede', icon: IconFileText },
 ];
 
@@ -107,25 +109,38 @@ const NavGroup: React.FC<{
   );
 };
 
-
 const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, closeSidebar }) => {
+  const { logo, companyName } = useBranding();
+
   const handleNavLinkClick = () => {
-    if (closeSidebar) {
+    if (window.innerWidth < 1024 && closeSidebar) {
       closeSidebar();
     }
   };
 
   const navLinkClasses = (isActive: boolean) =>
-    `flex items-center space-x-3 px-3 py-3 rounded-lg transition-all duration-200 ${isCollapsed ? 'justify-center' : ''} ${isActive
-      ? 'bg-brand-gold text-brand-dark font-semibold shadow-lg shadow-brand-gold/20'
-      : 'text-brand-text-dim hover:bg-brand-gray-light hover:text-brand-gold'
-    }`;
+    `flex items-center space-x-3 px-3 py-3 rounded-lg transition-all duration-200 ${isActive
+      ? 'bg-brand-gold text-black font-bold shadow-lg shadow-brand-gold/20'
+      : 'text-brand-text-dim hover:bg-brand-gray-light hover:text-white'
+    } ${isCollapsed ? 'justify-center' : ''}`;
 
   return (
     <aside className="w-full h-full bg-brand-gray border-r border-brand-gray-light flex-shrink-0 p-3 flex flex-col">
-      <div className={`py-4 text-center transition-all duration-300 ${isCollapsed ? 'mb-2' : 'mb-4'}`}>
-        <h1 className={`text-brand-gold text-2xl font-bold ${isCollapsed ? 'hidden' : 'block'}`}>RS Prólipsi</h1>
-        <h1 className={`text-brand-gold text-2xl font-bold ${isCollapsed ? 'block' : 'hidden'}`}>RS</h1>
+      <div className={`py-4 flex items-center justify-center transition-all duration-300 ${isCollapsed ? 'mb-2' : 'mb-4'}`}>
+        {logo && (
+          <img
+            src={logo}
+            alt={companyName}
+            className={`${isCollapsed ? 'h-8 w-8' : 'h-10 w-auto max-w-[180px]'} object-contain`}
+            onError={(e) => { (e.target as HTMLImageElement).src = '/logo-rs.png'; }}
+          />
+        )}
+        {!logo && (
+          <>
+            <h1 className={`text-brand-gold text-2xl font-bold ${isCollapsed ? 'hidden' : 'block'}`}>{companyName}</h1>
+            <h1 className={`text-brand-gold text-2xl font-bold ${isCollapsed ? 'block' : 'hidden'}`}>{companyName.substring(0, 2).toUpperCase()}</h1>
+          </>
+        )}
       </div>
       <nav className="flex flex-col space-y-2 overflow-y-auto">
         {mainNavItems.map((item) => (
@@ -181,7 +196,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, closeSidebar }) => {
 
       </nav>
       <div className="mt-auto p-4 text-center text-xs text-gray-400">
-        {!isCollapsed && <span>&copy; {new Date().getFullYear()} RS Prólipsi.</span>}
+        {!isCollapsed && <span>&copy; {new Date().getFullYear()} {companyName}.</span>}
       </div>
     </aside>
   );

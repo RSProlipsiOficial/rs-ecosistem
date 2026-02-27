@@ -17,7 +17,8 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, isOpen, onClose
   const menuItems: { id: ViewState; label: string; icon: React.ReactNode }[] = [
     { id: 'DASHBOARD', label: 'Painel', icon: <LayoutDashboard size={20} /> },
     { id: 'PEDIDOS', label: 'Gestão Pedidos', icon: <ShoppingBag size={20} /> },
-    { id: 'HISTORICO', label: 'Histórico', icon: <History size={20} /> },
+    { id: 'HISTORICO', label: 'Histórico Vendas', icon: <History size={20} /> },
+    { id: 'ABASTECIMENTOS', label: 'Meus Abastecimentos', icon: <Package size={20} /> },
     { id: 'ESTOQUE', label: 'Estoque CD', icon: <Package size={20} /> },
     { id: 'FINANCEIRO', label: 'Financeiro', icon: <PieChart size={20} /> },
     { id: 'IA_ADVISOR', label: 'RS-IA', icon: <Bot size={20} /> },
@@ -86,20 +87,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, isOpen, onClose
           ))}
         </nav>
 
-        {/* Botão Administrador Master (Separado do menu comum) */}
-        <div className="px-4 pb-2">
-          <button
-            onClick={() => setView('HEADQUARTERS')}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-bold transition-all duration-200 border ${currentView === 'HEADQUARTERS'
-              ? 'bg-red-900/30 text-red-500 border-red-800 shadow-lg shadow-red-900/20'
-              : 'bg-dark-900 border-dark-800 text-gray-400 hover:text-white hover:border-gray-600'
-              } ${isCollapsed ? 'md:justify-center' : ''}`}
-            title={isCollapsed ? 'Administrador' : ''}
-          >
-            <Shield size={20} />
-            {!isCollapsed && <span>Administrador</span>}
-          </button>
-        </div>
+        {/* Administrador removido - gestão de CDs é feita pelo Admin central */}
 
         <div className="p-4 border-t border-dark-800">
           <button className={`w-full flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-red-400 text-sm font-medium transition-colors rounded-lg hover:bg-dark-800 ${isCollapsed ? 'md:justify-center' : ''

@@ -19,11 +19,14 @@ interface HeaderProps {
   onNavigate: (view: View, data?: any) => void;
   currentCustomer: Customer | null;
   onLogout: () => void;
+  searchQuery: string;
+  onSearch: (query: string) => void;
 }
 
 const Header: React.FC<HeaderProps> = ({
   logoUrl, onLogoClick, onConsultantClick, cartItems, onCartClick,
-  collections, onNavigate, currentCustomer, onLogout
+  collections, onNavigate, currentCustomer, onLogout,
+  searchQuery, onSearch
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
@@ -33,7 +36,6 @@ const Header: React.FC<HeaderProps> = ({
   const navLinks = [
     { name: 'Categorias', action: () => setIsCategoryOpen(!isCategoryOpen), dropdown: true },
     { name: 'Ofertas', href: '#offers' },
-    { name: 'Mais Vendidos', href: '#bestsellers' },
   ];
 
   const categoryLinks = collections.map(c => ({ name: c.title, id: c.id }));
@@ -47,21 +49,32 @@ const Header: React.FC<HeaderProps> = ({
             {logoUrl ? (
               <img src={logoUrl} alt="RS Prólipsi Logo" className="h-10 max-w-[120px] object-contain" />
             ) : (
-              <span className="text-3xl font-display text-[rgb(var(--color-brand-gold))]">RS Prólipsi</span>
+              <span className="text-3xl font-display text-[rgb(var(--color-brand-gold))] uppercase">RS PRÓLIPSI</span>
             )}
           </button>
 
           {/* Search Bar */}
-          <div className="flex flex-grow max-w-xl mx-4 lg:mx-8">
+          <div className="flex flex-grow max-w-xl mx-4 lg:mx-8 group">
             <div className="relative w-full">
               <input
                 type="text"
-                placeholder="Buscar produtos..."
-                className="w-full bg-[rgb(var(--color-brand-dark))]/[.50] border-2 border-[rgb(var(--color-brand-gray-light))] rounded-full py-2 pl-12 pr-4 text-[rgb(var(--color-brand-text-light))] placeholder-[rgb(var(--color-brand-text-dim))] focus:outline-none focus:border-[rgb(var(--color-brand-gold))] transition-colors"
+                value={searchQuery}
+                onChange={(e) => onSearch(e.target.value)}
+                placeholder="Buscar produtos premium..."
+                className="w-full bg-[rgb(var(--color-brand-dark))]/[.40] backdrop-blur-md border-2 border-[rgb(var(--color-brand-gray-light))] rounded-full py-2.5 pl-12 pr-12 text-[rgb(var(--color-brand-text-light))] placeholder-[rgb(var(--color-brand-text-dim))] focus:outline-none focus:border-[rgb(var(--color-brand-gold))] focus:shadow-[0_0_15px_rgba(255,215,0,0.15)] transition-all duration-300"
               />
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <SearchIcon className="h-5 w-5 text-[rgb(var(--color-brand-text-dim))]" />
+                <SearchIcon className={`h-5 w-5 transition-colors duration-300 ${searchQuery ? 'text-[rgb(var(--color-brand-gold))]' : 'text-[rgb(var(--color-brand-text-dim))]'}`} />
               </div>
+              {searchQuery && (
+                <button
+                  onClick={() => onSearch('')}
+                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-[rgb(var(--color-brand-text-dim))] hover:text-[rgb(var(--color-brand-gold))] transition-colors"
+                  aria-label="Limpar busca"
+                >
+                  <CloseIcon className="h-5 w-5" />
+                </button>
+              )}
             </div>
           </div>
 

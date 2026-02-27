@@ -22,5 +22,11 @@ export const dashboardApi = {
      * Busca a configuração genérica de layout
      */
     getLayout: (): Promise<ApiResponse> =>
-        apiClient.get('/v1/admin/dashboard/layout')
+        apiClient.get('/v1/admin/dashboard/layout'),
+
+    /**
+     * Busca as configurações gerais de branding e empresa
+     */
+    getGeneralSettings: (): Promise<ApiResponse> =>
+        apiClient.get('/v1/admin/settings/general')
 };

@@ -14,6 +14,7 @@ import { cssTransition, ToastContainer } from 'react-toastify';
 import reactToastifyStyles from 'react-toastify/dist/ReactToastify.css?url';
 import globalStyles from './styles/index.scss?url';
 import xtermStyles from '@xterm/xterm/css/xterm.css?url';
+import { brandingApi } from './lib/brandingApi';
 
 import 'virtual:uno.css';
 
@@ -77,6 +78,30 @@ export function Layout({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     document.querySelector('html')?.setAttribute('data-theme', theme);
   }, [theme]);
+
+  useEffect(() => {
+    const fetchBranding = async () => {
+      try {
+        const res = await brandingApi.getBranding();
+        if (res.success && res.data) {
+          const { favicon } = res.data;
+          if (favicon) {
+            const link = document.querySelector("link[rel*='icon']") as HTMLLinkElement;
+            if (link) link.href = favicon;
+          }
+        }
+      } catch (error) {
+        console.error("[Root] Failed to fetch branding:", error);
+      }
+    };
+
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'rs-branding-update') fetchBranding();
+    };
+    window.addEventListener('storage', handleStorageChange);
+    fetchBranding();
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   return (
     <>

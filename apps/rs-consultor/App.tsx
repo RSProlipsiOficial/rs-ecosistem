@@ -14,6 +14,7 @@ import TopSigme from './consultant/sigme/TopSigme';
 import RelatoriosRede from './consultant/Relatorios'; // Repurposed for network reports
 import BonusProfundidade from './consultant/sigme/BonusProfundidade';
 import BonusFidelidade from './consultant/sigme/BonusFidelidade';
+import PlanoCarreiraDigital from './consultant/sigme/PlanoCarreiraDigital';
 
 // RS Shop Pages
 import ShopLayout from './consultant/shop/ShopLayout';
@@ -55,9 +56,23 @@ import { syncService } from './consultant/services/syncService';
 
 
 // [RS-BRANDING] - Constantes Globais de Identidade
-const OFFICIAL_LOGO_RS = 'https://raw.githubusercontent.com/RS-Prolipsi/assets/main/logo_rs_gold.png';
+const DEFAULT_LOGO_RS = '/logo-rs.png';
 const BANNED_PATTERNS = ['0aa67016', 'user-attachments/assets', 'google', 'ai-studio'];
 const OFFICIAL_BANNER_RS = 'https://github.com/user-attachments/assets/bf61e389-9e8c-4f9e-a0e1-7e81084d59de';
+
+// Branding Context
+interface BrandingType {
+  logo: string;
+  favicon: string;
+  companyName: string;
+}
+export const BrandingContext = createContext<BrandingType>({
+  logo: DEFAULT_LOGO_RS,
+  favicon: '/favicon.ico',
+  companyName: 'RSPrólipsi'
+});
+
+export const useBranding = () => useContext(BrandingContext);
 
 // New Layout Context for full-screen focus mode
 type LayoutMode = 'default' | 'focus';
@@ -97,6 +112,7 @@ const defaultDashboardConfig: DashboardConfig = {
   links: [
     { id: 'link-1', label: 'Link de Indicação (ID Único)', source: 'linkIndicacao' },
     { id: 'link-2', label: 'Link da Loja (Marketplace)', source: 'linkLoja' },
+    { id: 'link-3', label: 'Link de Cadastro (MMN)', source: 'linkCadastro' },
   ],
   promoBanners: mockPromoBanners.map(b => ({
     ...b,
@@ -167,6 +183,11 @@ const ContextProviders: React.FC<{ children: React.ReactNode }> = ({ children })
   const [dashboardConfig, setDashboardConfig] = useState<DashboardConfig>(getInitialConfig());
   const [layoutMode, setLayoutMode] = useState<LayoutMode>('default');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [branding, setBranding] = useState<BrandingType>({
+    logo: DEFAULT_LOGO_RS,
+    favicon: '/favicon.ico',
+    companyName: 'RSPrólipsi'
+  });
 
   // Handlers moved from ConsultantLayout
   const updateUser = (newUserData: Partial<User>) => {
@@ -216,33 +237,31 @@ const ContextProviders: React.FC<{ children: React.ReactNode }> = ({ children })
           console.log('[App] Merging User Data:', { profileId: profile?.id, consultorId: consultData?.id });
 
           setUser(prev => {
+            // [RS-UNIFY-LOGIC] - Forçar Identidade Mestre RS Prólipsi
             const isMasterAccount =
-              currentUserEmail?.includes('rsprolipsi') ||
-              profile?.slug === 'rsprolipsi' ||
-              consultData?.username === 'rsprolipsi';
+              currentUserEmail?.toLowerCase().includes('rsprolipsi') ||
+              profile?.slug?.toLowerCase().includes('rsprolipsi') ||
+              consultData?.username?.toLowerCase().includes('rsprolipsi');
 
-            const baseName = isMasterAccount ? 'SEDE RS PRÓLIPSI' : (profile?.full_name || profile?.name || consultData?.nome || prev.name);
+            const baseName = isMasterAccount ? 'RS PRÓLIPSI' : (profile?.full_name || profile?.name || consultData?.nome || prev.name);
+            const baseSlug = isMasterAccount ? 'rsprolipsi' : (profile?.id_consultor || profile?.consultant_id || consultData?.username || consultData?.mmn_id || prev.idConsultor);
             const baseWhatsapp = profile?.phone || profile?.whatsapp || consultData?.whatsapp || consultData?.telefone || prev.whatsapp;
             const baseCover = profile?.cover_url || '';
 
-            // Master Identity fallback (RS Prólipsi Official Gold)
+            // ... (avatar logic kept identical)
             let rawAvatar = profile?.avatar_url || consultData?.foto || prev.avatarUrl;
+            if (!rawAvatar || BANNED_PATTERNS.some(p => rawAvatar?.includes(p))) rawAvatar = branding.logo;
+            let baseAvatar = isMasterAccount ? branding.logo : rawAvatar;
 
-            // [RS-ANTI-INFILTRATION] - Blindagem agressiva
-            const isBanned = (url: string) => BANNED_PATTERNS.some(p => url?.includes(p));
+            // [RS-SYNC-LINKS] - Portas: 3002 (Cadastro), 3003 (Loja)
+            const currentOrigin = window.location.origin;
+            const isLocal = currentOrigin.includes('localhost');
+            const marketplaceDomain = isLocal ? 'http://localhost:3003' : 'https://marketplace.rsprolipsi.com.br';
+            const rotaFacilDomain = isLocal ? 'http://localhost:3002' : 'https://rotafacil.rsprolipsi.com.br';
 
-            if (!rawAvatar || isBanned(rawAvatar)) {
-              rawAvatar = OFFICIAL_LOGO_RS;
-            }
-
-            let baseAvatar = rawAvatar;
-
-            // [RS-MASTER-FORCE] - Forçar logo Gold em contas Sede, mesmo que venha algo do banco
-            if (isMasterAccount) {
-              baseAvatar = OFFICIAL_LOGO_RS;
-            }
-
-            const baseSlug = isMasterAccount ? 'RSPROLIPSI' : (profile?.id_consultor || profile?.consultant_id || consultData?.username || consultData?.mmn_id || prev.idConsultor);
+            const linkLoja = marketplaceDomain;
+            const linkIndicacao = `${rotaFacilDomain}/indicacao/${baseSlug}`;
+            const linkCadastro = `${rotaFacilDomain}/indicacao/${baseSlug}`;
 
             return {
               ...prev,
@@ -259,6 +278,8 @@ const ContextProviders: React.FC<{ children: React.ReactNode }> = ({ children })
               idConsultor: baseSlug,
               avatarUrl: baseAvatar,
               coverUrl: baseCover,
+              linkLoja,
+              linkIndicacao,
 
               // Mapeamento Correto de CPF e Data
               cpfCnpj: profile?.cpf || consultData?.cpf || prev.cpfCnpj,
@@ -358,33 +379,41 @@ const ContextProviders: React.FC<{ children: React.ReactNode }> = ({ children })
 
         // [RS-MASTER-FORCE] - Blindagem da Identidade Mestre
         // Se for a conta da Sede, força os dados oficiais
+        // [RS-UNIFY-LOGIC] - Forçar Identidade Mestre RS Prólipsi
         const isMasterAccount =
-          profile.slug === 'rsprolipsi' ||
-          profile.email?.includes('rsprolipsi') ||
-          authUser.email?.includes('rsprolipsi') ||
-          (profile.nome_completo && profile.nome_completo.toUpperCase().includes('SEDE RS'));
+          profile.slug?.toLowerCase().includes('rsprolipsi') ||
+          profile.email?.toLowerCase().includes('rsprolipsi') ||
+          authUser.email?.toLowerCase().includes('rsprolipsi');
 
-        let finalSlug = profile.slug || profile.id_consultor || profile.username || profile.consultant_id || 'rsprolipsi';
-        let finalAvatar = profile.avatar_url || user.avatarUrl;
-        let finalName = profile.nome_completo || user.name;
+        let finalSlug = isMasterAccount ? 'rsprolipsi' : (profile.slug || profile.id_consultor || profile.username || profile.consultant_id || 'rsprolipsi');
+        let finalName = isMasterAccount ? 'RS PRÓLIPSI' : (profile.nome_completo || user.name);
 
-        if (isMasterAccount) {
-          finalSlug = 'RSPROLIPSI';
-          finalName = 'SEDE RS PRÓLIPSI';
-          if (!profile.avatar_url) {
-            finalAvatar = OFFICIAL_LOGO_RS;
-          }
-        }
+        let rawAvatar = profile.avatar_url || user.avatarUrl;
+        if (!rawAvatar || BANNED_PATTERNS.some(p => rawAvatar?.includes(p))) rawAvatar = branding.logo;
+        let finalAvatar = isMasterAccount ? branding.logo : rawAvatar;
+
+        // Sempre usar minúsculas para o slug de links
+        finalSlug = finalSlug.toLowerCase();
 
         // Fallback global para qualquer usuário sem foto ou foto proibida
         if (!finalAvatar || finalAvatar === '' || BANNED_PATTERNS.some(p => finalAvatar?.includes(p))) {
-          finalAvatar = OFFICIAL_LOGO_RS;
+          finalAvatar = branding.logo;
         }
 
         // Forçar para master accounts
         if (isMasterAccount) {
-          finalAvatar = OFFICIAL_LOGO_RS;
+          finalAvatar = branding.logo;
         }
+
+        // [RS-SYNC-LINKS] - Geração de links dinâmicos (Environment Aware)
+        const currentOrigin = window.location.origin;
+        const isLocal = currentOrigin.includes('localhost');
+        const marketplaceDomain = isLocal ? 'http://localhost:3003' : 'https://marketplace.rsprolipsi.com.br';
+        const rotaFacilDomain = isLocal ? 'http://localhost:3002' : 'https://rotafacil.rsprolipsi.com.br';
+
+        const linkLoja = marketplaceDomain;
+        const linkIndicacao = `${rotaFacilDomain}/indicacao/${finalSlug}`;
+        const linkCadastro = `${rotaFacilDomain}/indicacao/${finalSlug}`;
 
         // [FIX] Atualizar estado local imediatamente
         const updatedData = {
@@ -395,7 +424,9 @@ const ContextProviders: React.FC<{ children: React.ReactNode }> = ({ children })
           coverUrl: profile.cover_url || '',
           idConsultor: finalSlug,
           idNumerico: profile.id_numerico || 1,
-          linkIndicacao: `https://plataforma.rs.com/cadastro?patrocinador=${finalSlug}`,
+          linkIndicacao,
+          linkLoja,
+          linkCadastro,
           address: {
             zipCode: profile.endereco_cep || user.address.zipCode,
             street: profile.endereco_rua || user.address.street,
@@ -482,11 +513,47 @@ const ContextProviders: React.FC<{ children: React.ReactNode }> = ({ children })
     }
   }, [isAuthenticated]);
 
+  // [RS-BRANDING] - Fetch Global Branding Configs
+  React.useEffect(() => {
+    const fetchBranding = async () => {
+      try {
+        const response = await dashboardApi.getGeneralSettings();
+        if (response.success && response.data) {
+          const { logo, favicon, companyName } = response.data;
+          setBranding({
+            logo: logo || DEFAULT_LOGO_RS,
+            favicon: favicon || '/favicon.ico',
+            companyName: companyName || 'RSPrólipsi'
+          });
+
+          // Update favicon dynamically
+          if (favicon) {
+            const link = document.querySelector("link[rel*='icon']") as HTMLLinkElement;
+            if (link) link.href = favicon;
+          }
+        }
+      } catch (error) {
+        console.error("[App] Failed to fetch branding settings:", error);
+      }
+    };
+    // Listen for cross-tab branding updates
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'rs-branding-update') fetchBranding();
+    };
+    window.addEventListener('storage', handleStorageChange);
+
+    fetchBranding();
+
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
   return (
     <UserContext.Provider value={{ user, updateUser, messages, markMessageAsRead, onSyncProfile, credits, setCredits, isAuthenticated, login, logout }}>
       <DashboardConfigContext.Provider value={{ config: dashboardConfig, setConfig: setDashboardConfig }}>
         <LayoutContext.Provider value={{ layoutMode, setLayoutMode }}>
-          {children}
+          <BrandingContext.Provider value={branding}>
+            {children}
+          </BrandingContext.Provider>
         </LayoutContext.Provider>
       </DashboardConfigContext.Provider>
     </UserContext.Provider>
@@ -514,6 +581,7 @@ const App: React.FC = () => {
           <Route path="sigme/arvore-interativa/:type/:matrixId" element={<ArvoreInterativaPage />} />
           <Route path="sigme/arvore-interativa/directs" element={<ArvoreInterativaPage />} />
           <Route path="sigme/plano-carreira" element={<PlanoCarreira />} />
+          <Route path="sigme/plano-carreira-digital" element={<PlanoCarreiraDigital />} />
           <Route path="sigme/top-sigme" element={<TopSigme />} />
           <Route path="sigme/relatorios-rede" element={<RelatoriosRede />} />
 

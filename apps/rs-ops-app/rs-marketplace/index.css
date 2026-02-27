@@ -8,8 +8,15 @@
   font-weight: 400;
 
   color-scheme: dark;
-  color: #F2F4F8;
-  background-color: #0F1115;
+  --color-brand-dark: 15, 17, 21;
+  --color-brand-gray: 26, 29, 35;
+  --color-brand-gray-light: 42, 45, 52;
+  --color-brand-gold: 200, 167, 78;
+  --color-brand-text-light: 242, 244, 248;
+  --color-brand-text-dim: 156, 163, 175;
+
+  color: rgb(var(--color-brand-text-light));
+  background-color: rgb(var(--color-brand-dark));
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;

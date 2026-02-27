@@ -63,17 +63,17 @@ export const initialStoreCustomization: StoreCustomization = {
   },
   orderBump: {
     enabled: true,
-    productId: '3', // Caneta-tinteiro Executiva
-    offerPrice: 595.00,
+    productId: '3', // DivaLipsi
+    offerPrice: 99.90,
     title: '🔥 SIM, EU QUERO ESTA OFERTA ESPECIAL!',
-    description: 'Adicione a Caneta-tinteiro Executiva ao seu pedido por um preço exclusivo e eleve sua experiência de escrita!',
+    description: 'Adicione o DivaLipsi ao seu pedido por um preço exclusivo! Beleza e vitalidade feminina com desconto único.',
   },
   upsell: {
     enabled: true,
-    productId: '4', // Óculos de Sol
-    offerPrice: 499.90,
+    productId: '2', // GlicoLipsi
+    offerPrice: 109.90,
     title: '✨ OFERTA ÚNICA PÓS-COMPRA! ✨',
-    description: 'Parabéns pela sua compra! Vimos que você tem bom gosto. Que tal adicionar estes Óculos de Sol Aviador por um preço que você não verá novamente?',
+    description: 'Parabéns pela sua compra! Complete seu tratamento com o GlicoLipsi — equilíbrio metabólico e vitalidade diária por um preço que você não verá novamente!',
     acceptButtonText: 'Sim, adicionar ao meu pedido com 1 clique!',
     declineButtonText: 'Não, obrigado. Perder esta oferta.',
   },

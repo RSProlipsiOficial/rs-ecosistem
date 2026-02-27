@@ -92,7 +92,7 @@ const permissionsList: { [key: string]: string } = {
     manageUserRoles: 'Gerenciar permissões e usuários',
 };
 
-type SaveStatus = 'idle' | 'saving' | 'success';
+type SaveStatus = 'idle' | 'saving' | 'success' | 'error';
 
 const SaveButton: React.FC<{
     status: SaveStatus;
@@ -102,15 +102,17 @@ const SaveButton: React.FC<{
     return (
         <button
             onClick={onClick}
-            disabled={status !== 'idle'}
+            disabled={status === 'saving' || status === 'success'}
             className={`flex items-center justify-center gap-2 font-bold py-2 px-5 rounded-lg transition-all duration-300 w-44 text-center ${status === 'idle' ? 'bg-yellow-500 text-black hover:bg-yellow-600' :
                 status === 'saving' ? 'bg-yellow-500/50 text-black cursor-wait' :
-                    'bg-green-600 text-white'
+                    status === 'success' ? 'bg-green-600 text-white' :
+                        'bg-red-600 text-white hover:bg-red-700'
                 }`}
         >
             {status === 'idle' && text}
             {status === 'saving' && <><SpinnerIcon className="w-5 h-5 animate-spin" /> Salvando...</>}
             {status === 'success' && <><CheckCircleIcon className="w-5 h-5" /> Salvo!</>}
+            {status === 'error' && <><TrashIcon className="w-5 h-5" /> Erro!</>}
         </button>
     );
 };
@@ -128,8 +130,36 @@ const SettingsPage: React.FC = () => {
         try {
             setLoading(true);
             const res = await settingsAPI.getAllSettings();
-            if (res?.data?.success) {
-                // Atualizar settings com dados da API
+            if (res?.data) {
+                const { general: generalRaw, notifications: notificationsRaw } = res.data as any;
+
+                // Mapeamento correto: res.data.general.data contém as infos reais
+                const general = generalRaw?.data || generalRaw;
+                const notifications = notificationsRaw?.data || notificationsRaw;
+
+                if (general) {
+                    setProfile({
+                        companyName: general.companyName || 'RSPrólipsi Comércio LTDA',
+                        name: general.name || 'Roberto',
+                        surname: general.surname || 'Camargo',
+                        cpf: general.cpf || '123.456.789-00',
+                        cnpj: general.cnpj || '12.345.678/0001-99',
+                        avatar: general.avatar || '/logo-rs.png',
+                    });
+                    setBranding({
+                        logo: general.logo || '/logo-rs.png',
+                        favicon: general.favicon || '/favicon.ico',
+                    });
+
+                    // [RS-FAVICON] Sync immediate
+                    if (general.favicon) {
+                        const link = document.querySelector("link[rel*='icon']") as HTMLLinkElement;
+                        if (link) link.href = general.favicon;
+                    }
+                }
+                if (notifications) {
+                    setNotifications(notifications);
+                }
             }
         } catch (err) {
             setError('Erro ao carregar configurações');
@@ -147,13 +177,19 @@ const SettingsPage: React.FC = () => {
         avatar: 'https://picsum.photos/seed/roberto/100',
     });
     const [branding, setBranding] = useState<{ logo: string | null, favicon: string | null }>({
-        logo: null,
-        favicon: null,
+        logo: '/logo-rs.png',
+        favicon: '/favicon.ico',
+    });
+    const [notifications, setNotifications] = useState({
+        emailEnabled: true,
+        whatsappEnabled: true,
+        pushEnabled: false
     });
 
     // Save statuses
     const [profileSaveStatus, setProfileSaveStatus] = useState<SaveStatus>('idle');
     const [brandingSaveStatus, setBrandingSaveStatus] = useState<SaveStatus>('idle');
+    const [notificationsSaveStatus, setNotificationsSaveStatus] = useState<SaveStatus>('idle');
     const [permissionsSaveStatus, setPermissionsSaveStatus] = useState<SaveStatus>('idle');
     const [localizationSaveStatus, setLocalizationSaveStatus] = useState<SaveStatus>('idle');
     const [apiKeysSaveStatus, setApiKeysSaveStatus] = useState<SaveStatus>('idle');
@@ -184,12 +220,99 @@ const SettingsPage: React.FC = () => {
         }
     };
 
-    const handleSave = (setStatus: React.Dispatch<React.SetStateAction<SaveStatus>>) => {
+    const handleSave = async (setStatus: React.Dispatch<React.SetStateAction<SaveStatus>>) => {
         setStatus('saving');
-        setTimeout(() => {
+        try {
+            await new Promise(resolve => setTimeout(resolve, 1000));
             setStatus('success');
-            setTimeout(() => setStatus('idle'), 2500);
-        }, 1500);
+            setTimeout(() => setStatus('idle'), 3000);
+        } catch (err) {
+            setStatus('error');
+            setTimeout(() => setStatus('idle'), 3000);
+        }
+    };
+
+    const handleSaveProfile = async () => {
+        setProfileSaveStatus('saving');
+        console.log('[Settings] Saving profile + branding data:', { ...profile, logo: branding.logo, favicon: branding.favicon });
+        try {
+            const dataToSave = {
+                ...profile,
+                logo: branding.logo,
+                favicon: branding.favicon
+            };
+            await settingsAPI.updateGeneralSettings(dataToSave);
+
+            // [RS-SYNC] Persist to user_profiles for Topbar consistency
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                await supabase.from('user_profiles').update({
+                    avatar_url: profile.avatar,
+                    nome_completo: `${profile.name} ${profile.surname}`,
+                    updated_at: new Date().toISOString()
+                }).eq('user_id', user.id);
+            }
+
+            setProfileSaveStatus('success');
+
+            // [RS-FAVICON] Update favicon dynamically immediately
+            if (branding.favicon) {
+                const link = document.querySelector("link[rel*='icon']") as HTMLLinkElement;
+                if (link) link.href = branding.favicon;
+            }
+
+            window.dispatchEvent(new CustomEvent('rs-profile-updated'));
+            window.dispatchEvent(new CustomEvent('rs-admin:settings-updated'));
+            localStorage.setItem('rs-branding-update', Date.now().toString());
+            setTimeout(() => setProfileSaveStatus('idle'), 3000);
+        } catch (err: any) {
+            setProfileSaveStatus('error');
+            console.error('[Settings] API Error saving profile:', err);
+            alert('Erro ao salvar perfil: ' + (err.message || 'Tente novamente'));
+            setTimeout(() => setProfileSaveStatus('idle'), 3000);
+        }
+    };
+
+    const handleSaveBranding = async () => {
+        setBrandingSaveStatus('saving');
+        console.log('[Settings] Saving branding + profile data:', { ...profile, logo: branding.logo, favicon: branding.favicon });
+        try {
+            const dataToSave = {
+                ...profile,
+                logo: branding.logo,
+                favicon: branding.favicon
+            };
+            await settingsAPI.updateGeneralSettings(dataToSave);
+            setBrandingSaveStatus('success');
+
+            // [RS-FAVICON] Update favicon dynamically immediately
+            if (branding.favicon) {
+                const link = document.querySelector("link[rel*='icon']") as HTMLLinkElement;
+                if (link) link.href = branding.favicon;
+            }
+
+            window.dispatchEvent(new CustomEvent('rs-profile-updated'));
+            window.dispatchEvent(new CustomEvent('rs-admin:settings-updated'));
+            localStorage.setItem('rs-branding-update', Date.now().toString());
+            setTimeout(() => setBrandingSaveStatus('idle'), 3000);
+        } catch (err: any) {
+            setBrandingSaveStatus('error');
+            console.error('[Settings] API Error saving branding:', err);
+            alert('Erro ao salvar branding: ' + (err.message || 'Tente novamente'));
+            setTimeout(() => setBrandingSaveStatus('idle'), 3000);
+        }
+    };
+
+    const handleSaveNotifications = async () => {
+        setNotificationsSaveStatus('saving');
+        try {
+            await settingsAPI.updateNotificationSettings(notifications);
+            setNotificationsSaveStatus('success');
+            setTimeout(() => setNotificationsSaveStatus('idle'), 2500);
+        } catch (err) {
+            setNotificationsSaveStatus('idle');
+            alert('Erro ao salvar notificações');
+        }
     };
 
     const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -338,7 +461,7 @@ const SettingsPage: React.FC = () => {
             <SettingsCard
                 title="Meu Perfil / Dados da Empresa"
                 icon={<BuildingOffice2Icon className="w-6 h-6 text-yellow-500" />}
-                footer={<SaveButton status={profileSaveStatus} onClick={() => handleSave(setProfileSaveStatus)} text="Salvar Perfil" />}
+                footer={<SaveButton status={profileSaveStatus} onClick={handleSaveProfile} text="Salvar Perfil" />}
             >
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2">
                     <SettingsRow label="Nome da Empresa"><input name="companyName" value={profile.companyName} onChange={handleProfileChange} className={baseInputClasses} /></SettingsRow>
@@ -359,7 +482,7 @@ const SettingsPage: React.FC = () => {
             <SettingsCard
                 title="Identidade Visual (Branding)"
                 icon={<PaintBrushIcon className="w-6 h-6 text-yellow-500" />}
-                footer={<SaveButton status={brandingSaveStatus} onClick={() => handleSave(setBrandingSaveStatus)} text="Salvar Branding" />}
+                footer={<SaveButton status={brandingSaveStatus} onClick={handleSaveBranding} text="Salvar Branding" />}
             >
                 <ImageUpload label="Logo do Painel" description="Aparece no topo da barra lateral." currentImage={branding.logo} onImageChange={(file) => handleImageChange('logo', file)} recommendedSize="200x50px (SVG/PNG)" />
                 <ImageUpload label="Favicon" description="Ícone na aba do navegador." currentImage={branding.favicon} onImageChange={(file) => handleImageChange('favicon', file)} recommendedSize="32x32px (PNG/ICO)" />
@@ -434,10 +557,31 @@ const SettingsPage: React.FC = () => {
                 </form>
             </SettingsCard>
 
-            <SettingsCard title="Templates de Notificações" icon={<EnvelopeIcon className="w-6 h-6 text-yellow-500" />}>
-                <p className="text-sm text-gray-300">Gerencie os templates de e-mail, push e WhatsApp enviados aos consultores.</p>
-                <div className="flex justify-start pt-4">
-                    <button className="bg-gray-700 text-white font-bold py-2 px-5 rounded-lg hover:bg-gray-600 transition-colors">Gerenciar Templates</button>
+            <SettingsCard title="Configurações de Notificações" icon={<EnvelopeIcon className="w-6 h-6 text-yellow-500" />}
+                footer={<SaveButton status={notificationsSaveStatus} onClick={handleSaveNotifications} text="Salvar Notificações" />}
+            >
+                <div className="space-y-4">
+                    <div className="flex items-center justify-between p-3 bg-gray-900/30 rounded-lg border border-gray-800">
+                        <div>
+                            <h4 className="text-white font-medium">Notificações por E-mail</h4>
+                            <p className="text-xs text-gray-500">Enviar alertas de novos pedidos e bônus por e-mail.</p>
+                        </div>
+                        <Checkbox checked={notifications.emailEnabled} onChange={() => setNotifications(prev => ({ ...prev, emailEnabled: !prev.emailEnabled }))} />
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-gray-900/30 rounded-lg border border-gray-800">
+                        <div>
+                            <h4 className="text-white font-medium">Notificações via WhatsApp</h4>
+                            <p className="text-xs text-gray-500">Enviar mensagens automáticas via Evolution API.</p>
+                        </div>
+                        <Checkbox checked={notifications.whatsappEnabled} onChange={() => setNotifications(prev => ({ ...prev, whatsappEnabled: !prev.whatsappEnabled }))} />
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-gray-900/30 rounded-lg border border-gray-800">
+                        <div>
+                            <h4 className="text-white font-medium">Notificações Push</h4>
+                            <p className="text-xs text-gray-500">Alertas em tempo real no app do consultor.</p>
+                        </div>
+                        <Checkbox checked={notifications.pushEnabled} onChange={() => setNotifications(prev => ({ ...prev, pushEnabled: !prev.pushEnabled }))} />
+                    </div>
                 </div>
             </SettingsCard>
 

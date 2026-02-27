@@ -121,7 +121,7 @@ const Footer: React.FC<FooterProps> = ({ logoUrl, content, onConsultantClick, on
             {/* Removed Shipping Methods section */}
           </div>
           <div className="mt-8 border-t border-[rgb(var(--color-brand-gray-light))] pt-8 text-center">
-            <p>&copy; {new Date().getFullYear()} RS Prólipsi. Todos os Direitos Reservados.</p>
+            <p>&copy; {new Date().getFullYear()} RS PRÓLIPSI. Todos os Direitos Reservados.</p>
           </div>
         </div>
 

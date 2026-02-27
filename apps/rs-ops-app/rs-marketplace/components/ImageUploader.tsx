@@ -7,9 +7,10 @@ interface ImageUploaderProps {
     onImageUpload: (url: string) => void;
     placeholderText: string;
     aspectRatio?: 'video' | 'square';
+    acceptMedia?: boolean;
 }
 
-export const ImageUploader: React.FC<ImageUploaderProps> = ({ currentImage, onImageUpload, placeholderText, aspectRatio = 'video' }) => {
+export const ImageUploader: React.FC<ImageUploaderProps> = ({ currentImage, onImageUpload, placeholderText, aspectRatio = 'video', acceptMedia = false }) => {
     const [isDragging, setIsDragging] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -42,7 +43,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({ currentImage, onIm
     };
 
     const removeImage = () => {
-        if(currentImage.startsWith('blob:')){
+        if (currentImage.startsWith('blob:')) {
             URL.revokeObjectURL(currentImage);
         }
         onImageUpload('');
@@ -62,16 +63,17 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({ currentImage, onIm
     }
 
     return (
-        <div 
+        <div
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
             onClick={() => fileInputRef.current?.click()}
-            className={`border-2 border-dashed border-dark-700 rounded-lg p-6 text-center cursor-pointer transition-colors flex flex-col items-center justify-center ${aspectClass} ${isDragging ? 'border-gold-500 bg-dark-800/50' : 'hover:border-dark-700'}`}
+            className={`border-2 border-dashed border-dark-700 rounded-lg p-3 text-center cursor-pointer transition-colors flex flex-col items-center justify-center ${aspectClass} ${isDragging ? 'border-gold-500 bg-dark-800/50' : 'hover:border-dark-700'}`}
         >
-            <input type="file" ref={fileInputRef} onChange={(e) => handleFileSelect(e.target.files)} accept="image/*" className="hidden" />
-            <PhotoIcon className="w-8 h-8 text-gray-500 mb-2"/>
-            <p className="text-gray-400 text-sm">{placeholderText}</p>
+            <input type="file" ref={fileInputRef} onChange={(e) => handleFileSelect(e.target.files)} accept={acceptMedia ? 'image/*,video/mp4,video/webm,video/quicktime,.gif' : 'image/*'} className="hidden" />
+            <PhotoIcon className="w-6 h-6 text-gray-500 mb-1" />
+            <p className="text-gray-400 text-xs leading-tight">{placeholderText}</p>
+            {acceptMedia && <p className="text-gray-500 text-[10px] mt-0.5">Foto / Vídeo / GIF</p>}
         </div>
     );
 };

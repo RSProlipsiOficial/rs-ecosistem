@@ -6,26 +6,40 @@ type IconProps = React.SVGProps<SVGSVGElement> & {
 };
 
 const createIcon = (path: React.ReactNode) => {
-  const Icon: React.FC<IconProps> = ({ size = 24, className, ...props }) => (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-      {...props}
-    >
-      {path}
-    </svg>
-  );
+  const Icon: React.FC<IconProps> = ({ size = 24, className, ...props }) => {
+    const iconId = React.useId().replace(/:/g, ''); // Generate a unique ID for gradients/filters
+
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width={size}
+        height={size}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke={`url(#gold-gradient-${iconId})`}
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className={className}
+        style={{ filter: `drop-shadow(0 0 2px rgba(184, 134, 11, 0.3))` }}
+        {...props}
+      >
+        <defs>
+          <linearGradient id={`gold-gradient-${iconId}`} x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#D4AF37" />
+            <stop offset="50%" stopColor="#FFD700" />
+            <stop offset="100%" stopColor="#B8860B" />
+          </linearGradient>
+        </defs>
+        {path}
+      </svg>
+    );
+  };
   Icon.displayName = 'Icon';
   return Icon;
 };
+
+export const IconUserPlus = createIcon(<><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><line x1="19" y1="8" x2="19" y2="14" /><line x1="22" y1="11" x2="16" y2="11" /></>);
 
 export const IconActive = createIcon(<><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></>);
 export const IconAdjustments = createIcon(<><path d="M4 21v-7" /><path d="M4 8V3" /><path d="M12 21v-9" /><path d="M12 6V3" /><path d="M20 21v-5" /><path d="M20 10V3" /><path d="M1 14h6" /><path d="M9 8h6" /><path d="M17 16h6" /></>);

@@ -27,7 +27,7 @@ const getAppConfig = async (key: string) => {
 const updateAppConfig = async (key: string, value: any) => {
     try {
         console.log(`[AdminConfig] Updating ${key}...`);
-        const { data: existing, error: fetchError } = await supabaseAdmin.from('app_configs').select('id').eq('key', key).maybeSingle();
+        const { data: existing, error: fetchError } = await supabaseAdmin.from('app_configs').select('key').eq('key', key).maybeSingle();
 
         if (fetchError) throw fetchError;
 
@@ -35,7 +35,7 @@ const updateAppConfig = async (key: string, value: any) => {
             const { error: updateError } = await supabaseAdmin.from('app_configs').update({
                 value,
                 updated_at: new Date().toISOString()
-            }).eq('id', existing.id);
+            }).eq('key', key);
             if (updateError) throw updateError;
         } else {
             const { error: insertError } = await supabaseAdmin.from('app_configs').insert([{ key, value }]);
@@ -134,6 +134,64 @@ router.put('/v1/admin/sigma/pins/visibility', supabaseAuth, requireRole([ROLES.A
     }
 });
 
-export default router;
+// ============================================================================
+// GENERAL SETTINGS & BRANDING (Unified)
+// ============================================================================
+
+// GET all settings (General + Notifications) - PUBLIC for login branding
+router.get('/v1/admin/settings/general', async (_req: Request, res: Response) => {
+    try {
+        const general = await getAppConfig('general_branding_settings') || {
+            companyName: 'RSPrólipsi Comércio LTDA',
+            name: 'Roberto',
+            surname: 'Camargo',
+            cpf: '123.456.789-00',
+            cnpj: '12.345.678/0001-99',
+            avatar: '/logo-rs.png',
+            logo: '/logo-rs.png',
+            favicon: '/favicon.ico',
+            language: 'pt-BR',
+            currency: 'BRL'
+        };
+        res.json({ success: true, data: general });
+    } catch (e: any) {
+        res.status(500).json({ success: false, error: e.message });
+    }
+});
+
+router.put('/v1/admin/settings/general', supabaseAuth, requireRole([ROLES.ADMIN, ROLES.SUPERADMIN]), async (req: Request, res: Response) => {
+    try {
+        const payload = req.body;
+        const success = await updateAppConfig('general_branding_settings', payload);
+        if (!success) throw new Error('Falha ao persistir configurações gerais');
+        res.json({ success: true });
+    } catch (e: any) {
+        res.status(500).json({ success: false, error: e.message });
+    }
+});
+
+router.get('/v1/admin/settings/notifications', supabaseAuth, async (_req: Request, res: Response) => {
+    try {
+        const notifications = await getAppConfig('notification_settings') || {
+            emailEnabled: true,
+            whatsappEnabled: true,
+            pushEnabled: false
+        };
+        res.json({ success: true, data: notifications });
+    } catch (e: any) {
+        res.status(500).json({ success: false, error: e.message });
+    }
+});
+
+router.put('/v1/admin/settings/notifications', supabaseAuth, requireRole([ROLES.ADMIN, ROLES.SUPERADMIN]), async (req: Request, res: Response) => {
+    try {
+        const payload = req.body;
+        const success = await updateAppConfig('notification_settings', payload);
+        if (!success) throw new Error('Falha ao persistir configurações de notificação');
+        res.json({ success: true });
+    } catch (e: any) {
+        res.status(500).json({ success: false, error: e.message });
+    }
+});
 
 export default router;

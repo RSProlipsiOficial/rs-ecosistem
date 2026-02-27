@@ -1,10 +1,12 @@
 import React, { useState, useRef, ChangeEvent } from 'react';
 import { UserCircle, ShieldCheck, Camera, Shield, X, RefreshCw, Lock, Wallet, Loader2, Save, Mail, Phone, MapPin, Upload } from 'lucide-react';
 import { useUser } from './ConsultantLayout';
+import { useBranding } from '../App';
 import { supabase } from './services/supabaseClient';
 
 const Configuracoes: React.FC = () => {
     const { user, updateUser, onSyncProfile } = useUser();
+    const branding = useBranding();
     const [profileTab, setProfileTab] = useState<'identity' | 'avatar' | 'bank' | 'security'>('identity');
     const [isSyncing, setIsSyncing] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
@@ -297,10 +299,15 @@ const Configuracoes: React.FC = () => {
                             <div className="w-24 h-24 rounded-full border-4 border-brand-gold bg-gray-800 flex items-center justify-center overflow-hidden shadow-2xl transition-transform group-hover:scale-105">
                                 {isUploading ? (
                                     <Loader2 className="animate-spin text-brand-gold" size={32} />
-                                ) : profileForm.avatarUrl ? (
-                                    <img src={profileForm.avatarUrl} alt="Profile" className="w-full h-full object-cover" />
                                 ) : (
-                                    <span className="text-brand-gold font-bold text-4xl">{profileForm.name.charAt(0)}</span>
+                                    <img
+                                        src={profileForm.avatarUrl || branding.logo}
+                                        alt="Profile"
+                                        className="w-full h-full object-cover"
+                                        onError={(e) => {
+                                            (e.target as HTMLImageElement).src = branding.logo;
+                                        }}
+                                    />
                                 )}
                             </div>
                             <button className="absolute bottom-0 right-0 bg-brand-gold text-black p-2 rounded-full shadow-lg hover:scale-110 transition-transform">
@@ -496,10 +503,15 @@ const Configuracoes: React.FC = () => {
                                 <div className="w-48 h-48 rounded-full border-8 border-brand-gold bg-gray-800 flex items-center justify-center overflow-hidden shadow-2xl relative group cursor-pointer" onClick={handleAvatarClick}>
                                     {isUploading ? (
                                         <Loader2 className="animate-spin text-brand-gold" size={48} />
-                                    ) : profileForm.avatarUrl ? (
-                                        <img src={profileForm.avatarUrl} alt="Avatar Preview" className="w-full h-full object-cover transition-opacity group-hover:opacity-50" />
                                     ) : (
-                                        <span className="text-brand-gold font-bold text-6xl">{profileForm.name.charAt(0)}</span>
+                                        <img
+                                            src={profileForm.avatarUrl || branding.logo}
+                                            alt="Avatar Preview"
+                                            className="w-full h-full object-cover transition-opacity group-hover:opacity-50"
+                                            onError={(e) => {
+                                                (e.target as HTMLImageElement).src = branding.logo;
+                                            }}
+                                        />
                                     )}
                                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                                         <Camera size={48} className="text-white" />
@@ -508,6 +520,9 @@ const Configuracoes: React.FC = () => {
                                 <button onClick={handleAvatarClick} className="px-8 py-3 bg-brand-dark border border-brand-gold/30 text-brand-gold rounded-xl font-bold hover:bg-brand-gray transition-all">
                                     Mudar Foto de Perfil
                                 </button>
+                                <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest bg-brand-gold/5 px-2 py-1 rounded border border-brand-gold/10">
+                                    ✨ Dica: Use uma imagem quadrada (ex: 500x500px) para melhor ajuste.
+                                </p>
                             </div>
 
                             <div className="border-t border-brand-gold/10 pt-10">

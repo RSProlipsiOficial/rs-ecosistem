@@ -10,7 +10,7 @@ interface ProductQAProps {
 }
 
 const ProductQA: React.FC<ProductQAProps> = ({ productId, questions, onQuestionSubmit, onAnswerSubmit }) => {
-    
+
     const productQuestions = useMemo(() => {
         return questions
             .filter(q => q.productId === productId)
@@ -38,28 +38,28 @@ const ProductQA: React.FC<ProductQAProps> = ({ productId, questions, onQuestionS
     const handlePostReply = (questionId: string) => {
         if (replyText.trim()) {
             onAnswerSubmit(questionId, {
-                author: 'Ana Carolina (Vendedor)', // Mocking seller reply
+                author: 'RS Prólipsi (Vendedor)', // Updated to use brand name
                 text: replyText
             });
             setReplyingTo(null);
             setReplyText('');
         }
     };
-    
+
     return (
         <div>
             <h2 className="text-2xl font-bold font-display text-white mb-4">Perguntas e Respostas</h2>
-            
+
             <form onSubmit={handleAskQuestion} className="bg-dark-800/50 p-4 rounded-lg mb-6 space-y-3">
-                <textarea 
-                    value={newQuestionText} 
+                <textarea
+                    value={newQuestionText}
                     onChange={e => setNewQuestionText(e.target.value)}
-                    placeholder="Faça sua pergunta sobre o produto..." 
+                    placeholder="Faça sua pergunta sobre o produto..."
                     rows={3}
                     className="w-full bg-dark-800 border-2 border-dark-700 rounded-md py-2 px-3 text-white"
                 />
                 <div className="flex items-center gap-2">
-                    <input 
+                    <input
                         value={newQuestionAuthor}
                         onChange={e => setNewQuestionAuthor(e.target.value)}
                         placeholder="Seu nome"

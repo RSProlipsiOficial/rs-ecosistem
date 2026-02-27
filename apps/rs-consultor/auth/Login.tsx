@@ -3,6 +3,7 @@ import React, { useState, FormEvent, useContext } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { UserContext } from '../consultant/ConsultantLayout';
 import * as icons from '../components/icons';
+import { dashboardApi } from '../consultant/services/dashboardApi';
 
 const { IconLock, IconUser, IconEye, IconEyeOff } = icons;
 
@@ -12,11 +13,32 @@ const Login: React.FC = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [branding, setBranding] = useState<{ logo: string | null; companyName: string }>({
+        logo: '/logo-rs.png',
+        companyName: 'RS Prólipsi'
+    });
     const context = useContext(UserContext);
     const navigate = useNavigate();
     const location = useLocation();
 
     const from = location.state?.from?.pathname || '/consultant/dashboard';
+
+    React.useEffect(() => {
+        const fetchBranding = async () => {
+            try {
+                const res = await dashboardApi.getGeneralSettings();
+                if (res.success && res.data) {
+                    setBranding({
+                        logo: res.data.logo || '/logo-rs.png',
+                        companyName: res.data.companyName || 'RS Prólipsi'
+                    });
+                }
+            } catch (err) {
+                console.error("[Login] Failed to fetch branding:", err);
+            }
+        };
+        fetchBranding();
+    }, []);
 
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
@@ -46,7 +68,25 @@ const Login: React.FC = () => {
 
             <div className="w-full max-w-md relative z-10 animate-fade-in">
                 <div className="text-center mb-10">
-                    <h1 className="text-6xl font-black text-gradient-gold tracking-tighter">RS Prólipsi</h1>
+                    {branding.logo ? (
+                        <img
+                            src={branding.logo}
+                            alt={branding.companyName}
+                            className="h-20 mx-auto mb-4 object-contain animate-fade-in"
+                            onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                                const parent = e.currentTarget.parentElement;
+                                if (parent && !parent.querySelector('.dynamic-title')) {
+                                    const title = document.createElement('h1');
+                                    title.className = 'text-6xl font-black text-gradient-gold tracking-tighter dynamic-title';
+                                    title.innerText = branding.companyName;
+                                    parent.prepend(title);
+                                }
+                            }}
+                        />
+                    ) : (
+                        <h1 className="text-6xl font-black text-gradient-gold tracking-tighter">{branding.companyName}</h1>
+                    )}
                     <p className="text-text-muted mt-3 uppercase tracking-[0.3em] text-[10px] font-bold opacity-70">Escritório do Consultor</p>
                 </div>
 

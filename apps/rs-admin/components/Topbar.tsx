@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MenuIcon, MagnifyingGlassIcon, BellIcon, UsersIcon, CubeIcon, TrophyIcon, WalletIcon, CloseIcon, DocumentTextIcon, CycleIcon, BuildingStorefrontIcon } from './icons';
+import { settingsAPI } from '../src/services/api';
 
 // Cleared mock data
 const mockSearchConsultants: any[] = [];
@@ -112,51 +113,78 @@ const Topbar: React.FC<TopbarProps> = ({ toggleSidebar, setActiveView }) => {
                     const userId = session.user.id;
                     const { supabase } = await import('../src/services/supabase');
 
-                    // 2. Try fetching from user_profiles
-                    const { data: profile } = await supabase
-                        .from('user_profiles')
-                        .select('*')
-                        .eq('user_id', userId)
-                        .maybeSingle();
+                    // 2. Fetch both Profile and Global Branding
+                    const [profileRes, brandingRes] = await Promise.all([
+                        supabase.from('user_profiles').select('*').eq('user_id', userId).maybeSingle(),
+                        settingsAPI.getGeneralSettings()
+                    ]);
 
-                    const OFFICIAL_LOGO_RS = 'https://raw.githubusercontent.com/RS-Prolipsi/assets/main/logo_rs_gold.png';
+                    const profile = profileRes.data;
+                    // [RS-MAPPING] Branding is nested under .data.data in axios client
+                    const general = (brandingRes?.data?.data || brandingRes?.data) as any;
+
+                    const DEFAULT_LOGO_RS = '/logo-rs.png';
                     const BANNED_PATTERNS = ['0aa67016', 'user-attachments/assets', 'google', 'ai-studio'];
 
-                    // 3. Fallback/Logic similar to App.tsx logic
-                    let avatarUrl = profile?.avatar_url || OFFICIAL_LOGO_RS;
-                    const isBanned = BANNED_PATTERNS.some(p => avatarUrl?.includes(p));
+                    // 3. Logic for Avatar (Unified for all including Master)
+                    let avatarUrl = profile?.avatar_url || general?.avatar || general?.logo || DEFAULT_LOGO_RS;
+                    const isBanned = BANNED_PATTERNS.some(p => typeof avatarUrl === 'string' && avatarUrl?.includes(p));
                     const isMaster = session.user.email?.includes('rsprolipsi') || profile?.slug === 'rsprolipsi';
 
-                    if (isBanned || isMaster || !profile?.avatar_url) {
-                        avatarUrl = OFFICIAL_LOGO_RS;
+                    if (isBanned) {
+                        avatarUrl = general?.avatar || general?.logo || DEFAULT_LOGO_RS;
                     }
 
                     if (profile) {
                         const loginId = profile.slug || profile.id_consultor || profile.consultant_id;
                         setUserProfile({
-                            name: isMaster ? 'SEDE RS PRÓLIPSI' : (profile.nome_completo || profile.name || 'Administrador'),
+                            name: isMaster ? (general?.companyName || 'SEDE RS PRÓLIPSI') : (profile.nome_completo || profile.name || 'Administrador'),
                             avatarUrl: avatarUrl,
                             loginId: loginId && loginId.length < 20 ? loginId : null,
                             shortId: userId.split('-')[0].toUpperCase(),
-                            role: 'Administrador' // Or fetch role
+                            role: 'Administrador'
                         });
                     } else {
-                        // If no profile, use session data with official logo fallback
                         setUserProfile({
                             name: session.user.email || 'Administrador',
-                            avatarUrl: OFFICIAL_LOGO_RS,
+                            avatarUrl: general?.avatar || general?.logo || DEFAULT_LOGO_RS,
                             loginId: null,
                             shortId: userId.split('-')[0].toUpperCase(),
                             role: 'Administrador'
                         });
                     }
+
+                    // [RS-FAVICON] Update favicon dynamically
+                    if (general?.favicon) {
+                        const link = document.querySelector("link[rel*='icon']") as HTMLLinkElement;
+                        if (link) link.href = general.favicon;
+                    }
                 }
-            } catch (error) {
-                console.error("Error fetching admin profile:", error);
+            } catch (err) {
+                console.error("Error fetching Topbar profile:", err);
             }
         };
 
         fetchUserProfile();
+
+        // Listen for updates from SettingsPage
+        const handleSettingsUpdate = () => fetchUserProfile();
+        window.addEventListener('rs-admin:settings-updated', handleSettingsUpdate);
+
+        // Listen for profile updates
+        window.addEventListener('rs-profile-updated', fetchUserProfile);
+
+        // Listen for cross-tab branding updates
+        const handleStorageChange = (e: StorageEvent) => {
+            if (e.key === 'rs-branding-update') fetchUserProfile();
+        };
+        window.addEventListener('storage', handleStorageChange);
+
+        return () => {
+            window.removeEventListener('rs-admin:settings-updated', handleSettingsUpdate);
+            window.removeEventListener('rs-profile-updated', fetchUserProfile);
+            window.removeEventListener('storage', handleStorageChange);
+        };
     }, []);
 
     return (

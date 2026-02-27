@@ -36,13 +36,14 @@ const Accordion: React.FC<{ title: string; children: React.ReactNode; defaultOpe
 
 const AddEditProduct: React.FC<AddEditProductProps> = ({ product, collections, onSave, onCancel }) => {
     const isEditing = !!product?.id || (product?.id === '' && !!product.name);
-    
+
     const [formData, setFormData] = useState<Partial<Product>>({
         name: '',
         shortDescription: '',
         description: '',
         images: [],
         price: 0,
+        memberPrice: 0,
         compareAtPrice: undefined,
         costPerItem: undefined,
         status: 'Ativo',
@@ -67,7 +68,7 @@ const AddEditProduct: React.FC<AddEditProductProps> = ({ product, collections, o
     });
     const [isGenerating, setIsGenerating] = useState(false);
     const [isGeneratingSeo, setIsGeneratingSeo] = useState(false);
-    
+
     const formRef = useRef<HTMLFormElement>(null);
     const [newOptionValues, setNewOptionValues] = useState<Record<number, string>>({});
 
@@ -75,7 +76,7 @@ const AddEditProduct: React.FC<AddEditProductProps> = ({ product, collections, o
 
     useEffect(() => {
         if (!hasVariants) {
-            if (formData.variants?.length) setFormData(prev => ({...prev, variants: []}));
+            if (formData.variants?.length) setFormData(prev => ({ ...prev, variants: [] }));
             return;
         }
 
@@ -84,27 +85,27 @@ const AddEditProduct: React.FC<AddEditProductProps> = ({ product, collections, o
 
         if (options.length === 0 || options.every(o => o.values.length === 0)) {
             if (oldVariants.length > 0) {
-                 setFormData(prev => ({ ...prev, variants: [] }));
+                setFormData(prev => ({ ...prev, variants: [] }));
             }
             return;
         }
 
         const valueArrays = options.map(opt => opt.values.length > 0 ? opt.values : ['']);
-        
+
         const cartesian = <T,>(...a: T[][]): T[][] => a.reduce((acc, val) => acc.flatMap(d => val.map(e => [...d, e])), [[]] as T[][]);
         const combinations = cartesian(...valueArrays);
 
         const newVariants = combinations.map((combo, index) => {
             const comboArray = Array.isArray(combo) ? combo : [combo];
             const optionsObject = options.reduce((obj, opt, i) => {
-                if(comboArray[i]) obj[opt.name] = comboArray[i] as string;
+                if (comboArray[i]) obj[opt.name] = comboArray[i] as string;
                 return obj;
             }, {} as { [key: string]: string });
 
             const existingVariant = oldVariants.find(v => {
                 return options.every(opt => v.options[opt.name] === optionsObject[opt.name]);
             });
-            
+
             return {
                 id: existingVariant?.id || `var-${Date.now()}-${index}`,
                 options: optionsObject,
@@ -113,12 +114,22 @@ const AddEditProduct: React.FC<AddEditProductProps> = ({ product, collections, o
                 sku: existingVariant?.sku ?? '',
             };
         });
-        
+
         if (JSON.stringify(newVariants) !== JSON.stringify(oldVariants)) {
             setFormData(prev => ({ ...prev, variants: newVariants }));
         }
 
     }, [formData.options, hasVariants, formData.price]); // Added formData.price to dependencies for variant price initialization
+
+    // Auto-calculate Retail Price (price) based on Consultant Price (memberPrice) x2
+    useEffect(() => {
+        if (formData.memberPrice !== undefined) {
+            const calculatedPrice = (formData.memberPrice || 0) * 2;
+            if (formData.price !== calculatedPrice) {
+                setFormData(prev => ({ ...prev, price: calculatedPrice }));
+            }
+        }
+    }, [formData.memberPrice]);
 
     const handleHasVariantsToggle = (checked: boolean) => {
         if (checked) {
@@ -134,10 +145,10 @@ const AddEditProduct: React.FC<AddEditProductProps> = ({ product, collections, o
     const handleAddOption = () => {
         setFormData(prev => ({
             ...prev,
-            options: [...(prev.options || []), { id: `opt-${Date.now()}`, name: `Opção ${ (prev.options?.length || 0) + 1 }`, values: [] }]
+            options: [...(prev.options || []), { id: `opt-${Date.now()}`, name: `Opção ${(prev.options?.length || 0) + 1}`, values: [] }]
         }));
     };
-    
+
     const handleRemoveOption = (optionIndex: number) => {
         setFormData(prev => ({
             ...prev,
@@ -164,7 +175,7 @@ const AddEditProduct: React.FC<AddEditProductProps> = ({ product, collections, o
             return { ...prev, options: newOptions, variants: newVariants };
         });
     };
-    
+
     const handleAddOptionValue = (optionIndex: number) => {
         const newValue = newOptionValues[optionIndex]?.trim();
         if (!newValue) return;
@@ -191,7 +202,7 @@ const AddEditProduct: React.FC<AddEditProductProps> = ({ product, collections, o
             return prev;
         });
     };
-    
+
     const handleNewOptionValueChange = (index: number, value: string) => {
         setNewOptionValues(prev => ({ ...prev, [index]: value }));
     };
@@ -199,7 +210,7 @@ const AddEditProduct: React.FC<AddEditProductProps> = ({ product, collections, o
     const handleVariantChange = (variantId: string, field: 'price' | 'inventory' | 'sku', value: string | number) => {
         setFormData(prev => ({
             ...prev,
-            variants: (prev.variants || []).map(v => 
+            variants: (prev.variants || []).map(v =>
                 v.id === variantId ? { ...v, [field]: (field === 'price' || field === 'inventory') ? Number(value) : value } : v
             )
         }));
@@ -210,21 +221,21 @@ const AddEditProduct: React.FC<AddEditProductProps> = ({ product, collections, o
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
     };
-    
+
     const handleToggleChange = (name: keyof Product, checked: boolean) => {
         setFormData(prev => ({ ...prev, [name]: checked }));
     };
 
     const handleDescriptionChange = (value: string) => {
-        setFormData(prev => ({...prev, description: value}));
+        setFormData(prev => ({ ...prev, description: value }));
     };
-    
+
     const handleImageUpload = (url: string) => {
-        setFormData(prev => ({ ...prev, images: [...(prev.images || []), url]}));
+        setFormData(prev => ({ ...prev, images: [...(prev.images || []), url] }));
     };
-    
+
     const handleImageRemove = (urlToRemove: string) => {
-        setFormData(prev => ({...prev, images: prev.images?.filter(url => url !== urlToRemove)}));
+        setFormData(prev => ({ ...prev, images: prev.images?.filter(url => url !== urlToRemove) }));
     };
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -249,10 +260,10 @@ const AddEditProduct: React.FC<AddEditProductProps> = ({ product, collections, o
         try {
             const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
             const prompt = `Você é um copywriter especialista em e-commerce para produtos de luxo. Com base no nome do produto "${formData.name}" e na descrição curta "${formData.shortDescription}", escreva uma descrição completa, atraente e sofisticada para o produto. Use formatação rica em HTML como títulos (h2), listas de marcadores (ul/li) e negrito (strong) para destacar os principais recursos e benefícios. O tone deve ser elegante e persuasivo, focado em qualidade, design e exclusividade.`;
-            
+
             const response = await ai.models.generateContent({
-              model: 'gemini-2.5-flash',
-              contents: prompt,
+                model: 'gemini-2.5-flash',
+                contents: prompt,
             });
 
             handleDescriptionChange(response.text ?? '');
@@ -272,31 +283,31 @@ const AddEditProduct: React.FC<AddEditProductProps> = ({ product, collections, o
         setIsGeneratingSeo(true);
         try {
             const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
-            
+
             const response = await ai.models.generateContent({
-              model: 'gemini-2.5-flash',
-              contents: `Baseado no nome do produto "${formData.name}" e na descrição curta "${formData.shortDescription}", gere um Título SEO e uma Meta Descrição SEO otimizados para mecanismos de busca para um e-commerce de luxo.`,
-              config: {
-                responseMimeType: "application/json",
-                responseSchema: {
-                    type: Type.OBJECT,
-                    properties: {
-                        seoTitle: {
-                            type: Type.STRING,
-                            description: "Um título otimizado para SEO com no máximo 60 caracteres."
+                model: 'gemini-2.5-flash',
+                contents: `Baseado no nome do produto "${formData.name}" e na descrição curta "${formData.shortDescription}", gere um Título SEO e uma Meta Descrição SEO otimizados para mecanismos de busca para um e-commerce de luxo.`,
+                config: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: Type.OBJECT,
+                        properties: {
+                            seoTitle: {
+                                type: Type.STRING,
+                                description: "Um título otimizado para SEO com no máximo 60 caracteres."
+                            },
+                            seoDescription: {
+                                type: Type.STRING,
+                                description: "Uma meta descrição otimizada para SEO com no máximo 160 caracteres."
+                            }
                         },
-                        seoDescription: {
-                            type: Type.STRING,
-                            description: "Uma meta descrição otimizada para SEO com no máximo 160 caracteres."
-                        }
+                        required: ["seoTitle", "seoDescription"]
                     },
-                    required: ["seoTitle", "seoDescription"]
                 },
-              },
             });
-    
+
             const responseJson = JSON.parse(response.text ?? '{}');
-            
+
             if (responseJson.seoTitle && responseJson.seoDescription) {
                 setFormData(prev => ({
                     ...prev,
@@ -306,7 +317,7 @@ const AddEditProduct: React.FC<AddEditProductProps> = ({ product, collections, o
             } else {
                 throw new Error("Resposta da IA em formato inválido.");
             }
-    
+
         } catch (error) {
             console.error("AI SEO Generation Error:", error);
             alert("Ocorreu um erro ao gerar o conteúdo de SEO. Tente novamente.");
@@ -314,11 +325,11 @@ const AddEditProduct: React.FC<AddEditProductProps> = ({ product, collections, o
             setIsGeneratingSeo(false);
         }
     };
-    
+
     return (
         <div className="space-y-6">
             <div className="pb-6 mb-6 flex justify-between items-center border-b border-[rgb(var(--color-brand-gray-light))]">
-                 <h1 className="text-2xl font-bold text-[rgb(var(--color-brand-text-light))]">{isEditing ? 'Editar Produto' : 'Adicionar Produto'}</h1>
+                <h1 className="text-2xl font-bold text-[rgb(var(--color-brand-text-light))]">{isEditing ? 'Editar Produto' : 'Adicionar Produto'}</h1>
                 <div className="flex items-center gap-4">
                     <button type="button" onClick={onCancel} className="text-sm font-semibold bg-[rgb(var(--color-brand-gray))] text-[rgb(var(--color-brand-text-light))] py-2 px-4 rounded-md hover:bg-[rgb(var(--color-brand-gray-light))] transition-colors">
                         Descartar
@@ -333,7 +344,7 @@ const AddEditProduct: React.FC<AddEditProductProps> = ({ product, collections, o
                 <div className="lg:col-span-2 space-y-8">
                     {/* Main Details */}
                     <div className="bg-[rgb(var(--color-brand-dark))] border border-[rgb(var(--color-brand-gray-light))] rounded-lg p-6 space-y-4">
-                         <div>
+                        <div>
                             <label htmlFor="name" className="block text-sm font-medium text-[rgb(var(--color-brand-text-light))] mb-2">Nome do Produto</label>
                             <input type="text" name="name" id="name" value={formData.name} onChange={handleInputChange} className="w-full bg-[rgb(var(--color-brand-gray))] border-2 border-[rgb(var(--color-brand-gray-light))] rounded-md py-2 px-3 text-[rgb(var(--color-brand-text-light))]" />
                         </div>
@@ -353,38 +364,75 @@ const AddEditProduct: React.FC<AddEditProductProps> = ({ product, collections, o
                         </div>
                     </div>
 
-                    {/* Images */}
+                    {/* Media - Images, Videos & GIFs */}
                     <div className="bg-[rgb(var(--color-brand-dark))] border border-[rgb(var(--color-brand-gray-light))] rounded-lg p-6">
-                        <h3 className="text-lg font-semibold text-[rgb(var(--color-brand-text-light))] mb-4">Mídia</h3>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                            {formData.images?.map(img => (
-                                <div key={img} className="relative group aspect-square">
-                                    <img src={img} alt="preview" className="w-full h-full object-cover rounded-md"/>
-                                    <div className="absolute inset-0 bg-[rgb(var(--color-brand-dark))]/[.60] opacity-0 group-hover:opacity-100 flex items-center justify-center">
-                                        <button type="button" onClick={() => handleImageRemove(img)} className="p-2 bg-[rgb(var(--color-error))] rounded-full"><TrashIcon className="w-5 h-5"/></button>
-                                    </div>
-                                </div>
-                            ))}
-                            <ImageUploader currentImage="" onImageUpload={handleImageUpload} placeholderText="Adicionar imagem" aspectRatio="square" />
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-lg font-semibold text-[rgb(var(--color-brand-text-light))]">Mídia</h3>
+                            <span className="text-xs text-[rgb(var(--color-brand-text-dim))]">{formData.images?.length || 0}/10 mídias</span>
                         </div>
+                        <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2">
+                            {formData.images?.map(media => {
+                                const isVideo = media.match(/\.(mp4|webm|mov|avi)$/i) || media.startsWith('blob:') && media.includes('video');
+                                const isGif = media.match(/\.gif$/i);
+                                return (
+                                    <div key={media} className="relative group aspect-square w-full max-w-[80px]">
+                                        {isVideo ? (
+                                            <>
+                                                <video src={media} className="w-full h-full object-cover rounded-md" muted />
+                                                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                                    <div className="bg-black/60 rounded-full p-1.5">
+                                                        <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" /></svg>
+                                                    </div>
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <img src={media} alt="preview" className={`w-full h-full object-cover rounded-md ${isGif ? 'ring-2 ring-cyan-400' : ''}`} />
+                                        )}
+                                        {isGif && (
+                                            <span className="absolute top-1 left-1 bg-cyan-500 text-black text-[9px] font-bold px-1.5 py-0.5 rounded">GIF</span>
+                                        )}
+                                        <div className="absolute inset-0 bg-[rgb(var(--color-brand-dark))]/[.60] opacity-0 group-hover:opacity-100 flex items-center justify-center rounded-md transition-opacity">
+                                            <button type="button" onClick={() => handleImageRemove(media)} className="p-1.5 bg-[rgb(var(--color-error))] rounded-full">
+                                                <TrashIcon className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                            {(formData.images?.length || 0) < 10 && (
+                                <ImageUploader currentImage="" onImageUpload={handleImageUpload} placeholderText="Adicionar" aspectRatio="square" acceptMedia />
+                            )}
+                        </div>
+                        <p className="text-xs text-[rgb(var(--color-brand-text-dim))] mt-3">Formatos: JPG, PNG, WebP, GIF, MP4, WebM (máx. 10 arquivos, 30s para vídeos)</p>
                     </div>
 
                     {/* Pricing */}
                     <Accordion title="Preços" defaultOpen>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label htmlFor="price" className="block text-sm font-medium text-[rgb(var(--color-brand-text-light))] mb-2">Preço</label>
-                                <input type="number" name="price" id="price" value={formData.price} onChange={handleInputChange} className="w-full bg-[rgb(var(--color-brand-gray))] border-2 border-[rgb(var(--color-brand-gray-light))] rounded-md py-2 px-3 text-[rgb(var(--color-brand-text-light))]" step="0.01" min="0" />
+                                <label htmlFor="memberPrice" className="block text-sm font-medium text-[rgb(var(--color-brand-text-light))] mb-2">Preço Consultor (Base)</label>
+                                <div className="relative">
+                                    <span className="absolute left-3 top-2 text-[rgb(var(--color-brand-text-dim))]">R$</span>
+                                    <input type="number" name="memberPrice" id="memberPrice" value={formData.memberPrice} onChange={handleInputChange} className="w-full bg-[rgb(var(--color-brand-gray))] border-2 border-[rgb(var(--color-brand-gold))]/[.30] rounded-md py-2 pl-9 pr-3 text-[rgb(var(--color-brand-text-light))] font-bold" step="0.01" min="0" />
+                                </div>
+                                <p className="text-xs text-[rgb(var(--color-brand-gold))] mt-1">Este é o valor base. O preço de varejo será R$ {((formData.memberPrice || 0) * 2).toFixed(2)}.</p>
                             </div>
                             <div>
-                                <label htmlFor="compareAtPrice" className="block text-sm font-medium text-[rgb(var(--color-brand-text-light))] mb-2">Preço de Comparação (opcional)</label>
+                                <label htmlFor="price" className="block text-sm font-medium text-[rgb(var(--color-brand-text-light))] mb-2">Preço Varejo (Loja)</label>
+                                <div className="relative">
+                                    <span className="absolute left-3 top-2 text-[rgb(var(--color-brand-text-dim))]">R$</span>
+                                    <input type="number" name="price" id="price" value={formData.price} readOnly className="w-full bg-[rgb(var(--color-brand-gray-light))]/[.10] border-2 border-[rgb(var(--color-brand-gray-light))] rounded-md py-2 pl-9 pr-3 text-[rgb(var(--color-brand-text-light))] opacity-75 cursor-not-allowed" step="0.01" min="0" />
+                                </div>
+                                <p className="text-xs text-[rgb(var(--color-brand-text-dim))] mt-1">Calculado automaticamente (2x o preço consultor).</p>
+                            </div>
+                            <div>
+                                <label htmlFor="compareAtPrice" className="block text-sm font-medium text-[rgb(var(--color-brand-text-light))] mb-2">Preço de Comparação (De:)</label>
                                 <input type="number" name="compareAtPrice" id="compareAtPrice" value={formData.compareAtPrice} onChange={handleInputChange} className="w-full bg-[rgb(var(--color-brand-gray))] border-2 border-[rgb(var(--color-brand-gray-light))] rounded-md py-2 px-3 text-[rgb(var(--color-brand-text-light))]" step="0.01" min="0" />
-                                <p className="text-xs text-[rgb(var(--color-brand-text-dim))] mt-1">Defina um preço mais alto para mostrar um desconto.</p>
                             </div>
                             <div>
-                                <label htmlFor="costPerItem" className="block text-sm font-medium text-[rgb(var(--color-brand-text-light))] mb-2">Custo por Item (opcional)</label>
+                                <label htmlFor="costPerItem" className="block text-sm font-medium text-[rgb(var(--color-brand-text-light))] mb-2">Custo de Produção/Compra</label>
                                 <input type="number" name="costPerItem" id="costPerItem" value={formData.costPerItem} onChange={handleInputChange} className="w-full bg-[rgb(var(--color-brand-gray))] border-2 border-[rgb(var(--color-brand-gray-light))] rounded-md py-2 px-3 text-[rgb(var(--color-brand-text-light))]" step="0.01" min="0" />
-                                <p className="text-xs text-[rgb(var(--color-brand-text-dim))] mt-1">Exibido apenas para você. Para calcular margem.</p>
+                                <p className="text-xs text-[rgb(var(--color-brand-text-dim))] mt-1">Apenas para cálculo interno de lucro.</p>
                             </div>
                         </div>
                     </Accordion>
@@ -427,7 +475,7 @@ const AddEditProduct: React.FC<AddEditProductProps> = ({ product, collections, o
                                                 <button type="button" onClick={() => handleRemoveOption(index)} className="p-1 text-[rgb(var(--color-brand-text-dim))] hover:text-[rgb(var(--color-error))]"><TrashIcon className="w-4 h-4" /></button>
                                             </div>
                                             <input type="text" value={option.name} onChange={e => handleOptionNameChange(index, e.target.value)} className="w-full bg-[rgb(var(--color-brand-gray))] border-2 border-[rgb(var(--color-brand-gray-light))] rounded-md py-1 px-2 text-[rgb(var(--color-brand-text-light))] text-sm mb-3" />
-                                            
+
                                             <label className="text-sm font-medium text-[rgb(var(--color-brand-text-light))]">Valores da Opção</label>
                                             <div className="flex flex-wrap gap-2 my-2 min-h-[2.25rem]">
                                                 {option.values.map(val => (
@@ -471,13 +519,13 @@ const AddEditProduct: React.FC<AddEditProductProps> = ({ product, collections, o
                                                                     <td key={key} className="px-4 py-2">{value}</td>
                                                                 ))}
                                                                 <td className="px-4 py-2">
-                                                                    <input type="number" value={variant.price} onChange={e => handleVariantChange(variant.id, 'price', e.target.value)} className="w-24 bg-[rgb(var(--color-brand-gray))] border-2 border-[rgb(var(--color-brand-gray-light))] rounded-md py-1 px-2 text-[rgb(var(--color-brand-text-light))] text-sm"/>
+                                                                    <input type="number" value={variant.price} onChange={e => handleVariantChange(variant.id, 'price', e.target.value)} className="w-24 bg-[rgb(var(--color-brand-gray))] border-2 border-[rgb(var(--color-brand-gray-light))] rounded-md py-1 px-2 text-[rgb(var(--color-brand-text-light))] text-sm" />
                                                                 </td>
                                                                 <td className="px-4 py-2">
-                                                                    <input type="number" value={variant.inventory} onChange={e => handleVariantChange(variant.id, 'inventory', e.target.value)} className="w-24 bg-[rgb(var(--color-brand-gray))] border-2 border-[rgb(var(--color-brand-gray-light))] rounded-md py-1 px-2 text-[rgb(var(--color-brand-text-light))] text-sm"/>
+                                                                    <input type="number" value={variant.inventory} onChange={e => handleVariantChange(variant.id, 'inventory', e.target.value)} className="w-24 bg-[rgb(var(--color-brand-gray))] border-2 border-[rgb(var(--color-brand-gray-light))] rounded-md py-1 px-2 text-[rgb(var(--color-brand-text-light))] text-sm" />
                                                                 </td>
                                                                 <td className="px-4 py-2">
-                                                                    <input type="text" value={variant.sku} onChange={e => handleVariantChange(variant.id, 'sku', e.target.value)} className="w-24 bg-[rgb(var(--color-brand-gray))] border-2 border-[rgb(var(--color-brand-gray-light))] rounded-md py-1 px-2 text-[rgb(var(--color-brand-text-light))] text-sm"/>
+                                                                    <input type="text" value={variant.sku} onChange={e => handleVariantChange(variant.id, 'sku', e.target.value)} className="w-24 bg-[rgb(var(--color-brand-gray))] border-2 border-[rgb(var(--color-brand-gray-light))] rounded-md py-1 px-2 text-[rgb(var(--color-brand-text-light))] text-sm" />
                                                                 </td>
                                                             </tr>
                                                         ))}
@@ -562,7 +610,7 @@ const AddEditProduct: React.FC<AddEditProductProps> = ({ product, collections, o
                     {/* SEO */}
                     <Accordion title="SEO (Otimização para Busca)">
                         <div className="space-y-4">
-                             <button type="button" onClick={handleGenerateSeo} disabled={isGeneratingSeo} className="w-full flex items-center justify-center gap-1.5 text-sm font-semibold bg-[rgb(var(--color-brand-gold))]/[.10] text-[rgb(var(--color-brand-gold))] py-2 px-3 rounded-md hover:bg-[rgb(var(--color-brand-gold))]/[.20] transition-colors disabled:opacity-50">
+                            <button type="button" onClick={handleGenerateSeo} disabled={isGeneratingSeo} className="w-full flex items-center justify-center gap-1.5 text-sm font-semibold bg-[rgb(var(--color-brand-gold))]/[.10] text-[rgb(var(--color-brand-gold))] py-2 px-3 rounded-md hover:bg-[rgb(var(--color-brand-gold))]/[.20] transition-colors disabled:opacity-50">
                                 {isGeneratingSeo ? <SpinnerIcon className="w-4 h-4" /> : <BotIcon className="w-4 h-4" />}
                                 {isGeneratingSeo ? 'Gerando...' : 'Gerar SEO com IA'}
                             </button>

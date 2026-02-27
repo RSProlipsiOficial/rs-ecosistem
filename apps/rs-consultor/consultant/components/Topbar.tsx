@@ -3,6 +3,7 @@ import { NavLink } from 'react-router-dom';
 import type { User, SystemMessage } from '../../types';
 import { IconMenu, IconSettings, IconLogOut, IconBell, IconStore } from '../../components/icons';
 import { useUser } from '../ConsultantLayout';
+import { useBranding } from '../../App';
 import Modal from '../../components/Modal';
 
 interface TopbarProps {
@@ -14,6 +15,7 @@ interface TopbarProps {
 
 const Topbar: React.FC<TopbarProps> = ({ user, onMenuClick, onToggleCollapse }) => {
   const { messages, markMessageAsRead, logout } = useUser();
+  const branding = useBranding();
   const [isProfileMenuOpen, setProfileMenuOpen] = useState(false);
   const [isNotificationsOpen, setNotificationsOpen] = useState(false);
   const [selectedNotification, setSelectedNotification] = useState<SystemMessage | null>(null);
@@ -74,12 +76,17 @@ const Topbar: React.FC<TopbarProps> = ({ user, onMenuClick, onToggleCollapse }) 
         </div>
 
         {/* Center: Main App Logo */}
-        <div className="absolute left-1/2 -translate-x-1/2">
-          <svg aria-label="RS Prólipsi Logo" role="img" height="28" viewBox="0 0 250 40" xmlns="http://www.w3.org/2000/svg" className="text-brand-gold">
-            <text x="0" y="35" fontFamily="Inter, sans-serif" fontSize="38" fontWeight="800" fill="currentColor" letterSpacing="-2">
-              RS Prólipsi
-            </text>
-          </svg>
+        <div className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center h-full">
+          {branding.logo ? (
+            <img
+              src={branding.logo}
+              alt={branding.companyName}
+              className="h-8 w-auto object-contain"
+              onError={(e) => { (e.target as HTMLImageElement).src = '/logo-rs.png'; }}
+            />
+          ) : (
+            <span className="text-brand-gold font-bold text-xl">{branding.companyName}</span>
+          )}
         </div>
 
         {/* Right: User Menu & Notifications */}
@@ -128,19 +135,22 @@ const Topbar: React.FC<TopbarProps> = ({ user, onMenuClick, onToggleCollapse }) 
               <div className="hidden sm:flex flex-col items-end">
                 <span className="font-semibold text-brand-text-light text-sm leading-tight">{user.name}</span>
                 <div className="flex items-center gap-1.5 mt-0.5">
-                  {/* Exibe Login se existir e não for um UUID longo */}
-                  {user.idConsultor && user.idConsultor.length < 20 && user.idConsultor !== 'RS-PRO-001' && (
-                    <span className="text-[9px] font-black text-brand-gold uppercase tracking-widest bg-brand-gold/10 px-1.5 py-0.5 rounded border border-brand-gold/20">
-                      {user.idConsultor}
-                    </span>
-                  )}
-                  {/* Exibe sempre o ID curto (UID) */}
+                  <span className="text-[9px] font-black text-brand-gold uppercase tracking-widest bg-brand-gold/10 px-1.5 py-0.5 rounded border border-brand-gold/20">
+                    {user.idConsultor || '---'}
+                  </span>
                   <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest bg-gray-800 px-1.5 py-0.5 rounded border border-gray-700">
                     #{user.id ? user.id.split('-')[0].toUpperCase() : '---'}
                   </span>
                 </div>
               </div>
-              <img src={user.avatarUrl} alt={user.name} className="h-9 w-9 rounded-full border-2 border-brand-gold/50 object-cover" />
+              <img
+                src={user.avatarUrl || '/logo-rs.png'}
+                alt={user.name}
+                className="h-9 w-9 rounded-full border-2 border-brand-gold/50 object-cover"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = '/logo-rs.png';
+                }}
+              />
             </button>
             {isProfileMenuOpen && (
               <div className="absolute right-0 mt-2 w-56 bg-brand-gray border border-brand-gray-light rounded-lg shadow-2xl z-20 py-1 animate-fade-in-down">

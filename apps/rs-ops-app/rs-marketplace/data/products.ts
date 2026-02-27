@@ -3,189 +3,210 @@ import { Product } from '../types';
 export const products: Product[] = [
   {
     id: '1',
-    name: 'Relógio de Pulso Clássico de Couro',
-    seller: 'Ana Carolina',
-    price: 1250.00,
-    compareAtPrice: 1500.00,
+    name: 'AlphaLipsi',
+    seller: 'RS Prólipsi',
+    price: 120.00,
+    memberPrice: 60.00,
     currency: 'BRL',
-    shortDescription: 'Um relógio atemporal que combina design clássico com funcionalidade moderna. Perfeito para qualquer ocasião.',
+    shortDescription: 'Controle de Peso e Metabolismo Acelerado com o Poder da Natureza.',
     description: `
-      <h2>Design Atemporal, Qualidade Inquestionável</h2>
-      <p>Este relógio é mais do que um simples acessório; é uma declaração de estilo. Com sua pulseira de couro genuíno e caixa de aço inoxidável polido, ele exala sofisticação.</p>
+      <h2>Transforme Seu Corpo com o Poder da Natureza</h2>
+      <p>Acelere seu metabolismo, queime gordura de forma natural e conquiste o corpo que você sempre desejou com AlphaLipsi. Resultados cientificamente comprovados.</p>
       <ul>
-        <li><strong>Movimento:</strong> Quartzo Suíço de alta precisão.</li>
-        <li><strong>Material:</strong> Aço inoxidável 316L e couro legítimo.</li>
-        <li><strong>Resistência à água:</strong> 5 ATM (adequado para banho, não para mergulho).</li>
-        <li><strong>Vidro:</strong> Cristal de safira resistente a arranhões.</li>
+        <li><strong>Cafeína Anidra:</strong> Acelera o metabolismo e aumenta a queima de gordura em até 30%.</li>
+        <li><strong>Chá Verde (EGCG):</strong> Potente antioxidante que ativa a termogênese natural do corpo.</li>
+        <li><strong>L-Carnitina:</strong> Transforma gordura armazenada em energia utilizável.</li>
+        <li><strong>Picolinato de Cromo:</strong> Reduz a compulsão por doces e controla o apetite.</li>
       </ul>
-      <blockquote>"O tempo é o que mais queremos, mas o que usamos de pior maneira." - William Penn. Use o seu com sabedoria e estilo.</blockquote>
-      <p>Seja para uma reunião de negócios ou um evento social, este relógio complementará seu visual com um toque de elegância discreta.</p>
     `,
-    images: [
-      'https://picsum.photos/seed/watch1/600/600',
-      'https://picsum.photos/seed/watch2/600/600',
-      'https://picsum.photos/seed/watch3/600/600',
-      'https://picsum.photos/seed/watch4/600/600',
-    ],
-    rating: 4.8,
-    reviewCount: 72,
-    collectionId: 'col-1',
+    images: ['https://images.unsplash.com/photo-1584017945666-674c2464a75b?auto=format&fit=crop&q=80&w=800'],
+    rating: 0,
+    reviewCount: 0,
+    collectionId: 'col-emagrecimento',
     status: 'Ativo',
-    inventory: 25,
+    inventory: 500,
     type: 'Físico',
-    sku: 'RW-CLASSIC-01',
+    sku: 'RS-ALPHA-01',
     requiresShipping: true,
     trackQuantity: true,
     chargeTax: true,
     continueSelling: false,
-    seoTitle: 'Relógio Clássico de Couro | Elegância e Precisão',
-    seoDescription: 'Descubra o relógio de pulso clássico com pulseira de couro e movimento suíço. Uma peça de luxo atemporal para o homem moderno.',
-    urlHandle: 'relogio-pulso-classico-couro',
-    options: [
-      { id: 'opt1', name: 'Cor da Pulseira', values: ['Marrom', 'Preto'] },
-      { id: 'opt2', name: 'Cor da Caixa', values: ['Prata', 'Dourado'] },
-    ],
-    variants: [
-      { id: 'var1', options: { 'Cor da Pulseira': 'Marrom', 'Cor da Caixa': 'Prata' }, price: 1250.00, inventory: 10, sku: 'RW-MAR-PRA' },
-      { id: 'var2', options: { 'Cor da Pulseira': 'Marrom', 'Cor da Caixa': 'Dourado' }, price: 1350.00, inventory: 5, sku: 'RW-MAR-DOU' },
-      { id: 'var3', options: { 'Cor da Pulseira': 'Preto', 'Cor da Caixa': 'Prata' }, price: 1250.00, inventory: 8, sku: 'RW-PRE-PRA' },
-      { id: 'var4', options: { 'Cor da Pulseira': 'Preto', 'Cor da Caixa': 'Dourado' }, price: 1350.00, inventory: 2, sku: 'RW-PRE-DOU' },
-    ],
-    weight: 0.3,
-    weightUnit: 'kg',
-    supplier: 'Relojoaria Suíça Premium',
+    seoTitle: 'AlphaLipsi | Controle de Peso e Metabolismo Acelerado',
+    seoDescription: 'Acelere seu metabolismo e queime gordura naturalmente com AlphaLipsi. O suplemento definitivo da RS Prólipsi para sua transformação física.',
+    options: [],
+    variants: [],
   },
   {
     id: '2',
-    name: 'Bolsa de Ombro de Designer em Couro',
+    name: 'GlicoLipsi',
     seller: 'RS Prólipsi',
-    price: 2100.00,
+    price: 140.00,
+    memberPrice: 70.00,
     currency: 'BRL',
-    shortDescription: 'Elegância e praticidade em uma bolsa de couro legítimo com design exclusivo. Espaço interno otimizado e acabamento impecável.',
+    shortDescription: 'Equilíbrio Metabólico e Vitalidade Diária para sua Glicose.',
     description: `
-      <h2>A Companheira Perfeita para o Seu Dia a Dia</h2>
-      <p>Feita à mão com couro italiano da mais alta qualidade, esta bolsa de ombro é o epítome do luxo funcional. Seu design versátil a torna perfeita tanto para o trabalho quanto para o lazer.</p>
-      <h3>Características:</h3>
-      <ul>
-        <li><strong>Material Externo:</strong> Couro bovino italiano de flor integral.</li>
-        <li><strong>Forro:</strong> Tecido jacquard personalizado.</li>
-        <li><strong>Metais:</strong> Banhados a ouro com acabamento acetinado.</li>
-        <li><strong>Compartimentos:</strong> Três compartimentos internos, incluindo um com zíper, e um bolso externo de acesso rápido.</li>
-      </ul>
+      <h2>A Chave para o Equilíbrio Metabólico</h2>
+      <p>Recupere sua vitalidade e mantenha sua glicose sob controle com a potência dos ativos naturais do GlicoLipsi. Ciência, segurança e resultados reais.</p>
     `,
-    images: [
-      'https://picsum.photos/seed/bag1/600/600',
-      'https://picsum.photos/seed/bag2/600/600',
-      'https://picsum.photos/seed/bag3/600/600',
-    ],
-    rating: 4.9,
-    reviewCount: 45,
-    collectionId: 'col-2',
+    images: ['https://images.unsplash.com/photo-1550573105-df4574744720?auto=format&fit=crop&q=80&w=800'],
+    rating: 0,
+    reviewCount: 0,
+    collectionId: 'col-essenciais',
     status: 'Ativo',
-    inventory: 15,
+    inventory: 300,
     type: 'Físico',
-    sku: 'HB-LEATHER-DESIGN',
+    sku: 'RS-GLICO-01',
     requiresShipping: true,
     trackQuantity: true,
     chargeTax: true,
     continueSelling: false,
+    seoTitle: 'GlicoLipsi | Equilíbrio Glicêmico e Vitalidade Metabólica',
+    seoDescription: 'Regule seus níveis de açúcar e melhore seu metabolismo com GlicoLipsi. Suplementação natural de alta performance para sua saúde diária.',
     options: [],
     variants: [],
-    weight: 0.8,
-    weightUnit: 'kg',
-    supplier: 'Artesãos de Florença',
   },
   {
     id: '3',
-    name: 'Caneta-tinteiro Executiva',
-    seller: 'Escritório Premium',
-    price: 850.00,
-    compareAtPrice: 950.00,
+    name: 'DivaLipsi',
+    seller: 'RS Prólipsi',
+    price: 126.00,
+    memberPrice: 63.00,
     currency: 'BRL',
-    shortDescription: 'Uma experiência de escrita superior. Corpo em resina nobre, detalhes banhados a platina e pena de ouro 14K feita à mão.',
+    shortDescription: 'Beleza e Vitalidade Feminina: Nutrição Completa de dentro para fora.',
     description: `
-      <h2>A Arte da Escrita</h2>
-      <p>Redescubra o prazer de escrever com esta caneta-tinteiro executiva. Cada traço é uma experiência suave e fluida, graças à sua pena de ouro maciço 14K, meticulosamente trabalhada.</p>
+      <h2>Beleza, Equilíbrio e Vitalidade Feminina</h2>
+      <p>Sua dose diária de bem-estar. DivaLipsi foi desenvolvido exclusivamente para as necessidades do organismo feminino, promovendo saúde, pele radiante e energia.</p>
     `,
-    images: [
-      'https://picsum.photos/seed/pen1/600/600',
-      'https://picsum.photos/seed/pen2/600/600',
-    ],
-    rating: 4.7,
-    reviewCount: 30,
-    collectionId: 'col-3',
+    images: ['https://images.unsplash.com/photo-1550133730-69038290f653?auto=format&fit=crop&q=80&w=800'],
+    rating: 0,
+    reviewCount: 0,
+    collectionId: 'col-mulher',
     status: 'Ativo',
-    inventory: 50,
+    inventory: 200,
     type: 'Físico',
-    sku: 'PEN-EXEC-BLK',
+    sku: 'RS-DIVA-01',
     requiresShipping: true,
     trackQuantity: true,
     chargeTax: true,
     continueSelling: false,
+    seoTitle: 'DivaLipsi | Saúde e Vitalidade para a Mulher Moderna',
+    seoDescription: 'Nutrição completa para o organismo feminino. DivaLipsi promove pele, cabelo e unhas saudáveis, além de equilibrar o bem-estar hormonal.',
     options: [],
     variants: [],
-    weight: 0.1,
-    weightUnit: 'kg',
-    supplier: 'Oficina Alemã de Canetas',
   },
   {
     id: '4',
-    name: 'Óculos de Sol Aviador Polarizados',
-    seller: 'Estilo & Visão',
-    price: 720.00,
+    name: 'Inflamaxi',
+    seller: 'RS Prólipsi',
+    price: 120.00,
+    memberPrice: 60.00,
     currency: 'BRL',
-    shortDescription: 'Proteção e estilo icônico. Lentes polarizadas com 100% de proteção UV e armação de metal leve e resistente.',
+    shortDescription: 'Combate Avançado à Inflamação Silenciosa e Recuperação Celular.',
     description: `
-      <h2>Visão Clara, Estilo Inconfundível</h2>
-      <p>O design clássico do aviador encontra a tecnologia moderna de lentes polarizadas. Estes óculos de sol não apenas protegem seus olhos, mas também elevam seu estilo a um novo patamar.</p>
+      <h2>Combate Avançado à Inflamação Silenciosa</h2>
+      <p>Desinflame seu corpo e recupere sua saúde. Inflamaxi utiliza compostos bioativos de alta biodisponibilidade para reduzir processos inflamatórios e proteger suas células.</p>
     `,
-    images: [
-      'https://picsum.photos/seed/glasses1/600/600',
-      'https://picsum.photos/seed/glasses2/600/600',
-      'https://picsum.photos/seed/glasses3/600/600',
-    ],
-    rating: 4.9,
-    reviewCount: 88,
-    collectionId: null,
+    images: ['https://images.unsplash.com/photo-1607619056574-7b8d3ee536b2?auto=format&fit=crop&q=80&w=800'],
+    rating: 0,
+    reviewCount: 0,
+    collectionId: 'col-essenciais',
     status: 'Ativo',
-    inventory: 40,
+    inventory: 150,
     type: 'Físico',
-    sku: 'SUN-AVIA-POL',
+    sku: 'RS-INFLA-01',
     requiresShipping: true,
     trackQuantity: true,
     chargeTax: true,
     continueSelling: false,
+    seoTitle: 'Inflamaxi | Anti-inflamatório Natural e Regeneração Celular',
+    seoDescription: 'Combata a inflamação de dentro para fora com Inflamaxi. A tecnologia RS Prólipsi para proteger suas células e promover longevidade.',
     options: [],
     variants: [],
-    weight: 0.15,
-    weightUnit: 'kg',
-    supplier: 'Design de Óculos Italiano',
   },
-   {
+  {
     id: '5',
-    name: 'Curso Online de Marketing Digital',
-    seller: 'Academia do Saber',
-    price: 497.00,
+    name: 'Ozone Pro 3+',
+    seller: 'RS Prólipsi',
+    price: 76.00,
+    memberPrice: 38.00,
     currency: 'BRL',
-    shortDescription: 'Domine as estratégias essenciais de marketing digital, de SEO a mídias sociais, e impulsione sua carreira ou negócio.',
+    shortDescription: 'Tecnologia de Ozônio Integrada para Máxima Regeneração.',
     description: `
-      <h2>Transforme sua Carreira com Marketing Digital</h2>
-      <p>Aprenda com especialistas do setor e adquira as habilidades mais procuradas do mercado. Este curso abrangente cobre tudo o que você precisa para ter sucesso no mundo digital.</p>
+      <h2>Tecnologia de Ozônio para Saúde Celular</h2>
+      <p>Experimente o poder regenerador do ozônio. Ozone Pro 3+ oferece suporte imunológico e regenerativo através de uma fórmula ozonizada exclusiva e segura.</p>
     `,
-    images: [
-      'https://picsum.photos/seed/course1/600/600',
-    ],
-    rating: 4.8,
-    reviewCount: 250,
-    collectionId: null,
+    images: ['https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&q=80&w=800'],
+    rating: 0,
+    reviewCount: 0,
+    collectionId: 'col-encapsulados',
     status: 'Ativo',
-    inventory: 1000, // Typically high for digital products
-    type: 'Digital',
-    sku: 'DIG-MKT-COURSE',
-    requiresShipping: false,
-    trackQuantity: false,
-    chargeTax: false,
-    continueSelling: true,
+    inventory: 400,
+    type: 'Físico',
+    sku: 'RS-OZONE-01',
+    requiresShipping: true,
+    trackQuantity: true,
+    chargeTax: true,
+    continueSelling: false,
+    seoTitle: 'Ozone Pro 3+ | Recuperação com Tecnologia de Ozônio',
+    seoDescription: 'Fortaleça seu sistema imunológico e acelere a regeneração celular com Ozone Pro 3+. O poder do ozônio em cápsulas de alta absorção.',
+    options: [],
+    variants: [],
+  },
+  {
+    id: '6',
+    name: 'Pro 3+',
+    seller: 'RS Prólipsi',
+    price: 90.00,
+    memberPrice: 45.00,
+    currency: 'BRL',
+    shortDescription: 'Suplementação Premium de Ômega 3 com Alta Concentração de EPA/DHA.',
+    description: `
+      <h2>Suplementação Premium de Ômega 3</h2>
+      <p>Coração, cérebro e articulações protegidos. Pro 3+ entrega a pureza e a concentração que você precisa para manter sua saúde cardiovascular e cognitiva em dia.</p>
+    `,
+    images: ['https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&q=80&w=800'],
+    rating: 0,
+    reviewCount: 0,
+    collectionId: 'col-essenciais',
+    status: 'Ativo',
+    inventory: 600,
+    type: 'Físico',
+    sku: 'RS-PRO3-01',
+    requiresShipping: true,
+    trackQuantity: true,
+    chargeTax: true,
+    continueSelling: false,
+    seoTitle: 'Pro 3+ | Omega 3 Premium de Alta Concentração',
+    seoDescription: 'Proteção para o coração e cérebro. Pro 3+ é o omega 3 da RS Prólipsi com pureza certificada e a maior concentração de EPA e DHA.',
+    options: [],
+    variants: [],
+  },
+  {
+    id: '7',
+    name: 'SlimLipsi',
+    seller: 'RS Prólipsi',
+    price: 140.00,
+    memberPrice: 70.00,
+    currency: 'BRL',
+    shortDescription: 'Curvas Definidas e Metabolismo Ativo: Sua Nova Silhueta Começa Aqui.',
+    description: `
+      <h2>Curvas Definidas e Metabolismo Ativo</h2>
+      <p>Reduza medidas de forma inteligente. SlimLipsi combina redutores de apetite e ativadores metabólicos para esculpir seu corpo sem perder a energia.</p>
+    `,
+    images: ['https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&q=80&w=800'],
+    rating: 0,
+    reviewCount: 0,
+    collectionId: 'col-emagrecimento',
+    status: 'Ativo',
+    inventory: 350,
+    type: 'Físico',
+    sku: 'RS-SLIM-01',
+    requiresShipping: true,
+    trackQuantity: true,
+    chargeTax: true,
+    continueSelling: false,
+    seoTitle: 'SlimLipsi | Queima de Gordura e Definição Corporal',
+    seoDescription: 'Alcance seu peso ideal com SlimLipsi. Fórmula termogênica avançada da RS Prólipsi para queima de gordura e controle de apetite.',
     options: [],
     variants: [],
   },
