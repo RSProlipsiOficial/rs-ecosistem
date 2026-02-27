@@ -120,10 +120,13 @@ const communicationAPI = {
     announcements: {
         getAll: async (): Promise<ApiResponse<Announcement[]>> => {
             try {
-                let r: any = await apiFetch(`/consultor/communications/announcements?tenantId=${TENANT_ID}`);
+                // Tenta v1 primeiro pois é onde o Admin salva
+                let r: any = await apiFetch(`/v1/communications/announcements?tenantId=${TENANT_ID}&audience=marketplace`);
                 let data = r?.data || r;
+
+                // Fallback para consultor se vazio
                 if (!Array.isArray(data) || data.length === 0) {
-                    r = await apiFetch(`/v1/communications/announcements?tenantId=${TENANT_ID}&audience=marketplace`);
+                    r = await apiFetch(`/consultor/communications/announcements?tenantId=${TENANT_ID}`);
                     data = r?.data || r;
                 }
                 return { success: true, data };
@@ -133,7 +136,7 @@ const communicationAPI = {
         },
         acknowledge: async (id: string, userId: string): Promise<ApiResponse<null>> => {
             try {
-                await apiFetch(`/consultor/communications/announcements/${encodeURIComponent(id)}/ack?tenantId=${TENANT_ID}&userId=${encodeURIComponent(userId)}`, { method: 'POST' });
+                await apiFetch(`/v1/communications/announcements/${encodeURIComponent(id)}/ack?tenantId=${TENANT_ID}&userId=${encodeURIComponent(userId)}`, { method: 'POST' });
                 return { success: true };
             } catch (error: any) {
                 return { success: false, error: error.message };
@@ -145,10 +148,10 @@ const communicationAPI = {
     agendaItems: {
         getAll: async (): Promise<ApiResponse<AgendaItem[]>> => {
             try {
-                let r: any = await apiFetch(`/consultor/communications/agenda?tenantId=${TENANT_ID}`);
+                let r: any = await apiFetch(`/v1/communications/agenda?tenantId=${TENANT_ID}`);
                 let data = r?.data || r;
                 if (!Array.isArray(data) || data.length === 0) {
-                    r = await apiFetch(`/v1/communications/agenda?tenantId=${TENANT_ID}`);
+                    r = await apiFetch(`/consultor/communications/agenda?tenantId=${TENANT_ID}`);
                     data = r?.data || r;
                 }
                 return { success: true, data };

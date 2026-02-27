@@ -294,7 +294,7 @@ const App: React.FC<RSCDAppProps> = ({ cdId: propCdId, onBackToAdmin }) => {
         <div className="animate-fade-in-up pb-10 flex-1">
           {currentView === 'DASHBOARD' && <Dashboard profile={userProfile} orders={orders} onNavigate={handleNavigate} />}
           {currentView === 'PEDIDOS' && <Orders orders={orders} onNavigate={handleNavigate} />}
-          {currentView === 'ESTOQUE' && <Inventory products={products} walletBalance={userProfile.walletBalance} cdId={cdRecordId} />}
+          {currentView === 'ESTOQUE' && <Inventory products={products} walletBalance={userProfile.walletBalance} cdId={cdRecordId} profile={userProfile} />}
           {currentView === 'FINANCEIRO' && <Financial profile={userProfile} transactions={transactions} cdId={cdRecordId} />}
           {currentView === 'IA_ADVISOR' && <GeminiAdvisor profile={userProfile} orders={orders} products={products} />}
           {currentView === 'CONFIGURACOES' && <Settings initialData={appSettings || undefined} onSaveProfile={handleUpdateProfile} cdId={cdRecordId} />}

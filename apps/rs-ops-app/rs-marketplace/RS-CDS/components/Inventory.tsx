@@ -4,11 +4,13 @@ import React, { useState, useEffect } from 'react';
 import { Product, PaymentMethod } from '../types';
 import { AlertTriangle, CheckCircle, Package, Edit, Plus, Search, Trash2, X, Send, ShoppingCart, FileText, Save, Lock, ArrowLeft, CreditCard, Wallet, QrCode, Banknote, Truck, MapPin, Zap, Copy, Check, Smartphone, Barcode, Calendar } from 'lucide-react';
 import { dataService } from '../services/dataService';
+import { shippingService, ShippingQuote } from '../services/shippingService';
 
 interface InventoryProps {
     products: Product[];
     walletBalance: number;
     cdId?: string;
+    profile?: CDProfile;
 }
 
 interface RequestItem {
@@ -24,7 +26,7 @@ interface PaymentEntry {
 
 type ShippingOption = 'PICKUP' | 'STANDARD' | 'EXPRESS';
 
-const Inventory: React.FC<InventoryProps> = ({ products: initialProducts, walletBalance, cdId }) => {
+const Inventory: React.FC<InventoryProps> = ({ products: initialProducts, walletBalance, cdId, profile }) => {
     const [products, setProducts] = useState<Product[]>(initialProducts);
     const [searchTerm, setSearchTerm] = useState('');
 
@@ -63,6 +65,11 @@ const Inventory: React.FC<InventoryProps> = ({ products: initialProducts, wallet
     const [requestQuantity, setRequestQuantity] = useState<number>(1);
     const [requestStep, setRequestStep] = useState<'CART' | 'CHECKOUT'>('CART');
 
+    // Reset quotes if cart changes to force recalculation
+    useEffect(() => {
+        setShippingQuotes([]);
+    }, [requestCart]);
+
     // Checkout State (Shipping & Payment)
     const [shippingOption, setShippingOption] = useState<ShippingOption>('PICKUP');
     const [shippingQuotes, setShippingQuotes] = useState<any[]>([]);
@@ -86,22 +93,23 @@ const Inventory: React.FC<InventoryProps> = ({ products: initialProducts, wallet
     };
 
     const calculateRealShipping = async () => {
+        if (!profile) return;
         setIsCalculatingShipping(true);
-        // Simulating the logic from shippingService.ts
-        // In a real scenario, we'd fetch from an API
-        await new Promise(resolve => setTimeout(resolve, 1500));
 
-        const weight = requestCart.reduce((acc, item) => acc + (item.quantity * 0.5), 0);
+        try {
+            const quotes = await shippingService.calculateShipping(profile, requestCart);
+            setShippingQuotes(quotes);
 
-        const mockQuotes = [
-            { id: 1, service: 'STANDARD', carrier: 'Jadlog Package', price: 45.90 + (weight * 2.5), delivery_time: 5 },
-            { id: 2, service: 'EXPRESS', carrier: 'Sedex', price: 82.40 + (weight * 4.2), delivery_time: 2 }
-        ];
+            // Auto-select best option
+            const hasPickup = quotes.some(q => q.service === 'PICKUP');
+            if (hasPickup) setShippingOption('PICKUP');
+            else setShippingOption('STANDARD');
 
-        setShippingQuotes(mockQuotes);
-        setIsCalculatingShipping(false);
-        // Auto-select standard after calculation if not pickup
-        if (shippingOption !== 'PICKUP') setShippingOption('STANDARD');
+        } catch (error) {
+            console.error("Erro ao calcular frete:", error);
+        } finally {
+            setIsCalculatingShipping(false);
+        }
     };
 
     useEffect(() => {
@@ -586,17 +594,19 @@ const Inventory: React.FC<InventoryProps> = ({ products: initialProducts, wallet
                                     <div className="space-y-3">
                                         <h4 className="text-sm font-bold text-gray-400 uppercase flex items-center gap-2">1. Modalidade de Envio</h4>
                                         <div className="grid grid-cols-1 gap-2">
-                                            <label className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-all ${shippingOption === 'PICKUP' ? 'bg-gold-500/10 border-gold-500' : 'bg-dark-950 border-dark-800'}`}>
-                                                <div className="flex items-center gap-3">
-                                                    <input type="radio" name="shipping" className="hidden" checked={shippingOption === 'PICKUP'} onChange={() => setShippingOption('PICKUP')} />
-                                                    <MapPin size={20} className={shippingOption === 'PICKUP' ? 'text-gold-400' : 'text-gray-500'} />
-                                                    <div>
-                                                        <span className="block text-white font-medium text-sm">Retirada na Fábrica</span>
-                                                        <span className="text-xs text-gray-500">Disponível em 24h</span>
+                                            {shippingQuotes.some(q => q.service === 'PICKUP') && (
+                                                <label className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-all ${shippingOption === 'PICKUP' ? 'bg-gold-500/10 border-gold-500' : 'bg-dark-950 border-dark-800'}`}>
+                                                    <div className="flex items-center gap-3">
+                                                        <input type="radio" name="shipping" className="hidden" checked={shippingOption === 'PICKUP'} onChange={() => setShippingOption('PICKUP')} />
+                                                        <MapPin size={20} className={shippingOption === 'PICKUP' ? 'text-gold-400' : 'text-gray-500'} />
+                                                        <div>
+                                                            <span className="block text-white font-medium text-sm">Retirada na Fábrica</span>
+                                                            <span className="text-xs text-gray-500">Disponível em 24h</span>
+                                                        </div>
                                                     </div>
-                                                </div>
-                                                <span className="text-green-500 font-bold text-sm">Grátis</span>
-                                            </label>
+                                                    <span className="text-green-500 font-bold text-sm">Grátis</span>
+                                                </label>
+                                            )}
 
                                             <label className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-all ${shippingOption === 'STANDARD' ? 'bg-gold-500/10 border-gold-500' : 'bg-dark-950 border-dark-800'}`}>
                                                 <div className="flex items-center gap-3">
@@ -626,6 +636,14 @@ const Inventory: React.FC<InventoryProps> = ({ products: initialProducts, wallet
                                                 </span>
                                             </label>
                                         </div>
+                                        {profile?.address?.cep && (
+                                            <div className="flex items-center gap-2 px-3 py-2 bg-dark-950/50 rounded-lg border border-dark-800 mt-2">
+                                                <MapPin size={14} className="text-gold-400" />
+                                                <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">
+                                                    Enviado para: <span className="text-gray-300">{profile.address.cep}</span> ({profile.address.city} - {profile.address.state})
+                                                </span>
+                                            </div>
+                                        )}
                                     </div>
 
                                     {/* 2. Payment Method Split */}

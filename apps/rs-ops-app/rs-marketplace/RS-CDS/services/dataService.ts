@@ -230,7 +230,13 @@ export const dataService = {
                 memberPrice: consultantPrice,
                 costPrice: cdCostPrice,
                 points: p.points || 0,
-                status: 'OK' as const
+                status: 'OK' as const,
+                weightKg: p.weight_kg || 0.5,
+                dimensions: {
+                    widthCm: p.width_cm || 10,
+                    heightCm: p.height_cm || 10,
+                    lengthCm: p.length_cm || 10
+                }
             };
         });
 

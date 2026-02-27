@@ -79,21 +79,14 @@ const apiFetch = async <T>(endpoint: string, options: RequestInit = {}): Promise
 };
 
 export const communicationService = {
-    // Retorna SystemMessage[] para compatibilidade com o componente existente? 
-    // O mock usava User.messages. SystemMessage tem 'content'. API tem 'message'.
-    // Mapeamento necessário no componente ou aqui. Vamos retornar raw e mapear no componente por enquanto ou criar tipo proprio.
-    getAnnouncements: () => apiFetch<any[]>('/consultor/communications/announcements'),
-
-    getAgenda: () => apiFetch<AgendaItem[]>('/consultor/communications/agenda'),
-    getTrainings: () => apiFetch<Training[]>('/consultor/communications/trainings'),
-    getTrainingModules: (trainingId: string) => apiFetch<any[]>('/consultor/communications/training-modules?trainingId=' + trainingId),
-    getLessons: (trainingId: string) => apiFetch<any[]>('/consultor/communications/lessons?trainingId=' + trainingId),
-    getTrainingProgress: (userId: string) => apiFetch<any[]>('/consultor/communications/training-progress?userId=' + userId),
-
-    getCatalogs: () => apiFetch<Catalog[]>('/consultor/communications/catalogs'),
-
-    getMaterials: () => apiFetch<Material[]>('/consultor/communications/materials'),
-
-    ackAnnouncement: (id: string, userId: string) => apiFetch(`/consultor/communications/announcements/${id}/ack?userId=${userId}`, { method: 'POST' }),
-    completeLesson: (lessonId: string, userId: string, trainingId?: string) => apiFetch(`/consultor/communications/lessons/${lessonId}/complete?userId=${userId}&trainingId=${trainingId}`, { method: 'POST' }),
+    getAnnouncements: () => apiFetch<any[]>('/v1/communications/announcements'),
+    getAgenda: () => apiFetch<AgendaItem[]>('/v1/communications/agenda'),
+    getTrainings: () => apiFetch<Training[]>('/v1/communications/trainings'),
+    getTrainingModules: (trainingId: string) => apiFetch<any[]>('/v1/communications/training-modules?trainingId=' + trainingId),
+    getLessons: (trainingId: string) => apiFetch<any[]>('/v1/communications/lessons?trainingId=' + trainingId),
+    getTrainingProgress: (userId: string) => apiFetch<any[]>('/v1/communications/training-progress?userId=' + userId),
+    getCatalogs: () => apiFetch<Catalog[]>('/v1/communications/catalogs'),
+    getMaterials: () => apiFetch<Material[]>('/v1/communications/materials'),
+    ackAnnouncement: (id: string, userId: string) => apiFetch(`/v1/communications/announcements/${id}/ack?userId=${userId}`, { method: 'POST' }),
+    completeLesson: (lessonId: string, userId: string, trainingId?: string) => apiFetch(`/v1/communications/lessons/${lessonId}/complete?userId=${userId}&trainingId=${trainingId}`, { method: 'POST' }),
 };

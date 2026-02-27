@@ -76,6 +76,12 @@ export interface Product {
   points: number;    // VP (Volume Points) - Crítico para MMN
   status: 'OK' | 'BAIXO' | 'CRITICO';
   batches?: Batch[]; // Controle de Lotes e Validade
+  weightKg?: number;
+  dimensions?: {
+    widthCm: number;
+    heightCm: number;
+    lengthCm: number;
+  };
 }
 
 export interface OrderDetail {
