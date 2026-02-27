@@ -272,6 +272,17 @@ export interface ReplenishmentOrder {
   paymentProofUrl?: string;
   paymentProofStatus?: string;
   shippingMethod: string;
+  cdDetails?: { // Dados para etiqueta
+    document?: string;
+    email?: string;
+    phone?: string;
+    addressStreet?: string;
+    addressNumber?: string;
+    addressNeighborhood?: string;
+    city?: string;
+    state?: string;
+    addressZip?: string;
+  };
   items: {
     sku: string;
     name: string;

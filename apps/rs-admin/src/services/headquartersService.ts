@@ -166,8 +166,8 @@ export const headquartersService = {
                 .select('*, items:cd_order_items(product_id, product_name, quantity, unit_price)')
                 .order('created_at', { ascending: false })
                 .limit(100),
-            supabase.from('cd_profiles').select('id, name'),
-            supabase.from('minisite_profiles').select('id, name')
+            supabase.from('cd_profiles').select('*'),
+            supabase.from('minisite_profiles').select('*')
         ]);
 
         if (error) {
@@ -175,28 +175,43 @@ export const headquartersService = {
             return [];
         }
 
-        // Merge de nomes (minisite_profiles tem precedência se houver duplicata por ser o perfil de exibição)
+        // Merge de dados (minisite_profiles tem precedência se houver duplicata por ser o perfil de exibição)
         const cdMap = new Map();
-        (cds || []).forEach(c => cdMap.set(c.id, c.name));
-        (profiles || []).forEach(p => cdMap.set(p.id, p.name));
+        (cds || []).forEach(c => cdMap.set(c.id, c));
+        (profiles || []).forEach(p => cdMap.set(p.id, p));
 
-        return (orders || []).map((order: any) => ({
-            id: order.id,
-            cdId: order.cd_id,
-            cdName: cdMap.get(order.cd_id) || `CD: ${order.cd_id.substring(0, 8).toUpperCase()}`,
-            itemCount: order.items_count || 0,
-            items: order.items || [],
-            totalValue: Number(order.total) || 0,
-            status: (order.status || 'PENDENTE').toUpperCase(),
-            requestDate: order.created_at,
-            date: order.created_at,
-            expectedDelivery: order.updated_at,
-            marketplace_order_id: order.marketplace_order_id,
-            trackingCode: order.tracking_code || '',
-            paymentProofUrl: order.payment_proof_url || '',
-            paymentProofStatus: order.payment_proof_status || '',
-            shippingMethod: order.shipping_method || 'Transportadora'
-        }));
+        return (orders || []).map((order: any) => {
+            const cdData = cdMap.get(order.cd_id) || {};
+
+            return {
+                id: order.id,
+                cdId: order.cd_id,
+                cdName: cdData.name || `CD: ${order.cd_id.substring(0, 8).toUpperCase()}`,
+                itemCount: order.items_count || 0,
+                items: order.items || [],
+                totalValue: Number(order.total) || 0,
+                status: (order.status || 'PENDENTE').toUpperCase(),
+                requestDate: order.created_at,
+                date: order.created_at,
+                expectedDelivery: order.updated_at,
+                marketplace_order_id: order.marketplace_order_id,
+                trackingCode: order.tracking_code || '',
+                paymentProofUrl: order.payment_proof_url || '',
+                paymentProofStatus: order.payment_proof_status || '',
+                shippingMethod: order.shipping_method || 'Transportadora',
+                cdDetails: {
+                    document: cdData.cpf || cdData.cnpj || '',
+                    email: cdData.email || '',
+                    phone: cdData.phone || '',
+                    addressStreet: cdData.address_street || '',
+                    addressNumber: cdData.address_number || '',
+                    addressNeighborhood: cdData.address_neighborhood || '',
+                    city: cdData.address_city || cdData.city || '',
+                    state: cdData.address_state || cdData.state || '',
+                    addressZip: cdData.address_zip || '',
+                }
+            };
+        });
     },
 
     async updateReplenishmentOrderStatus(orderId: string, status: string, trackingCode?: string): Promise<boolean> {

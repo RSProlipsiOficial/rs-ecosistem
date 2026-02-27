@@ -22,6 +22,8 @@ const HeadquartersPanel: React.FC<HeadquartersPanelProps> = ({ activeTab: initia
     const [isEditingRules, setIsEditingRules] = useState(false);
     const [editedRules, setEditedRules] = useState<FranchiseRule | null>(null);
     const [processingOrderId, setProcessingOrderId] = useState<string | null>(null);
+    const [selectedOrder, setSelectedOrder] = useState<ReplenishmentOrder | null>(null);
+    const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
 
     const handleUpdateOrderStatus = async (orderId: string, newStatus: string) => {
         setProcessingOrderId(orderId);
@@ -100,6 +102,11 @@ const HeadquartersPanel: React.FC<HeadquartersPanelProps> = ({ activeTab: initia
     const handleEditCD = (cd: CDRegistry) => {
         setEditingCD(cd);
         setIsEditModalOpen(true);
+    };
+
+    const handleOpenOrderDetails = (order: ReplenishmentOrder) => {
+        setSelectedOrder(order);
+        setIsOrderModalOpen(true);
     };
 
     return (
@@ -255,14 +262,22 @@ const HeadquartersPanel: React.FC<HeadquartersPanelProps> = ({ activeTab: initia
                                                 </tr>
                                             ) : (
                                                 orders.map((order) => (
-                                                    <tr key={order.id} className="hover:bg-white/5 transition-colors">
+                                                    <tr key={order.id} className="hover:bg-white/5 transition-colors group">
                                                         <td className="px-6 py-5 text-gray-300 text-xs">{new Date(order.date).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}</td>
                                                         <td className="px-6 py-5">
-                                                            <span className="text-xs font-mono text-gray-300 bg-white/5 px-2 py-1 rounded border border-gray-800">
+                                                            <button
+                                                                onClick={() => handleOpenOrderDetails(order)}
+                                                                className="text-xs font-mono text-gray-300 bg-white/5 hover:bg-yellow-500/20 hover:text-yellow-500 px-2 py-1 rounded border border-gray-800 hover:border-yellow-500/50 transition-all cursor-pointer"
+                                                                title="Ver Detalhes do Abastecimento e Envio"
+                                                            >
                                                                 AC-{order.id.split('-')[0].toUpperCase()}
-                                                            </span>
+                                                            </button>
                                                         </td>
-                                                        <td className="px-6 py-5 text-white font-bold">{order.cdName}</td>
+                                                        <td className="px-6 py-5">
+                                                            <button onClick={() => handleOpenOrderDetails(order)} className="text-white font-bold group-hover:text-yellow-500 text-left cursor-pointer transition-colors">
+                                                                {order.cdName}
+                                                            </button>
+                                                        </td>
                                                         <td className="px-6 py-5 text-gray-400 text-xs">{order.itemCount} itens</td>
                                                         <td className="px-6 py-5 text-yellow-500 font-bold">R$ {order.totalValue.toLocaleString('pt-BR')}</td>
                                                         <td className="px-6 py-5">
@@ -273,7 +288,7 @@ const HeadquartersPanel: React.FC<HeadquartersPanelProps> = ({ activeTab: initia
                                                                 }`}>{order.status}</span>
                                                             {order.paymentProofUrl && (
                                                                 <a href={order.paymentProofUrl} target="_blank" rel="noopener noreferrer" className="block mt-2 text-[10px] text-blue-400 hover:text-blue-300 underline font-semibold">
-                                                                    Visualizar Comprovante
+                                                                    Ver Comprovante ({order.paymentProofStatus || 'Pendente'})
                                                                 </a>
                                                             )}
                                                             {order.trackingCode && (
@@ -283,50 +298,51 @@ const HeadquartersPanel: React.FC<HeadquartersPanelProps> = ({ activeTab: initia
                                                             )}
                                                         </td>
 
-                                                        <td className="px-6 py-5">
-                                                            <div className="flex justify-end gap-2">
-                                                                {order.status === 'PENDENTE' && (
+                                                        <td className="px-6 py-5 align-top">
+                                                            <div className="flex flex-col items-end gap-2">
+                                                                {(order.status === 'PENDENTE' || order.status === 'CANCELADO') && (
                                                                     <button
                                                                         onClick={() => handleUpdateOrderStatus(order.id, 'AGUARDANDO PAGAMENTO')}
                                                                         disabled={processingOrderId === order.id}
-                                                                        className="px-3 py-1 bg-yellow-500/20 text-yellow-500 text-xs font-bold rounded hover:bg-yellow-500/30 transition-colors"
-                                                                        title="Aguardar Pagamento"
+                                                                        className="px-3 py-1 bg-yellow-500/20 text-yellow-500 text-[10px] font-bold rounded hover:bg-yellow-500/30 transition-colors"
+                                                                        title="Cobrar Pagamento"
                                                                     >
-                                                                        {processingOrderId === order.id ? '...' : 'Cobrar'}
+                                                                        {processingOrderId === order.id ? '...' : 'Cobrar Pagamento'}
                                                                     </button>
                                                                 )}
-                                                                {order.status === 'EM SEPARAÇÃO' && (
+                                                                {(order.status === 'COMPROVANTE ENVIADO' || order.status === 'EM SEPARAÇÃO' || order.status === 'AGUARDANDO PAGAMENTO') && order.paymentProofUrl && (
                                                                     <button
                                                                         onClick={async () => {
-                                                                            // Confirma o comprovante e finaliza status Pago (opcional mas bom para registro duplo)
+                                                                            setProcessingOrderId(order.id);
                                                                             await headquartersService.confirmPaymentProof(order.id, true);
                                                                             fetchData();
+                                                                            setProcessingOrderId(null);
                                                                         }}
                                                                         disabled={processingOrderId === order.id}
-                                                                        className="px-3 py-1 bg-green-500/20 text-green-500 text-xs font-bold rounded hover:bg-green-500/30 transition-colors"
-                                                                        title="Confirmar Comprovante"
+                                                                        className="px-3 py-1 bg-green-500/20 text-green-500 text-[10px] font-bold rounded hover:bg-green-500/30 transition-colors"
+                                                                        title="Confirmar que o pagamento foi recebido"
                                                                     >
                                                                         {processingOrderId === order.id ? '...' : 'Confirmar Pgto'}
                                                                     </button>
                                                                 )}
-                                                                {(order.status === 'APROVADO' || order.status === 'PAGO' || order.status === 'EM SEPARAÇÃO') && (
+                                                                {(order.status === 'PAGO' || order.status === 'EM SEPARAÇÃO' || order.status === 'SAIU PARA ENTREGA' || order.status === 'ENVIADO') && (
                                                                     <button
                                                                         onClick={async () => {
                                                                             const tracking = window.prompt("Informe o Código de Rastreio (se houver):");
                                                                             if (tracking !== null) {
                                                                                 setProcessingOrderId(order.id);
-                                                                                const success = await headquartersService.updateReplenishmentOrderStatus(order.id, 'ENVIADO', tracking);
+                                                                                const success = await headquartersService.updateReplenishmentOrderStatus(order.id, 'SAIU PARA ENTREGA', tracking);
                                                                                 if (success) {
-                                                                                    setOrders(orders.map(o => o.id === order.id ? { ...o, status: 'ENVIADO', trackingCode: tracking } : o));
+                                                                                    setOrders(orders.map(o => o.id === order.id ? { ...o, status: 'SAIU PARA ENTREGA', trackingCode: tracking } : o));
                                                                                 }
                                                                                 setProcessingOrderId(null);
                                                                             }
                                                                         }}
                                                                         disabled={processingOrderId === order.id}
-                                                                        className="px-3 py-1 bg-blue-500/20 text-blue-500 text-xs font-bold rounded hover:bg-blue-500/30 transition-colors"
-                                                                        title="Despachar Pedido"
+                                                                        className="px-3 py-1 bg-blue-500/20 text-blue-500 text-[10px] font-bold rounded hover:bg-blue-500/30 transition-colors"
+                                                                        title="Despachar Pedido e informar rastreio"
                                                                     >
-                                                                        {processingOrderId === order.id ? '...' : 'Despachar'}
+                                                                        {processingOrderId === order.id ? '...' : 'Despachar / Rastreio'}
                                                                     </button>
                                                                 )}
                                                             </div>
@@ -529,6 +545,156 @@ const HeadquartersPanel: React.FC<HeadquartersPanelProps> = ({ activeTab: initia
                     onClose={() => setIsEditModalOpen(false)}
                     onSuccess={fetchData}
                 />
+            )}
+
+            {isOrderModalOpen && selectedOrder && (
+                <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
+                    <div className="bg-[#1E1E1E] rounded-xl border border-gray-800 w-full max-w-4xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+                        <div className="p-6 border-b border-gray-800 flex justify-between items-center bg-gradient-to-r from-gray-900 to-black">
+                            <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                                <ShoppingBagIcon className="w-6 h-6 text-yellow-500" />
+                                Detalhes do Pedido de Abastecimento
+                            </h2>
+                            <button
+                                onClick={() => setIsOrderModalOpen(false)}
+                                className="text-gray-500 hover:text-white transition-colors"
+                            >
+                                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        <div className="p-6 overflow-y-auto flex-1 custom-scrollbar">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                {/* Informações do Pedido e Itens */}
+                                <div className="space-y-6">
+                                    <div className="bg-black/20 p-4 rounded-lg border border-gray-800">
+                                        <h3 className="text-yellow-500 font-bold mb-4 uppercase text-xs tracking-wider">Resumo do Pedido</h3>
+                                        <div className="space-y-2 text-sm">
+                                            <div className="flex justify-between">
+                                                <span className="text-gray-400">ID:</span>
+                                                <span className="text-white font-mono">AC-{selectedOrder.id.split('-')[0].toUpperCase()}</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span className="text-gray-400">Data:</span>
+                                                <span className="text-white">{new Date(selectedOrder.date).toLocaleString('pt-BR')}</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span className="text-gray-400">Valor Total:</span>
+                                                <span className="text-yellow-500 font-bold">R$ {selectedOrder.totalValue.toLocaleString('pt-BR')}</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span className="text-gray-400">Status Atual:</span>
+                                                <span className="text-white font-bold">{selectedOrder.status}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <h3 className="text-yellow-500 font-bold mb-4 uppercase text-xs tracking-wider flex items-center gap-2">
+                                            <ShoppingBagIcon className="w-4 h-4" /> Itens Solicitados
+                                        </h3>
+                                        <div className="bg-black/20 rounded-lg border border-gray-800 overflow-hidden">
+                                            <table className="w-full text-sm">
+                                                <thead className="bg-gray-900 text-gray-400 text-xs">
+                                                    <tr>
+                                                        <th className="px-4 py-2 text-left">Produto</th>
+                                                        <th className="px-4 py-2 text-center">SKU</th>
+                                                        <th className="px-4 py-2 text-right">Qtd</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-gray-800">
+                                                    {selectedOrder.items.map((item, idx) => (
+                                                        <tr key={idx} className="text-gray-300">
+                                                            <td className="px-4 py-3">{item.name}</td>
+                                                            <td className="px-4 py-3 text-center font-mono text-xs">{item.sku}</td>
+                                                            <td className="px-4 py-3 text-right font-bold text-white">{item.quantity}</td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Informações do Destinatário */}
+                                <div className="space-y-6">
+                                    <div className="bg-black/20 p-4 rounded-lg border border-gray-800">
+                                        <h3 className="text-yellow-500 font-bold mb-4 uppercase text-xs tracking-wider flex items-center gap-2">
+                                            <MapPinIcon className="w-4 h-4" /> Endereço de Entrega (Destinatário)
+                                        </h3>
+
+                                        {!selectedOrder.cdDetails ? (
+                                            <p className="text-sm text-gray-500 italic">Detalhes do endereço não encontrados para este CD.</p>
+                                        ) : (
+                                            <div className="space-y-3 text-sm">
+                                                <div>
+                                                    <span className="block text-gray-500 text-xs uppercase">Nome do Destinatário / Razão</span>
+                                                    <span className="text-white font-bold">{selectedOrder.cdName}</span>
+                                                </div>
+
+                                                <div>
+                                                    <span className="block text-gray-500 text-xs uppercase">Documento (CPF/CNPJ)</span>
+                                                    <span className="text-gray-300 font-mono">{selectedOrder.cdDetails.document || 'Não informado'}</span>
+                                                </div>
+
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div>
+                                                        <span className="block text-gray-500 text-xs uppercase">E-mail</span>
+                                                        <span className="text-gray-300 truncate block" title={selectedOrder.cdDetails.email}>{selectedOrder.cdDetails.email || 'Não informado'}</span>
+                                                    </div>
+                                                    <div>
+                                                        <span className="block text-gray-500 text-xs uppercase">Telefone</span>
+                                                        <span className="text-gray-300">{selectedOrder.cdDetails.phone || 'Não informado'}</span>
+                                                    </div>
+                                                </div>
+
+                                                <div className="pt-3 mt-3 border-t border-gray-800">
+                                                    <span className="block text-gray-500 text-xs uppercase mb-1">Endereço Completo</span>
+                                                    <span className="text-white block">
+                                                        {selectedOrder.cdDetails.addressStreet
+                                                            ? `${selectedOrder.cdDetails.addressStreet}, ${selectedOrder.cdDetails.addressNumber}`
+                                                            : 'Rua não informada'}
+                                                    </span>
+                                                    <span className="text-gray-400 block">
+                                                        {selectedOrder.cdDetails.addressNeighborhood || 'Bairro não informado'}
+                                                    </span>
+                                                    <span className="text-gray-400 block">
+                                                        {selectedOrder.cdDetails.city || 'Cidade'} - {selectedOrder.cdDetails.state || 'UF'}
+                                                    </span>
+                                                    <span className="text-gray-300 font-mono mt-1 block">
+                                                        CEP: {selectedOrder.cdDetails.addressZip || 'Não informado'}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="flex flex-col gap-2 mt-4 pt-4 border-t border-gray-800">
+                                        <button
+                                            className="w-full py-3 bg-yellow-500 hover:bg-yellow-400 text-black font-bold rounded-lg transition-colors flex justify-center items-center gap-2"
+                                            onClick={() => {
+                                                const addr = selectedOrder.cdDetails;
+                                                const text = `DESTINATÁRIO: ${selectedOrder.cdName}\nDOC: ${addr?.document}\nENDEREÇO: ${addr?.addressStreet}, ${addr?.addressNumber} - ${addr?.addressNeighborhood}\n${addr?.city} - ${addr?.state} / CEP: ${addr?.addressZip}\nCONTATO: ${addr?.phone}`;
+                                                navigator.clipboard.writeText(text);
+                                                alert("Endereço copiado para a área de transferência!");
+                                            }}
+                                        >
+                                            Copiar Endereço para Etiqueta
+                                        </button>
+                                        <button
+                                            className="w-full py-3 bg-white/5 hover:bg-white/10 text-white font-bold rounded-lg transition-colors"
+                                            onClick={() => setIsOrderModalOpen(false)}
+                                        >
+                                            Fechar Modal
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     );

@@ -1,6 +1,8 @@
 const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:4000';
 
 function resolveTenantId(): string {
+    const envTenant = (import.meta as any).env?.VITE_TENANT_ID;
+
     try {
         const qs = new URLSearchParams(window.location.search);
         const fromQuery = qs.get('tenantId');
@@ -14,10 +16,14 @@ function resolveTenantId(): string {
             localStorage.setItem('rs-tenant-id', m[1]);
             return m[1];
         }
+
+        // Prioriza o .env sobre o Local Storage para evitar cache fantasma de tenant
+        if (envTenant) return envTenant;
+
         const fromStorage = localStorage.getItem('rs-tenant-id');
         if (fromStorage && fromStorage.length > 0) return fromStorage;
     } catch { }
-    const envTenant = (import.meta as any).env?.VITE_TENANT_ID;
+
     return envTenant || '00000000-0000-0000-0000-000000000000';
 }
 
