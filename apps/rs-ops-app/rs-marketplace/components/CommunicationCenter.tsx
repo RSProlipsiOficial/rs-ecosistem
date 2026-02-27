@@ -9,6 +9,9 @@ import { CalendarIcon } from './icons/CalendarIcon';
 import { UserPlusIcon } from './icons/UserPlusIcon';
 import { StarIcon } from './icons/StarIcon';
 import { TrophyIcon } from './icons/TrophyIcon';
+import { UserIcon } from './icons/UserIcon';
+import { mockDeepNetwork } from '../data/network';
+import { NetworkNode, UserProfile } from '../types';
 
 // --- TYPES ---
 interface Announcement {
@@ -69,8 +72,67 @@ const getIcon = (type: string, className: string = 'w-6 h-6') => {
         case 'Aniversariantes': return <TrophyIcon {...props} />;
         case 'PINs': return <StarIcon {...props} />;
         case 'Datas Comemorativas': return <CalendarIcon {...props} />;
+        case 'Network': return <UserIcon {...props} />;
         default: return null;
     }
+};
+
+const getNetworkDownline = (node: NetworkNode, maxLevel: number): UserProfile[] => {
+    const downline: UserProfile[] = [];
+    const queue: NetworkNode[] = [...node.children];
+
+    while (queue.length > 0) {
+        const currentNode = queue.shift();
+        if (currentNode && !currentNode.isEmpty && currentNode.level <= maxLevel) {
+            downline.push(currentNode);
+            if (currentNode.children) {
+                queue.push(...currentNode.children);
+            }
+        }
+    }
+    return downline;
+};
+
+const BirthdayCard: React.FC<{ member: UserProfile }> = ({ member }) => {
+    // member.birthDate for mock purposes is not always available in UserProfile type, 
+    // but in consultant it was member.birthDate. split('-')
+    // I'll add a birthDate check or use a default
+    const birthDate = (member as any).birthDate || '1990-01-01';
+    const [, month, day] = birthDate.split('-');
+
+    const handleSendWhatsApp = () => {
+        const message = `Olá, ${member.name}! 🎉 Muitas felicidades, saúde e sucesso neste seu dia especial. Que seja um novo ciclo de grandes realizações! Um grande abraço da equipe RS Prólipsi.`;
+        const phone = (member as any).phone || '';
+        const phoneNumber = phone.replace(/\D/g, '');
+        const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+        window.open(url, '_blank');
+    };
+
+    return (
+        <div className="flex items-center justify-between p-4 bg-dark-900 border border-dark-800 rounded-lg">
+            <div className="flex items-center space-x-4">
+                <div className="relative">
+                    <img src={member.avatarUrl} alt={member.name} className="h-12 w-12 rounded-full border-2 border-gold-500/30" />
+                    <div className="absolute -bottom-1 -right-1 bg-gold-500 rounded-full p-1">
+                        <CalendarIcon className="w-2.5 h-2.5 text-black" />
+                    </div>
+                </div>
+                <div>
+                    <p className="font-bold text-white mb-0.5">{member.name}</p>
+                    <p className="text-[10px] font-bold text-gold-500 uppercase tracking-widest opacity-80">{member.graduation}</p>
+                </div>
+            </div>
+            <div className="text-right flex flex-col items-end">
+                <p className="text-lg font-black text-white">{day}/{month}</p>
+                <button
+                    onClick={handleSendWhatsApp}
+                    className="text-[10px] mt-1.5 bg-dark-800 text-gold-500 border border-gold-500/20 px-3 py-1.5 rounded-md hover:bg-gold-500 hover:text-black transition-all font-bold uppercase tracking-tighter"
+                >
+                    Felicitar
+                </button>
+            </div>
+        </div>
+    );
 };
 
 const forceDownload = async (url: string, fileName: string) => {
@@ -152,7 +214,7 @@ const mapDownload = (it: any): DownloadMaterial => ({
 const AnnouncementsTab: React.FC<{ announcements: Announcement[] }> = ({ announcements }) => (
     <div className="space-y-4">
         {announcements.length > 0 ? announcements.map((item) => (
-            <div key={item.id} className="flex items-start gap-4 p-4 bg-dark-900 rounded-lg border border-dark-800" onClick={async () => { try { const uid = localStorage.getItem('rs-user-id') || 'anonymous'; await communicationAPI.announcements.acknowledge(item.id, uid); } catch {} }}>
+            <div key={item.id} className="flex items-start gap-4 p-4 bg-dark-900 rounded-lg border border-dark-800" onClick={async () => { try { const uid = localStorage.getItem('rs-user-id') || 'anonymous'; await communicationAPI.announcements.acknowledge(item.id, uid); } catch { } }}>
                 <div className="p-3 rounded-full bg-dark-800 text-gold-500 flex-shrink-0">
                     {getIcon(item.type)}
                 </div>
@@ -188,37 +250,72 @@ const AgendaComemorativaTab: React.FC<{ items: AgendaItem[] }> = ({ items }) => 
         }, {} as Record<AgendaCategory, AgendaItem[]>);
     }, [items]);
 
+    const currentMonth = new Date().getMonth() + 1;
+    const downline = getNetworkDownline(mockDeepNetwork, 5);
+    const birthdaysThisMonth = downline
+        .filter(member => {
+            const bDate = (member as any).birthDate;
+            if (!bDate) return false;
+            return parseInt(bDate.split('-')[1]) === currentMonth;
+        })
+        .sort((a, b) => {
+            const dayA = parseInt(((a as any).birthDate || '').split('-')[2] || '0');
+            const dayB = parseInt(((b as any).birthDate || '').split('-')[2] || '0');
+            return dayA - dayB;
+        });
+
     return (
-        <div>
-            <p className="text-sm text-gray-400 mb-4">
-                Mensagens automáticas para datas e conquistas especiais.
-            </p>
-            {items.length > 0 ? (
-                <div className="space-y-6">
-                    {Object.entries(groupedItems).map(([category, categoryItems]) => (
-                        <div key={category}>
-                            <h2 className="text-xl font-bold text-white mb-3 flex items-center gap-2">
-                                {getIcon(category, 'w-6 h-6 text-gold-500')} {category}
-                            </h2>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {(categoryItems as AgendaItem[]).map(item => (
-                                    <div key={item.id} className="flex flex-col justify-between p-4 bg-dark-900 rounded-lg border border-dark-800">
-                                        <div>
-                                            <h3 className="font-bold text-white">{item.title}</h3>
-                                            <p className="text-sm text-gray-400 mt-1">{item.content}</p>
+        <div className="space-y-8">
+            <div>
+                <p className="text-sm text-gray-400 mb-4">
+                    Mensagens automáticas para datas e conquistas especiais.
+                </p>
+                {items.length > 0 ? (
+                    <div className="space-y-6">
+                        {Object.entries(groupedItems).map(([category, categoryItems]) => (
+                            <div key={category}>
+                                <h2 className="text-xl font-bold text-white mb-3 flex items-center gap-2">
+                                    {getIcon(category, 'w-6 h-6 text-gold-500')} {category}
+                                </h2>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {(categoryItems as AgendaItem[]).map(item => (
+                                        <div key={item.id} className="flex flex-col justify-between p-4 bg-dark-900 rounded-lg border border-dark-800">
+                                            <div>
+                                                <h3 className="font-bold text-white">{item.title}</h3>
+                                                <p className="text-sm text-gray-400 mt-1">{item.content}</p>
+                                            </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    ))}
+                                </div>
                             </div>
-                        </div>
-                    ))}
-                </div>
-            ) : (
-                <div className="text-center py-16 text-gray-500">
-                    <CalendarIcon className="w-12 h-12 mx-auto" />
-                    <p className="mt-2">Nenhum item na agenda comemorativa.</p>
-                </div>
-            )}
+                        ))}
+                    </div>
+                ) : (
+                    <div className="text-center py-10 text-gray-500 border border-dark-800 border-dashed rounded-lg">
+                        <CalendarIcon className="w-12 h-12 mx-auto opacity-20" />
+                        <p className="mt-2">Nenhum item na agenda corporativa.</p>
+                    </div>
+                )}
+            </div>
+
+            {/* Aniversariantes da Rede - Sincronizado do Consultor */}
+            <div className="space-y-4 pt-4 border-t border-dark-800">
+                <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                    {getIcon('Network', 'w-6 h-6 text-gold-500')} Aniversariantes da Rede
+                </h2>
+                {birthdaysThisMonth.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {birthdaysThisMonth.map(member => (
+                            <BirthdayCard key={member.id} member={member} />
+                        ))}
+                    </div>
+                ) : (
+                    <div className="text-center py-10 text-gray-500 border border-dark-800 border-dashed rounded-lg">
+                        <TrophyIcon className="w-12 h-12 mx-auto opacity-20" />
+                        <p className="mt-2">Nenhum aniversário este mês na sua rede (até 5ª geração).</p>
+                    </div>
+                )}
+            </div>
         </div>
     );
 };
@@ -302,7 +399,7 @@ const TrainingTab: React.FC<{ trainings: any[]; selectedTraining: any | null; se
                             )}
                             <div className="flex flex-wrap items-center justify-between gap-4 py-4 border-y border-dark-800">
                                 <div className="flex items-center gap-2">
-                                    <input type="checkbox" className="w-5 h-5 rounded bg-dark-800 border-dark-700 text-gold-500" checked={Boolean(currentLesson.completed)} onChange={async () => { const id = String(currentLesson.id); const updated = lessons.map((l: any) => String(l.id) === id ? { ...l, completed: !l.completed } : l); setSelectedTraining({ ...selectedTraining, lessons: updated }); try { const uid = localStorage.getItem('rs-user-id') || 'anonymous'; await communicationAPI.trainings.completeLesson(id, uid, String(selectedTraining.id)); } catch {} }} />
+                                    <input type="checkbox" className="w-5 h-5 rounded bg-dark-800 border-dark-700 text-gold-500" checked={Boolean(currentLesson.completed)} onChange={async () => { const id = String(currentLesson.id); const updated = lessons.map((l: any) => String(l.id) === id ? { ...l, completed: !l.completed } : l); setSelectedTraining({ ...selectedTraining, lessons: updated }); try { const uid = localStorage.getItem('rs-user-id') || 'anonymous'; await communicationAPI.trainings.completeLesson(id, uid, String(selectedTraining.id)); } catch { } }} />
                                     <span className="text-sm text-gray-300">Marcar como concluída</span>
                                 </div>
                                 <div className="flex items-center gap-2">
@@ -502,8 +599,8 @@ const CommunicationCenter: React.FC = () => {
         <button
             onClick={() => setActiveTab(tabId)}
             className={`flex items-center gap-2 px-4 py-3 text-sm font-bold transition-colors rounded-t-lg border-b-2 whitespace-nowrap ${activeTab === tabId
-                    ? 'border-gold-500 text-gold-500'
-                    : 'border-transparent text-gray-400 hover:text-white'
+                ? 'border-gold-500 text-gold-500'
+                : 'border-transparent text-gray-400 hover:text-white'
                 }`}
         >
             {icon} {label}

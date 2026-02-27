@@ -260,10 +260,20 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ title, children, curre
                     ${isSidebarOpen ? 'w-72' : 'w-20'}
                 `}
             >
-                <div className="flex items-center justify-between h-16 px-3 mb-6 flex-shrink-0">
-                    <span className={`font-display text-[rgb(var(--color-brand-gold))] transition-all duration-300 ${isSidebarOpen ? 'text-2xl' : 'text-xl'}`}>
-                        {isSidebarOpen ? 'RS Prólipsi' : 'RS'}
-                    </span>
+                <div className="flex items-center justify-between h-20 px-3 mb-6 flex-shrink-0 border-b border-[rgb(var(--color-brand-gold))]/10">
+                    <div className="flex items-center gap-3">
+                        <img
+                            src="https://raw.githubusercontent.com/RS-Prolipsi/assets/main/logo_rs_gold.png"
+                            alt="RS Prólipsi"
+                            className={`transition-all duration-300 ${isSidebarOpen ? 'w-10 h-10' : 'w-12 h-12'}`}
+                        />
+                        {isSidebarOpen && (
+                            <div className="flex flex-col">
+                                <span className="text-lg font-black text-white leading-none tracking-tighter">RS PRÓLIPSI</span>
+                                <span className="text-[10px] font-bold text-[rgb(var(--color-brand-gold))] uppercase tracking-[0.2em] opacity-80">Ecosystem</span>
+                            </div>
+                        )}
+                    </div>
                     <button
                         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
                         className="hidden lg:inline-flex items-center gap-2 px-2 py-2 rounded-md text-sm font-medium text-[rgb(var(--color-brand-text-dim))] hover:bg-[rgb(var(--color-brand-gray-light))] hover:text-white"

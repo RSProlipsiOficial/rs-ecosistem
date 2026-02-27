@@ -287,6 +287,7 @@ export interface UserProfile {
   email?: string;
   cpfCnpj?: string;
   phone?: string;
+  birthDate?: string;
 }
 
 export interface NetworkActivityItem {
@@ -630,4 +631,10 @@ export interface WalletPaymentResponse {
   transactionId: string;
   remainingBalance: number;
   message: string;
+}
+
+export interface NetworkNode extends UserProfile {
+  level: number;
+  children: NetworkNode[];
+  isEmpty?: boolean;
 }

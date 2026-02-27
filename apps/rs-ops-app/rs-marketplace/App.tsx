@@ -206,17 +206,20 @@ const App: React.FC = () => {
     const [userProfile, setUserProfile] = useState<UserProfile>(() => {
         const saved = localStorage.getItem('rs-consultant-profile');
         const currentOrigin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3003';
+        const isLocal = currentOrigin.includes('localhost');
+        const marketplaceDomain = isLocal ? 'http://localhost:3003' : 'https://marketplace.rsprolipsi.com.br';
+        const rotaFacilDomain = isLocal ? 'http://localhost:3002' : 'https://rotafacil.rsprolipsi.com.br';
 
         let profile: UserProfile = {
             name: 'RS PRÓLIPSI',
-            id: 'RSPROLIPSI',
-            idConsultor: 'RSPROLIPSI',
+            id: 'rsprolipsi',
+            idConsultor: 'rsprolipsi',
             graduation: 'DIAMANTE PRESIDENCIAL',
             accountStatus: 'Ativo',
             monthlyActivity: 'Ativo',
             category: 'DIAMANTE',
-            referralLink: `${currentOrigin}/?ref=RSPROLIPSI`,
-            affiliateLink: `${currentOrigin}/loja/RSPROLIPSI`,
+            referralLink: `${rotaFacilDomain}/indicacao/rsprolipsi`,
+            affiliateLink: `${marketplaceDomain}/loja/rsprolipsi`,
             avatarUrl: 'https://raw.githubusercontent.com/RS-Prolipsi/assets/main/logo_rs_gold.png'
         };
 
@@ -285,25 +288,37 @@ const App: React.FC = () => {
     // Master Identity Cleanup & Enforcement
     useEffect(() => {
         const isMaster =
-            userProfile.idConsultor === 'RSPROLIPSI' ||
-            userProfile.slug === 'rsprolipsi' ||
-            (userProfile.email && userProfile.email.includes('rsprolipsioficial')) ||
-            userProfile.id === 'rsprolipsioficial';
+            userProfile.idConsultor?.toLowerCase().includes('rsprolipsi') ||
+            userProfile.slug?.toLowerCase().includes('rsprolipsi') ||
+            (userProfile.email && userProfile.email.includes('rsprolipsi')) ||
+            userProfile.id === 'rsprolipsioficial' ||
+            userProfile.id === 'rsprolipsi';
 
         if (isMaster) {
             const currentOrigin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3003';
+            const isLocal = currentOrigin.includes('localhost');
+            const marketplaceDomain = isLocal ? 'http://localhost:3003' : 'https://marketplace.rsprolipsi.com.br';
+            const rotaFacilDomain = isLocal ? 'http://localhost:3002' : 'https://rotafacil.rsprolipsi.com.br';
+
             const officialId = 'rsprolipsi';
             const officialName = 'RS PRÓLIPSI';
 
-            if (userProfile.idConsultor !== officialId || userProfile.name !== officialName) {
+            // Blindagem total de campos mestre
+            const needsUpdate =
+                userProfile.idConsultor !== officialId ||
+                userProfile.id !== officialId ||
+                userProfile.name !== officialName ||
+                !userProfile.referralLink?.includes('3002');
+
+            if (needsUpdate) {
                 const updatedProfile = {
                     ...userProfile,
                     name: officialName,
                     id: officialId,
                     idConsultor: officialId,
                     slug: officialId,
-                    referralLink: `${currentOrigin}/?ref=${officialId}`,
-                    affiliateLink: `${currentOrigin}/loja/${officialId}`,
+                    referralLink: `${rotaFacilDomain}/indicacao/${officialId}`,
+                    affiliateLink: `${marketplaceDomain}/loja/${officialId}`,
                     avatarUrl: 'https://raw.githubusercontent.com/RS-Prolipsi/assets/main/logo_rs_gold.png'
                 };
                 setUserProfile(updatedProfile);
