@@ -109,6 +109,89 @@ const HeadquartersPanel: React.FC<HeadquartersPanelProps> = ({ activeTab: initia
         setIsOrderModalOpen(true);
     };
 
+    const handlePrintOrder = (order: ReplenishmentOrder) => {
+        const printWindow = window.open('', '_blank');
+        if (!printWindow) return;
+
+        const html = `
+            <!DOCTYPE html>
+            <html>
+                <head>
+                    <title>Pedido AC-${order.id.split('-')[0].toUpperCase()}</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; padding: 20px; line-height: 1.6; max-width: 800px; margin: 0 auto; color: #333; }
+                        .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px; }
+                        .title { font-size: 24px; font-weight: bold; }
+                        .subtitle { color: #666; font-size: 14px; }
+                        .grid { display: flex; justify-content: space-between; gap: 20px; margin-bottom: 30px; }
+                        .box { border: 1px solid #ccc; padding: 15px; flex: 1; border-radius: 4px; }
+                        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px; }
+                        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                        th { background-color: #f4f4f4; text-transform: uppercase; font-size: 12px; }
+                        .total { text-align: right; font-weight: bold; margin-top: 20px; font-size: 18px; padding-top: 10px; border-top: 2px solid #000; }
+                        .footer { text-align: center; margin-top: 50px; font-size: 12px; color: #888; border-top: 1px solid #eee; padding-top: 10px; }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <div class="title">RS PRÓLIPSI - ABASTECIMENTO</div>
+                        <div class="subtitle">PEDIDO ID: AC-${order.id.split('-')[0].toUpperCase()} | DATA: ${new Date(order.date).toLocaleString('pt-BR')}</div>
+                    </div>
+
+                    <div class="grid">
+                        <div class="box">
+                            <strong>DESTINATÁRIO:</strong><br/>
+                            ${order.cdName}<br/>
+                            CNPJ/CPF: ${order.cdDetails?.document || 'Não informado'}<br/>
+                            E-mail: ${order.cdDetails?.email || 'Não informado'}<br/>
+                            Tel: ${order.cdDetails?.phone || 'Não informado'}
+                        </div>
+                        <div class="box">
+                            <strong>ENDEREÇO DE ENTREGA:</strong><br/>
+                            ${order.cdDetails?.addressStreet || 'Rua não informada'}, ${order.cdDetails?.addressNumber || 'S/N'}<br/>
+                            Bairro: ${order.cdDetails?.addressNeighborhood || 'Não informado'}<br/>
+                            ${order.cdDetails?.city || 'Não informada'} - ${order.cdDetails?.state || 'UF'}<br/>
+                            CEP: ${order.cdDetails?.addressZip || 'Não informado'}
+                        </div>
+                    </div>
+
+                    <h3>ITENS SOLICITADOS (TOTAL: ${order.itemCount})</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Produto</th>
+                                <th>SKU</th>
+                                <th style="text-align: right">Qtd</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${order.items.map(i => `
+                                <tr>
+                                    <td>${i.name}</td>
+                                    <td>${i.sku}</td>
+                                    <td style="text-align: right">${i.quantity}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                    
+                    <div class="total">
+                        VALOR TOTAL: R$ ${order.totalValue.toLocaleString('pt-BR')}
+                    </div>
+                    
+                    <div class="footer">
+                        Documento gerado em ${new Date().toLocaleString('pt-BR')} - RS Prólipsi Ecossistema
+                    </div>
+                    <script>
+                        window.onload = function() { window.print(); window.close(); }
+                    </script>
+                </body>
+            </html>
+        `;
+        printWindow.document.write(html);
+        printWindow.document.close();
+    };
+
     return (
         <div className="p-6 space-y-6">
             {/* Header / Tabs */}
@@ -681,7 +764,19 @@ const HeadquartersPanel: React.FC<HeadquartersPanelProps> = ({ activeTab: initia
                                                 alert("Endereço copiado para a área de transferência!");
                                             }}
                                         >
-                                            Copiar Endereço para Etiqueta
+                                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                                            </svg>
+                                            Copiar Endereço
+                                        </button>
+                                        <button
+                                            className="w-full py-3 bg-blue-500 hover:bg-blue-400 text-white font-bold rounded-lg transition-colors flex justify-center items-center gap-2"
+                                            onClick={() => handlePrintOrder(selectedOrder)}
+                                        >
+                                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                                            </svg>
+                                            Imprimir Pedido
                                         </button>
                                         <button
                                             className="w-full py-3 bg-white/5 hover:bg-white/10 text-white font-bold rounded-lg transition-colors"

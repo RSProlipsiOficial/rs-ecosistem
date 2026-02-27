@@ -188,7 +188,12 @@ export const headquartersService = {
                 cdId: order.cd_id,
                 cdName: cdData.name || `CD: ${order.cd_id.substring(0, 8).toUpperCase()}`,
                 itemCount: order.items_count || 0,
-                items: order.items || [],
+                items: (order.items || []).map((i: any) => ({
+                    sku: i.product_id || '',
+                    name: i.product_name || 'Produto sem nome',
+                    quantity: i.quantity || 0,
+                    unitCost: i.unit_price || 0
+                })),
                 totalValue: Number(order.total) || 0,
                 status: (order.status || 'PENDENTE').toUpperCase(),
                 requestDate: order.created_at,
