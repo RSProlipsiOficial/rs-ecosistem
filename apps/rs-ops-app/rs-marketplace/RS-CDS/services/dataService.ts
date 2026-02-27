@@ -190,34 +190,10 @@ export const dataService = {
             return base * (1 - 0.152);
         };
 
-        const mappedInitial = initialProducts.map(p => {
-            const retailPrice = Number(p.price) || 0;
-            const consultantPrice = (p as any).memberPrice || (retailPrice * 0.50);
-            const cdCostPrice = consultantPrice * (1 - 0.152); // -15.2% sobre o consultor
-
-            console.log(`[CDS-MOCK] ${p.name}: Varejo=${retailPrice} | Consultor=${consultantPrice} | Custo CD=${cdCostPrice}`);
-
-            return {
-                id: p.id,
-                sku: p.sku || 'N/A',
-                name: p.name,
-                category: p.category || 'Geral',
-                stockLevel: p.inventory || 0,
-                minStock: 0,
-                price: retailPrice,
-                memberPrice: consultantPrice,
-                costPrice: cdCostPrice,
-                points: 0,
-                status: 'OK' as const
-            };
-        });
-
         const mappedApi = apiProducts.map(p => {
             const retailPrice = Number(p.price) || 0;
             const consultantPrice = Number(p.member_price) || (retailPrice * 0.50);
             const cdCostPrice = consultantPrice * (1 - 0.152);
-
-            console.log(`[CDS-API] ${p.name}: Varejo=${retailPrice} | Consultor=${consultantPrice} | Custo CD=${cdCostPrice}`);
 
             return {
                 id: p.id,
@@ -240,11 +216,8 @@ export const dataService = {
             };
         });
 
-        // Remove duplicados da API caso já estejam nos iniciais (pelo ID)
-        const premiumIds = new Set(mappedInitial.map(p => String(p.id)));
-        const filteredApi = mappedApi.filter(p => !premiumIds.has(String(p.id)));
-
-        return [...mappedInitial, ...filteredApi];
+        // Retorna exclusivamente os produtos reais do Banco para garantir IDs válidos (UUID)
+        return mappedApi;
     },
 
     async createReplenishmentOrder(cdId: string, items: any[], totalValue: number): Promise<boolean> {
@@ -275,7 +248,11 @@ export const dataService = {
                 unit_price: item.product.costPrice,
                 points: item.product.points || 0
             }));
-            await adminSupabase.from('cd_order_items').insert(itemsPayload);
+
+            const { error: itemsError } = await adminSupabase.from('cd_order_items').insert(itemsPayload);
+            if (itemsError) {
+                console.error('[CDS] Falha crítica ao inserir itens do pedido:', itemsError);
+            }
         }
         return true;
     },

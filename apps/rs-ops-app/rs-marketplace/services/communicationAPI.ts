@@ -1,7 +1,7 @@
-const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:4000';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
 
 function resolveTenantId(): string {
-    const envTenant = (import.meta as any).env?.VITE_TENANT_ID;
+    const envTenant = import.meta.env.VITE_TENANT_ID;
 
     try {
         const qs = new URLSearchParams(window.location.search);
