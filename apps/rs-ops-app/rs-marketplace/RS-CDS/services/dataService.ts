@@ -266,7 +266,7 @@ export const dataService = {
                 const realId = originalId.length < 10 ? (FallbackIds[originalId] || FallbackIds[item.product.name] || originalId) : originalId;
 
                 return {
-                    order_id: data.id,
+                    cd_order_id: data.id,
                     product_id: realId,
                     product_name: item.product.name,
                     quantity: item.quantity,
