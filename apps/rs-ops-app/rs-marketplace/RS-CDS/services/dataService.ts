@@ -239,15 +239,41 @@ export const dataService = {
             return false;
         }
 
+        // MAPA FALLBACK (DE-PARA) EM CASO DE CACHE NO NAVEGADOR COM IDs FALSOS (1-7)
+        const FallbackIds: Record<string, string> = {
+            '1': 'd8da03a4-d45a-4390-8698-9a35d43647c8', // AlphaLipsi
+            '2': '850c41ec-2cde-4768-aa65-9630215ea407', // GlicoLipsi
+            '3': 'b98c42b9-52c5-478e-b172-faee36c6ba2c', // DivaLipsi
+            '4': '486f290d-500f-4c1c-8889-f8d2db87c2bc', // Inflamax
+            '5': '1c337036-bde5-4f2d-aba5-6729b911b002', // OzoniPro
+            '6': '802529e1-ead9-4eef-bf20-4ce63e25ec92', // Pro3+
+            '7': '8445623a-2642-4e04-be6d-c815b1d337f6', // SlimLipsi
+
+            // Tratativas nominais também prevenidos
+            'AlphaLipsi': 'd8da03a4-d45a-4390-8698-9a35d43647c8',
+            'GlicoLipsi': '850c41ec-2cde-4768-aa65-9630215ea407',
+            'DivaLipsi': 'b98c42b9-52c5-478e-b172-faee36c6ba2c',
+            'Inflamaxi': '486f290d-500f-4c1c-8889-f8d2db87c2bc',
+            'Ozone Pro 3+': '1c337036-bde5-4f2d-aba5-6729b911b002',
+            'Pro 3+': '802529e1-ead9-4eef-bf20-4ce63e25ec92',
+            'SlimLipsi': '8445623a-2642-4e04-be6d-c815b1d337f6',
+        };
+
         if (data && data.id && items.length > 0) {
-            const itemsPayload = items.map(item => ({
-                order_id: data.id,
-                product_id: item.product.id,
-                product_name: item.product.name,
-                quantity: item.quantity,
-                unit_price: item.product.costPrice,
-                points: item.product.points || 0
-            }));
+            const itemsPayload = items.map(item => {
+                const originalId = String(item.product.id);
+                // Se o ID for numérico ou curto, busca o UUID real do fallback.
+                const realId = originalId.length < 10 ? (FallbackIds[originalId] || FallbackIds[item.product.name] || originalId) : originalId;
+
+                return {
+                    order_id: data.id,
+                    product_id: realId,
+                    product_name: item.product.name,
+                    quantity: item.quantity,
+                    unit_price: item.product.costPrice,
+                    points: item.product.points || 0
+                };
+            });
 
             const { error: itemsError } = await adminSupabase.from('cd_order_items').insert(itemsPayload);
             if (itemsError) {

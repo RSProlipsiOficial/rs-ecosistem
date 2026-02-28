@@ -8,6 +8,7 @@ import { CalendarIcon } from './icons/CalendarIcon';
 import { UserPlusIcon } from './icons/UserPlusIcon';
 import { StarIcon } from './icons/StarIcon';
 import { TrophyIcon } from './icons/TrophyIcon';
+import { BellIcon } from './icons/BellIcon';
 
 import Treinamentos from './communication/Treinamentos';
 import Catalogo from './communication/Catalogo';
@@ -36,8 +37,8 @@ const getIcon = (type: string, className: string = 'w-6 h-6') => {
     const props = { className };
     switch (type) {
         case 'alert': return <MegaphoneIcon {...props} />;
-        case 'info': return <MegaphoneIcon {...props} />;
-        case 'promo': return <MegaphoneIcon {...props} />;
+        case 'info': return <BellIcon {...props} />;
+        case 'promo': return <StarIcon {...props} />;
         case 'presentation': return <DocumentTextIcon {...props} />;
         case 'catalog': return <DocumentTextIcon {...props} />;
         case 'document': return <DocumentTextIcon {...props} />;
@@ -45,7 +46,7 @@ const getIcon = (type: string, className: string = 'w-6 h-6') => {
         case 'Aniversariantes': return <TrophyIcon {...props} />;
         case 'PINs': return <StarIcon {...props} />;
         case 'Datas Comemorativas': return <CalendarIcon {...props} />;
-        default: return null;
+        default: return <BellIcon {...props} />;
     }
 };
 
@@ -70,8 +71,8 @@ const mapAgendaItem = (it: any): AgendaItem => ({
 const AnnouncementsTab: React.FC<{ announcements: Announcement[] }> = ({ announcements }) => (
     <div className="space-y-4">
         {announcements.length > 0 ? announcements.map((item) => (
-            <div key={item.id} className="flex items-start gap-4 p-4 bg-dark-900 rounded-lg border border-dark-800" onClick={async () => { try { const uid = localStorage.getItem('rs-user-id') || 'anonymous'; await communicationAPI.announcements.acknowledge(item.id, uid); } catch { } }}>
-                <div className="p-3 rounded-full bg-dark-800 text-gold-500 flex-shrink-0">
+            <div key={item.id} className="flex items-start gap-4 p-4 bg-[#1E1E1E] rounded-lg border border-gray-800" onClick={async () => { try { const uid = localStorage.getItem('rs-user-id') || 'anonymous'; await communicationAPI.announcements.acknowledge(item.id, uid); } catch { } }}>
+                <div className="p-3 rounded-full bg-[#2A2A2A] text-yellow-500 flex-shrink-0">
                     {getIcon(item.type)}
                 </div>
                 <div className="flex-1">
@@ -91,7 +92,7 @@ const AnnouncementsTab: React.FC<{ announcements: Announcement[] }> = ({ announc
             </div>
         )) : (
             <div className="text-center py-16 text-gray-500">
-                <MegaphoneIcon className="w-12 h-12 mx-auto" />
+                <BellIcon className="w-12 h-12 mx-auto text-gray-700" />
                 <p className="mt-2">Nenhum comunicado disponível.</p>
             </div>
         )}

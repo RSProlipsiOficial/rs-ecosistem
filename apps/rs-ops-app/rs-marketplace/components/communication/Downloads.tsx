@@ -66,7 +66,11 @@ const Downloads: React.FC = () => {
         <div className="animate-fade-in">
             <h2 className="text-2xl font-bold text-white mb-6">Materiais para Download</h2>
             {materials.length === 0 ? (
-                <p className="text-gray-500 text-center py-10">Nenhum material disponível para download.</p>
+                <div className="text-center py-16 text-gray-500 border-t border-gray-800 mt-8 pt-16">
+                    <DownloadIcon className="w-12 h-12 mx-auto text-yellow-500" />
+                    <h2 className="text-2xl font-bold text-white mt-4">Materiais para Download</h2>
+                    <p className="mt-2 max-w-lg mx-auto">Nenhum material disponível para download no momento.</p>
+                </div>
             ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                     {materials.map(asset => (

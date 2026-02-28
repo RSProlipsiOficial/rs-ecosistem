@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { ShopIcon } from '../icons/ShopIcon';
+import { CatalogIcon } from '../icons/CatalogIcon';
 import { ArrowTopRightOnSquareIcon } from '../icons/ArrowTopRightOnSquareIcon';
 import { DocumentTextIcon } from '../icons/DocumentTextIcon';
 import communicationAPI, { Catalog } from '../../services/communicationAPI';
@@ -26,7 +26,7 @@ const Catalogo: React.FC = () => {
     if (catalogs.length === 0) {
         return (
             <div className="animate-fade-in text-center py-16 text-gray-500">
-                <ShopIcon className="w-12 h-12 mx-auto text-yellow-500" />
+                <CatalogIcon className="w-12 h-12 mx-auto text-yellow-500" />
                 <h2 className="text-2xl font-bold text-white mt-4">Catálogos</h2>
                 <p className="mt-2 max-w-lg mx-auto">Nenhum caderno ou catálogo disponível no momento.</p>
             </div>

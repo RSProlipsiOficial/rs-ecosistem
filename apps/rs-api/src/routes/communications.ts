@@ -102,6 +102,7 @@ router.put('/v1/communications/announcements/:id', async (req: Request, res: Res
     const patch: any = req.body ?? {};
     delete patch.id;
     delete patch.tenant_id;
+    delete patch.tenantId;
     delete patch.created_at;
 
     const { data, error } = await supabase.from('announcements').update(patch).eq('id', id).select().single();

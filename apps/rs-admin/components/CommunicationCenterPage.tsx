@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import communicationAPI from '../src/services/communicationAPI';
+import { supabase } from '../src/lib/supabaseClient';
 import { GoogleGenAI, GenerateContentResponse, Type } from '@google/genai';
 import {
     BellIcon,
@@ -400,18 +401,39 @@ const MaterialEditModal: React.FC<{
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, field: 'coverImage' | 'pdfSource' | 'fileUrl') => {
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, field: 'coverImage' | 'pdfSource' | 'fileUrl') => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                setFormData(prev => ({ ...prev, [field]: event.target?.result as string, fileName: file.name }));
-            };
-            reader.readAsDataURL(file);
+            setFormData(prev => ({ ...prev, fileName: file.name, [field]: 'Uploading...' }));
+
+            try {
+                const fileExt = file.name.split('.').pop();
+                const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
+                const filePath = `communications/${fileName}`;
+
+                const { error: uploadError } = await supabase.storage
+                    .from('public')
+                    .upload(filePath, file, { cacheControl: '3600', upsert: false });
+
+                if (uploadError) throw uploadError;
+
+                const { data } = supabase.storage.from('public').getPublicUrl(filePath);
+                setFormData(prev => ({ ...prev, [field]: data.publicUrl }));
+            } catch (error: any) {
+                console.error("Upload error:", error);
+                alert("Erro ao fazer upload do arquivo: " + error.message);
+                setFormData(prev => ({ ...prev, [field]: null, fileName: '' }));
+            }
         }
     };
 
-    const handleSave = () => { onSave({ ...formData, id: material?.id }); };
+    const handleSave = () => {
+        if (formData.pdfSource === 'Uploading...' || formData.fileUrl === 'Uploading...' || formData.coverImage === 'Uploading...') {
+            alert('Aguarde o término do upload antes de salvar.');
+            return;
+        }
+        onSave({ ...formData, id: material?.id });
+    };
 
     return (
         <div className="fixed inset-0 bg-black/80 z-50 flex justify-center items-center p-4">
@@ -421,9 +443,9 @@ const MaterialEditModal: React.FC<{
                     <div><label className="block text-sm font-medium text-gray-300 mb-1">Título</label><input type="text" name="title" value={formData.title || ''} onChange={handleChange} className="bg-[#2A2A2A] w-full p-2 rounded-lg" /></div>
                     {!isCatalog && <div><label className="block text-sm font-medium text-gray-300 mb-1">Descrição</label><input type="text" name="description" value={formData.description || ''} onChange={handleChange} className="bg-[#2A2A2A] w-full p-2 rounded-lg" /></div>}
                     <div><label className="block text-sm font-medium text-gray-300 mb-1">Fonte</label><select name="sourceType" value={formData.sourceType || 'none'} onChange={handleChange} className="bg-[#2A2A2A] w-full p-2 rounded-lg"><option value="none">Nenhum</option><option value="file">Arquivo (Upload)</option><option value="url">URL Externa</option></select></div>
-                    {formData.sourceType === 'file' && <div><label className="block text-sm font-medium text-gray-300 mb-1">Arquivo {isCatalog ? 'PDF' : ''}</label><button onClick={() => fileInputRef.current?.click()} className="w-full text-sm bg-gray-700 p-2 rounded-lg hover:bg-gray-600">{formData.fileName || 'Selecionar arquivo...'}</button><input ref={fileInputRef} type="file" onChange={(e) => handleFileChange(e, sourceProp)} className="hidden" accept={isCatalog ? '.pdf' : undefined} /></div>}
+                    {formData.sourceType === 'file' && <div><label className="block text-sm font-medium text-gray-300 mb-1">Arquivo {isCatalog ? 'PDF' : ''}</label><button onClick={() => fileInputRef.current?.click()} className="w-full text-sm bg-gray-700 p-2 rounded-lg hover:bg-gray-600 disabled:opacity-50" disabled={formData[sourceProp] === 'Uploading...'}>{formData[sourceProp] === 'Uploading...' ? 'Enviando...' : formData.fileName || 'Selecionar arquivo...'}</button><input ref={fileInputRef} type="file" onChange={(e) => handleFileChange(e, sourceProp)} className="hidden" accept={isCatalog ? '.pdf' : undefined} /></div>}
                     {formData.sourceType === 'url' && <div><label className="block text-sm font-medium text-gray-300 mb-1">URL do Arquivo</label><input type="url" name={sourceProp} value={formData[sourceProp] || ''} onChange={handleChange} className="bg-[#2A2A2A] w-full p-2 rounded-lg" /></div>}
-                    {isCatalog && <div><label className="block text-sm font-medium text-gray-300 mb-1">Imagem de Capa</label>{formData.coverImage && <img src={formData.coverImage} className="w-24 h-32 object-cover rounded-md mb-2" />}<button onClick={() => coverInputRef.current?.click()} className="w-full text-sm bg-gray-700 p-2 rounded-lg hover:bg-gray-600">Selecionar imagem...</button><input ref={coverInputRef} type="file" onChange={(e) => handleFileChange(e, 'coverImage')} className="hidden" accept="image/*" /></div>}
+                    {isCatalog && <div><label className="block text-sm font-medium text-gray-300 mb-1">Imagem de Capa</label>{formData.coverImage && formData.coverImage !== 'Uploading...' && <img src={formData.coverImage} className="w-24 h-32 object-cover rounded-md mb-2" />}{formData.coverImage === 'Uploading...' && <div className="text-yellow-500 font-bold mb-2 text-sm flex items-center gap-2"><SpinnerIcon className="w-4 h-4 animate-spin" /> Enviando imagem...</div>}<button onClick={() => coverInputRef.current?.click()} className="w-full text-sm bg-gray-700 p-2 rounded-lg hover:bg-gray-600 disabled:opacity-50" disabled={formData.coverImage === 'Uploading...'}>Selecionar imagem...</button><input ref={coverInputRef} type="file" onChange={(e) => handleFileChange(e, 'coverImage')} className="hidden" accept="image/*" /></div>}
                     {!isCatalog && <div><label className="block text-sm font-medium text-gray-300 mb-1">Ícone</label><select name="iconType" value={formData.iconType || 'document'} onChange={handleChange} className="bg-[#2A2A2A] w-full p-2 rounded-lg"><option value="document">Documento</option><option value="photo">Imagem</option><option value="presentation">Apresentação</option></select></div>}
                 </main>
                 <footer className="p-4 bg-black/50 border-t border-[#2A2A2A] flex justify-end gap-3"><button onClick={onClose} className="px-4 py-2 text-sm bg-gray-700 rounded-lg hover:bg-gray-600">Cancelar</button><button onClick={handleSave} className="px-4 py-2 text-sm bg-[#FFD700] text-black font-bold rounded-lg hover:bg-yellow-600">Salvar</button></footer>
@@ -623,7 +645,6 @@ const CommunicationCenterPage: React.FC<CommunicationCenterPageProps> = ({ credi
                 title: String(item.title || ''),
                 message: String(item.content || ''),
                 type: item.type || 'info',
-                is_new: Boolean(item.new),
                 is_published: true,
                 audience: ['consultor', 'marketplace']
             };
