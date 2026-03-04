@@ -10,7 +10,8 @@ import { ChatBubbleLeftRightIcon } from './icons/ChatBubbleLeftRightIcon';
 import { BellIcon } from './icons/BellIcon';
 import { UserIcon } from './icons/UserIcon';
 import { SparklesIcon } from './icons/SparklesIcon';
-import { Cog6ToothIcon } from './icons/Cog6ToothIcon';
+import { CogIcon } from './icons/CogIcon';
+import { AdjustmentsHorizontalIcon } from './icons/AdjustmentsHorizontalIcon';
 import { ChevronDoubleLeftIcon } from './icons/ChevronDoubleLeftIcon';
 import { MenuIcon } from './icons/MenuIcon';
 import { CloseIcon } from './icons/CloseIcon';
@@ -46,7 +47,7 @@ const navGroups = [
     },
     { isSeparator: true, title: "GERENCIAR" },
     {
-        main: { icon: StorefrontIcon, label: "Minha Loja", view: "manageProducts" as View },
+        main: { icon: BuildingStorefrontIcon, label: "Minha Loja", view: "manageProducts" as View },
         subLinks: [
             { label: 'Produtos', view: 'manageProducts' as View },
             { label: 'Coleções', view: 'manageCollections' as View },
@@ -59,23 +60,16 @@ const navGroups = [
             { label: 'Links de Indicação', view: 'manageAffiliates' as View },
         ]
     },
-    { isSeparator: true, title: "CARREIRA & ENSINO" },
-    {
-        main: { icon: UserIcon, label: "SIGME & Graduação", view: "compensationPlan" as View }
-    },
-    {
-        main: { icon: DocumentTextIcon, label: "Treinamentos", view: "manageTrainings" as View }
-    },
+
     { isSeparator: true, title: "APARÊNCIA" },
     {
-        main: { icon: PaletteIcon, label: "Personalização", view: "storeEditor" as View },
+        main: { icon: AdjustmentsHorizontalIcon, label: "Personalização", view: "storeEditor" as View },
         subLinks: [
-            { label: 'Meu Perfil', view: 'userProfileEditor' as View },
             { label: 'Aparência da Loja', view: 'storeEditor' as View },
         ]
     },
     {
-        main: { icon: Cog6ToothIcon, label: "Configurações", view: "managePayments" as View },
+        main: { icon: CogIcon, label: "Configurações", view: "managePayments" as View },
         subLinks: [
             { label: 'Perfil do Consultor', view: 'consultantProfile' as View },
             { label: 'Pagamentos', view: 'managePayments' as View },

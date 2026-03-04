@@ -3,37 +3,43 @@ import React, { useState } from 'react';
 import { Order } from '../types';
 import { SearchIcon } from './icons/SearchIcon';
 import { SpinnerIcon } from './icons/SpinnerIcon';
+import { ordersAPI } from '../services/marketplaceAPI';
 
 interface OrderLookupViewProps {
-  orders: Order[];
-  onOrderFound: (order: Order) => void;
+  onOrderFound: (order: any) => void;
 }
 
-const OrderLookupView: React.FC<OrderLookupViewProps> = ({ orders, onOrderFound }) => {
+const OrderLookupView: React.FC<OrderLookupViewProps> = ({ onOrderFound }) => {
   const [orderId, setOrderId] = useState('');
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
 
-    // Simulate network delay
-    setTimeout(() => {
-      const foundOrder = orders.find(
-        o => o.id.toLowerCase() === orderId.toLowerCase().trim() &&
-             o.customerEmail.toLowerCase() === email.toLowerCase().trim()
-      );
-      
-      if (foundOrder) {
-        onOrderFound(foundOrder);
+    try {
+      const cleanCode = orderId.trim().replace('#', '');
+      const result = await ordersAPI.trackByCode(cleanCode);
+
+      if (result.success && result.data) {
+        const order = result.data;
+        // Validação extra de e-mail por segurança
+        if (order.customer_email?.toLowerCase() === email.toLowerCase().trim()) {
+          onOrderFound(order);
+        } else {
+          setError('Pedido não encontrado ou e-mail não confere.');
+        }
       } else {
-        setError('Pedido não encontrado. Verifique os dados e tente novamente.');
+        setError('Pedido não encontrado. Verifique o código e tente novamente.');
       }
+    } catch (err) {
+      setError('Erro ao buscar pedido. Tente novamente mais tarde.');
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   return (
@@ -62,7 +68,7 @@ const OrderLookupView: React.FC<OrderLookupViewProps> = ({ orders, onOrderFound 
                 placeholder="Ex: #2024-001"
               />
             </div>
-             <div>
+            <div>
               <label htmlFor="email" className="block text-sm font-medium text-[rgb(var(--color-brand-text-light))] mb-2">E-mail da Compra</label>
               <input
                 id="email"
@@ -88,7 +94,7 @@ const OrderLookupView: React.FC<OrderLookupViewProps> = ({ orders, onOrderFound 
               disabled={isLoading}
               className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-bold rounded-md text-[rgb(var(--color-brand-dark))] bg-[rgb(var(--color-brand-gold))] hover:bg-[rgb(var(--color-warning))] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[rgb(var(--color-brand-dark))] focus:ring-[rgb(var(--color-brand-gold))] transition-colors mt-6 disabled:opacity-50 disabled:cursor-wait"
             >
-                {isLoading ? <SpinnerIcon className="w-5 h-5"/> : <SearchIcon className="w-5 h-5"/>}
+              {isLoading ? <SpinnerIcon className="w-5 h-5" /> : <SearchIcon className="w-5 h-5" />}
               <span className="ml-2">{isLoading ? 'Buscando...' : 'Rastrear Pedido'}</span>
             </button>
           </div>

@@ -9,9 +9,24 @@ interface FeaturedProductsProps {
   products: Product[];
   wishlist: string[];
   onToggleWishlist: (productId: string) => void;
+  title?: string;
+  subtitle?: string;
+  titleColor?: string;
+  subtitleColor?: string;
+  backgroundColor?: string;
 }
 
-const FeaturedProducts: React.FC<FeaturedProductsProps> = ({ onProductClick, products, wishlist, onToggleWishlist }) => {
+const FeaturedProducts: React.FC<FeaturedProductsProps> = ({
+  onProductClick,
+  products,
+  wishlist,
+  onToggleWishlist,
+  title = 'Destaques RS',
+  subtitle,
+  titleColor,
+  subtitleColor,
+  backgroundColor
+}) => {
   const sourceProducts = (products && products.length > 0) ? products : initialProducts;
   const featured = sourceProducts
     .filter(p => String(p.status) === 'Ativo' || String(p.status) === 'Publicado');
@@ -38,7 +53,7 @@ const FeaturedProducts: React.FC<FeaturedProductsProps> = ({ onProductClick, pro
 
   const totalItems = featured.length;
   // Let the user scroll through all items. If 7 items, and 4 visible: maxIndex is 3.
-  const maxIndex = totalItems - Math.floor(itemsVisible);
+  const maxIndex = Math.max(0, totalItems - Math.floor(itemsVisible));
 
   const nextSlide = () => {
     setCurrentIndex((prev) => (prev >= maxIndex ? 0 : prev + 1));
@@ -81,10 +96,24 @@ const FeaturedProducts: React.FC<FeaturedProductsProps> = ({ onProductClick, pro
   };
 
   return (
-    <section id="featured-products" className="py-12 sm:py-16 bg-[rgb(var(--color-brand-dark))] overflow-hidden border-b border-[rgb(var(--color-brand-gold))]/[.10]">
+    <section
+      id="featured-products"
+      className="py-12 sm:py-16 overflow-hidden border-b border-[rgb(var(--color-brand-gold))]/[.10]"
+      style={{ backgroundColor: backgroundColor || 'rgb(var(--color-brand-dark))' }}
+    >
       <div className="container mx-auto px-4 relative">
         <div className="text-center mb-10">
-          <h2 className="text-2xl md:text-3xl font-bold font-display text-[rgb(var(--color-brand-text-light))] uppercase tracking-widest">Destaques RS</h2>
+          <h2
+            className="text-2xl md:text-3xl font-bold font-display uppercase tracking-widest"
+            style={{ color: titleColor || 'rgb(var(--color-brand-text-light))' }}
+          >
+            {title}
+          </h2>
+          {subtitle && (
+            <p className="mt-2 text-gray-400" style={{ color: subtitleColor || (titleColor ? `${titleColor}cc` : undefined) }}>
+              {subtitle}
+            </p>
+          )}
           <div className="w-16 h-1 bg-[rgb(var(--color-brand-gold))] mx-auto mt-3 rounded-full"></div>
         </div>
 

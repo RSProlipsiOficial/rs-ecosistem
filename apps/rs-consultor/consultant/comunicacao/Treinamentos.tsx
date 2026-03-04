@@ -28,6 +28,7 @@ const Treinamentos: React.FC = () => {
     const { user } = useUser();
     const [courses, setCourses] = useState<Course[]>([]);
     const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+    const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
 
     const availableIcons: { [key: string]: React.ElementType } = { IconBookOpen, IconChart, IconUsers, IconBuilding2 };
@@ -131,9 +132,17 @@ const Treinamentos: React.FC = () => {
         const completedLessons = currentCourseState.modules.flatMap(m => m.lessons).filter(l => l.completed).length;
         const overallProgress = totalLessons > 0 ? (completedLessons / totalLessons) * 100 : 0;
 
+        // Auto selection
+        if (!selectedLessonId && currentCourseState.modules.length > 0 && currentCourseState.modules[0].lessons.length > 0) {
+            setSelectedLessonId(currentCourseState.modules[0].lessons[0].id);
+        }
+
+        const activeLesson = currentCourseState.modules.flatMap(m => m.lessons).find(l => l.id === selectedLessonId);
+
         return (
             <div className="animate-fade-in space-y-6">
-                <button onClick={() => setSelectedCourse(null)} className="text-brand-gold font-semibold mb-4">&larr; Voltar para todos os cursos</button>
+                <button onClick={() => { setSelectedCourse(null); setSelectedLessonId(null); }} className="text-brand-gold font-semibold mb-4 hover:underline">&larr; Voltar para todos os cursos</button>
+
                 <div>
                     <h2 className="text-3xl font-bold text-white">{currentCourseState.title}</h2>
                     <p className="text-gray-400 mt-1">{currentCourseState.description}</p>
@@ -142,46 +151,96 @@ const Treinamentos: React.FC = () => {
                         <p className="text-sm text-gray-400 text-right mt-1">{completedLessons} de {totalLessons} aulas concluídas</p>
                     </div>
                 </div>
-                <div className="space-y-6">
-                    {currentCourseState.modules.map(module => {
-                        const moduleTotal = module.lessons.length;
-                        const moduleCompleted = module.lessons.filter(l => l.completed).length;
-                        const moduleProgress = moduleTotal > 0 ? (moduleCompleted / moduleTotal) * 100 : 0;
-                        return (
-                            <Card key={module.id}>
-                                <h3 className="text-xl font-bold text-white mb-2">{module.title}</h3>
-                                <div className="flex items-center gap-4 mb-4">
-                                    <ProgressBar progress={moduleProgress} />
-                                    <span className="text-sm text-gray-400 whitespace-nowrap">{moduleCompleted}/{moduleTotal}</span>
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-6">
+                    {/* Video Player Section */}
+                    <div className="lg:col-span-2 space-y-4">
+                        <div className="aspect-video bg-black rounded-xl overflow-hidden border border-brand-gray">
+                            {activeLesson?.videoId ? (
+                                <iframe
+                                    key={activeLesson.id}
+                                    width="100%"
+                                    height="100%"
+                                    src={`https://www.youtube-nocookie.com/embed/${activeLesson.videoId}`}
+                                    title={activeLesson.title}
+                                    frameBorder="0"
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                    allowFullScreen
+                                ></iframe>
+                            ) : (
+                                <div className="w-full h-full flex items-center justify-center text-gray-500 flex-col">
+                                    <IconYoutube className="w-12 h-12 mb-2 opacity-50" />
+                                    <p>Nenhum vídeo disponível para esta aula.</p>
                                 </div>
-                                <div className="space-y-3">
-                                    {module.lessons.map(lesson => (
-                                        <div key={lesson.id} className="flex items-center justify-between p-3 bg-brand-gray-light rounded-lg">
-                                            <div className="flex items-center">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={lesson.completed}
-                                                    onChange={() => handleToggleLesson(currentCourseState.id, module.id, lesson.id)}
-                                                    className="h-5 w-5 rounded bg-brand-gray border-brand-gray-light text-brand-gold focus:ring-brand-gold mr-3 cursor-pointer"
-                                                    aria-label={`Marcar aula '${lesson.title}' como concluída`}
-                                                />
-                                                <span className={`text-sm ${lesson.completed ? 'text-gray-500 line-through' : 'text-white'}`}>{lesson.title}</span>
-                                            </div>
-                                            {lesson.videoId && (
-                                                <a href={`https://www.youtube.com/watch?v=${lesson.videoId}`} target="_blank" rel="noopener noreferrer" className="flex items-center space-x-2 text-sm bg-brand-gray px-3 py-1.5 rounded-md hover:bg-brand-dark transition-colors font-semibold">
-                                                    <IconYoutube size={16} className="text-red-500" />
-                                                    <span>Assistir</span>
-                                                </a>
-                                            )}
+                            )}
+                        </div>
+                        {activeLesson && (
+                            <div className="space-y-4">
+                                <h2 className="text-2xl font-bold text-white">{activeLesson.title}</h2>
+                                <div className="flex items-center gap-2 py-4 border-t border-brand-gray">
+                                    <input
+                                        type="checkbox"
+                                        id={`complete-${activeLesson.id}`}
+                                        checked={activeLesson.completed}
+                                        onChange={() => {
+                                            const mod = currentCourseState.modules.find(m => m.lessons.some(l => l.id === activeLesson.id));
+                                            if (mod) handleToggleLesson(currentCourseState.id, mod.id, activeLesson.id);
+                                        }}
+                                        className="h-5 w-5 rounded bg-brand-gray border-brand-gray-light text-brand-gold focus:ring-brand-gold cursor-pointer"
+                                    />
+                                    <label htmlFor={`complete-${activeLesson.id}`} className="text-sm font-medium text-gray-300 cursor-pointer">
+                                        Marcar aula como concluída
+                                    </label>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Class List Section */}
+                    <div className="lg:col-span-1 bg-brand-gray-light/30 border border-brand-gray rounded-xl p-4 flex flex-col max-h-[70vh]">
+                        <h3 className="text-xl font-bold text-white mb-4">Aulas do Treinamento</h3>
+                        <div className="flex-1 overflow-y-auto pr-2 space-y-4">
+                            {currentCourseState.modules.map(module => {
+                                const moduleTotal = module.lessons.length;
+                                const moduleCompleted = module.lessons.filter(l => l.completed).length;
+                                const moduleProgress = moduleTotal > 0 ? (moduleCompleted / moduleTotal) * 100 : 0;
+                                return (
+                                    <div key={module.id} className="space-y-3">
+                                        <div className="flex items-center justify-between text-sm text-gray-400 mb-2">
+                                            <span className="font-bold text-gray-300">{module.title}</span>
+                                            <span>{moduleCompleted}/{moduleTotal}</span>
                                         </div>
-                                    ))}
-                                </div>
-                            </Card>
-                        );
-                    })}
+                                        <ProgressBar progress={moduleProgress} />
+                                        <div className="space-y-2 mt-3">
+                                            {module.lessons.map((lesson, idx) => (
+                                                <div
+                                                    key={lesson.id}
+                                                    onClick={() => setSelectedLessonId(lesson.id)}
+                                                    className={`group flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors ${selectedLessonId === lesson.id ? 'bg-brand-gold/10 border border-brand-gold/30' : 'bg-brand-gray-light hover:bg-brand-gray'}`}
+                                                >
+                                                    <div className="flex items-center gap-3">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={lesson.completed}
+                                                            onChange={(e) => { e.stopPropagation(); handleToggleLesson(currentCourseState.id, module.id, lesson.id); }}
+                                                            className="h-4 w-4 rounded bg-brand-gray border-brand-gray-light text-brand-gold focus:ring-brand-gold cursor-pointer"
+                                                            aria-label={`Marcar aula '${lesson.title}' como concluída`}
+                                                        />
+                                                        <span className={`text-sm ${selectedLessonId === lesson.id ? 'text-brand-gold font-bold' : (lesson.completed ? 'text-gray-500 line-through' : 'text-white')}`}>
+                                                            Aula {idx + 1}: {lesson.title}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
                 </div>
             </div>
-        )
+        );
     }
 
     return (

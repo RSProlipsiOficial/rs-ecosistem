@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import multer from 'multer';
 import { supabase } from '../lib/supabaseClient';
+import axios from 'axios';
 
 const upload = multer({ storage: multer.memoryStorage() });
 
@@ -447,6 +448,96 @@ router.post('/v1/marketplace/orders', async (req: Request, res: Response) => {
   }
 });
 
+/**
+ * GERAÇÃO DE PIX REAL (MERCADO PAGO)
+ * Usado pelo CD (Replenishment) e Marketplace
+ */
+router.post('/v1/marketplace/pix', async (req: Request, res: Response) => {
+  try {
+    const { amount, description, payer } = req.body;
+
+    if (!amount || !payer || !payer.email) {
+      console.error('[MARKETPLACE→PIX] Dados insuficientes:', req.body);
+      return res.status(400).json({ success: false, error: 'Dados insuficientes (amount, payer.email)' });
+    }
+
+    // 1) Buscar Token da SEDE (Administrador do Marketplace/Central)
+    const { data: profile, error: profileError } = await supabase
+      .from('user_profiles')
+      .select('mercadopago_access_token')
+      .eq('nome_completo', 'SEDE RS PRÓLIPSI')
+      .maybeSingle();
+
+    if (profileError) {
+      console.error('[MARKETPLACE→PIX] Erro ao buscar perfil da SEDE:', profileError);
+    }
+
+    // Fallback para env var se não encontrar no banco
+    const accessToken = profile?.mercadopago_access_token || process.env.MP_ACCESS_TOKEN;
+
+    if (!accessToken) {
+      console.error('[MARKETPLACE→PIX] Erro: Token de acesso MP não configurado.');
+      return res.status(500).json({ success: false, error: 'Configuração de pagamento não encontrada no sistema' });
+    }
+
+    // 2) Gerar Idempotência (Baseado no valor e timestamp para evitar duplicados em curto prazo)
+    const idempotencyKey = `pix-marketplace-${Math.floor(Date.now() / 1000)}`;
+
+    // 3) Chamada Direta à API do Mercado Pago (v1/payments)
+    console.log(`[MARKETPLACE→PIX] Gerando pagamento de R$ ${amount} para ${payer.email}...`);
+
+    const mpPayload = {
+      transaction_amount: Number(amount),
+      description: description || 'Pagamento RS Prólipsi Marketplace',
+      payment_method_id: 'pix',
+      payer: {
+        email: payer.email,
+        first_name: payer.name || 'Cliente',
+        identification: payer.cpf ? {
+          type: 'CPF',
+          number: payer.cpf.replace(/[^0-9]/g, '')
+        } : undefined
+      }
+    };
+
+    const mpResponse = await axios.post('https://api.mercadopago.com/v1/payments', mpPayload, {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+        'X-Idempotency-Key': idempotencyKey
+      },
+      validateStatus: () => true // Permitir tratar erros manualmente
+    });
+
+    if (mpResponse.status >= 400) {
+      console.error('[MARKETPLACE→PIX] ❌ Erro Mercado Pago:', mpResponse.data);
+      return res.status(mpResponse.status).json({
+        success: false,
+        error: mpResponse.data.message || 'Erro ao gerar pagamento no Mercado Pago',
+        details: mpResponse.data
+      });
+    }
+
+    const { id, status, point_of_interaction } = mpResponse.data;
+    const trx = point_of_interaction?.transaction_data;
+
+    console.log(`[MARKETPLACE→PIX] ✅ PIX Gerado com Sucesso! ID: ${id}`);
+
+    res.json({
+      success: true,
+      paymentId: id,
+      status: status,
+      qr_code: trx?.qr_code,
+      qr_code_base64: trx?.qr_code_base64,
+      ticket_url: trx?.ticket_url
+    });
+
+  } catch (err: any) {
+    console.error('[MARKETPLACE→PIX] Erro crítico:', err.message);
+    res.status(500).json({ success: false, error: 'Erro interno ao processar PIX' });
+  }
+});
+
 // Atualizar status do pedido
 router.patch('/v1/marketplace/orders/:id/status', async (req: Request, res: Response) => {
   try {
@@ -498,6 +589,12 @@ router.get('/v1/marketplace/customization', async (req: Request, res: Response) 
     // Frontend uses: logoUrl, faviconUrl, etc.
     // DB likely has: logo_url, favicon_url.
 
+    // Extract footer and custom settings stored inside footer JSONB
+    const footerRaw = data.footer || {};
+    const customSettings = footerRaw.customSettings || {};
+    const footerClean = { ...footerRaw };
+    delete footerClean.customSettings;
+
     const mappedData = {
       id: data.id,
       tenantId: data.tenant_id,
@@ -507,8 +604,17 @@ router.get('/v1/marketplace/customization', async (req: Request, res: Response) 
       secondaryColor: data.secondary_color,
       hero: data.hero || { title: '', subtitle: '', desktopImage: '', mobileImage: '', link: '' },
       carouselBanners: data.carousel_banners || [],
+      carouselHeight: customSettings.carouselHeight,
+      carouselHeightMobile: customSettings.carouselHeightMobile,
+      carouselFullWidth: customSettings.carouselFullWidth,
+      logoMaxWidth: customSettings.logoMaxWidth,
+      faviconMaxWidth: customSettings.faviconMaxWidth,
+      storeBackgroundColor: customSettings.storeBackgroundColor,
+      orderBump: customSettings.orderBump,
+      upsell: customSettings.upsell,
       midPageBanner: data.mid_page_banner || { desktopImage: '', mobileImage: '', link: '' },
-      footer: data.footer || { description: '', socialLinks: [], businessAddress: '', contactEmail: '', cnpj: '' },
+      footer: footerClean.description !== undefined ? footerClean : { description: '', socialLinks: [], businessAddress: '', contactEmail: '', cnpj: '' },
+      homepageSections: data.sections || [],
       customCss: data.custom_css
     };
 
@@ -523,7 +629,22 @@ router.put('/v1/marketplace/customization', async (req: Request, res: Response) 
     const body = req.body;
     if (!body.tenantId) return res.status(400).json({ success: false, error: 'tenantId requerido' });
 
-    const dbData = {
+    // Store extra layout settings inside footer.customSettings (avoids new DB columns)
+    const customSettings: any = {};
+    if (body.carouselHeight !== undefined) customSettings.carouselHeight = body.carouselHeight;
+    if (body.carouselHeightMobile !== undefined) customSettings.carouselHeightMobile = body.carouselHeightMobile;
+    if (body.carouselFullWidth !== undefined) customSettings.carouselFullWidth = body.carouselFullWidth;
+    if (body.logoMaxWidth !== undefined) customSettings.logoMaxWidth = body.logoMaxWidth;
+    if (body.faviconMaxWidth !== undefined) customSettings.faviconMaxWidth = body.faviconMaxWidth;
+    if (body.storeBackgroundColor !== undefined) customSettings.storeBackgroundColor = body.storeBackgroundColor;
+    if (body.orderBump !== undefined) customSettings.orderBump = body.orderBump;
+    if (body.upsell !== undefined) customSettings.upsell = body.upsell;
+
+    const footerPayload = body.footer
+      ? { ...body.footer, customSettings: Object.keys(customSettings).length ? customSettings : undefined }
+      : (Object.keys(customSettings).length ? { customSettings } : undefined);
+
+    const dbData: any = {
       tenant_id: body.tenantId,
       logo_url: body.logoUrl,
       favicon_url: body.faviconUrl,
@@ -532,10 +653,14 @@ router.put('/v1/marketplace/customization', async (req: Request, res: Response) 
       hero: body.hero,
       carousel_banners: body.carouselBanners,
       mid_page_banner: body.midPageBanner,
-      footer: body.footer,
+      footer: footerPayload,
+      sections: body.homepageSections,
       custom_css: body.customCss,
       updated_at: new Date().toISOString()
     };
+
+    // Remove undefined keys to avoid overwriting existing data
+    Object.keys(dbData).forEach(key => dbData[key] === undefined && delete dbData[key]);
 
     const { data, error } = await supabase
       .from('store_customizations')
@@ -544,7 +669,7 @@ router.put('/v1/marketplace/customization', async (req: Request, res: Response) 
       .single();
 
     if (error) return res.status(500).json({ success: false, error: error.message });
-    res.json({ success: true, data });
+    res.json({ success: true, message: 'Customização salva com sucesso' });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
   }
@@ -585,6 +710,60 @@ router.post('/v1/marketplace/upload', upload.single('file'), async (req: Request
   } catch (err: any) {
     console.error('Upload Endpoint Error:', err);
     res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * CONSULTA STATUS DE PAGAMENTO PIX (MERCADO PAGO)
+ */
+router.get('/v1/marketplace/pix/:id', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    // 1) Buscar Token da SEDE
+    const { data: profile } = await supabase
+      .from('user_profiles')
+      .select('mercadopago_access_token')
+      .eq('nome_completo', 'SEDE RS PRÓLIPSI')
+      .maybeSingle();
+
+    const accessToken = profile?.mercadopago_access_token || process.env.MP_ACCESS_TOKEN;
+
+    if (!accessToken) {
+      return res.status(500).json({ success: false, error: 'Configuração de pagamento não encontrada' });
+    }
+
+    // 2) Consultar API do Mercado Pago
+    console.log(`[MARKETPLACE→PIX] Consultando status do pagamento ${id}...`);
+
+    const mpResponse = await axios.get(`https://api.mercadopago.com/v1/payments/${id}`, {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`
+      },
+      validateStatus: () => true
+    });
+
+    if (mpResponse.status >= 400) {
+      console.error('[MARKETPLACE→PIX] ❌ Erro ao consultar Mercado Pago:', mpResponse.data);
+      return res.status(mpResponse.status).json({
+        success: false,
+        error: 'Erro ao consultar status no Mercado Pago'
+      });
+    }
+
+    const { status, status_detail } = mpResponse.data;
+    console.log(`[MARKETPLACE→PIX] Status do pagamento ${id}: ${status} (${status_detail})`);
+
+    res.json({
+      success: true,
+      status: status, // approved, pending, in_process, rejected, cancelled, etc.
+      statusDetail: status_detail,
+      isPaid: status === 'approved'
+    });
+
+  } catch (err: any) {
+    console.error('[MARKETPLACE→PIX] Erro crítico na consulta:', err.message);
+    res.status(500).json({ success: false, error: 'Erro interno ao consultar PIX' });
   }
 });
 

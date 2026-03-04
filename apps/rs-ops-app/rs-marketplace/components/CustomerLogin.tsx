@@ -2,31 +2,47 @@ import React, { useState } from 'react';
 import { EyeIcon } from './icons/EyeIcon';
 import { EyeOffIcon } from './icons/EyeOffIcon';
 import { Customer } from '../types';
+import { customersAPI } from '../services/marketplaceAPI';
 
 interface CustomerLoginProps {
-  customers: Customer[];
   onLoginSuccess: (customer: Customer) => void;
   onBackToHome: () => void;
   onNavigateToRegister: () => void;
   onNavigateToForgotPassword: () => void;
 }
 
-const CustomerLogin: React.FC<CustomerLoginProps> = ({ customers, onLoginSuccess, onBackToHome, onNavigateToRegister, onNavigateToForgotPassword }) => {
+const CustomerLogin: React.FC<CustomerLoginProps> = ({ onLoginSuccess, onBackToHome, onNavigateToRegister, onNavigateToForgotPassword }) => {
   const [email, setEmail] = useState('rsprolipsioficial@gmail.com');
   const [password, setPassword] = useState('Yannis784512@');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    const foundCustomer = customers.find(c => c.email.toLowerCase() === email.toLowerCase());
-    
-    // NOTE: In a real application, password comparison must be done with a secure hashing algorithm on the backend.
-    if (foundCustomer && foundCustomer.passwordHash === password) {
-      onLoginSuccess(foundCustomer);
-    } else {
-      setError('E-mail ou senha inválidos.');
+    setLoading(true);
+
+    try {
+      const result = await customersAPI.login(email, password);
+
+      if (result.success) {
+        // Mapear o perfil do Supabase para o tipo Customer do frontend
+        const customer: Customer = {
+          id: result.profile.id,
+          name: result.profile.name || result.profile.full_name || 'Cliente',
+          email: result.user.email!,
+          // Não expor hash no frontend se possível, mas mantemos interface por compatibilidade
+          passwordHash: '',
+        };
+        onLoginSuccess(customer);
+      } else {
+        setError(result.error || 'E-mail ou senha inválidos.');
+      }
+    } catch (err: any) {
+      setError('Ocorreu um erro ao tentar fazer login. Tente novamente.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -89,28 +105,29 @@ const CustomerLogin: React.FC<CustomerLoginProps> = ({ customers, onLoginSuccess
             <p className="text-red-500 text-sm text-center !mt-4">{error}</p>
           )}
           <div className="text-right">
-              <button onClick={onNavigateToForgotPassword} type="button" className="text-sm font-medium text-gold-500 hover:text-gold-400">Esqueceu sua senha?</button>
+            <button onClick={onNavigateToForgotPassword} type="button" className="text-sm font-medium text-gold-500 hover:text-gold-400">Esqueceu sua senha?</button>
           </div>
 
           <div>
             <button
               type="submit"
-              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-bold rounded-md text-black bg-amber-500 hover:bg-amber-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-amber-500 transition-colors mt-2"
+              disabled={loading}
+              className={`group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-bold rounded-md text-black bg-amber-500 hover:bg-amber-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-amber-500 transition-colors mt-2 ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
-              Entrar
+              {loading ? 'Entrando...' : 'Entrar'}
             </button>
           </div>
         </form>
-         <div className="text-center space-y-2">
-            <p className="text-sm text-gray-400">
-                Não tem uma conta?{' '}
-                <button onClick={onNavigateToRegister} className="font-medium text-gold-500 hover:text-gold-400">
-                    Cadastre-se
-                </button>
-            </p>
-            <button onClick={onBackToHome} className="font-medium text-sm text-gold-500 hover:text-gold-400">
-                Voltar para a loja
+        <div className="text-center space-y-2">
+          <p className="text-sm text-gray-400">
+            Não tem uma conta?{' '}
+            <button onClick={onNavigateToRegister} className="font-medium text-gold-500 hover:text-gold-400">
+              Cadastre-se
             </button>
+          </p>
+          <button onClick={onBackToHome} className="font-medium text-sm text-gold-500 hover:text-gold-400">
+            Voltar para a loja
+          </button>
         </div>
       </div>
     </div>

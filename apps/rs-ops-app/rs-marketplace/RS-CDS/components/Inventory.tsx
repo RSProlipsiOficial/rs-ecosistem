@@ -1,8 +1,13 @@
 
 
 import React, { useState, useEffect } from 'react';
-import { Product, PaymentMethod } from '../types';
-import { AlertTriangle, CheckCircle, Package, Edit, Plus, Search, Trash2, X, Send, ShoppingCart, FileText, Save, Lock, ArrowLeft, CreditCard, Wallet, QrCode, Banknote, Truck, MapPin, Zap, Copy, Check, Smartphone, Barcode, Calendar } from 'lucide-react';
+import { Product, PaymentMethod, CDProfile } from '../types';
+import {
+    AlertTriangle, CheckCircle, Package, Edit, Plus, Search, Trash2, X,
+    Send, ShoppingCart, FileText, Save, Lock, ArrowLeft, CreditCard,
+    Wallet, QrCode, Banknote, Truck, MapPin, Zap, Copy, Check,
+    Smartphone, Barcode, Calendar, RefreshCw
+} from 'lucide-react';
 import { dataService } from '../services/dataService';
 import { shippingService, ShippingQuote } from '../services/shippingService';
 
@@ -28,6 +33,9 @@ type ShippingOption = 'PICKUP' | 'STANDARD' | 'EXPRESS';
 
 const Inventory: React.FC<InventoryProps> = ({ products: initialProducts, walletBalance, cdId, profile }) => {
     const [products, setProducts] = useState<Product[]>(initialProducts);
+    const [loading, setLoading] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
+    const [isSyncing, setIsSyncing] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
 
     // Modals State
@@ -77,6 +85,23 @@ const Inventory: React.FC<InventoryProps> = ({ products: initialProducts, wallet
     const [payments, setPayments] = useState<PaymentEntry[]>([]);
     const [currentMethod, setCurrentMethod] = useState<PaymentMethod>('PIX');
     const [amountToAdd, setAmountToAdd] = useState<string>(''); // String to handle inputs better
+
+    // Pix Generation & Proof states
+    const [generatedPix, setGeneratedPix] = useState<{ qrCodeUrl: string; copyPaste: string; value: number } | null>(null);
+    const [pixProofBase64, setPixProofBase64] = useState<string | null>(null);
+    const [lastPaymentId, setLastPaymentId] = useState<string | null>(null);
+    const [isVerifyingPix, setIsVerifyingPix] = useState(false);
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setPixProofBase64(reader.result as string);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
 
     // Derived Totals
     const subtotal = requestCart.reduce((acc, item) => acc + (item.product.costPrice * item.quantity), 0);
@@ -136,25 +161,58 @@ const Inventory: React.FC<InventoryProps> = ({ products: initialProducts, wallet
 
 
     // --- Handlers for Product Editing ---
+    const handleFixInventory = async () => {
+        if (!cdId) return;
+        setIsSyncing(true);
+        try {
+            const result = await dataService.fixStockInconsistency(cdId);
+            if (result.success) {
+                if (result.fixedCount > 0) {
+                    alert(`Sucesso! ${result.fixedCount} produtos foram restaurados no seu estoque.`);
+                    window.dispatchEvent(new CustomEvent('refresh-cd-data'));
+                } else {
+                    alert('Nenhuma inconsistência encontrada. Seu estoque parece estar em dia.');
+                }
+            } else {
+                alert('Erro ao tentar reparar o estoque.');
+            }
+        } catch (err) {
+            console.error('Erro ao reparar estoque:', err);
+        } finally {
+            setIsSyncing(false);
+        }
+    };
+
     const handleEditClick = (product: Product) => {
         setEditingProduct({ ...product });
         setIsEditModalOpen(true);
     };
 
-    const handleSaveProduct = () => {
+    const handleSaveProduct = async () => {
         if (editingProduct) {
-            const updatedProducts = products.map(p =>
-                p.id === editingProduct.id ? editingProduct : p
-            );
+            setIsSaving(true);
+            try {
+                const updatedProduct = {
+                    ...editingProduct,
+                    status: editingProduct.stockLevel <= 0 ? 'CRITICO' : (editingProduct.stockLevel <= editingProduct.minStock ? 'BAIXO' : 'OK')
+                };
 
-            const finalProducts = updatedProducts.map(p => ({
-                ...p,
-                status: p.stockLevel <= 0 ? 'CRITICO' : p.stockLevel <= p.minStock ? 'BAIXO' : 'OK'
-            })) as Product[];
+                // Persistir no banco
+                const success = await dataService.updateStock(updatedProduct.id, updatedProduct.stockLevel, updatedProduct.minStock);
 
-            setProducts(finalProducts);
-            setIsEditModalOpen(false);
-            setEditingProduct(null);
+                if (success) {
+                    const finalProducts = products.map(p => p.id === updatedProduct.id ? updatedProduct : p);
+                    setProducts(finalProducts);
+                    setIsEditModalOpen(false);
+                    setEditingProduct(null);
+                } else {
+                    alert('Erro ao salvar no banco de dados. Verifique sua conexão.');
+                }
+            } catch (err) {
+                console.error('Erro ao salvar produto:', err);
+            } finally {
+                setIsSaving(false);
+            }
         }
     };
 
@@ -199,6 +257,8 @@ const Inventory: React.FC<InventoryProps> = ({ products: initialProducts, wallet
         setRequestStep('CHECKOUT');
         setPayments([]); // Reset payments on new checkout attempt
         setShippingOption('PICKUP');
+        // Define WALLET as default if balance is available
+        setCurrentMethod(walletBalance > 0 ? 'WALLET' : 'PIX');
     };
 
     // --- Payment Handlers ---
@@ -219,8 +279,41 @@ const Inventory: React.FC<InventoryProps> = ({ products: initialProducts, wallet
 
         // Intercept specific methods for interaction
         if (currentMethod === 'PIX') {
-            setPendingPaymentAmount(val);
-            setShowPixModal(true);
+            const generateRealPix = async () => {
+                setPendingPaymentAmount(val);
+                setIsSubmitting(true);
+
+                const payer = {
+                    email: profile?.email || 'financeiro@rsprolipsi.com.br',
+                    first_name: profile?.name || 'Distribuidor',
+                    last_name: 'RS Prólipsi',
+                    identification: {
+                        type: 'CPF',
+                        number: profile?.document?.replace(/[^0-9]/g, '') || '19119119100'
+                    }
+                };
+
+                const result = await dataService.generatePix(
+                    val,
+                    `Abastecimento CD - ${profile?.name || cdId}`,
+                    payer
+                );
+
+                if (result && result.success) {
+                    setGeneratedPix({
+                        qrCodeUrl: `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(result.qr_code)}&bgcolor=FFFFFF&color=000000&qzone=1`,
+                        copyPaste: result.qr_code,
+                        value: val
+                    });
+                    setLastPaymentId(result.paymentId);
+                    setShowPixModal(true);
+                } else {
+                    alert("Erro ao gerar PIX. Tente novamente ou use outra forma de pagamento.");
+                }
+                setIsSubmitting(false);
+            };
+
+            generateRealPix();
             return;
         }
 
@@ -269,12 +362,20 @@ const Inventory: React.FC<InventoryProps> = ({ products: initialProducts, wallet
         }
 
         setIsSubmitting(true);
-        const success = await dataService.createReplenishmentOrder(cdId, requestCart, totalOrder);
+        const orderId = await dataService.createReplenishmentOrder(cdId, requestCart, totalOrder, shippingOption);
 
-        if (success) {
+        if (orderId) {
+            // Upload proof silently
+            const isAutoPaid = payments.some(p => p.method === 'PIX' || p.method === 'WALLET') && !pixProofBase64;
+            if (pixProofBase64) {
+                await dataService.uploadPaymentProof(orderId, pixProofBase64);
+            } else if (isAutoPaid) {
+                await dataService.uploadPaymentProof(orderId, 'CONFIRMADO_AUTOMATICAMENTE');
+            }
             alert("Pedido de reposição enviado para a Sede central com sucesso!");
             setRequestCart([]);
             setPayments([]);
+            setPixProofBase64(null);
             setIsRequestModalOpen(false);
             setRequestStep('CART');
         } else {
@@ -308,12 +409,18 @@ const Inventory: React.FC<InventoryProps> = ({ products: initialProducts, wallet
         <div className="space-y-6 animate-fade-in">
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div>
+                <div className="flex items-center gap-4">
                     <h2 className="text-2xl font-bold text-white flex items-center gap-2">
                         <Package className="text-gold-400" />
                         Controle de Estoque (CD)
                     </h2>
-                    <p className="text-gray-400 text-sm">Gerencie inventário, lotes e reposição.</p>
+                    <button
+                        onClick={() => window.dispatchEvent(new CustomEvent('refresh-cd-data'))}
+                        className="p-2 text-gray-400 hover:text-gold-400 hover:bg-dark-800 rounded-full transition-colors"
+                        title="Atualizar dados"
+                    >
+                        <RefreshCw size={18} />
+                    </button>
                 </div>
                 <div className="flex gap-3 w-full md:w-auto">
                     <div className="relative flex-1 md:w-64">
@@ -326,6 +433,15 @@ const Inventory: React.FC<InventoryProps> = ({ products: initialProducts, wallet
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
+                    <button
+                        onClick={handleFixInventory}
+                        disabled={isSyncing}
+                        className="flex items-center gap-2 px-4 py-2 bg-dark-800 text-gold-400 border border-gold-400/30 font-bold rounded-lg hover:bg-dark-700 transition-all"
+                        title="Corrigir produtos que não apareceram após o pagamento"
+                    >
+                        {isSyncing ? <RefreshCw size={18} className="animate-spin" /> : <Package size={18} />}
+                        REPARAR ESTOQUE
+                    </button>
                     <button
                         onClick={() => { setIsRequestModalOpen(true); setRequestStep('CART'); }}
                         className="bg-gold-500 hover:bg-gold-400 text-black font-bold px-4 py-2 rounded-lg text-sm transition-colors flex items-center gap-2 whitespace-nowrap shadow-lg shadow-gold-500/20"
@@ -355,9 +471,18 @@ const Inventory: React.FC<InventoryProps> = ({ products: initialProducts, wallet
                                 return (
                                     <tr key={product.id} className="hover:bg-dark-800/50 transition-colors group">
                                         <td className="px-6 py-4">
-                                            <div>
-                                                <p className="text-white font-bold">{product.name}</p>
-                                                <p className="text-xs text-gray-600 font-mono">{product.sku}</p>
+                                            <div className="flex items-center gap-3">
+                                                {product.imageUrl ? (
+                                                    <img src={product.imageUrl} alt={product.name} className="w-10 h-10 rounded-lg bg-dark-800 object-cover border border-dark-700 shrink-0" />
+                                                ) : (
+                                                    <div className="w-10 h-10 rounded-lg bg-dark-800 flex items-center justify-center border border-dark-700 shrink-0">
+                                                        <Package size={20} className="text-gray-500" />
+                                                    </div>
+                                                )}
+                                                <div>
+                                                    <p className="text-white font-bold leading-tight">{product.name}</p>
+                                                    <p className="text-xs text-gray-600 font-mono">{product.sku}</p>
+                                                </div>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
@@ -412,6 +537,13 @@ const Inventory: React.FC<InventoryProps> = ({ products: initialProducts, wallet
                             Detalhes do Produto
                         </h3>
                         <p className="text-sm text-gray-500 mb-6 font-mono">{editingProduct.sku}</p>
+
+                        {/* Imagem do Produto no Modal */}
+                        {editingProduct.imageUrl && (
+                            <div className="mb-6 flex justify-center">
+                                <img src={editingProduct.imageUrl} alt={editingProduct.name} className="h-32 object-contain rounded-lg border border-dark-800 bg-dark-950 p-2" />
+                            </div>
+                        )}
 
                         <div className="space-y-4">
                             <div>
@@ -497,19 +629,17 @@ const Inventory: React.FC<InventoryProps> = ({ products: initialProducts, wallet
                             </div>
                         </div>
 
-                        <div className="mt-8 flex gap-3">
-                            <button
-                                onClick={() => setIsEditModalOpen(false)}
-                                className="flex-1 px-4 py-3 rounded-xl border border-dark-700 text-gray-300 font-medium hover:bg-dark-800 transition-colors"
-                            >
+                        <div className="flex justify-end gap-4 mt-8 pt-4 border-t border-dark-800">
+                            <button onClick={() => setIsEditModalOpen(false)} className="px-4 py-2 text-gray-400 hover:text-white font-medium" disabled={isSaving}>
                                 Cancelar
                             </button>
                             <button
                                 onClick={handleSaveProduct}
-                                className="flex-1 px-4 py-3 rounded-xl bg-gold-500 text-black font-bold hover:bg-gold-400 transition-colors shadow-lg shadow-gold-500/20 flex justify-center items-center gap-2"
+                                disabled={isSaving}
+                                className="px-6 py-2 bg-gold-400 text-dark-900 font-bold rounded-lg hover:bg-gold-500 transition-all disabled:opacity-50 flex items-center gap-2"
                             >
-                                <Save size={18} />
-                                Salvar Alterações
+                                {isSaving ? <RefreshCw size={18} className="animate-spin" /> : <Save size={18} />}
+                                {isSaving ? 'Salvando...' : 'Salvar Alterações'}
                             </button>
                         </div>
                     </div>
@@ -548,7 +678,7 @@ const Inventory: React.FC<InventoryProps> = ({ products: initialProducts, wallet
                                                 <option value="">{isLoadingCatalog ? 'Carregando catálogo da Sede...' : 'Selecione um produto da lista...'}</option>
                                                 {globalProducts.map(p => (
                                                     <option key={p.id} value={p.id}>
-                                                        {p.sku} - {p.name} (Varejo: R$ {p.price.toFixed(2)} | Consultor: R$ {(p.memberPrice || (p.price * 0.5)).toFixed(2)} | Custo CD: R$ {p.costPrice.toFixed(2)})
+                                                        {p.name} - Custo CD: R$ {p.costPrice.toFixed(2)}
                                                     </option>
                                                 ))}
                                             </select>
@@ -669,8 +799,6 @@ const Inventory: React.FC<InventoryProps> = ({ products: initialProducts, wallet
                                                         <option value="PIX">Pix</option>
                                                         <option value="WALLET">Saldo em Carteira</option>
                                                         <option value="CREDIT_CARD">Cartão de Crédito</option>
-                                                        <option value="BOLETO">Boleto</option>
-                                                        <option value="CASH">Dinheiro</option>
                                                     </select>
                                                     <input
                                                         type="number"
@@ -687,7 +815,15 @@ const Inventory: React.FC<InventoryProps> = ({ products: initialProducts, wallet
                                                     + Adicionar Pagamento
                                                 </button>
                                                 {currentMethod === 'WALLET' && (
-                                                    <p className="text-xs text-gray-500 mt-2 text-right">Saldo disponível: R$ {walletBalance.toFixed(2)}</p>
+                                                    <div className="flex justify-between items-center mt-2">
+                                                        <p className="text-xs text-gray-500">Saldo disponível: R$ {walletBalance.toFixed(2)}</p>
+                                                        <button
+                                                            onClick={() => setAmountToAdd(Math.min(walletBalance, remainingDue).toFixed(2))}
+                                                            className="text-xs text-gold-400 hover:text-gold-300 underline font-bold"
+                                                        >
+                                                            Usar Saldo Disponível
+                                                        </button>
+                                                    </div>
                                                 )}
                                             </div>
                                         ) : (
@@ -720,47 +856,88 @@ const Inventory: React.FC<InventoryProps> = ({ products: initialProducts, wallet
                             )}
 
                             {/* PIX MODAL (OVERLAY) */}
-                            {showPixModal && (
+                            {showPixModal && generatedPix && (
                                 <div className="absolute inset-0 bg-dark-950/95 z-10 flex flex-col items-center justify-center p-6 animate-fade-in">
                                     <h4 className="text-white font-bold text-lg mb-4 flex items-center gap-2">
                                         <QrCode className="text-gold-400" /> Pagamento via Pix
                                     </h4>
-                                    <div className="bg-white p-4 rounded-xl mb-6">
-                                        {/* Placeholder QR */}
-                                        <div className="w-48 h-48 bg-gray-100 flex items-center justify-center">
-                                            <QrCode size={120} className="text-black" />
-                                        </div>
+                                    <div className="bg-white p-4 rounded-xl mb-4">
+                                        <img src={generatedPix.qrCodeUrl} alt="QR Code PIX" className="w-48 h-48" />
                                     </div>
                                     <div className="w-full max-w-sm">
-                                        <p className="text-xs text-gray-500 mb-1 text-center">Código Copia e Cola</p>
+                                        <p className="text-xs text-gray-500 mb-1 text-center">Código Copia e Cola (R$ {generatedPix.value.toFixed(2)})</p>
                                         <div className="flex gap-2">
                                             <input
                                                 type="text"
                                                 readOnly
-                                                value="00020126580014BR.GOV.BCB.PIX0136123e4567-e89b-12d3-a456-4266141740005204000053039865802BR5913RS PROLIPSI6008SAO PAULO62070503***6304E2CA"
+                                                value={generatedPix.copyPaste}
                                                 className="flex-1 bg-dark-800 border border-dark-700 rounded px-3 py-2 text-xs text-gray-400"
                                             />
-                                            <button className="bg-dark-800 hover:bg-dark-700 border border-dark-700 rounded px-3 text-gold-400">
+                                            <button
+                                                onClick={() => { navigator.clipboard.writeText(generatedPix.copyPaste); alert("Copiado!"); }}
+                                                className="bg-dark-800 hover:bg-dark-700 border border-dark-700 rounded px-3 text-gold-400">
                                                 <Copy size={16} />
                                             </button>
                                         </div>
                                     </div>
-                                    <div className="mt-8 flex gap-3 w-full max-w-xs">
+
+                                    <div className="w-full max-w-sm mt-4">
+                                        <label className="text-xs text-gray-500 mb-1 text-center block">Anexar Comprovante do PIX gerado (Obrigatório para liberação)</label>
+                                        <input
+                                            type="file"
+                                            accept="image/*,application/pdf"
+                                            onChange={handleFileChange}
+                                            className="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-dark-800 file:text-gold-400 hover:file:bg-dark-700"
+                                        />
+                                    </div>
+
+                                    <div className="mt-8 flex flex-col gap-3 w-full max-w-xs">
                                         <button
-                                            onClick={() => setShowPixModal(false)}
-                                            className="flex-1 py-3 text-sm font-bold text-gray-400 hover:text-white"
-                                        >
-                                            Cancelar
-                                        </button>
-                                        <button
-                                            onClick={() => {
-                                                addPaymentEntry('PIX', pendingPaymentAmount);
-                                                setShowPixModal(false);
+                                            onClick={async () => {
+                                                if (!lastPaymentId) {
+                                                    alert("ID de pagamento não encontrado. Tente gerar novamente.");
+                                                    return;
+                                                }
+                                                setIsVerifyingPix(true);
+                                                const check = await dataService.checkPixStatus(lastPaymentId);
+                                                setIsVerifyingPix(false);
+
+                                                if (check && check.isPaid) {
+                                                    alert("✅ Pagamento confirmado com sucesso!");
+                                                    addPaymentEntry('PIX', pendingPaymentAmount);
+                                                    setShowPixModal(false);
+                                                    setPixProofBase64(null); // Proof not needed if API confirmed
+                                                } else {
+                                                    alert("❌ Pagamento ainda não consta como visualizado no Mercado Pago. Aguarde alguns instantes ou anexe o comprovante manual.");
+                                                }
                                             }}
-                                            className="flex-1 py-3 bg-green-600 hover:bg-green-500 text-white font-bold rounded-lg text-sm"
+                                            disabled={isVerifyingPix}
+                                            className="w-full py-4 bg-green-600 hover:bg-green-500 disabled:bg-gray-700 text-white font-bold rounded-xl text-lg flex items-center justify-center gap-2 shadow-lg shadow-green-900/30"
                                         >
-                                            Já paguei
+                                            {isVerifyingPix ? <span className="animate-pulse">Verificando...</span> : <><CheckCircle size={20} /> Confirmar Pagamento Automático</>}
                                         </button>
+
+                                        <div className="flex gap-2 mt-2">
+                                            <button
+                                                onClick={() => { setShowPixModal(false); setPixProofBase64(null); }}
+                                                className="flex-1 py-3 text-sm font-bold text-gray-400 hover:text-white"
+                                            >
+                                                Cancelar
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    if (!pixProofBase64) {
+                                                        alert("Caso o pagamento automático não funcione, você DEVE anexar o comprovante manual para prosseguir.");
+                                                        return;
+                                                    }
+                                                    addPaymentEntry('PIX', pendingPaymentAmount);
+                                                    setShowPixModal(false);
+                                                }}
+                                                className="flex-1 py-3 bg-dark-800 hover:bg-dark-700 text-gray-300 font-bold rounded-lg text-sm"
+                                            >
+                                                Já paguei (Manual)
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             )}

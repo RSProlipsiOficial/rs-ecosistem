@@ -13,6 +13,7 @@ import { BellIcon } from './icons/BellIcon';
 import Treinamentos from './communication/Treinamentos';
 import Catalogo from './communication/Catalogo';
 import Downloads from './communication/Downloads';
+import ContentCarousel from './communication/ContentCarousel';
 
 // --- TIPOS ---
 interface Announcement {
@@ -68,36 +69,43 @@ const mapAgendaItem = (it: any): AgendaItem => ({
 });
 
 // --- COMPONENTES DAS ABAS ---
-const AnnouncementsTab: React.FC<{ announcements: Announcement[] }> = ({ announcements }) => (
-    <div className="space-y-4">
-        {announcements.length > 0 ? announcements.map((item) => (
-            <div key={item.id} className="flex items-start gap-4 p-4 bg-[#1E1E1E] rounded-lg border border-gray-800" onClick={async () => { try { const uid = localStorage.getItem('rs-user-id') || 'anonymous'; await communicationAPI.announcements.acknowledge(item.id, uid); } catch { } }}>
-                <div className="p-3 rounded-full bg-[#2A2A2A] text-yellow-500 flex-shrink-0">
-                    {getIcon(item.type)}
-                </div>
-                <div className="flex-1">
-                    <div className="flex justify-between items-start">
-                        <h3 className="text-lg font-bold text-white">{item.title}</h3>
-                        {item.is_new && (
-                            <span className="px-3 py-1 text-xs font-bold text-black bg-gold-500 rounded-full ml-4 flex-shrink-0">
-                                Novo
-                            </span>
-                        )}
+const AnnouncementsTab: React.FC<{ announcements: Announcement[] }> = ({ announcements }) => {
+    if (announcements.length === 0) {
+        return (
+            <div className="col-span-full text-center py-16 text-gray-500">
+                <BellIcon className="w-12 h-12 mx-auto text-yellow-500/50" />
+                <p className="mt-2 text-sm">Nenhum comunicado disponível.</p>
+            </div>
+        );
+    }
+
+    return (
+        <ContentCarousel
+            items={announcements}
+            rows={2}
+            itemWidth="w-[280px]"
+            renderItem={(item) => (
+                <div key={item.id} className="flex flex-col p-4 bg-[#1E1E1E] rounded-lg border border-gray-800 hover:border-yellow-500/50 hover:shadow-lg transition-all duration-300 group cursor-pointer relative h-full" onClick={async () => { try { const uid = localStorage.getItem('rs-user-id') || 'anonymous'; await communicationAPI.announcements.acknowledge(item.id, uid); } catch { } }}>
+                    {item.is_new && (
+                        <span className="absolute top-2 right-2 px-2 py-0.5 text-[10px] font-bold text-black bg-yellow-500 rounded-full z-10 shadow-sm">
+                            Novo
+                        </span>
+                    )}
+                    <div className="bg-[#2A2A2A] w-10 h-10 rounded-md flex items-center justify-center mb-3">
+                        {getIcon(item.type, 'w-5 h-5 text-yellow-500 group-hover:scale-110 transition-transform')}
                     </div>
-                    <p className="text-sm text-gray-300 mt-1">{item.content}</p>
-                    <p className="text-xs text-gray-500 mt-2">
-                        {new Date(item.created_at).toLocaleDateString('pt-BR')}
-                    </p>
+                    <div className="flex-1 flex flex-col">
+                        <h3 className="text-sm font-bold text-white line-clamp-2 leading-snug group-hover:text-yellow-500 transition-colors">{item.title}</h3>
+                        <p className="text-xs text-gray-400 mt-2 line-clamp-3 mb-4">{item.content}</p>
+                        <p className="text-[10px] text-gray-500 mt-auto font-medium">
+                            {new Date(item.created_at).toLocaleDateString('pt-BR')}
+                        </p>
+                    </div>
                 </div>
-            </div>
-        )) : (
-            <div className="text-center py-16 text-gray-500">
-                <BellIcon className="w-12 h-12 mx-auto text-gray-700" />
-                <p className="mt-2">Nenhum comunicado disponível.</p>
-            </div>
-        )}
-    </div>
-);
+            )}
+        />
+    );
+};
 
 const AgendaComemorativaTab: React.FC<{ items: AgendaItem[] }> = ({ items }) => {
     const groupedItems = useMemo(() => {
@@ -117,19 +125,30 @@ const AgendaComemorativaTab: React.FC<{ items: AgendaItem[] }> = ({ items }) => 
                     <div className="space-y-6">
                         {Object.entries(groupedItems).map(([category, categoryItems]) => (
                             <div key={category}>
-                                <h2 className="text-xl font-bold text-white mb-3 flex items-center gap-2">
+                                <h2 className="text-xl font-bold text-white mb-1 mt-6 flex items-center gap-2">
                                     {getIcon(category, 'w-6 h-6 text-gold-500')} {category}
                                 </h2>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {(categoryItems as AgendaItem[]).map(item => (
-                                        <div key={item.id} className="flex flex-col justify-between p-4 bg-dark-900 rounded-lg border border-dark-800">
-                                            <div>
-                                                <h3 className="font-bold text-white">{item.title}</h3>
-                                                <p className="text-sm text-gray-400 mt-1">{item.content}</p>
+                                <ContentCarousel
+                                    items={categoryItems as AgendaItem[]}
+                                    rows={2}
+                                    itemWidth="w-[280px]"
+                                    renderItem={(item) => {
+                                        const initials = item.title ? item.title.slice(0, 2).toUpperCase() : 'RS';
+                                        return (
+                                            <div key={item.id} className="flex flex-col p-4 bg-[#1E1E1E] rounded-lg border border-gray-800 hover:border-yellow-500/50 hover:shadow-lg transition-all duration-300 group cursor-pointer h-full">
+                                                <div className="flex items-center gap-3 mb-3">
+                                                    <div className="bg-[#2A2A2A] w-10 h-10 rounded-full flex items-center justify-center font-bold text-yellow-500 text-sm group-hover:scale-110 transition-transform shadow-md">
+                                                        {initials}
+                                                    </div>
+                                                    <h3 className="text-sm font-bold text-white line-clamp-2 leading-tight group-hover:text-yellow-500 transition-colors flex-1">{item.title}</h3>
+                                                </div>
+                                                <p className="text-xs text-gray-400 mt-1 line-clamp-3 mb-2 flex-grow">{item.content}</p>
+                                                {/* Simulando a data ou subtítulo para preencher o card */}
+                                                <p className="text-[10px] font-medium text-gray-500 mt-auto pt-2 border-t border-gray-800/50">{item.category}</p>
                                             </div>
-                                        </div>
-                                    ))}
-                                </div>
+                                        );
+                                    }}
+                                />
                             </div>
                         ))}
                     </div>
@@ -145,7 +164,11 @@ const AgendaComemorativaTab: React.FC<{ items: AgendaItem[] }> = ({ items }) => 
 };
 
 // --- COMPONENTE PRINCIPAL ---
-const CommunicationCenter: React.FC = () => {
+interface CommunicationCenterProps {
+    onNavigate: (view: any) => void;
+}
+
+const CommunicationCenter: React.FC<CommunicationCenterProps> = ({ onNavigate }) => {
     const [activeTab, setActiveTab] = useState<'announcements' | 'agenda' | 'training' | 'materials'>('announcements');
     const [loading, setLoading] = useState(true);
     const [announcements, setAnnouncements] = useState<Announcement[]>([]);

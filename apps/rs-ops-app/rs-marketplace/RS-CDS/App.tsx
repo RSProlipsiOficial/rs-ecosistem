@@ -10,15 +10,16 @@ import SalesHistory from './components/SalesHistory';
 import ReplenishmentOrders from './components/ReplenishmentOrders';
 import { ViewState, SettingsData, CDProfile, Order, Product, Transaction } from './types';
 import { dataService } from './services/dataService';
-import { adminSupabase } from './services/supabaseClient';
 import { Bell, User, Menu, ArrowLeft, Home, RefreshCw } from 'lucide-react';
 
 interface RSCDAppProps {
   cdId?: string;
+  userId?: string;
   onBackToAdmin?: () => void;
+  onLogout?: () => void;
 }
 
-const App: React.FC<RSCDAppProps> = ({ cdId: propCdId, onBackToAdmin }) => {
+const App: React.FC<RSCDAppProps> = ({ cdId: propCdId, userId: propUserId, onBackToAdmin, onLogout }) => {
   const [viewHistory, setViewHistory] = useState<ViewState[]>(['DASHBOARD']);
   const currentView = viewHistory[viewHistory.length - 1];
 
@@ -43,6 +44,28 @@ const App: React.FC<RSCDAppProps> = ({ cdId: propCdId, onBackToAdmin }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
+  // === DYNAMIC FAVICON & TITLE ===
+  // Applies the CD's favicon_url and name to the browser tab dynamically
+  const [cdBranding, setCdBranding] = useState<{ faviconUrl?: string; logoUrl?: string }>({});
+
+  useEffect(() => {
+    if (!cdBranding.faviconUrl) return;
+    // Update favicon
+    let link = document.querySelector<HTMLLinkElement>("link[rel~='icon']");
+    if (!link) {
+      link = document.createElement('link');
+      link.rel = 'icon';
+      document.head.appendChild(link);
+    }
+    link.href = cdBranding.faviconUrl;
+  }, [cdBranding.faviconUrl]);
+
+  useEffect(() => {
+    if (userProfile.name && userProfile.name !== 'Carregando...') {
+      document.title = `${userProfile.name} – RS Prólipsi`;
+    }
+  }, [userProfile.name]);
+
   // === LOAD CD DATA AUTOMATICALLY ===
   // Priority: 1) URL param ?cdId=xxx  2) prop cdId  3) First CD from minisite_profiles
   useEffect(() => {
@@ -57,21 +80,9 @@ const App: React.FC<RSCDAppProps> = ({ cdId: propCdId, onBackToAdmin }) => {
         // 2. If no specific ID, load the first/primary CD from the database
         if (!targetCdId) {
           console.log('[RS-CDS] No cdId provided, loading primary CD from database...');
-          const { data: cds, error } = await adminSupabase
-            .from('minisite_profiles')
-            .select('*')
-            .eq('type', 'cd')
-            .order('created_at', { ascending: true })
-            .limit(1);
+          const cd = await dataService.getPrimaryCD();
 
-          if (error) {
-            console.error('[RS-CDS] Error loading CDs:', error);
-            setLoading(false);
-            return;
-          }
-
-          if (cds && cds.length > 0) {
-            const cd = cds[0];
+          if (cd) {
             targetCdId = cd.id;
             console.log(`[RS-CDS] ✅ Primary CD found: ${cd.name} (${cd.id})`);
 
@@ -88,7 +99,14 @@ const App: React.FC<RSCDAppProps> = ({ cdId: propCdId, onBackToAdmin }) => {
               monthlyCycles: 0,
             });
 
-            // Populate Settings form with real CD data
+            // Apply dynamic branding (favicon and logo from DB)
+            if (cd.favicon_url || cd.logo_url) {
+              setCdBranding({ faviconUrl: cd.favicon_url || undefined, logoUrl: cd.logo_url || undefined });
+            }
+
+            const cdSettingsExt = await dataService.getCDSettingsExt(targetCdId) || {};
+
+            // Populate Settings form with real CD data (including avatar)
             setAppSettings({
               profile: {
                 fantasyName: cd.name || '',
@@ -97,6 +115,8 @@ const App: React.FC<RSCDAppProps> = ({ cdId: propCdId, onBackToAdmin }) => {
                 email: cd.email || '',
                 phone: cd.phone || '',
                 avatarUrl: cd.avatar_url || '',
+                faviconUrl: cd.favicon_url || '',
+                logoUrl: cd.logo_url || '',
                 address: {
                   cep: cd.address_zip || '',
                   street: cd.address_street || '',
@@ -107,9 +127,9 @@ const App: React.FC<RSCDAppProps> = ({ cdId: propCdId, onBackToAdmin }) => {
                   state: cd.address_state || ''
                 }
               },
-              bank: { bankName: '', accountType: 'CORRENTE', agency: '', accountNumber: '', pixKey: cd.pix_key || '', pixKeyType: 'CPF' },
-              paymentGateway: { provider: 'MERCADO_PAGO', enabled: false, apiKey: '', apiToken: '', environment: 'SANDBOX' },
-              shippingGateway: { provider: 'MELHOR_ENVIO', enabled: false, apiToken: '', environment: 'SANDBOX' }
+              bank: cdSettingsExt.bank || { bankName: '', accountType: 'CORRENTE', agency: '', accountNumber: '', pixKey: cd.pix_key || '', pixKeyType: 'CPF' },
+              paymentGateway: cdSettingsExt.paymentGateway || { provider: 'MERCADO_PAGO', enabled: false, apiKey: '', apiToken: '', environment: 'SANDBOX' },
+              shippingGateway: cdSettingsExt.shippingGateway || { provider: 'MELHOR_ENVIO', enabled: false, apiToken: '', environment: 'SANDBOX' }
             });
           } else {
             console.warn('[RS-CDS] No CDs registered in the database');
@@ -123,15 +143,13 @@ const App: React.FC<RSCDAppProps> = ({ cdId: propCdId, onBackToAdmin }) => {
           }
         } else {
           // Load specific CD by ID
-          const { data: cdSpecific } = await adminSupabase
-            .from('minisite_profiles')
-            .select('*')
-            .eq('id', targetCdId)
-            .single();
+          const cdSpecific = await dataService.getCDProfileFromAPI(targetCdId);
 
           if (cdSpecific) {
             const profile = await dataService.getCDProfile(targetCdId);
             if (profile) setUserProfile(profile);
+
+            const cdSettingsExt = await dataService.getCDSettingsExt(targetCdId) || {};
 
             // Also populate Settings with this CD's data
             setAppSettings({
@@ -142,6 +160,8 @@ const App: React.FC<RSCDAppProps> = ({ cdId: propCdId, onBackToAdmin }) => {
                 email: cdSpecific.email || '',
                 phone: cdSpecific.phone || '',
                 avatarUrl: cdSpecific.avatar_url || '',
+                faviconUrl: cdSpecific.favicon_url || '',
+                logoUrl: cdSpecific.logo_url || '',
                 address: {
                   cep: cdSpecific.address_zip || '',
                   street: cdSpecific.address_street || '',
@@ -152,10 +172,15 @@ const App: React.FC<RSCDAppProps> = ({ cdId: propCdId, onBackToAdmin }) => {
                   state: cdSpecific.address_state || ''
                 }
               },
-              bank: { bankName: '', accountType: 'CORRENTE', agency: '', accountNumber: '', pixKey: cdSpecific.pix_key || '', pixKeyType: 'CPF' },
-              paymentGateway: { provider: 'MERCADO_PAGO', enabled: false, apiKey: '', apiToken: '', environment: 'SANDBOX' },
-              shippingGateway: { provider: 'MELHOR_ENVIO', enabled: false, apiToken: '', environment: 'SANDBOX' }
+              bank: cdSettingsExt.bank || { bankName: '', accountType: 'CORRENTE', agency: '', accountNumber: '', pixKey: cdSpecific.pix_key || '', pixKeyType: 'CPF' },
+              paymentGateway: cdSettingsExt.paymentGateway || { provider: 'MERCADO_PAGO', enabled: false, apiKey: '', apiToken: '', environment: 'SANDBOX' },
+              shippingGateway: cdSettingsExt.shippingGateway || { provider: 'MELHOR_ENVIO', enabled: false, apiToken: '', environment: 'SANDBOX' }
             });
+
+            // Apply dynamic branding (favicon and logo from DB)
+            if (cdSpecific.favicon_url || cdSpecific.logo_url) {
+              setCdBranding({ faviconUrl: cdSpecific.favicon_url || undefined, logoUrl: cdSpecific.logo_url || undefined });
+            }
           }
         }
 
@@ -227,6 +252,12 @@ const App: React.FC<RSCDAppProps> = ({ cdId: propCdId, onBackToAdmin }) => {
     setTransactions(transactionsData);
   };
 
+  useEffect(() => {
+    const handleRefresh = () => refreshData();
+    window.addEventListener('refresh-cd-data', handleRefresh);
+    return () => window.removeEventListener('refresh-cd-data', handleRefresh);
+  }, [cdRecordId]);
+
   if (loading) {
     return (
       <div className="bg-dark-950 min-h-screen flex items-center justify-center">
@@ -247,6 +278,8 @@ const App: React.FC<RSCDAppProps> = ({ cdId: propCdId, onBackToAdmin }) => {
         onClose={() => setIsSidebarOpen(false)}
         isCollapsed={isSidebarCollapsed}
         onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+        logoUrl={cdBranding.logoUrl}
+        onLogout={onLogout}
       />
 
       <main className={`ml-0 p-4 md:p-8 min-h-screen bg-black/40 transition-all duration-300 flex flex-col ${isSidebarCollapsed ? 'md:ml-20' : 'md:ml-64'}`}>
@@ -261,7 +294,13 @@ const App: React.FC<RSCDAppProps> = ({ cdId: propCdId, onBackToAdmin }) => {
                 <span className="hidden sm:inline text-sm font-medium">Voltar</span>
               </button>
             )}
-            <div className="md:hidden text-sm font-bold text-gold-400 uppercase tracking-wider ml-2">RS Prólipsi</div>
+            <div className="md:hidden text-sm font-bold text-gold-400 uppercase tracking-wider ml-2">
+              {cdBranding.logoUrl ? (
+                <img src={cdBranding.logoUrl} alt="Logo" className="h-6 w-auto object-contain" />
+              ) : (
+                "RS Prólipsi"
+              )}
+            </div>
           </div>
 
           <div className="flex items-center gap-3 md:gap-4">
@@ -293,7 +332,7 @@ const App: React.FC<RSCDAppProps> = ({ cdId: propCdId, onBackToAdmin }) => {
 
         <div className="animate-fade-in-up pb-10 flex-1">
           {currentView === 'DASHBOARD' && <Dashboard profile={userProfile} orders={orders} onNavigate={handleNavigate} />}
-          {currentView === 'PEDIDOS' && <Orders orders={orders} onNavigate={handleNavigate} />}
+          {currentView === 'PEDIDOS' && <Orders orders={orders} onNavigate={handleNavigate} cdId={cdRecordId} />}
           {currentView === 'ESTOQUE' && <Inventory products={products} walletBalance={userProfile.walletBalance} cdId={cdRecordId} profile={userProfile} />}
           {currentView === 'FINANCEIRO' && <Financial profile={userProfile} transactions={transactions} cdId={cdRecordId} />}
           {currentView === 'IA_ADVISOR' && <GeminiAdvisor profile={userProfile} orders={orders} products={products} />}

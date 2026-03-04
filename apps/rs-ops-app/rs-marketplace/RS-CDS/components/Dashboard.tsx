@@ -3,8 +3,8 @@ import React, { useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { CDProfile, Order, ViewState, Customer } from '../types';
 import { Users, DollarSign, Package, TrendingUp, AlertTriangle, ArrowRight, MessageCircle, X, Search } from 'lucide-react';
-// Customers will be loaded from dataService in a future iteration
-const emptyCustomers: Customer[] = [];
+// Clientes serão processados a partir dos pedidos
+
 
 interface DashboardProps {
   profile: CDProfile;
@@ -12,15 +12,8 @@ interface DashboardProps {
   onNavigate: (view: ViewState) => void;
 }
 
-// Dados iniciais zerados para produção
-const initialChartData = [
-  { name: 'Jan', vendas: 0 },
-  { name: 'Fev', vendas: 0 },
-  { name: 'Mar', vendas: 0 },
-  { name: 'Abr', vendas: 0 },
-  { name: 'Mai', vendas: 0 },
-  { name: 'Jun', vendas: 0 },
-];
+// Gráfico real calculado a partir dos pedidos (ver Dashboard component)
+
 
 const KPICard: React.FC<{
   title: string;
@@ -52,10 +45,63 @@ const Dashboard: React.FC<DashboardProps> = ({ profile, orders, onNavigate }) =>
   const pendingOrders = orders.filter(o => o.status === 'PENDENTE' || o.status === 'SEPARACAO').length;
   const readyOrders = orders.filter(o => o.status === 'AGUARDANDO_RETIRADA').length;
 
+  // Gráfico real: agrupa pedidos por mês (últimos 6 meses)
+  const chartData = (() => {
+    const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+    const now = new Date();
+    const months: { name: string; vendas: number; mes: string }[] = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      months.push({ name: monthNames[d.getMonth()], vendas: 0, mes: key });
+    }
+    orders.forEach(o => {
+      if (!o.date) return;
+      const mes = o.date.substring(0, 7); // 'YYYY-MM'
+      const slot = months.find(m => m.mes === mes);
+      if (slot) slot.vendas += Number(o.total) || 0;
+    });
+    return months.map(({ name, vendas }) => ({ name, vendas: Math.round(vendas * 100) / 100 }));
+  })();
+
   const handleWhatsApp = (phone: string) => {
+    if (!phone) {
+      alert("Telefone não registrado para este cliente.");
+      return;
+    }
     const cleanPhone = phone.replace(/\D/g, '');
     window.open(`https://wa.me/55${cleanPhone}?text=Olá, vi que você comprou recentemente no CD. Tem alguma dúvida?`, '_blank');
   };
+
+  // Calcular clientes reais baseados no histórico de pedidos
+  const customersMap = new Map<string, Customer>();
+  orders.forEach(o => {
+    const id = o.buyerCpf || o.consultantPin || o.buyerEmail || 'DESCONHECIDO';
+    if (id === 'DESCONHECIDO') return;
+    const name = o.buyerCpf ? (o.consultantName || 'Cliente Final') : o.consultantName;
+    if (!customersMap.has(id)) {
+      customersMap.set(id, {
+        id,
+        name: name || 'Cliente',
+        phone: o.buyerPhone || '',
+        email: o.buyerEmail || '',
+        lastPurchaseDate: o.date,
+        totalSpent: Number(o.total) || 0,
+        ordersCount: 1,
+        status: 'ATIVO'
+      });
+    } else {
+      const c = customersMap.get(id)!;
+      c.totalSpent += (Number(o.total) || 0);
+      c.ordersCount += 1;
+      if (new Date(o.date) > new Date(c.lastPurchaseDate)) {
+        c.lastPurchaseDate = o.date;
+      }
+    }
+  });
+
+  const activeCustomersList = Array.from(customersMap.values()).sort((a, b) => b.totalSpent - a.totalSpent);
+  const activeCustomersCount = activeCustomersList.length;
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -96,7 +142,7 @@ const Dashboard: React.FC<DashboardProps> = ({ profile, orders, onNavigate }) =>
         />
         <KPICard
           title="Clientes Recorrentes"
-          value={profile.activeCustomers.toString()}
+          value={activeCustomersCount.toString()}
           icon={<Users size={24} />}
           subtext="Clique para fidelizar"
           onClick={() => setShowCustomerModal(true)}
@@ -112,7 +158,7 @@ const Dashboard: React.FC<DashboardProps> = ({ profile, orders, onNavigate }) =>
           </h3>
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={initialChartData}>
+              <BarChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
                 <XAxis dataKey="name" stroke="#666" tick={{ fill: '#999' }} />
                 <YAxis stroke="#666" tick={{ fill: '#999' }} prefix="R$ " />
@@ -204,14 +250,14 @@ const Dashboard: React.FC<DashboardProps> = ({ profile, orders, onNavigate }) =>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-dark-800">
-                  {emptyCustomers.length === 0 ? (
+                  {activeCustomersList.length === 0 ? (
                     <tr>
                       <td colSpan={6} className="text-center py-12 text-gray-500 italic">
                         Nenhum cliente registrado. As vendas aparecerão aqui.
                       </td>
                     </tr>
                   ) : (
-                    emptyCustomers.map(customer => (
+                    activeCustomersList.map(customer => (
                       <tr key={customer.id} className="hover:bg-dark-800/50 transition-colors">
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">

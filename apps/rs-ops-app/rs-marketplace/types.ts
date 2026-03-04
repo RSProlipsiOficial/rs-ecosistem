@@ -32,6 +32,7 @@ export interface Product {
   weight?: number;
   weightUnit?: 'kg' | 'g' | 'lb' | 'oz';
   supplier?: string;
+  category?: string;
 }
 
 export interface ProductOption {
@@ -154,7 +155,7 @@ export type View = 'home' | 'productDetail' | 'consultantLogin' | 'sellerRegistr
   'managePromotions' | 'addEditCoupon' | 'manageAffiliates' | 'storeEditor' | 'storeBannerEditor' | 'virtualOfficeDropshipping' | 'virtualOfficeAffiliateLinks' |
   'virtualOfficePixels' | 'virtualOfficeLinkShortener' | 'addEditMarketingPixel' | 'bannerDashboard' | 'dashboardEditor' | 'marketplaceAdmin' | 'consultantProfile' | 'managePayments' | 'manageShipping' |
   'compensationPlan' | 'manageCollections' | 'addEditCollection' | 'walletOverview' | 'walletReports' | 'walletTransfers' | 'walletCharges' | 'walletSettings' |
-  'userProfileEditor' | 'rsStudio' | 'communicationCenter' | 'manageOrderBump' | 'manageUpsell' | 'manageAbandonedCarts' | 'manageReviews' | 'manageAnnouncements' | 'addEditAnnouncement' | 'manageTrainings' | 'addEditTraining' | 'trainingModuleDetail' | 'manageMarketingAssets' | 'addEditMarketingAsset' | 'productQA' | 'recentlyViewed' | 'orderLookup' | 'orderStatus' | 'cdRegions' | 'cdStock' | 'cdOrders' | 'rsCD' | 'rsControleDrop';
+  'userProfileEditor' | 'rsStudio' | 'communication' | 'communicationCenter' | 'manageOrderBump' | 'manageUpsell' | 'manageAbandonedCarts' | 'manageReviews' | 'manageAnnouncements' | 'addEditAnnouncement' | 'manageTrainings' | 'addEditTraining' | 'trainingModuleDetail' | 'manageMarketingAssets' | 'addEditMarketingAsset' | 'productQA' | 'recentlyViewed' | 'orderLookup' | 'orderStatus' | 'cdRegions' | 'cdStock' | 'cdOrders' | 'rsCD' | 'rsControleDrop';
 
 export interface Collection {
   id: string;
@@ -169,6 +170,15 @@ export interface Banner {
   desktopImage: string;
   mobileImage: string;
   link: string;
+  position?: 'top' | 'middle' | 'bottom';
+  height?: number;
+  mobileHeight?: number;
+  fullWidth?: boolean;
+  title?: string;
+  titleColor?: string;
+  subtitle?: string;
+  subtitleColor?: string;
+  backgroundColor?: string;
 }
 
 export interface HeroContent {
@@ -176,6 +186,13 @@ export interface HeroContent {
   subtitle: string;
   desktopImage: string;
   mobileImage: string;
+  buttonAnchor?: string;
+  videoUrl?: string; // Optional background video (mp4 URL or YouTube embed URL)
+  videoPoster?: string; // Fallback image while video loads
+  titleColor?: string; // e.g. '#FFFFFF'
+  subtitleColor?: string;
+  buttonColor?: string;
+  backgroundColor?: string;
 }
 
 export interface FooterContent {
@@ -202,14 +219,21 @@ export interface UpsellSettings {
 }
 
 export interface HomepageSection {
-  id: 'featuredProducts' | 'offers' | 'bestsellers' | 'featuredCollections' | 'recentlyViewed' | 'midPageBanner';
+  id: 'hero' | 'carousel' | 'featuredProducts' | 'offers' | 'bestsellers' | 'featuredCollections' | 'recentlyViewed' | 'midPageBanner' | string;
   name: string;
+  subtitle?: string;
   enabled: boolean;
+  order?: number;
+  titleColor?: string;
+  subtitleColor?: string;
+  backgroundColor?: string;
 }
 
 export interface StoreCustomization {
   logoUrl: string;
+  logoMaxWidth?: number;
   faviconUrl: string;
+  faviconMaxWidth?: number;
   hero: HeroContent;
   carouselBanners: Banner[];
   midPageBanner: Banner;
@@ -217,6 +241,10 @@ export interface StoreCustomization {
   orderBump: OrderBump;
   upsell: UpsellSettings;
   homepageSections: HomepageSection[];
+  carouselHeight?: number;
+  carouselHeightMobile?: number;
+  carouselFullWidth?: boolean;
+  storeBackgroundColor?: string;
   customCss: string;
 }
 
@@ -288,6 +316,8 @@ export interface UserProfile {
   cpfCnpj?: string;
   phone?: string;
   birthDate?: string;
+  idConsultor?: string;
+  slug?: string;
 }
 
 export interface NetworkActivityItem {

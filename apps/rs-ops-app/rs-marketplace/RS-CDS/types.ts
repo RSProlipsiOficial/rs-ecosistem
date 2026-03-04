@@ -7,8 +7,26 @@ export interface CDProfile {
   name: string;
   type: CDType;
   managerName: string;
-  avatarUrl?: string; // Novo campo para foto de perfil
+  avatarUrl?: string;
+  faviconUrl?: string;
+  logoUrl?: string;
   region: string;
+  // Campos opcionais estendidos
+  email?: string;
+  phone?: string;
+  document?: string;
+  status?: string;
+  joinDate?: string;
+  consultantId?: string;
+  address?: {
+    cep: string;
+    street: string;
+    number: string;
+    complement: string;
+    neighborhood: string;
+    city: string;
+    state: string;
+  };
   walletBalance: number;
   activeCustomers: number;
   monthlyCycles: number;
@@ -41,6 +59,8 @@ export interface SettingsData {
     email: string;
     phone: string;
     avatarUrl?: string; // Novo campo nas configurações
+    faviconUrl?: string;
+    logoUrl?: string;
     address: {
       cep: string;
       street: string;
@@ -75,6 +95,7 @@ export interface Product {
   costPrice: number; // Preço de Custo (CD paga à fabrica)
   points: number;    // VP (Volume Points) - Crítico para MMN
   status: 'OK' | 'BAIXO' | 'CRITICO';
+  imageUrl?: string; // Foto do produto (do catálogo global)
   batches?: Batch[]; // Controle de Lotes e Validade
   weightKg?: number;
   dimensions?: {

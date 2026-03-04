@@ -6,9 +6,12 @@ import { ArrowRightIcon } from './icons/ArrowRightIcon';
 interface CarouselProps {
     banners: Banner[];
     className?: string;
+    height?: number;
+    mobileHeight?: number;
+    fullWidth?: boolean;
 }
 
-const Carousel: React.FC<CarouselProps> = ({ banners, className }) => {
+const Carousel: React.FC<CarouselProps> = ({ banners, className, height = 400, mobileHeight = 300, fullWidth = true }) => {
     const [currentIndex, setCurrentIndex] = useState(0);
 
     const goToPrevious = () => {
@@ -31,26 +34,38 @@ const Carousel: React.FC<CarouselProps> = ({ banners, className }) => {
         }
     }, [banners, goToNext]);
 
-    if (!banners || banners.length === 0) {
-        return null;
+    if (!banners || !Array.isArray(banners) || banners.length === 0) {
+        return <div className="h-4 bg-dark-900"></div>; // Placeholder em vez de crash
     }
 
     return (
-        <section className={`relative w-full overflow-hidden bg-dark-900 group ${className || 'h-[300px] md:h-[400px]'}`}>
+        <section
+            className={`relative w-full overflow-hidden bg-dark-900 group ${fullWidth ? '' : 'container mx-auto px-4 rounded-xl'} ${className || ''}`}
+            style={{
+                height: typeof window !== 'undefined' && window.innerWidth < 768 ? mobileHeight : height
+            }}
+        >
             <div
                 className="w-full h-full flex transition-transform duration-700 ease-in-out"
                 style={{ transform: `translateX(-${currentIndex * 100}%)` }}
             >
                 {banners.map((banner) => (
                     <a href={banner.link} key={banner.id} className="w-full h-full flex-shrink-0" aria-label={`Banner ${banner.id}`}>
-                         <picture className="w-full h-full">
+                        <picture className="w-full h-full">
                             <source media="(min-width: 768px)" srcSet={banner.desktopImage} />
-                            <img src={banner.mobileImage} alt={`Banner ${banner.id}`} className="w-full h-full object-cover" />
+                            <img
+                                src={banner.mobileImage}
+                                alt={`Banner ${banner.id}`}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                    (e.target as HTMLImageElement).src = 'https://via.placeholder.com/1200x400?text=Imagem+Indispon%C3%ADvel';
+                                }}
+                            />
                         </picture>
                     </a>
                 ))}
             </div>
-            
+
             {banners.length > 1 && (
                 <>
                     <button
@@ -72,9 +87,8 @@ const Carousel: React.FC<CarouselProps> = ({ banners, className }) => {
                             <button
                                 key={index}
                                 onClick={() => setCurrentIndex(index)}
-                                className={`w-3 h-3 rounded-full transition-colors ${
-                                    currentIndex === index ? 'bg-gold-500' : 'bg-gray-400/50 hover:bg-gray-200/80'
-                                }`}
+                                className={`w-3 h-3 rounded-full transition-colors ${currentIndex === index ? 'bg-gold-500' : 'bg-gray-400/50 hover:bg-gray-200/80'
+                                    }`}
                                 aria-label={`Ir para o slide ${index + 1}`}
                             />
                         ))}

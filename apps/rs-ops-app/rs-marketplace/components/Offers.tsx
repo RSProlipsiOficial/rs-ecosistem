@@ -8,11 +8,28 @@ interface OffersProps {
   products: Product[];
   wishlist: string[];
   onToggleWishlist: (productId: string) => void;
+  title?: string;
+  subtitle?: string;
+  titleColor?: string;
+  subtitleColor?: string;
+  backgroundColor?: string;
 }
 
-const Offers: React.FC<OffersProps> = ({ onProductClick, products, wishlist, onToggleWishlist }) => {
-  const sourceProducts = (products && products.length >= 4) ? products : initialProducts;
-  const offerProducts = sourceProducts
+const Offers: React.FC<OffersProps> = ({
+  onProductClick,
+  products,
+  wishlist,
+  onToggleWishlist,
+  title,
+  subtitle,
+  titleColor,
+  subtitleColor,
+  backgroundColor
+}) => {
+  const sourceProducts = (products && products.length >= 1) ? products : initialProducts;
+
+  // First try: products with explicit discount (compareAtPrice > price)
+  const discountedProducts = sourceProducts
     .filter(p => p.status === 'Ativo' && p.compareAtPrice && p.compareAtPrice > p.price)
     .sort((a, b) => {
       if (!a.compareAtPrice || !b.compareAtPrice) return 0;
@@ -22,17 +39,38 @@ const Offers: React.FC<OffersProps> = ({ onProductClick, products, wishlist, onT
     })
     .slice(0, 4);
 
+  // Fallback: show first 4 active products when no discounts exist
+  const offerProducts = discountedProducts.length > 0
+    ? discountedProducts
+    : sourceProducts.filter(p => p.status === 'Ativo').slice(0, 4);
+
+  const hasRealDiscounts = discountedProducts.length > 0;
+
   if (offerProducts.length === 0) {
     return null;
   }
 
   return (
-    <section id="offers" className="py-16 sm:py-24 bg-dark-900">
+    <section
+      id="offers"
+      className="py-16 sm:py-24"
+      style={{ backgroundColor: backgroundColor || '#000000' }} // Preto absoluto como padrão
+    >
       <div className="container mx-auto px-4">
         <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold font-display text-white">Ofertas Especiais</h2>
-          <p className="mt-4 max-w-2xl mx-auto text-lg text-gray-400">
-            Aproveite nossos descontos exclusivos por tempo limitado.
+          <h2
+            className="text-3xl md:text-4xl font-bold font-display"
+            style={{ color: titleColor || 'white' }}
+          >
+            {title || (hasRealDiscounts ? 'Ofertas Especiais' : 'Seleção de Produtos')}
+          </h2>
+          <p
+            className="mt-4 max-w-2xl mx-auto text-lg"
+            style={{ color: subtitleColor || (titleColor ? `${titleColor}cc` : '#9CA3AF') }} // text-gray-400 is #9CA3AF
+          >
+            {subtitle || (hasRealDiscounts
+              ? 'Aproveite nossos descontos exclusivos por tempo limitado.'
+              : 'Confira nossa seleção de produtos premium.')}
           </p>
         </div>
         <div className="featured-grid">

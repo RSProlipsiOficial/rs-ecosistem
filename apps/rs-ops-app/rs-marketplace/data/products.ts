@@ -2,7 +2,7 @@ import { Product } from '../types';
 
 export const products: Product[] = [
   {
-    id: '1',
+    id: 'd8da03a4-d45a-4390-8698-9a35d43647c8',
     name: 'AlphaLipsi',
     seller: 'RS Prólipsi',
     price: 120.00,
@@ -37,7 +37,7 @@ export const products: Product[] = [
     variants: [],
   },
   {
-    id: '2',
+    id: '850c41ec-2cde-4768-aa65-9630215ea407',
     name: 'GlicoLipsi',
     seller: 'RS Prólipsi',
     price: 140.00,
@@ -66,7 +66,7 @@ export const products: Product[] = [
     variants: [],
   },
   {
-    id: '3',
+    id: 'b98c42b9-52c5-478e-b172-faee36c6ba2c',
     name: 'DivaLipsi',
     seller: 'RS Prólipsi',
     price: 126.00,
@@ -95,7 +95,7 @@ export const products: Product[] = [
     variants: [],
   },
   {
-    id: '4',
+    id: '486f290d-500f-4c1c-8889-f8d2db87c2bc',
     name: 'Inflamaxi',
     seller: 'RS Prólipsi',
     price: 120.00,
@@ -124,7 +124,7 @@ export const products: Product[] = [
     variants: [],
   },
   {
-    id: '5',
+    id: '1c337036-bde5-4f2d-aba5-6729b911b002',
     name: 'Ozone Pro 3+',
     seller: 'RS Prólipsi',
     price: 76.00,
@@ -153,7 +153,7 @@ export const products: Product[] = [
     variants: [],
   },
   {
-    id: '6',
+    id: '802529e1-ead9-4eef-bf20-4ce63e25ec92',
     name: 'Pro 3+',
     seller: 'RS Prólipsi',
     price: 90.00,
@@ -182,7 +182,7 @@ export const products: Product[] = [
     variants: [],
   },
   {
-    id: '7',
+    id: '8445623a-2642-4e04-be6d-c815b1d337f6',
     name: 'SlimLipsi',
     seller: 'RS Prólipsi',
     price: 140.00,

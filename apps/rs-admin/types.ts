@@ -267,7 +267,7 @@ export interface ReplenishmentOrder {
   date: string;
   itemsCount: number;
   totalValue: number;
-  status: 'PENDENTE' | 'AGUARDANDO PAGAMENTO' | 'PAGO' | 'EM SEPARAÇÃO' | 'ENVIADO' | 'ENTREGUE' | 'CANCELADO';
+  status: string; // Ex: 'PENDENTE' | 'AGUARDANDO PAGAMENTO' | 'PAGO' | 'EM SEPARAÇÃO' | 'ENVIADO' | 'ENTREGUE' | 'CANCELADO'
   trackingCode?: string;
   paymentProofUrl?: string;
   paymentProofStatus?: string;

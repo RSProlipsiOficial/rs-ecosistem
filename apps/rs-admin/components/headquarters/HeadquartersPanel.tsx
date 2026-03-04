@@ -659,17 +659,39 @@ const HeadquartersPanel: React.FC<HeadquartersPanelProps> = ({ activeTab: initia
                                                 <span className="text-gray-400">ID:</span>
                                                 <span className="text-white font-mono">AC-{selectedOrder.id.split('-')[0].toUpperCase()}</span>
                                             </div>
-                                            <div className="flex justify-between">
+                                            <div className="flex justify-between border-b border-gray-800 pb-2">
                                                 <span className="text-gray-400">Data:</span>
                                                 <span className="text-white">{new Date(selectedOrder.date).toLocaleString('pt-BR')}</span>
                                             </div>
-                                            <div className="flex justify-between">
-                                                <span className="text-gray-400">Valor Total:</span>
-                                                <span className="text-yellow-500 font-bold">R$ {selectedOrder.totalValue.toLocaleString('pt-BR')}</span>
+
+                                            {(() => {
+                                                const subtotal = selectedOrder.items.reduce((acc: number, item: any) => acc + ((item.unitCost || 0) * item.quantity), 0);
+                                                let freight = selectedOrder.totalValue - subtotal;
+                                                // [RS-FIX] Suprimir pequenas anomalias de precisão flutuante entre backend/frontend (ex: R$ 0,04)
+                                                if (freight < 0.1) freight = 0;
+
+                                                return (
+                                                    <>
+                                                        <div className="flex justify-between pt-1">
+                                                            <span className="text-gray-400">Produtos:</span>
+                                                            <span className="text-white">R$ {subtotal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                                        </div>
+                                                        <div className="flex justify-between">
+                                                            <span className="text-gray-400">Frete/Acréscimos:</span>
+                                                            <span className="text-white">R$ {freight.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                                        </div>
+                                                    </>
+                                                )
+                                            })()}
+
+                                            <div className="flex justify-between border-t border-gray-800 pt-2">
+                                                <span className="text-gray-400 font-bold uppercase text-[10px] self-end mb-1">Valor Total:</span>
+                                                <span className="text-yellow-500 font-black text-lg">R$ {selectedOrder.totalValue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                             </div>
-                                            <div className="flex justify-between">
-                                                <span className="text-gray-400">Status Atual:</span>
-                                                <span className="text-white font-bold">{selectedOrder.status}</span>
+                                            <div className="flex justify-between mt-2 items-center bg-gray-900 absolute top-4 right-4 px-3 py-1 rounded-full border border-gray-700 shadow shadow-black hidden">
+                                                {/* Migrado para o status_badge visual em vez da lista padrão */}
+                                                <span className="text-gray-400 text-xs">Status Atual:</span>
+                                                <span className="text-white font-bold text-xs ml-2">{selectedOrder.status}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -680,19 +702,23 @@ const HeadquartersPanel: React.FC<HeadquartersPanelProps> = ({ activeTab: initia
                                         </h3>
                                         <div className="bg-black/20 rounded-lg border border-gray-800 overflow-hidden">
                                             <table className="w-full text-sm">
-                                                <thead className="bg-gray-900 text-gray-400 text-xs">
+                                                <thead className="bg-gray-900 text-gray-400 text-[10px] uppercase tracking-wider">
                                                     <tr>
                                                         <th className="px-4 py-2 text-left">Produto</th>
                                                         <th className="px-4 py-2 text-center">SKU</th>
-                                                        <th className="px-4 py-2 text-right">Qtd</th>
+                                                        <th className="px-4 py-2 text-center">Valor Unit.</th>
+                                                        <th className="px-4 py-2 text-center">Qtd</th>
+                                                        <th className="px-4 py-2 text-right">Total Item</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody className="divide-y divide-gray-800">
-                                                    {selectedOrder.items.map((item, idx) => (
+                                                    {selectedOrder.items.map((item: any, idx: number) => (
                                                         <tr key={idx} className="text-gray-300">
                                                             <td className="px-4 py-3">{item.name}</td>
                                                             <td className="px-4 py-3 text-center font-mono text-xs">{item.sku}</td>
-                                                            <td className="px-4 py-3 text-right font-bold text-white">{item.quantity}</td>
+                                                            <td className="px-4 py-3 text-center text-xs">R$ {(item.unitCost || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                                                            <td className="px-4 py-3 text-center font-bold text-white">{item.quantity}</td>
+                                                            <td className="px-4 py-3 text-right font-bold text-yellow-500">R$ {((item.unitCost || 0) * item.quantity).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
                                                         </tr>
                                                     ))}
                                                 </tbody>

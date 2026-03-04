@@ -6,7 +6,10 @@ import path from "path";
 import { env } from "./config/env";
 import routes from "./routes";
 
-const app = Fastify({ logger: true });
+const app = Fastify({
+  logger: true,
+  bodyLimit: 10485760 // 10MB para suportar avatars base64 e vitrines
+});
 
 app.register(helmet);
 app.register(cors, { origin: true });

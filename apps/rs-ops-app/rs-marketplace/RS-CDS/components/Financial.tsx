@@ -1,9 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { Transaction, CDProfile } from '../types';
-import { ArrowUpRight, ArrowDownRight, Wallet, TrendingUp, DollarSign, Download, Calendar, X, AlertTriangle, CheckCircle, RefreshCw, Clock, Loader2 } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, Wallet, TrendingUp, DollarSign, Download, Calendar, X, AlertTriangle, CheckCircle, RefreshCw, Clock, Loader2, Eye } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { adminSupabase } from '../services/supabaseClient';
+import { dataService } from '../services/dataService';
 
 interface FinancialProps {
     profile: CDProfile;
@@ -29,11 +29,13 @@ const Financial: React.FC<FinancialProps> = ({ profile, transactions: propTransa
     const [withdrawError, setWithdrawError] = useState<string | null>(null);
     const [withdrawSuccess, setWithdrawSuccess] = useState(false);
     const [submitting, setSubmitting] = useState(false);
+    const [selectedWithdrawDetails, setSelectedWithdrawDetails] = useState<WithdrawRequest | null>(null);
 
     // Real data states
     const [withdrawHistory, setWithdrawHistory] = useState<WithdrawRequest[]>([]);
     const [realTransactions, setRealTransactions] = useState<Transaction[]>([]);
     const [loadingData, setLoadingData] = useState(true);
+    const [activeTab, setActiveTab] = useState<'ALL' | 'IN' | 'OUT'>('ALL');
 
     // Merge prop transactions with real ones
     const allTransactions = [...propTransactions, ...realTransactions];
@@ -62,34 +64,22 @@ const Financial: React.FC<FinancialProps> = ({ profile, transactions: propTransa
         if (!cdId) return;
         setLoadingData(true);
         try {
-            // Load withdraw requests
-            const { data: withdraws } = await adminSupabase
-                .from('cd_withdraw_requests')
-                .select('*')
-                .eq('cd_id', cdId)
-                .order('requested_at', { ascending: false });
+            const financialData = await dataService.getFinancialData(cdId);
 
-            if (withdraws) setWithdrawHistory(withdraws);
-
-            // Load transactions from cd_transactions
-            const { data: txns } = await adminSupabase
-                .from('cd_transactions')
-                .select('*')
-                .eq('cd_id', cdId)
-                .order('date', { ascending: false })
-                .limit(50);
-
-            if (txns) {
-                const mapped: Transaction[] = txns.map((t: any) => ({
-                    id: t.id,
-                    type: t.type as 'IN' | 'OUT',
-                    category: t.category,
-                    description: t.description,
-                    amount: parseFloat(t.amount),
-                    status: t.status,
-                    date: t.date
-                }));
-                setRealTransactions(mapped);
+            if (financialData) {
+                if (financialData.withdraws) setWithdrawHistory(financialData.withdraws);
+                if (financialData.transactions) {
+                    const mapped: Transaction[] = financialData.transactions.map((t: any) => ({
+                        id: t.id,
+                        type: t.type as 'IN' | 'OUT',
+                        category: t.category,
+                        description: t.description,
+                        amount: parseFloat(t.amount),
+                        status: t.status,
+                        date: t.created_at || t.date || new Date().toISOString()
+                    }));
+                    setRealTransactions(mapped);
+                }
             }
         } catch (err) {
             console.error('[RS-CDS Financial] Error loading data:', err);
@@ -145,38 +135,18 @@ const Financial: React.FC<FinancialProps> = ({ profile, transactions: propTransa
             const fee = Math.max(amount * 0.02, 5);
             const netAmount = amount - fee;
 
-            // Save to Supabase
-            const { error } = await adminSupabase
-                .from('cd_withdraw_requests')
-                .insert({
-                    cd_id: cdId,
-                    cd_name: profile.name,
-                    amount: amount,
-                    fee: fee,
-                    net_amount: netAmount,
-                    status: 'pending',
-                    scheduled_date: withdrawDate,
-                    pix_key: null
-                });
+            const success = await dataService.requestWithdraw(cdId, {
+                cd_name: profile.name,
+                amount: amount,
+                fee: fee,
+                net_amount: netAmount,
+                scheduled_date: withdrawDate
+            });
 
-            if (error) {
-                setWithdrawError(`Erro ao salvar: ${error.message}`);
+            if (!success) {
+                setWithdrawError("Erro ao processar a solicitação de saque na API.");
                 return;
             }
-
-            // Also record as transaction
-            await adminSupabase
-                .from('cd_transactions')
-                .insert({
-                    cd_id: cdId,
-                    type: 'OUT',
-                    category: 'SAQUE',
-                    description: `Solicitação de saque agendada para ${withdrawDate.split('-').reverse().join('/')}`,
-                    amount: amount,
-                    status: 'PENDENTE',
-                    reference_id: `SAQUE-${Date.now()}`,
-                    date: new Date().toISOString().split('T')[0]
-                });
 
             setWithdrawSuccess(true);
             setWithdrawAmount('');
@@ -241,7 +211,7 @@ const Financial: React.FC<FinancialProps> = ({ profile, transactions: propTransa
                     <p className="text-xs text-gray-500 mt-1">Atualizado agora</p>
                 </div>
 
-                <div className="bg-dark-900 p-6 rounded-xl border border-dark-800">
+                <div className="bg-dark-900 p-6 rounded-xl border border-dark-800 cursor-pointer hover:border-green-500/50 transition-colors" onClick={() => setActiveTab('IN')}>
                     <div className="flex justify-between items-start mb-2">
                         <p className="text-gray-400 text-xs font-bold uppercase">Entradas (Mês)</p>
                         <div className="p-2 bg-green-900/20 text-green-500 rounded-lg"><ArrowUpRight size={20} /></div>
@@ -250,7 +220,7 @@ const Financial: React.FC<FinancialProps> = ({ profile, transactions: propTransa
                     <p className="text-xs text-green-500 mt-1 flex items-center gap-1"><TrendingUp size={12} /> Vendas e comissões</p>
                 </div>
 
-                <div className="bg-dark-900 p-6 rounded-xl border border-dark-800">
+                <div className="bg-dark-900 p-6 rounded-xl border border-dark-800 cursor-pointer hover:border-red-500/50 transition-colors" onClick={() => setActiveTab('OUT')}>
                     <div className="flex justify-between items-start mb-2">
                         <p className="text-gray-400 text-xs font-bold uppercase">Saídas (Mês)</p>
                         <div className="p-2 bg-red-900/20 text-red-500 rounded-lg"><ArrowDownRight size={20} /></div>
@@ -286,6 +256,7 @@ const Financial: React.FC<FinancialProps> = ({ profile, transactions: propTransa
                                     <th className="px-6 py-3 text-right">Taxa</th>
                                     <th className="px-6 py-3 text-right">Líquido</th>
                                     <th className="px-6 py-3 text-center">Status</th>
+                                    <th className="px-6 py-3 text-center">Detalhes</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-dark-800">
@@ -299,6 +270,15 @@ const Financial: React.FC<FinancialProps> = ({ profile, transactions: propTransa
                                             <td className="px-6 py-4 text-right text-red-500">-R$ {Number(w.fee).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
                                             <td className="px-6 py-4 text-right font-bold text-green-500">R$ {Number(w.net_amount).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
                                             <td className="px-6 py-4 text-center"><span className={`text-[10px] px-2 py-1 rounded-full font-bold uppercase ${st.cls}`}>{st.label}</span></td>
+                                            <td className="px-6 py-4 text-center">
+                                                <button
+                                                    onClick={() => setSelectedWithdrawDetails(w)}
+                                                    className="inline-flex items-center justify-center p-2 rounded-lg bg-dark-800 text-gold-400 hover:bg-dark-700 hover:text-white transition-colors border border-dark-700 hover:border-gold-500/50"
+                                                    title="Ver Detalhes do Saque"
+                                                >
+                                                    <Eye size={16} />
+                                                </button>
+                                            </td>
                                         </tr>
                                     );
                                 })}
@@ -311,9 +291,16 @@ const Financial: React.FC<FinancialProps> = ({ profile, transactions: propTransa
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Transaction History */}
                 <div className="lg:col-span-2 bg-dark-900 rounded-xl border border-dark-800 flex flex-col">
-                    <div className="p-6 border-b border-dark-800 flex justify-between items-center">
-                        <h3 className="font-bold text-white">Histórico de Transações</h3>
-                        <span className="text-xs text-gray-500">{allTransactions.length} registro(s)</span>
+                    <div className="p-4 border-b border-dark-800 flex justify-between items-center px-6">
+                        <div className="flex items-center gap-4">
+                            <h3 className="font-bold text-white">Histórico de Transações</h3>
+                            <div className="flex gap-1 ml-4 bg-dark-950 p-1 rounded-lg border border-dark-800">
+                                <button onClick={() => setActiveTab('ALL')} className={`px-3 py-1 text-xs font-bold rounded ${activeTab === 'ALL' ? 'bg-dark-800 text-white' : 'text-gray-500 hover:text-white'}`}>Todas</button>
+                                <button onClick={() => setActiveTab('IN')} className={`px-3 py-1 text-xs font-bold rounded ${activeTab === 'IN' ? 'bg-green-900/30 text-green-500' : 'text-gray-500 hover:text-white'}`}>Entradas</button>
+                                <button onClick={() => setActiveTab('OUT')} className={`px-3 py-1 text-xs font-bold rounded ${activeTab === 'OUT' ? 'bg-red-900/30 text-red-500' : 'text-gray-500 hover:text-white'}`}>Saídas</button>
+                            </div>
+                        </div>
+                        <span className="text-xs text-gray-500">{allTransactions.filter(t => activeTab === 'ALL' || t.type === activeTab).length} registro(s)</span>
                     </div>
                     <div className="overflow-x-auto flex-1">
                         <table className="w-full text-left text-sm text-gray-400">
@@ -327,12 +314,12 @@ const Financial: React.FC<FinancialProps> = ({ profile, transactions: propTransa
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-dark-800">
-                                {allTransactions.length === 0 ? (
-                                    <tr><td colSpan={5} className="text-center py-12 text-gray-500 italic">Nenhuma transação registrada.</td></tr>
+                                {allTransactions.filter(t => activeTab === 'ALL' || t.type === activeTab).length === 0 ? (
+                                    <tr><td colSpan={5} className="text-center py-12 text-gray-500 italic">Nenhuma transação {activeTab === 'IN' ? 'de entrada ' : activeTab === 'OUT' ? 'de saída ' : ''}registrada.</td></tr>
                                 ) : (
-                                    allTransactions.map(t => (
+                                    allTransactions.filter(t => activeTab === 'ALL' || t.type === activeTab).map(t => (
                                         <tr key={t.id} className="hover:bg-dark-800/50 transition-colors">
-                                            <td className="px-6 py-4 whitespace-nowrap">{t.date.split('-').reverse().join('/')}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap">{t.date ? t.date.split('-').reverse().join('/') : '-'}</td>
                                             <td className="px-6 py-4 font-medium text-white">{t.description}</td>
                                             <td className="px-6 py-4">
                                                 <span className="text-xs bg-dark-800 px-2 py-1 rounded border border-dark-700">
@@ -384,6 +371,71 @@ const Financial: React.FC<FinancialProps> = ({ profile, transactions: propTransa
                     </div>
                 </div>
             </div>
+
+            {/* Withdraw Details Modal */}
+            {selectedWithdrawDetails && (
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
+                    <div className="bg-dark-900 border border-dark-700 rounded-2xl w-full max-w-lg p-6 shadow-2xl relative">
+                        <button
+                            onClick={() => setSelectedWithdrawDetails(null)}
+                            className="absolute top-4 right-4 text-gray-500 hover:text-white"
+                        >
+                            <X size={20} />
+                        </button>
+                        <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                            <DollarSign className="text-gold-400" /> Detalhes do Saque
+                        </h3>
+                        <div className="space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="bg-dark-950 p-3 rounded-lg border border-dark-800">
+                                    <p className="text-xs text-gray-500 uppercase font-bold">Valor Solicitado</p>
+                                    <p className="text-lg font-bold text-white">R$ {Number(selectedWithdrawDetails.amount).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                                </div>
+                                <div className="bg-dark-950 p-3 rounded-lg border border-dark-800">
+                                    <p className="text-xs text-gray-500 uppercase font-bold">Valor Líquido</p>
+                                    <p className="text-lg font-bold text-green-500">R$ {Number(selectedWithdrawDetails.net_amount).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                                </div>
+                            </div>
+
+                            <div className="bg-dark-950 p-4 rounded-lg border border-dark-800">
+                                <p className="text-xs text-gray-500 uppercase font-bold mb-1">Status do Saque</p>
+                                <p className={`font-bold ${statusLabels[selectedWithdrawDetails.status]?.cls || 'text-white'}`}>
+                                    {statusLabels[selectedWithdrawDetails.status]?.label || selectedWithdrawDetails.status}
+                                </p>
+                                <p className="text-sm text-gray-400 mt-2">Agendado para: <span className="text-white">{selectedWithdrawDetails.scheduled_date ? selectedWithdrawDetails.scheduled_date.split('-').reverse().join('/') : '-'}</span></p>
+                            </div>
+
+                            {selectedWithdrawDetails.admin_notes ? (
+                                <div className="bg-blue-900/10 p-4 rounded-lg border border-blue-900/30">
+                                    <p className="text-xs text-blue-500 uppercase font-bold mb-2 flex items-center gap-2"><CheckCircle size={14} /> Notas da Administração</p>
+                                    <p className="text-sm text-gray-300">{selectedWithdrawDetails.admin_notes}</p>
+                                    {(selectedWithdrawDetails.admin_notes.includes('http') || selectedWithdrawDetails.admin_notes.includes('data:image')) && (
+                                        <div className="mt-3">
+                                            {/* Extraindo possível URL de comprovante das notas se estiver lá */}
+                                            {selectedWithdrawDetails.admin_notes.match(/https?:\/\/[^\s]+/) ? (
+                                                <a href={selectedWithdrawDetails.admin_notes.match(/https?:\/\/[^\s]+/)![0]} target="_blank" rel="noreferrer" className="text-blue-400 text-xs underline block truncate">Ver Anexo PDF/Imagem</a>
+                                            ) : null}
+                                        </div>
+                                    )}
+                                </div>
+                            ) : (
+                                <div className="bg-dark-950 p-4 rounded-lg border border-dark-800 text-center">
+                                    <p className="text-sm text-gray-500 italic">Nenhuma anotação ou comprovante anexado pela administração até o momento.</p>
+                                </div>
+                            )}
+
+                        </div>
+                        <div className="mt-6 flex justify-end">
+                            <button
+                                onClick={() => setSelectedWithdrawDetails(null)}
+                                className="px-6 py-2 bg-dark-800 text-white font-bold rounded-lg hover:bg-dark-700 transition-all border border-dark-700"
+                            >
+                                FECHAR
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Withdraw Modal */}
             {isWithdrawModalOpen && (

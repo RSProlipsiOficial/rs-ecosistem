@@ -11,6 +11,7 @@ import { CartItem, Collection, View, Customer } from '../types';
 
 interface HeaderProps {
   logoUrl: string;
+  logoMaxWidth?: number;
   onLogoClick: () => void;
   onConsultantClick: () => void;
   cartItems: CartItem[];
@@ -24,12 +25,13 @@ interface HeaderProps {
 }
 
 const Header: React.FC<HeaderProps> = ({
-  logoUrl, onLogoClick, onConsultantClick, cartItems, onCartClick,
+  logoUrl, logoMaxWidth, onLogoClick, onConsultantClick, cartItems, onCartClick,
   collections, onNavigate, currentCustomer, onLogout,
   searchQuery, onSearch
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
+
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const totalItemsInCart = cartItems.reduce((acc, item) => acc + item.quantity, 0);
 
@@ -47,7 +49,16 @@ const Header: React.FC<HeaderProps> = ({
           {/* Logo */}
           <button onClick={onLogoClick} className="flex-shrink-0" title="Ir para página inicial" aria-label="Ir para página inicial">
             {logoUrl ? (
-              <img src={logoUrl} alt="RS Prólipsi Logo" className="h-10 max-w-[120px] object-contain" />
+              <img
+                src={logoUrl}
+                alt="RS Prólipsi Logo"
+                className="object-contain"
+                style={{
+                  maxWidth: logoMaxWidth ? `${logoMaxWidth}px` : '120px',
+                  maxHeight: '120px', // Altura máxima razoável para o header
+                  height: 'auto'
+                }}
+              />
             ) : (
               <span className="text-3xl font-display text-[rgb(var(--color-brand-gold))] uppercase">RS PRÓLIPSI</span>
             )}

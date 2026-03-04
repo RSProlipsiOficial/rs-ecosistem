@@ -11,9 +11,11 @@ interface SidebarProps {
   onClose: () => void;
   isCollapsed: boolean;
   onToggleCollapse: () => void;
+  logoUrl?: string;
+  onLogout?: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, isOpen, onClose, isCollapsed, onToggleCollapse }) => {
+const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, isOpen, onClose, isCollapsed, onToggleCollapse, logoUrl, onLogout }) => {
   const menuItems: { id: ViewState; label: string; icon: React.ReactNode }[] = [
     { id: 'DASHBOARD', label: 'Painel', icon: <LayoutDashboard size={20} /> },
     { id: 'PEDIDOS', label: 'Gestão Pedidos', icon: <ShoppingBag size={20} /> },
@@ -46,10 +48,22 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, isOpen, onClose
       >
         <div className="p-6 flex justify-between items-start">
           <div className={isCollapsed ? 'hidden md:hidden' : ''}>
-            <h1 className="text-xl font-bold text-gold-400 tracking-tight">RS Prólipsi</h1>
+            {logoUrl ? (
+              <img src={logoUrl} alt="Logo" className="h-8 w-auto object-contain mb-1" />
+            ) : (
+              <h1 className="text-xl font-bold text-gold-400 tracking-tight">RS Prólipsi</h1>
+            )}
             <p className="text-xs text-gray-500 mt-1">Gestão de CD v2.0</p>
           </div>
-          {isCollapsed && <div className="hidden md:block w-full text-center"><span className="text-2xl font-bold text-gold-400">RS</span></div>}
+          {isCollapsed && (
+            <div className="hidden md:block w-full text-center">
+              {logoUrl ? (
+                <img src={logoUrl} alt="Logo" className="h-6 w-6 object-contain mx-auto" icon-only="true" />
+              ) : (
+                <span className="text-2xl font-bold text-gold-400">RS</span>
+              )}
+            </div>
+          )}
           {/* Botão Fechar (Apenas Mobile) */}
           <button
             onClick={onClose}
@@ -90,8 +104,11 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, isOpen, onClose
         {/* Administrador removido - gestão de CDs é feita pelo Admin central */}
 
         <div className="p-4 border-t border-dark-800">
-          <button className={`w-full flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-red-400 text-sm font-medium transition-colors rounded-lg hover:bg-dark-800 ${isCollapsed ? 'md:justify-center' : ''
-            }`} title={isCollapsed ? 'Sair do Sistema' : ''}>
+          <button
+            onClick={onLogout}
+            className={`w-full flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-red-400 text-sm font-medium transition-colors rounded-lg hover:bg-dark-800 ${isCollapsed ? 'md:justify-center' : ''}`}
+            title={isCollapsed ? 'Sair do Sistema' : ''}
+          >
             <LogOut size={20} />
             {!isCollapsed && <span>Sair do Sistema</span>}
           </button>

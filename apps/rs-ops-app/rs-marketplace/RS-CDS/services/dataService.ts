@@ -1,461 +1,663 @@
-import { supabase, adminSupabase } from './supabaseClient';
+import { supabase } from './supabaseClient';
 import { CDProfile, Order, Product, Transaction, Customer } from '../types';
-import { products as initialProducts } from '../../data/products';
+
+const apiBaseUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
 
 export const dataService = {
-    // --- Perfil e Configurações ---
+    // --- Perfil e Configurações (API ou Local) ---
     async getCDProfile(userId: string): Promise<CDProfile | null> {
-        // [RS-CDS] Busca principal na tabela de Minisite Profiles (CDs)
-        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId);
+        // [RS-CDS] Busca principal na API agora para evitar RLS vindo de chaves anon
+        try {
+            const res = await fetch(`${apiBaseUrl}/v1/cds/${userId}/profile`);
+            const json = await res.json();
+            if (!json.success) {
+                // Fallback para Supabase se a API falhar ou não encontrar
+                const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId);
+                const { data, error } = await supabase
+                    .from('minisite_profiles')
+                    .select('*')
+                    .or(isUUID ? `id.eq.${userId},consultant_id.eq.${userId}` : `consultant_id.eq.${userId}`)
+                    .maybeSingle();
 
-        const { data, error } = await adminSupabase
-            .from('minisite_profiles')
-            .select('*')
-            .or(isUUID ? `id.eq.${userId},consultant_id.eq.${userId}` : `consultant_id.eq.${userId}`)
-            .maybeSingle();
-
-        if (error) {
-            console.error("Erro ao buscar perfil CD:", error);
+                if (error || !data) return null;
+                return this._mapProfile(data);
+            }
+            return this._mapProfile(json.data);
+        } catch (e) {
             return null;
         }
+    },
 
-        if (data) {
-            return {
-                id: data.id,
-                name: data.name,
-                managerName: data.manager_name || data.name, // Fallback
-                email: data.email,
-                phone: data.phone,
-                document: data.cpf || data.cnpj,
-                type: data.type === 'cd' ? 'CD REGIONAL' : 'FRANQUIA',
-                status: 'ATIVO',
-                joinDate: data.created_at,
-                walletBalance: 0, // TODO: Buscar do financeiro
-                activeCustomers: 0,
-                monthlyCycles: 0,
-                avatarUrl: data.avatar_url,
-                address: {
-                    cep: data.address_zip || '',
-                    street: data.address_street || '',
-                    number: data.address_number || '',
-                    complement: data.address_complement || '',
-                    neighborhood: data.address_neighborhood || '',
-                    city: data.address_city || '',
-                    state: data.address_state || ''
-                },
-                consultantId: data.consultant_id ? data.consultant_id.split('-')[0].toUpperCase() : undefined
-            };
+    _mapProfile(data: any): CDProfile {
+        const city = data.address_city || data.city || '';
+        const state = data.address_state || data.state || '';
+        return {
+            id: data.id,
+            name: data.name || data.fantasy_name || 'CD sem nome',
+            managerName: data.manager_name || data.name || 'Gerente',
+            email: data.email || '',
+            phone: data.phone || '',
+            document: data.cpf || data.cnpj || data.document || '',
+            type: (data.type === 'cd' ? 'CD REGIONAL' : data.type === 'FRANQUIA' ? 'FRANQUIA' : 'CD REGIONAL') as any,
+            status: (data.status || 'ATIVO') as any,
+            joinDate: data.created_at || new Date().toISOString(),
+            region: city && state ? `${city} - ${state}` : (city || state || 'Não informado'),
+            walletBalance: parseFloat(data.wallet_balance || '0'),
+            activeCustomers: parseInt(data.active_customers || '0', 10),
+            monthlyCycles: parseInt(data.monthly_cycles || '0', 10),
+            logoUrl: data.logo_url,
+            faviconUrl: data.favicon_url,
+            avatarUrl: data.avatar_url,
+            address: {
+                cep: data.address_zip || data.zip_code || '',
+                street: data.address_street || data.street || '',
+                number: data.address_number || data.number || '',
+                complement: data.address_complement || data.complement || '',
+                neighborhood: data.address_neighborhood || data.neighborhood || '',
+                city,
+                state
+            },
+            consultantId: data.consultant_id ? data.consultant_id.split('-')[0].toUpperCase() : undefined
+        };
+    },
+
+    async getPrimaryCD(): Promise<any | null> {
+        try {
+            const res = await fetch(`${apiBaseUrl}/v1/cds/primary`);
+            if (!res.ok) throw new Error('API offline');
+            const json = await res.json();
+            if (!json.success) throw new Error(json.error);
+            return json.data;
+        } catch (error) {
+            console.warn('[CDS] Erro ao buscar CD primário via API, tentando fallback Supabase:', error);
+            // Fallback: buscar o primeiro perfil de CD no Supabase
+            const { data, error: sbError } = await supabase
+                .from('minisite_profiles')
+                .select('*')
+                .eq('type', 'cd')
+                .limit(1)
+                .maybeSingle();
+
+            if (sbError || !data) {
+                // Tenta buscar qualquer perfil se o filtro 'type' falhar (alguns bancos usam 'FRANQUIA' ou 'cd' no texto)
+                const { data: anyData } = await supabase.from('minisite_profiles').select('*').limit(1).maybeSingle();
+                return anyData || null;
+            }
+            return data;
         }
+    },
 
-        return null;
+    async getCDProfileFromAPI(cdId: string): Promise<any | null> {
+        try {
+            const res = await fetch(`${apiBaseUrl}/v1/cds/${cdId}/profile`);
+            const json = await res.json();
+            if (!json.success) throw new Error(json.error);
+            return json.data;
+        } catch (error) {
+            console.error('[CDS] Erro ao buscar perfil na API:', error);
+            return null;
+        }
     },
 
     async updateCDProfile(userId: string, updates: Partial<CDProfile>): Promise<boolean> {
-        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId);
+        // [RS-LOGIC] - Agora utilizamos prioritariamente a nova rota PATCH da API (Bypass RLS)
+        try {
+            const payload: any = {};
+            if (updates.name !== undefined) payload.name = updates.name;
+            if (updates.managerName !== undefined) payload.manager_name = updates.managerName;
+            if (updates.avatarUrl !== undefined) payload.avatar_url = updates.avatarUrl;
 
-        // [RS-FIX] Montar payload COMPLETO — não apenas name/avatar
-        // Log para debug
-        console.log("[DataService] Atualizando perfil CD:", updates);
+            // Endereço
+            if (updates.address) {
+                const addr = updates.address as any;
+                if (addr.cep !== undefined) payload.address_zip = addr.cep;
+                if (addr.street !== undefined) payload.address_street = addr.street;
+                if (addr.number !== undefined) payload.address_number = addr.number;
+                if (addr.city !== undefined) payload.address_city = addr.city;
+                if (addr.state !== undefined) payload.address_state = addr.state;
+            }
 
-        const payload: any = {
-            updated_at: new Date().toISOString()
-        };
-
-        // Campos de identificação
-        if (updates.name || updates.managerName) payload.name = updates.name || updates.managerName;
-        if (updates.managerName) payload.manager_name = updates.managerName; // Novo campo se existir no banco
-        if (updates.avatarUrl !== undefined) payload.avatar_url = updates.avatarUrl;
-        if ((updates as any).email) payload.email = (updates as any).email;
-        if ((updates as any).phone) payload.phone = (updates as any).phone;
-        if ((updates as any).document) payload.cpf = (updates as any).document;
-
-        // Campos de endereço (se presentes)
-        const addr = (updates as any).address;
-        if (addr) {
-            if (addr.cep !== undefined) payload.address_zip = addr.cep;
-            if (addr.street !== undefined) payload.address_street = addr.street;
-            if (addr.number !== undefined) payload.address_number = addr.number;
-            if (addr.complement !== undefined) payload.address_complement = addr.complement;
-            if (addr.neighborhood !== undefined) payload.address_neighborhood = addr.neighborhood;
-            if (addr.city !== undefined) payload.address_city = addr.city;
-            if (addr.state !== undefined) payload.address_state = addr.state;
-        }
-
-        // [RS-FIX] Primeiro buscar o ID real para update direto (Supabase não suporta .or() com .update() corretamente)
-        const { data: existing } = await adminSupabase
-            .from('minisite_profiles')
-            .select('id')
-            .or(isUUID ? `id.eq.${userId},consultant_id.eq.${userId}` : `consultant_id.eq.${userId}`)
-            .maybeSingle();
-
-        if (!existing) {
-            console.warn('[RS-CDS dataService] Registro não encontrado para update. userId:', userId);
-            return false;
-        }
-
-        const { data, error } = await adminSupabase
-            .from('minisite_profiles')
-            .update(payload)
-            .eq('id', existing.id)
-            .select();
-
-        if (error) {
-            console.error('[RS-CDS dataService] Erro ao atualizar perfil:', error);
-            return false;
-        }
-
-        // [RS-FIX] Verificar se algum registro foi realmente atualizado
-        if (!data || data.length === 0) {
-            console.warn('[RS-CDS dataService] Nenhum registro atualizado para userId:', userId);
-            return false;
-        }
-
-        console.log(`[RS-CDS dataService] ✅ Perfil atualizado (${data.length} registro(s))`);
-        return true;
-    },
-
-    // --- Pedidos ---
-    async getOrders(cdId: string): Promise<Order[]> {
-        const { data, error } = await supabase
-            .from('cd_orders')
-            .select('id, consultant_id, consultant_name, consultant_pin, sponsor_name, sponsor_id, buyer_cpf, buyer_email, buyer_phone, shipping_address, order_date, order_time, total, total_points, status, type, items_count, tracking_code, vehicle_plate, items:cd_order_items(product_id, product_name, quantity, unit_price, points)')
-            .eq('cd_id', cdId)
-            .order('created_at', { ascending: false });
-
-        if (error) {
-            console.error('Error fetching orders:', error);
-            return [];
-        }
-
-        return (data || []).map(order => ({
-            id: order.id,
-            consultantName: order.consultant_name,
-            consultantPin: order.consultant_pin,
-            sponsorName: order.sponsor_name,
-            sponsorId: order.sponsor_id,
-            buyerCpf: order.buyer_cpf,
-            buyerEmail: order.buyer_email,
-            buyerPhone: order.buyer_phone,
-            shippingAddress: order.shipping_address,
-            date: order.order_date,
-            time: order.order_time,
-            total: Number(order.total),
-            totalPoints: order.total_points,
-            status: order.status,
-            type: order.type,
-            items: order.items_count,
-            trackingCode: order.tracking_code,
-            vehiclePlate: order.vehicle_plate,
-            productsDetail: order.items.map((item: any) => ({
-                productId: item.product_id,
-                productName: item.product_name,
-                quantity: item.quantity,
-                unitPrice: Number(item.unit_price),
-                points: item.points
-            }))
-        }));
-    },
-
-    async updateOrderStatus(orderId: string, status: Order['status']): Promise<boolean> {
-        const { error } = await supabase
-            .from('cd_orders')
-            .update({ status, updated_at: new Date().toISOString() })
-            .eq('id', orderId);
-
-        if (error) {
-            console.error('Error updating order status:', error);
-            return false;
-        }
-        return true;
-    },
-
-    // --- Catálogo Global (Sede) ---
-    async getGlobalCatalog(): Promise<Product[]> {
-        const { data, error } = await adminSupabase
-            .from('products')
-            .select('*')
-            .or('status.eq.active,status.eq.published');
-
-        if (error) {
-            console.error('[CDS] Erro ao buscar catálogo global:', error);
-        }
-
-        // Filtra apenas produtos da RS Prólipsi da API
-        const apiProducts = (data || []).filter(p => p.seller === 'RS Prólipsi' || (p.name && p.name.toLowerCase().includes('lipsi')));
-
-        // Calcula desconto CD: Prioriza Preço Consultor (memberPrice) e aplica -15.2%
-        // Se não houver memberPrice (legado), aplica 50% e depois 15.2%
-        const applyDiscount = (price: number, memberPrice?: number) => {
-            const base = memberPrice || (price * 0.50);
-            return base * (1 - 0.152);
-        };
-
-        const mappedApi = apiProducts.map(p => {
-            const retailPrice = Number(p.price) || 0;
-            const consultantPrice = Number(p.member_price) || (retailPrice * 0.50);
-            const cdCostPrice = consultantPrice * (1 - 0.152);
-
-            return {
-                id: p.id,
-                sku: p.sku || 'N/A',
-                name: p.name,
-                category: p.category_id || p.category || 'Geral',
-                stockLevel: p.inventory || 0,
-                minStock: 0,
-                price: retailPrice,
-                memberPrice: consultantPrice,
-                costPrice: cdCostPrice,
-                points: p.points || 0,
-                status: 'OK' as const,
-                weightKg: p.weight_kg || 0.5,
-                dimensions: {
-                    widthCm: p.width_cm || 10,
-                    heightCm: p.height_cm || 10,
-                    lengthCm: p.length_cm || 10
-                }
-            };
-        });
-
-        // Retorna exclusivamente os produtos reais do Banco para garantir IDs válidos (UUID)
-        return mappedApi;
-    },
-
-    async createReplenishmentOrder(cdId: string, items: any[], totalValue: number): Promise<boolean> {
-        const payload = {
-            cd_id: cdId,
-            items_count: items.reduce((acc, i) => acc + i.quantity, 0),
-            total: totalValue,
-            total_points: 0, // CD orders usually don't generate VP for the CD itself on buying stock, depends on rules
-            status: 'PENDENTE',
-            type: 'ABASTECIMENTO',
-            order_date: new Date().toISOString().split('T')[0],
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-        };
-
-        const { data, error } = await adminSupabase.from('cd_orders').insert([payload]).select().single();
-        if (error) {
-            console.error('[CDS] Erro ao criar pedido de abastecimento:', error);
-            return false;
-        }
-
-        // MAPA FALLBACK (DE-PARA) EM CASO DE CACHE NO NAVEGADOR COM IDs FALSOS (1-7)
-        const FallbackIds: Record<string, string> = {
-            '1': 'd8da03a4-d45a-4390-8698-9a35d43647c8', // AlphaLipsi
-            '2': '850c41ec-2cde-4768-aa65-9630215ea407', // GlicoLipsi
-            '3': 'b98c42b9-52c5-478e-b172-faee36c6ba2c', // DivaLipsi
-            '4': '486f290d-500f-4c1c-8889-f8d2db87c2bc', // Inflamax
-            '5': '1c337036-bde5-4f2d-aba5-6729b911b002', // OzoniPro
-            '6': '802529e1-ead9-4eef-bf20-4ce63e25ec92', // Pro3+
-            '7': '8445623a-2642-4e04-be6d-c815b1d337f6', // SlimLipsi
-
-            // Tratativas nominais também prevenidos
-            'AlphaLipsi': 'd8da03a4-d45a-4390-8698-9a35d43647c8',
-            'GlicoLipsi': '850c41ec-2cde-4768-aa65-9630215ea407',
-            'DivaLipsi': 'b98c42b9-52c5-478e-b172-faee36c6ba2c',
-            'Inflamaxi': '486f290d-500f-4c1c-8889-f8d2db87c2bc',
-            'Ozone Pro 3+': '1c337036-bde5-4f2d-aba5-6729b911b002',
-            'Pro 3+': '802529e1-ead9-4eef-bf20-4ce63e25ec92',
-            'SlimLipsi': '8445623a-2642-4e04-be6d-c815b1d337f6',
-        };
-
-        if (data && data.id && items.length > 0) {
-            const itemsPayload = items.map(item => {
-                const originalId = String(item.product.id);
-                // Se o ID for numérico ou curto, busca o UUID real do fallback.
-                const realId = originalId.length < 10 ? (FallbackIds[originalId] || FallbackIds[item.product.name] || originalId) : originalId;
-
-                return {
-                    cd_order_id: data.id,
-                    product_id: realId,
-                    product_name: item.product.name,
-                    quantity: item.quantity,
-                    unit_price: item.product.costPrice,
-                    points: item.product.points || 0
-                };
+            const res = await fetch(`${apiBaseUrl}/v1/cds/${userId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
             });
 
-            const { error: itemsError } = await adminSupabase.from('cd_order_items').insert(itemsPayload);
-            if (itemsError) {
-                console.error('[CDS] Falha crítica ao inserir itens do pedido:', itemsError);
+            const json = await res.json();
+            if (json.success) return true;
+
+            throw new Error(json.error || 'Falha na API');
+        } catch (error) {
+            console.warn('[CDS] Erro ao atualizar perfil via API, tentando fallback direto no Supabase:', error);
+
+            // Fallback direto via Supabase Client (sujeito a RLS)
+            const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId);
+            const payload: any = { updated_at: new Date().toISOString() };
+
+            if (updates.name || updates.managerName) payload.name = updates.name || updates.managerName;
+            if (updates.managerName) payload.manager_name = updates.managerName;
+            if (updates.avatarUrl !== undefined) payload.avatar_url = updates.avatarUrl;
+
+            const addr = updates.address as any;
+            if (addr) {
+                if (addr.cep !== undefined) payload.address_zip = addr.cep;
+                if (addr.street !== undefined) payload.address_street = addr.street;
+                if (addr.number !== undefined) payload.address_number = addr.number;
+                if (addr.city !== undefined) payload.address_city = addr.city;
+                if (addr.state !== undefined) payload.address_state = addr.state;
             }
+
+            const { data: existing } = await supabase
+                .from('minisite_profiles')
+                .select('id')
+                .or(isUUID ? `id.eq.${userId},consultant_id.eq.${userId}` : `consultant_id.eq.${userId}`)
+                .maybeSingle();
+
+            if (!existing) return false;
+
+            const { error: sbError } = await supabase
+                .from('minisite_profiles')
+                .update(payload)
+                .eq('id', existing.id);
+
+            return !sbError;
         }
-        return true;
+    },
+
+    async getCDSettingsExt(cdId: string): Promise<{ bank?: any, paymentGateway?: any, shippingGateway?: any } | null> {
+        try {
+            const { data, error } = await supabase
+                .from('app_configs')
+                .select('value')
+                .eq('key', `cd_settings_${cdId}`)
+                .maybeSingle();
+
+            if (error || !data) return null;
+            return data.value;
+        } catch (error) {
+            console.error('[CDS] Erro ao buscar configurações extras do CD:', error);
+            return null;
+        }
+    },
+
+    async updateCDSettingsExt(cdId: string, settings: { bank?: any, paymentGateway?: any, shippingGateway?: any }): Promise<boolean> {
+        try {
+            const key = `cd_settings_${cdId}`;
+            const { data: existing } = await supabase
+                .from('app_configs')
+                .select('key')
+                .eq('key', key)
+                .maybeSingle();
+
+            if (existing) {
+                const { error } = await supabase
+                    .from('app_configs')
+                    .update({ value: settings, updated_at: new Date().toISOString() })
+                    .eq('key', key);
+                if (error) throw error;
+            } else {
+                const { error } = await supabase
+                    .from('app_configs')
+                    .insert({ key, value: settings, updated_at: new Date().toISOString() });
+                if (error) throw error;
+            }
+            return true;
+        } catch (error) {
+            console.error('[CDS] Erro ao atualizar configurações extras do CD:', error);
+            return false;
+        }
+    },
+
+    // --- Pedidos (Vendas do CD para Clientes) ---
+    async getOrders(cdId: string): Promise<Order[]> {
+        try {
+            const res = await fetch(`${apiBaseUrl}/v1/cds/${cdId}/sales`);
+            if (!res.ok) throw new Error('API offline');
+            const json = await res.json();
+            if (!json.success) throw new Error(json.error);
+            return json.data;
+        } catch (error) {
+            console.error('[CDS] Erro ao buscar vendas via API, ativando fallback Supabase:', error);
+            const { data, error: sbError } = await supabase
+                .from('cd_orders')
+                .select('*, items:cd_order_items(*)')
+                .eq('cd_id', cdId)
+                .neq('type', 'REPLENISHMENT')
+                .neq('type', 'ABASTECIMENTO')
+                .order('created_at', { ascending: false });
+
+            if (sbError || !data) return [];
+
+            return data.map((order: any) => ({
+                id: order.id,
+                consultantName: order.consultant_name,
+                consultantPin: order.consultant_pin,
+                total: Number(order.total),
+                status: order.status,
+                date: order.order_date,
+                items: order.items_count,
+                productsDetail: (order.items || []).map((item: any) => ({
+                    productId: item.product_id,
+                    productName: item.product_name,
+                    quantity: item.quantity,
+                    unitPrice: Number(item.unit_price)
+                }))
+            }));
+        }
+    },
+
+    async updateOrderStatus(orderId: string, status: string): Promise<boolean> {
+        try {
+            const res = await fetch(`${apiBaseUrl}/v1/cds/orders/${orderId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status })
+            });
+            const json = await res.json();
+            return json.success;
+        } catch (error) {
+            return false;
+        }
+    },
+
+    async confirmSalePayment(cdId: string, orderId: string, total: number): Promise<boolean> {
+        try {
+            // 1. Atualizar status do pedido
+            const { error: orderError } = await supabase
+                .from('cd_orders')
+                .update({ status: 'SEPARACAO', updated_at: new Date().toISOString() })
+                .eq('id', orderId);
+
+            if (orderError) throw orderError;
+
+            // 2. Registrar transação financeira (Entrada)
+            const { error: txError } = await supabase
+                .from('cd_transactions')
+                .insert({
+                    cd_id: cdId,
+                    type: 'IN',
+                    category: 'VENDA_CONSULTOR',
+                    amount: total,
+                    description: `Recebimento Pedido #${orderId.split('-')[0].toUpperCase()}`,
+                    status: 'CONCLUIDO',
+                    created_at: new Date().toISOString()
+                });
+
+            if (txError) console.warn('[CDS] Erro ao registrar transação:', txError.message);
+
+            // 3. Atualizar saldo da carteira do CD
+            const { data: profile } = await supabase
+                .from('minisite_profiles')
+                .select('id, wallet_balance')
+                .eq('id', cdId)
+                .single();
+
+            if (profile) {
+                const newBalance = Number(profile.wallet_balance || 0) + total;
+                await supabase
+                    .from('minisite_profiles')
+                    .update({ wallet_balance: newBalance })
+                    .eq('id', cdId);
+            }
+
+            // 4. Baixa de Estoque (cd_products)
+            const { data: items } = await supabase
+                .from('cd_order_items')
+                .select('product_id, quantity')
+                .eq('cd_order_id', orderId);
+
+            if (items) {
+                for (const item of items) {
+                    const { data: product } = await supabase
+                        .from('cd_products')
+                        .select('stock_level')
+                        .eq('cd_id', cdId)
+                        .eq('id', item.product_id)
+                        .maybeSingle();
+
+                    if (product) {
+                        const newStock = Math.max(0, Number(product.stock_level) - Number(item.quantity));
+                        await supabase
+                            .from('cd_products')
+                            .update({
+                                stock_level: newStock,
+                                updated_at: new Date().toISOString(),
+                                status: newStock <= 0 ? 'CRITICO' : (newStock <= 5 ? 'BAIXO' : 'OK')
+                            })
+                            .eq('cd_id', cdId)
+                            .eq('id', item.product_id);
+                    }
+                }
+            }
+
+            return true;
+        } catch (e) {
+            console.error('[CDS] Erro no confirmSalePayment:', e);
+            return false;
+        }
+    },
+
+    // --- Abastecimento (CD comprando da Sede) ---
+    async createReplenishmentOrder(cdId: string, items: any[], totalValue: number, shippingMethod: string = 'TRANSPORTADORA'): Promise<string | null> {
+        try {
+            const res = await fetch(`${apiBaseUrl}/v1/cds/orders`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    cdId,
+                    items: items.map(i => ({
+                        productId: i.product.id,
+                        productName: i.product.name,
+                        sku: i.product.sku,
+                        quantity: i.quantity,
+                        price: i.product.costPrice
+                    })),
+                    total: totalValue,
+                    shippingMethod
+                })
+            });
+            const json = await res.json();
+            return json.success ? json.data.id : null;
+        } catch (error) {
+            console.error('[CDS] Erro ao criar abastecimento:', error);
+            return null;
+        }
     },
 
     async getReplenishmentOrders(cdId: string): Promise<any[]> {
-        // Correção crítica: usar adminSupabase para não ser bloqueado por RLS (Row Level Security)
-        const { data, error } = await adminSupabase
-            .from('cd_orders')
-            .select('*, items:cd_order_items(*)')
-            .eq('cd_id', cdId)
-            .order('created_at', { ascending: false });
+        try {
+            const res = await fetch(`${apiBaseUrl}/v1/cds/orders?cdId=${cdId}`);
+            if (!res.ok) throw new Error('API offline');
+            const json = await res.json();
+            if (!json.success) throw new Error(json.error || 'Erro');
+            return json.data;
+        } catch (error) {
+            console.error('[CDS] Erro ao buscar pedidos de abastecimento via API, ativando fallback Supabase:', error);
+            const { data, error: sbError } = await supabase
+                .from('cd_orders')
+                .select('*, items:cd_order_items(*)')
+                .eq('cd_id', cdId)
+                .in('type', ['REPLENISHMENT', 'ABASTECIMENTO'])
+                .order('created_at', { ascending: false });
 
-        if (error) {
-            console.error('[CDS] Erro ao buscar histórico de abastecimento:', error);
-            return [];
+            if (sbError || !data) return [];
+
+            return data.map((order: any) => ({
+                ...order,
+                items: (order.items || []).map((i: any) => ({
+                    ...i,
+                    product_name: i.product_name || 'Produto Não Identificado',
+                    sku: i.sku || 'N/A'
+                }))
+            }));
         }
-        return data || [];
     },
 
-    async uploadPaymentProof(orderId: string, url: string, paymentMethod: string): Promise<boolean> {
-        const { error } = await adminSupabase
-            .from('cd_orders')
-            .update({
-                payment_proof_url: url,
-                payment_proof_status: 'PAGO', // Status de pagamento atualizado
-                payment_method: paymentMethod,
-                status: 'EM SEPARAÇÃO', // Move o pedido para o próximo estágio
-                updated_at: new Date().toISOString()
-            })
-            .eq('id', orderId);
+    // --- Financeiro ---
+    async getFinancialData(cdId: string): Promise<{ withdraws: any[], transactions: any[] } | null> {
+        try {
+            const res = await fetch(`${apiBaseUrl}/v1/cds/${cdId}/financial`);
+            if (!res.ok) throw new Error('API offline');
+            const json = await res.json();
+            return json.success ? json.data : null;
+        } catch (error) {
+            console.warn('[CDS] Erro ao buscar dados financeiros via API, tentando fallback Supabase:', error);
 
-        if (error) {
-            console.error('[CDS] Erro ao enviar comprovante:', error);
-            return false;
+            // Buscar Transações
+            const { data: transactions } = await supabase
+                .from('cd_transactions')
+                .select('*')
+                .eq('cd_id', cdId)
+                .order('created_at', { ascending: false })
+                .limit(50);
+
+            // Buscar Saques
+            const { data: withdraws } = await supabase
+                .from('cd_withdraw_requests')
+                .select('*')
+                .eq('cd_id', cdId)
+                .order('created_at', { ascending: false });
+
+            return {
+                withdraws: withdraws || [],
+                transactions: transactions || []
+            };
         }
-        return true;
     },
 
-    async updateOrderTracking(orderId: string, trackingCode: string): Promise<boolean> {
-        const { error } = await adminSupabase
-            .from('cd_orders')
-            .update({
-                tracking_code: trackingCode,
-                status: 'ENVIADO',
-                updated_at: new Date().toISOString()
-            })
-            .eq('id', orderId);
+    async getTransactions(cdId: string): Promise<Transaction[]> {
+        try {
+            const res = await fetch(`${apiBaseUrl}/v1/cds/${cdId}/financial`);
+            if (!res.ok) throw new Error('API offline');
+            const json = await res.json();
+            if (!json.success) throw new Error(json.error);
+            return json.data.transactions;
+        } catch (error) {
+            console.error('[CDS] Erro ao buscar transações via API, ativando fallback:', error);
+            const { data } = await supabase
+                .from('cd_transactions')
+                .select('*')
+                .eq('cd_id', cdId)
+                .order('created_at', { ascending: false })
+                .limit(50);
+            return (data as unknown as Transaction[]) || [];
+        }
+    },
 
-        if (error) {
-            console.error('[CDS] Erro ao adicionar rastreio:', error);
+    async requestWithdraw(cdId: string, payload: any): Promise<boolean> {
+        try {
+            const res = await fetch(`${apiBaseUrl}/v1/cds/${cdId}/withdraws`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const json = await res.json();
+            return json.success;
+        } catch (error) {
+            console.error('[CDS] Erro ao solicitar saque via API, tentando fallback Supabase:', error);
+            // Fallback: Inserir diretamente na tabela de solicitações
+            const { error: sbError } = await supabase
+                .from('cd_withdraw_requests')
+                .insert({
+                    cd_id: cdId,
+                    cd_name: payload.cd_name,
+                    amount: payload.amount,
+                    fee: payload.fee,
+                    net_amount: payload.net_amount,
+                    status: 'PENDENTE',
+                    scheduled_date: payload.scheduled_date,
+                    created_at: new Date().toISOString()
+                });
+
+            return !sbError;
+        }
+    },
+
+    async uploadPaymentProof(orderId: string, proofBase64: string): Promise<boolean> {
+        try {
+            const res = await fetch(`${apiBaseUrl}/v1/cds/orders/${orderId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    payment_proof_url: proofBase64,
+                    payment_proof_status: 'PAGO',
+                    status: 'EM SEPARAÇÃO'
+                })
+            });
+            const json = await res.json();
+            return json.success;
+        } catch (error) {
             return false;
         }
-        return true;
     },
 
     async completeOrder(orderId: string): Promise<boolean> {
-        const { error } = await adminSupabase
-            .from('cd_orders')
-            .update({
-                status: 'ENTREGUE',
-                updated_at: new Date().toISOString()
-            })
-            .eq('id', orderId);
+        try {
+            // A inteligência agora reside no Backend (apps/rs-api/src/routes/cds.ts)
+            // Ao marcar como ENTREGUE, a API incrementa o estoque e registra transações.
+            const res = await fetch(`${apiBaseUrl}/v1/cds/orders/${orderId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: 'ENTREGUE' })
+            });
+            const json = await res.json();
+            return json.success;
+        } catch (error) {
+            console.error('[CDS] Erro ao concluir pedido:', error);
 
-        if (error) {
-            console.error('[CDS] Erro ao confirmar recebimento:', error);
-            return false;
+            // Fallback de emergência caso a API falhe totalmente, apenas para mudar o status
+            const { error: sbError } = await supabase
+                .from('cd_orders')
+                .update({ status: 'ENTREGUE', updated_at: new Date().toISOString() })
+                .eq('id', orderId);
+
+            return !sbError;
         }
-        return true;
     },
 
-    // --- Estoque ---
+    // --- Estoque e Catálogo ---
+    async getGlobalCatalog(): Promise<Product[]> {
+        try {
+            const res = await fetch(`${apiBaseUrl}/v1/cds/catalog`);
+            if (!res.ok) throw new Error('API offline');
+            const json = await res.json();
+            if (!json.success) throw new Error(json.error);
+            return json.data;
+        } catch (error) {
+            console.error('[CDS] Erro ao buscar catálogo da Sede via API, ativando fallback Supabase:', error);
+            const { data, error: sbError } = await supabase
+                .from('products')
+                .select('*')
+                .or('is_active.eq.true,published.eq.true');
+
+            if (sbError || !data) return [];
+
+            return data.map(p => {
+                const retailPrice = Number(p.price) || 0;
+                const consultantPrice = (retailPrice * 0.50);
+                const cdCostPrice = consultantPrice * (1 - 0.152);
+
+                return {
+                    id: p.id,
+                    sku: p.sku || 'N/A',
+                    name: p.name,
+                    category: p.category || 'Geral',
+                    stockLevel: Number(p.stock_quantity) || 0,
+                    price: retailPrice,
+                    memberPrice: consultantPrice,
+                    costPrice: cdCostPrice,
+                    points: p.pv_points || 0,
+                    status: 'OK' as const,
+                    imageUrl: p.image_url || (Array.isArray(p.images) && p.images[0]) || undefined,
+                    weight: p.weight || 0.5,
+                    dimensions: {
+                        width: p.dimensions_width || 10,
+                        height: p.dimensions_height || 10,
+                        length: p.dimensions_length || 10
+                    }
+                } as any;
+            });
+        }
+    },
+
     async getProducts(cdId: string): Promise<Product[]> {
-        const { data, error } = await supabase
-            .from('cd_products')
-            .select('id, sku, name, category, stock_level, min_stock, price, cost_price, points, status')
-            .eq('cd_id', cdId)
-            .order('name', { ascending: true });
+        console.log(`[CDS] Buscando estoque para CD: ${cdId}`);
+        try {
+            const res = await fetch(`${apiBaseUrl}/v1/cds/${cdId}/inventory`);
+            if (!res.ok) throw new Error(`API offline: ${res.status}`);
+            const json = await res.json();
+            if (!json.success) throw new Error(json.error);
+            console.log(`[CDS] Estoque via API carregado: ${json.data?.length || 0} produtos`);
+            return json.data;
+        } catch (error) {
+            console.warn('[CDS] Erro ao buscar estoque via API, ativando fallback Supabase:', error);
+            const { data, error: sbError } = await supabase
+                .from('cd_products')
+                .select('*')
+                .eq('cd_id', cdId)
+                .order('name', { ascending: true });
 
-        if (error) {
-            console.error('Error fetching products:', error);
-            return [];
+            if (sbError || !data) return [];
+
+            return data.map(p => ({
+                id: p.id,
+                sku: p.sku || 'N/A',
+                name: p.name,
+                category: p.category || 'Geral',
+                stockLevel: p.stock_level || 0,
+                minStock: p.min_stock || 0,
+                price: Number(p.price) || 0,
+                costPrice: Number(p.cost_price) || 0,
+                points: Number(p.points) || 0,
+                imageUrl: p.image_url || undefined,
+                status: (p.status || 'OK') as 'OK' | 'BAIXO' | 'CRITICO'
+            })) as Product[];
         }
-
-        return (data || []).map(p => ({
-            id: p.id,
-            sku: p.sku,
-            name: p.name,
-            category: p.category,
-            stockLevel: p.stock_level,
-            minStock: p.min_stock,
-            price: Number(p.price),
-            costPrice: Number(p.cost_price),
-            points: p.points,
-            status: p.status
-        }));
     },
 
-    async updateStock(productId: string, newLevel: number): Promise<boolean> {
+    async updateStock(productId: string, newLevel: number, minStock: number = 5): Promise<boolean> {
+        // [RS-CDS] Mantém via RLS se o usuário estiver autenticado, ou migrar se necessário
         const { error } = await supabase
             .from('cd_products')
             .update({
                 stock_level: newLevel,
-                updated_at: new Date().toISOString(),
-                status: newLevel <= 0 ? 'CRITICO' : (newLevel <= 5 ? 'BAIXO' : 'OK') // Example logic
-            })
-            .eq('id', productId);
-
-        if (error) {
-            console.error('Error updating stock:', error);
-            return false;
-        }
-        return true;
-    },
-
-    async updateProductAlert(productId: string, minStock: number): Promise<boolean> {
-        const { error } = await supabase
-            .from('cd_products')
-            .update({
                 min_stock: minStock,
-                updated_at: new Date().toISOString()
+                updated_at: new Date().toISOString(),
+                status: newLevel <= 0 ? 'CRITICO' : (newLevel <= minStock ? 'BAIXO' : 'OK')
             })
             .eq('id', productId);
 
-        if (error) {
-            console.error('Error updating product alert:', error);
-            return false;
-        }
-        return true;
+        return !error;
     },
 
-    // --- Financeiro ---
-    async getTransactions(cdId: string): Promise<Transaction[]> {
-        const { data, error } = await supabase
-            .from('cd_transactions')
-            .select('id, created_at, description, type, category, amount, status')
-            .eq('cd_id', cdId)
-            .order('created_at', { ascending: false });
+    /**
+     * Função para corrigir inconsistências de estoque.
+     * Utiliza o backend para processar pedidos e reconstruir o estoque com privilégios admin.
+     */
+    async fixStockInconsistency(cdId: string): Promise<{ success: boolean, fixedCount: number }> {
+        console.log(`[CDS] Iniciando reparo de estoque via API para CD: ${cdId}`);
+        try {
+            const res = await fetch(`${apiBaseUrl}/v1/cds/${cdId}/repair-stock`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const json = await res.json();
 
-        if (error) {
-            console.error('Error fetching transactions:', error);
-            return [];
+            if (json.success) {
+                console.log(`[CDS] Reparo concluído: ${json.fixedCount} itens restaurados.`);
+                return { success: true, fixedCount: json.fixedCount };
+            } else {
+                throw new Error(json.error || 'Erro desconhecido na API');
+            }
+        } catch (err: any) {
+            console.error('[CDS] Falha no reparo de estoque:', err.message || err);
+            return { success: false, fixedCount: 0 };
         }
-
-        return (data || []).map(t => ({
-            id: t.id,
-            date: t.created_at,
-            description: t.description,
-            type: t.type,
-            category: t.category,
-            amount: Number(t.amount),
-            status: t.status
-        }));
     },
 
-    // --- Clientes ---
-    async getCustomers(cdId: string): Promise<Customer[]> {
-        const { data, error } = await supabase
-            .from('cd_customers')
-            .select('id, name, phone, email, last_purchase_date, total_spent, orders_count, status')
-            .eq('cd_id', cdId)
-            .order('name', { ascending: true });
-
-        if (error) {
-            console.error('Error fetching customers:', error);
-            return [];
+    async generatePix(amount: number, description: string, payer: any): Promise<any> {
+        try {
+            const res = await fetch(`${apiBaseUrl}/v1/marketplace/pix`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ amount, description, payer })
+            });
+            const json = await res.json();
+            return json.success ? json : null;
+        } catch (error) {
+            console.error('[CDS] Erro ao gerar Pix:', error);
+            return null;
         }
+    },
 
-        return (data || []).map(c => ({
-            id: c.id,
-            name: c.name,
-            phone: c.phone,
-            email: c.email,
-            lastPurchaseDate: c.last_purchase_date,
-            totalSpent: Number(c.total_spent),
-            ordersCount: c.orders_count,
-            status: c.status
-        }));
+    async checkPixStatus(paymentId: string): Promise<any> {
+        try {
+            const res = await fetch(`${apiBaseUrl}/v1/marketplace/pix/${paymentId}`);
+            const json = await res.json();
+            return json;
+        } catch (error) {
+            console.error('[CDS] Erro ao verificar status do Pix:', error);
+            return { success: false, error: 'Erro de conexão' };
+        }
     }
 };

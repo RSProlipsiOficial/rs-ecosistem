@@ -1,4 +1,5 @@
-export { supabase } from '../lib/supabaseClient';
+import { supabase } from '../lib/supabaseClient';
+export { supabase };
 
 // ============================================
 // 📤 UPLOAD DE ARQUIVOS NO SUPABASE

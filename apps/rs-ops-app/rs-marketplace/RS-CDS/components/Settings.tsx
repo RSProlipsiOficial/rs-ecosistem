@@ -3,11 +3,11 @@ import React, { useState, useRef, useEffect } from 'react';
 import { SettingsData } from '../types';
 import { Save, User, Building, CreditCard, Truck, MapPin, Search, AlertCircle, CheckCircle, Smartphone, Mail, Lock, Eye, EyeOff, Camera, Upload, RefreshCw } from 'lucide-react';
 import { syncService } from '../services/syncService';
-import { adminSupabase } from '../services/supabaseClient';
+import { dataService } from '../services/dataService';
 
 // Default empty settings when no data is provided
 const defaultSettings: SettingsData = {
-  profile: { fantasyName: '', companyName: '', document: '', email: '', phone: '', avatarUrl: '', address: { cep: '', street: '', number: '', complement: '', neighborhood: '', city: '', state: '' } },
+  profile: { fantasyName: '', companyName: '', document: '', email: '', phone: '', avatarUrl: '', faviconUrl: '', logoUrl: '', address: { cep: '', street: '', number: '', complement: '', neighborhood: '', city: '', state: '' } },
   bank: { bankName: '', accountType: 'CORRENTE', agency: '', accountNumber: '', pixKey: '', pixKeyType: 'CPF' },
   paymentGateway: { provider: 'MERCADO_PAGO', enabled: false, apiKey: '', apiToken: '', environment: 'SANDBOX' },
   shippingGateway: { provider: 'MELHOR_ENVIO', enabled: false, apiToken: '', environment: 'SANDBOX' }
@@ -114,20 +114,35 @@ const Settings: React.FC<SettingsProps> = ({ initialData, onSaveProfile, cdId })
     }));
   };
 
-  // --- AVATAR UPLOAD HANDLER ---
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // --- AVATAR UPLOAD HANDLER (com auto-save) ---
+  const [avatarSaving, setAvatarSaving] = useState(false);
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'avatarUrl' | 'faviconUrl' | 'logoUrl' = 'avatarUrl') => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        // Update local state with base64 string
-        setSettings(prev => ({
-          ...prev,
-          profile: { ...prev.profile, avatarUrl: reader.result as string }
-        }));
-      };
-      reader.readAsDataURL(file);
-    }
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      const base64 = reader.result as string;
+      // 1. Atualiza preview local imediatamente
+      setSettings(prev => ({ ...prev, profile: { ...prev.profile, [type]: base64 } }));
+
+      // 2. Se for avatar, persiste no banco agora (sem precisar clicar em Salvar)
+      if (type === 'avatarUrl' && cdId) {
+        setAvatarSaving(true);
+        try {
+          await dataService.updateCDProfile(cdId, { avatarUrl: base64 } as any);
+          // Notifica o pai para atualizar o header/sidebar
+          if (onSaveProfile) {
+            onSaveProfile({ ...settings.profile, avatarUrl: base64 });
+          }
+        } catch (err) {
+          console.error('[Settings] Erro ao salvar avatar automaticamente:', err);
+        } finally {
+          setAvatarSaving(false);
+        }
+      }
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleAddressChange = (field: string, value: string) => {
@@ -158,11 +173,40 @@ const Settings: React.FC<SettingsProps> = ({ initialData, onSaveProfile, cdId })
     }));
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (onSaveProfile) {
       onSaveProfile(settings.profile);
     }
-    alert("Configurações e Perfil salvos com sucesso!");
+    // Persist avatar and profile data to Supabase if cdId is available
+    if (cdId) {
+      try {
+        await dataService.updateCDProfile(cdId, {
+          name: settings.profile.fantasyName,
+          managerName: settings.profile.companyName,
+          avatarUrl: settings.profile.avatarUrl,
+          address: {
+            cep: settings.profile.address.cep,
+            street: settings.profile.address.street,
+            number: settings.profile.address.number,
+            city: settings.profile.address.city,
+            state: settings.profile.address.state,
+          } as any,
+        } as any);
+
+        // Salvar configurações extra (banco e gateways) via app_configs JSON
+        await dataService.updateCDSettingsExt(cdId, {
+          bank: settings.bank,
+          paymentGateway: settings.paymentGateway,
+          shippingGateway: settings.shippingGateway
+        });
+
+        alert("Configurações e Perfil salvos com sucesso!");
+      } catch (err) {
+        alert("Erro ao salvar perfil. Tente novamente.");
+      }
+    } else {
+      alert("Configurações e Perfil salvos com sucesso!");
+    }
   };
 
   return (
@@ -216,27 +260,34 @@ const Settings: React.FC<SettingsProps> = ({ initialData, onSaveProfile, cdId })
             </h3>
 
             {/* FOTO DE PERFIL / AVATAR UPLOAD */}
-            <div className="flex flex-col items-center mb-6 p-4 border border-dark-800 rounded-xl bg-dark-950/50">
-              <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-                <div className="w-24 h-24 rounded-full border-2 border-gold-500 overflow-hidden flex items-center justify-center bg-dark-800">
-                  {settings.profile.avatarUrl ? (
-                    <img src={settings.profile.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+            <div className="flex flex-col items-center mb-6 p-6 border border-dark-800 rounded-xl bg-dark-950/50">
+              <div className="flex flex-col items-center gap-4">
+                <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+                  <div className="w-24 h-24 rounded-full border-2 border-gold-500 overflow-hidden flex items-center justify-center bg-dark-800 shadow-xl shadow-gold-500/10">
+                    {settings.profile.avatarUrl ? (
+                      <img src={settings.profile.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                    ) : (
+                      <User size={40} className="text-gray-500" />
+                    )}
+                  </div>
+                  {avatarSaving ? (
+                    <div className="absolute inset-0 bg-black/70 rounded-full flex items-center justify-center">
+                      <div className="w-5 h-5 border-2 border-gold-400 border-t-transparent rounded-full animate-spin" />
+                    </div>
                   ) : (
-                    <User size={40} className="text-gray-500" />
+                    <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Camera className="text-white" size={24} />
+                    </div>
                   )}
+                  <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={(e) => handleFileChange(e, 'avatarUrl')} />
                 </div>
-                <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Camera className="text-white" size={24} />
+                <div className="text-center">
+                  <p className="text-sm font-bold text-white">Foto de Perfil do CD</p>
+                  <p className="text-[10px] text-gray-500 uppercase tracking-wider mt-1">
+                    {avatarSaving ? '⏳ Salvando...' : 'Clique para alterar'}
+                  </p>
                 </div>
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  className="hidden"
-                  accept="image/*"
-                  onChange={handleFileChange}
-                />
               </div>
-              <p className="text-xs text-gray-500 mt-2">Clique para alterar foto</p>
             </div>
 
             <div>
@@ -392,357 +443,362 @@ const Settings: React.FC<SettingsProps> = ({ initialData, onSaveProfile, cdId })
             </div>
           </div>
         </div>
-      )}
+      )
+      }
 
       {/* --- TAB: BANK --- */}
-      {activeTab === 'BANK' && (
-        <div className="bg-dark-900 p-8 rounded-xl border border-dark-800 animate-fade-in max-w-3xl mx-auto">
-          <h3 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
-            <Building className="text-gold-400" size={24} /> Dados para Recebimento (Saque)
-          </h3>
-          <p className="text-sm text-gray-500 mb-8">Conta bancária onde serão depositados os valores de vendas e comissões.</p>
+      {
+        activeTab === 'BANK' && (
+          <div className="bg-dark-900 p-8 rounded-xl border border-dark-800 animate-fade-in max-w-3xl mx-auto">
+            <h3 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
+              <Building className="text-gold-400" size={24} /> Dados para Recebimento (Saque)
+            </h3>
+            <p className="text-sm text-gray-500 mb-8">Conta bancária onde serão depositados os valores de vendas e comissões.</p>
 
-          <div className="space-y-6">
-            <div className="grid grid-cols-2 gap-6">
-              <div>
-                <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Banco</label>
-                <select
-                  className="w-full bg-dark-950 border border-dark-700 rounded-lg px-4 py-3 text-white focus:border-gold-400 outline-none"
-                  value={settings.bank.bankName}
-                  onChange={(e) => handleBankChange('bankName', e.target.value)}
-                >
-                  <option value="">Selecione...</option>
-                  <option>Banco Itaú</option>
-                  <option>Banco Bradesco</option>
-                  <option>Banco do Brasil</option>
-                  <option>Santander</option>
-                  <option>Nubank</option>
-                  <option>Inter</option>
-                </select>
-              </div>
-              <div>
-                <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Tipo de Conta</label>
-                <select
-                  className="w-full bg-dark-950 border border-dark-700 rounded-lg px-4 py-3 text-white focus:border-gold-400 outline-none"
-                  value={settings.bank.accountType}
-                  onChange={(e) => handleBankChange('accountType', e.target.value)}
-                >
-                  <option value="CORRENTE">Conta Corrente</option>
-                  <option value="POUPANCA">Conta Poupança</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-6">
-              <div>
-                <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Agência</label>
-                <input
-                  type="text"
-                  className="w-full bg-dark-950 border border-dark-700 rounded-lg px-4 py-3 text-white focus:border-gold-400 outline-none"
-                  value={settings.bank.agency}
-                  onChange={(e) => handleBankChange('agency', e.target.value)}
-                  placeholder="0000"
-                />
-              </div>
-              <div>
-                <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Conta</label>
-                <input
-                  type="text"
-                  className="w-full bg-dark-950 border border-dark-700 rounded-lg px-4 py-3 text-white focus:border-gold-400 outline-none"
-                  value={settings.bank.accountNumber}
-                  onChange={(e) => handleBankChange('accountNumber', e.target.value)}
-                  placeholder="00000-0"
-                />
-              </div>
-            </div>
-
-            <div className="bg-dark-950 p-6 rounded-lg border border-dark-700/50">
-              <h4 className="text-white font-bold mb-4 flex items-center gap-2 text-sm uppercase">
-                <Smartphone size={16} className="text-gold-400" /> Chave Pix Principal
-              </h4>
-              <div className="grid grid-cols-3 gap-4">
-                <div className="col-span-1">
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-6">
+                <div>
+                  <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Banco</label>
                   <select
-                    className="w-full bg-dark-900 border border-dark-700 rounded-lg px-3 py-3 text-white focus:border-gold-400 outline-none text-sm"
-                    value={settings.bank.pixKeyType}
-                    onChange={(e) => handleBankChange('pixKeyType', e.target.value)}
+                    className="w-full bg-dark-950 border border-dark-700 rounded-lg px-4 py-3 text-white focus:border-gold-400 outline-none"
+                    value={settings.bank.bankName}
+                    onChange={(e) => handleBankChange('bankName', e.target.value)}
                   >
-                    <option value="CPF">CPF</option>
-                    <option value="CNPJ">CNPJ</option>
-                    <option value="EMAIL">E-mail</option>
-                    <option value="PHONE">Celular</option>
-                    <option value="RANDOM">Chave Aleatória</option>
+                    <option value="">Selecione...</option>
+                    <option>Banco Itaú</option>
+                    <option>Banco Bradesco</option>
+                    <option>Banco do Brasil</option>
+                    <option>Santander</option>
+                    <option>Nubank</option>
+                    <option>Inter</option>
                   </select>
                 </div>
-                <div className="col-span-2">
+                <div>
+                  <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Tipo de Conta</label>
+                  <select
+                    className="w-full bg-dark-950 border border-dark-700 rounded-lg px-4 py-3 text-white focus:border-gold-400 outline-none"
+                    value={settings.bank.accountType}
+                    onChange={(e) => handleBankChange('accountType', e.target.value)}
+                  >
+                    <option value="CORRENTE">Conta Corrente</option>
+                    <option value="POUPANCA">Conta Poupança</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-6">
+                <div>
+                  <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Agência</label>
                   <input
                     type="text"
-                    className="w-full bg-dark-900 border border-dark-700 rounded-lg px-4 py-3 text-white focus:border-gold-400 outline-none"
-                    placeholder="Informe sua chave Pix"
-                    value={settings.bank.pixKey}
-                    onChange={(e) => handleBankChange('pixKey', e.target.value)}
+                    className="w-full bg-dark-950 border border-dark-700 rounded-lg px-4 py-3 text-white focus:border-gold-400 outline-none"
+                    value={settings.bank.agency}
+                    onChange={(e) => handleBankChange('agency', e.target.value)}
+                    placeholder="0000"
                   />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Conta</label>
+                  <input
+                    type="text"
+                    className="w-full bg-dark-950 border border-dark-700 rounded-lg px-4 py-3 text-white focus:border-gold-400 outline-none"
+                    value={settings.bank.accountNumber}
+                    onChange={(e) => handleBankChange('accountNumber', e.target.value)}
+                    placeholder="00000-0"
+                  />
+                </div>
+              </div>
+
+              <div className="bg-dark-950 p-6 rounded-lg border border-dark-700/50">
+                <h4 className="text-white font-bold mb-4 flex items-center gap-2 text-sm uppercase">
+                  <Smartphone size={16} className="text-gold-400" /> Chave Pix Principal
+                </h4>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="col-span-1">
+                    <select
+                      className="w-full bg-dark-900 border border-dark-700 rounded-lg px-3 py-3 text-white focus:border-gold-400 outline-none text-sm"
+                      value={settings.bank.pixKeyType}
+                      onChange={(e) => handleBankChange('pixKeyType', e.target.value)}
+                    >
+                      <option value="CPF">CPF</option>
+                      <option value="CNPJ">CNPJ</option>
+                      <option value="EMAIL">E-mail</option>
+                      <option value="PHONE">Celular</option>
+                      <option value="RANDOM">Chave Aleatória</option>
+                    </select>
+                  </div>
+                  <div className="col-span-2">
+                    <input
+                      type="text"
+                      className="w-full bg-dark-900 border border-dark-700 rounded-lg px-4 py-3 text-white focus:border-gold-400 outline-none"
+                      placeholder="Informe sua chave Pix"
+                      value={settings.bank.pixKey}
+                      onChange={(e) => handleBankChange('pixKey', e.target.value)}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* --- TAB: PAYMENT INTEGRATION --- */}
-      {activeTab === 'PAYMENT' && (
-        <div className="bg-dark-900 p-8 rounded-xl border border-dark-800 animate-fade-in max-w-3xl mx-auto">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h3 className="text-xl font-bold text-white mb-1 flex items-center gap-2">
-                <CreditCard className="text-gold-400" size={24} /> Gateway de Pagamento
-              </h3>
-              <p className="text-sm text-gray-500">Configure suas credenciais de API para receber pagamentos online.</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className={`text-sm font-bold ${settings.paymentGateway.enabled ? 'text-green-500' : 'text-gray-500'}`}>
-                {settings.paymentGateway.enabled ? 'ATIVADO' : 'DESATIVADO'}
-              </span>
-              <button
-                onClick={() => handleIntegrationChange('paymentGateway', 'enabled', !settings.paymentGateway.enabled)}
-                className={`w-12 h-6 rounded-full p-1 transition-colors ${settings.paymentGateway.enabled ? 'bg-green-500/20 border border-green-500' : 'bg-dark-800 border border-dark-600'}`}
-              >
-                <div className={`w-4 h-4 rounded-full bg-current transform transition-transform ${settings.paymentGateway.enabled ? 'translate-x-6 text-green-500' : 'text-gray-500'}`} />
-              </button>
-            </div>
-          </div>
-
-          <div className={`space-y-6 ${!settings.paymentGateway.enabled && 'opacity-50 pointer-events-none'}`}>
-            <div>
-              <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Provedor</label>
-              <select
-                className="w-full bg-dark-950 border border-dark-700 rounded-lg px-4 py-3 text-white focus:border-gold-400 outline-none"
-                value={settings.paymentGateway.provider}
-                onChange={(e) => handleIntegrationChange('paymentGateway', 'provider', e.target.value)}
-              >
-                <option value="MERCADO_PAGO">Mercado Pago</option>
-                <option value="STONE">Stone / Pagar.me</option>
-                <option value="ASAAS">Asaas</option>
-                <option value="VODAFONE">Vodafone / Vindi</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Public Key (Chave Pública)</label>
-              <div className="relative">
-                <input
-                  type="text"
-                  className="w-full bg-dark-950 border border-dark-700 rounded-lg pl-10 pr-3 py-3 text-white focus:border-gold-400 outline-none font-mono text-sm"
-                  value={settings.paymentGateway.apiKey}
-                  onChange={(e) => handleIntegrationChange('paymentGateway', 'apiKey', e.target.value)}
-                  placeholder="Ex: APP_USR-..."
-                />
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600" size={16} />
+      {
+        activeTab === 'PAYMENT' && (
+          <div className="bg-dark-900 p-8 rounded-xl border border-dark-800 animate-fade-in max-w-3xl mx-auto">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3 className="text-xl font-bold text-white mb-1 flex items-center gap-2">
+                  <CreditCard className="text-gold-400" size={24} /> Gateway de Pagamento
+                </h3>
+                <p className="text-sm text-gray-500">Configure suas credenciais de API para receber pagamentos online.</p>
               </div>
-            </div>
-
-            <div>
-              <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Access Token / Secret Key</label>
-              <div className="relative">
-                <input
-                  type={showSecret ? "text" : "password"}
-                  className="w-full bg-dark-950 border border-dark-700 rounded-lg pl-10 pr-10 py-3 text-white focus:border-gold-400 outline-none font-mono text-sm"
-                  value={settings.paymentGateway.apiToken || ''}
-                  onChange={(e) => handleIntegrationChange('paymentGateway', 'apiToken', e.target.value)}
-                  placeholder="Insira o token secreto de produção"
-                />
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600" size={16} />
+              <div className="flex items-center gap-2">
+                <span className={`text-sm font-bold ${settings.paymentGateway.enabled ? 'text-green-500' : 'text-gray-500'}`}>
+                  {settings.paymentGateway.enabled ? 'ATIVADO' : 'DESATIVADO'}
+                </span>
                 <button
-                  type="button"
-                  onClick={() => setShowSecret(!showSecret)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white"
+                  onClick={() => handleIntegrationChange('paymentGateway', 'enabled', !settings.paymentGateway.enabled)}
+                  className={`w-12 h-6 rounded-full p-1 transition-colors ${settings.paymentGateway.enabled ? 'bg-green-500/20 border border-green-500' : 'bg-dark-800 border border-dark-600'}`}
                 >
-                  {showSecret ? <EyeOff size={16} /> : <Eye size={16} />}
+                  <div className={`w-4 h-4 rounded-full bg-current transform transition-transform ${settings.paymentGateway.enabled ? 'translate-x-6 text-green-500' : 'text-gray-500'}`} />
                 </button>
               </div>
-              <p className="text-xs text-gray-500 mt-1">Este token é usado para processar transações. Mantenha em segurança.</p>
             </div>
 
-            <div>
-              <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Ambiente</label>
-              <div className="flex gap-4">
-                <label className="flex items-center gap-2 cursor-pointer">
+            <div className={`space-y-6 ${!settings.paymentGateway.enabled && 'opacity-50 pointer-events-none'}`}>
+              <div>
+                <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Provedor</label>
+                <select
+                  className="w-full bg-dark-950 border border-dark-700 rounded-lg px-4 py-3 text-white focus:border-gold-400 outline-none"
+                  value={settings.paymentGateway.provider}
+                  onChange={(e) => handleIntegrationChange('paymentGateway', 'provider', e.target.value)}
+                >
+                  <option value="MERCADO_PAGO">Mercado Pago</option>
+                  <option value="STONE">Stone / Pagar.me</option>
+                  <option value="ASAAS">Asaas</option>
+                  <option value="VODAFONE">Vodafone / Vindi</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Public Key (Chave Pública)</label>
+                <div className="relative">
                   <input
-                    type="radio"
-                    name="env_pay"
-                    checked={settings.paymentGateway.environment === 'SANDBOX'}
-                    onChange={() => handleIntegrationChange('paymentGateway', 'environment', 'SANDBOX')}
+                    type="text"
+                    className="w-full bg-dark-950 border border-dark-700 rounded-lg pl-10 pr-3 py-3 text-white focus:border-gold-400 outline-none font-mono text-sm"
+                    value={settings.paymentGateway.apiKey}
+                    onChange={(e) => handleIntegrationChange('paymentGateway', 'apiKey', e.target.value)}
+                    placeholder="Ex: APP_USR-..."
                   />
-                  <span className="text-gray-300">Sandbox (Teste)</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600" size={16} />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Access Token / Secret Key</label>
+                <div className="relative">
                   <input
-                    type="radio"
-                    name="env_pay"
-                    checked={settings.paymentGateway.environment === 'PRODUCTION'}
-                    onChange={() => handleIntegrationChange('paymentGateway', 'environment', 'PRODUCTION')}
+                    type={showSecret ? "text" : "password"}
+                    className="w-full bg-dark-950 border border-dark-700 rounded-lg pl-10 pr-10 py-3 text-white focus:border-gold-400 outline-none font-mono text-sm"
+                    value={settings.paymentGateway.apiToken || ''}
+                    onChange={(e) => handleIntegrationChange('paymentGateway', 'apiToken', e.target.value)}
+                    placeholder="Insira o token secreto de produção"
                   />
-                  <span className="text-gold-400 font-bold">Produção</span>
-                </label>
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600" size={16} />
+                  <button
+                    type="button"
+                    onClick={() => setShowSecret(!showSecret)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white"
+                  >
+                    {showSecret ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">Este token é usado para processar transações. Mantenha em segurança.</p>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Ambiente</label>
+                <div className="flex gap-4">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="env_pay"
+                      checked={settings.paymentGateway.environment === 'SANDBOX'}
+                      onChange={() => handleIntegrationChange('paymentGateway', 'environment', 'SANDBOX')}
+                    />
+                    <span className="text-gray-300">Sandbox (Teste)</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="env_pay"
+                      checked={settings.paymentGateway.environment === 'PRODUCTION'}
+                      onChange={() => handleIntegrationChange('paymentGateway', 'environment', 'PRODUCTION')}
+                    />
+                    <span className="text-gold-400 font-bold">Produção</span>
+                  </label>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* --- TAB: SHIPPING INTEGRATION --- */}
-      {activeTab === 'SHIPPING' && (
-        <div className="bg-dark-900 p-8 rounded-xl border border-dark-800 animate-fade-in max-w-3xl mx-auto">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h3 className="text-xl font-bold text-white mb-1 flex items-center gap-2">
-                <Truck className="text-gold-400" size={24} /> Integração de Frete
-              </h3>
-              <p className="text-sm text-gray-500">Configure a API para cálculo de frete e geração de etiquetas.</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className={`text-sm font-bold ${settings.shippingGateway.enabled ? 'text-green-500' : 'text-gray-500'}`}>
-                {settings.shippingGateway.enabled ? 'ATIVADO' : 'DESATIVADO'}
-              </span>
-              <button
-                onClick={() => handleIntegrationChange('shippingGateway', 'enabled', !settings.shippingGateway.enabled)}
-                className={`w-12 h-6 rounded-full p-1 transition-colors ${settings.shippingGateway.enabled ? 'bg-green-500/20 border border-green-500' : 'bg-dark-800 border border-dark-600'}`}
-              >
-                <div className={`w-4 h-4 rounded-full bg-current transform transition-transform ${settings.shippingGateway.enabled ? 'translate-x-6 text-green-500' : 'text-gray-500'}`} />
-              </button>
-            </div>
-          </div>
-
-          <div className={`space-y-6 ${!settings.shippingGateway.enabled && 'opacity-50 pointer-events-none'}`}>
-            <div>
-              <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Plataforma</label>
-              <select
-                className="w-full bg-dark-950 border border-dark-700 rounded-lg px-4 py-3 text-white focus:border-gold-400 outline-none"
-                value={settings.shippingGateway.provider}
-                onChange={(e) => handleIntegrationChange('shippingGateway', 'provider', e.target.value)}
-              >
-                <option value="MELHOR_ENVIO">Melhor Envio</option>
-                <option value="KANGU">Kangu (7th Net)</option>
-                <option value="CORREIOS">Correios WebService</option>
-                <option value="JADLOG">Jadlog</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">API Token</label>
-              <div className="relative">
-                <input
-                  type={showSecret ? "text" : "password"}
-                  className="w-full bg-dark-950 border border-dark-700 rounded-lg pl-10 pr-10 py-3 text-white focus:border-gold-400 outline-none font-mono text-sm"
-                  value={settings.shippingGateway.apiToken}
-                  onChange={(e) => handleIntegrationChange('shippingGateway', 'apiToken', e.target.value)}
-                  placeholder="Cole o token de produção aqui"
-                />
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600" size={16} />
+      {
+        activeTab === 'SHIPPING' && (
+          <div className="bg-dark-900 p-8 rounded-xl border border-dark-800 animate-fade-in max-w-3xl mx-auto">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3 className="text-xl font-bold text-white mb-1 flex items-center gap-2">
+                  <Truck className="text-gold-400" size={24} /> Integração de Frete
+                </h3>
+                <p className="text-sm text-gray-500">Configure a API para cálculo de frete e geração de etiquetas.</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className={`text-sm font-bold ${settings.shippingGateway.enabled ? 'text-green-500' : 'text-gray-500'}`}>
+                  {settings.shippingGateway.enabled ? 'ATIVADO' : 'DESATIVADO'}
+                </span>
                 <button
-                  type="button"
-                  onClick={() => setShowSecret(!showSecret)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white"
+                  onClick={() => handleIntegrationChange('shippingGateway', 'enabled', !settings.shippingGateway.enabled)}
+                  className={`w-12 h-6 rounded-full p-1 transition-colors ${settings.shippingGateway.enabled ? 'bg-green-500/20 border border-green-500' : 'bg-dark-800 border border-dark-600'}`}
                 >
-                  {showSecret ? <EyeOff size={16} /> : <Eye size={16} />}
+                  <div className={`w-4 h-4 rounded-full bg-current transform transition-transform ${settings.shippingGateway.enabled ? 'translate-x-6 text-green-500' : 'text-gray-500'}`} />
                 </button>
               </div>
             </div>
 
-            <div className="p-4 bg-dark-950 rounded-lg border border-dark-800 flex items-start gap-3">
-              <AlertCircle className="text-gold-400 shrink-0 mt-0.5" size={18} />
+            <div className={`space-y-6 ${!settings.shippingGateway.enabled && 'opacity-50 pointer-events-none'}`}>
               <div>
-                <p className="text-sm text-gray-300 font-bold mb-1">Configuração de Remetente</p>
-                <p className="text-xs text-gray-500">
-                  As etiquetas serão geradas utilizando os dados de endereço preenchidos na aba
-                  <button onClick={() => setActiveTab('PROFILE')} className="text-gold-400 underline ml-1">Perfil</button>.
-                </p>
+                <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Plataforma</label>
+                <select
+                  className="w-full bg-dark-950 border border-dark-700 rounded-lg px-4 py-3 text-white focus:border-gold-400 outline-none"
+                  value={settings.shippingGateway.provider}
+                  onChange={(e) => handleIntegrationChange('shippingGateway', 'provider', e.target.value)}
+                >
+                  <option value="MELHOR_ENVIO">Melhor Envio</option>
+                  <option value="KANGU">Kangu (7th Net)</option>
+                  <option value="CORREIOS">Correios WebService</option>
+                  <option value="JADLOG">Jadlog</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">API Token</label>
+                <div className="relative">
+                  <input
+                    type={showSecret ? "text" : "password"}
+                    className="w-full bg-dark-950 border border-dark-700 rounded-lg pl-10 pr-10 py-3 text-white focus:border-gold-400 outline-none font-mono text-sm"
+                    value={settings.shippingGateway.apiToken}
+                    onChange={(e) => handleIntegrationChange('shippingGateway', 'apiToken', e.target.value)}
+                    placeholder="Cole o token de produção aqui"
+                  />
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600" size={16} />
+                  <button
+                    type="button"
+                    onClick={() => setShowSecret(!showSecret)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white"
+                  >
+                    {showSecret ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="p-4 bg-dark-950 rounded-lg border border-dark-800 flex items-start gap-3">
+                <AlertCircle className="text-gold-400 shrink-0 mt-0.5" size={18} />
+                <div>
+                  <p className="text-sm text-gray-300 font-bold mb-1">Configuração de Remetente</p>
+                  <p className="text-xs text-gray-500">
+                    As etiquetas serão geradas utilizando os dados de endereço preenchidos na aba
+                    <button onClick={() => setActiveTab('PROFILE')} className="text-gold-400 underline ml-1">Perfil</button>.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* --- TAB: SYNC --- */}
-      {activeTab === 'SYNC' && (
-        <div className="bg-dark-900 p-8 rounded-xl border border-dark-800 animate-fade-in max-w-3xl mx-auto">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="p-3 bg-gold-500/10 rounded-lg">
-              <RefreshCw className="text-gold-400" size={24} />
-            </div>
-            <div>
-              <h3 className="text-xl font-bold text-white">Sincronização com Plataforma</h3>
-              <p className="text-sm text-gray-500">Sincronize seus dados com o Admin central RS Prólipsi.</p>
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <div className="p-4 bg-dark-950 rounded-lg border border-dark-800">
-              <p className="text-sm text-gray-300 mb-2"><strong className="text-white">O que é sincronizado:</strong></p>
-              <ul className="text-xs text-gray-400 space-y-1 list-disc list-inside">
-                <li>Nome, avatar e dados cadastrais</li>
-                <li>Endereço e informações de contato</li>
-                <li>Dados do consultor vinculado (Central / Rota / Drop)</li>
-              </ul>
-            </div>
-
-            {syncResult && (
-              <div className={`p-4 rounded-lg border flex items-center gap-3 ${syncResult.success ? 'bg-green-900/20 border-green-800 text-green-400' : 'bg-red-900/20 border-red-800 text-red-400'}`}>
-                {syncResult.success ? <CheckCircle size={20} /> : <AlertCircle size={20} />}
-                <span className="text-sm">{syncResult.message}</span>
+      {
+        activeTab === 'SYNC' && (
+          <div className="bg-dark-900 p-8 rounded-xl border border-dark-800 animate-fade-in max-w-3xl mx-auto">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-3 bg-gold-500/10 rounded-lg">
+                <RefreshCw className="text-gold-400" size={24} />
               </div>
-            )}
+              <div>
+                <h3 className="text-xl font-bold text-white">Sincronização com Plataforma</h3>
+                <p className="text-sm text-gray-500">Sincronize seus dados com o Admin central RS Prólipsi.</p>
+              </div>
+            </div>
 
-            <button
-              onClick={async () => {
-                setSyncLoading(true);
-                setSyncResult(null);
-                try {
-                  if (!cdId) {
-                    setSyncResult({ success: false, message: 'Nenhum CD vinculado. Cadastre o CD no Admin primeiro.' });
-                    return;
+            <div className="space-y-4">
+              <div className="p-4 bg-dark-950 rounded-lg border border-dark-800">
+                <p className="text-sm text-gray-300 mb-2"><strong className="text-white">O que é sincronizado:</strong></p>
+                <ul className="text-xs text-gray-400 space-y-1 list-disc list-inside">
+                  <li>Nome, avatar e dados cadastrais</li>
+                  <li>Endereço e informações de contato</li>
+                  <li>Dados do consultor vinculado (Central / Rota / Drop)</li>
+                </ul>
+              </div>
+
+              {syncResult && (
+                <div className={`p-4 rounded-lg border flex items-center gap-3 ${syncResult.success ? 'bg-green-900/20 border-green-800 text-green-400' : 'bg-red-900/20 border-red-800 text-red-400'}`}>
+                  {syncResult.success ? <CheckCircle size={20} /> : <AlertCircle size={20} />}
+                  <span className="text-sm">{syncResult.message}</span>
+                </div>
+              )}
+
+              <button
+                onClick={async () => {
+                  setSyncLoading(true);
+                  setSyncResult(null);
+                  try {
+                    if (!cdId) {
+                      setSyncResult({ success: false, message: 'Nenhum CD vinculado. Cadastre o CD no Admin primeiro.' });
+                      return;
+                    }
+
+                    // Buscar dados do CD via API (sem admin key no front)
+                    const cdData = await dataService.getCDProfileFromAPI(cdId);
+
+                    if (!cdData) {
+                      setSyncResult({ success: false, message: 'CD não encontrado ou erro na API.' });
+                      return;
+                    }
+
+                    // Usar o consultant_id do CD para sync, ou o próprio ID
+                    const syncId = cdData.consultant_id || cdId;
+                    const result = await syncService.syncCDProfile(syncId, { email: cdData.email || undefined });
+                    setSyncResult(result);
+                  } catch (err: any) {
+                    setSyncResult({ success: false, message: 'Erro: ' + err.message });
+                  } finally {
+                    setSyncLoading(false);
                   }
+                }}
+                disabled={syncLoading}
+                className={`w-full flex items-center justify-center gap-3 py-4 rounded-xl font-bold text-lg transition-all ${syncLoading
+                  ? 'bg-dark-800 text-gray-500 cursor-wait'
+                  : 'bg-gold-500 hover:bg-gold-400 text-black shadow-lg shadow-gold-500/20'
+                  }`}
+              >
+                <RefreshCw size={20} className={syncLoading ? 'animate-spin' : ''} />
+                {syncLoading ? 'Sincronizando...' : 'Sincronizar Agora'}
+              </button>
 
-                  // Buscar dados do CD no minisite_profiles
-                  const { data: cdData, error } = await adminSupabase
-                    .from('minisite_profiles')
-                    .select('*')
-                    .eq('id', cdId)
-                    .single();
-
-                  if (error || !cdData) {
-                    setSyncResult({ success: false, message: 'CD não encontrado no banco de dados.' });
-                    return;
-                  }
-
-                  // Usar o consultant_id do CD para sync, ou o próprio ID
-                  const syncId = cdData.consultant_id || cdId;
-                  const result = await syncService.syncCDProfile(syncId, { email: cdData.email || undefined });
-                  setSyncResult(result);
-                } catch (err: any) {
-                  setSyncResult({ success: false, message: 'Erro: ' + err.message });
-                } finally {
-                  setSyncLoading(false);
-                }
-              }}
-              disabled={syncLoading}
-              className={`w-full flex items-center justify-center gap-3 py-4 rounded-xl font-bold text-lg transition-all ${syncLoading
-                ? 'bg-dark-800 text-gray-500 cursor-wait'
-                : 'bg-gold-500 hover:bg-gold-400 text-black shadow-lg shadow-gold-500/20'
-                }`}
-            >
-              <RefreshCw size={20} className={syncLoading ? 'animate-spin' : ''} />
-              {syncLoading ? 'Sincronizando...' : 'Sincronizar Agora'}
-            </button>
-
-            <p className="text-xs text-gray-600 text-center">
-              Última atualização: os dados serão buscados em todas as plataformas vinculadas.
-            </p>
+              <p className="text-xs text-gray-600 text-center">
+                Última atualização: os dados serão buscados em todas as plataformas vinculadas.
+              </p>
+            </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
-    </div>
+    </div >
   );
 };
 

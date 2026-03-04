@@ -1,11 +1,10 @@
 
 
-import React, { useState, useEffect, useMemo, Suspense } from 'react';
+import React, { useState, useEffect, useMemo, Suspense, useRef } from 'react';
 import Header from './components/Header';
 import Hero from './components/Hero';
 import FeaturedProducts from './components/FeaturedProducts';
 import FeaturedCollections from './components/FeaturedCollections';
-import CallToAction from './components/CallToAction';
 import Footer from './components/Footer';
 import ProductDetail from './components/ProductDetail';
 import ConsultantLogin from './components/ConsultantLogin';
@@ -83,8 +82,10 @@ import ProductQA from './components/ProductQA';
 import RecentlyViewed from './components/RecentlyViewed';
 import OrderLookupView from './components/OrderLookupView';
 import OrderStatusView from './components/OrderStatusView';
-import { productsAPI, collectionsAPI, marketingPixelsAPI, distributorsAPI } from './services/marketplaceAPI';
+import { storeCustomizationAPI, consultantAPI, productsAPI, ordersAPI, collectionsAPI, marketingPixelsAPI, distributorsAPI, customersAPI, orderTrackingAPI } from './services/marketplaceAPI';
+import { supabase } from './services/supabase';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import * as reviewService from './services/reviewService';
 
 // import './rs-controle-drop/styles.css'; // Commented out - folder not found
 
@@ -108,7 +109,6 @@ import { networkActivity as initialNetworkActivity } from './data/networkActivit
 import { weeklyBonuses as initialWeeklyBonuses } from './data/weeklyBonuses';
 import { initialReviews } from './data/reviews';
 import { initialQuestions } from './data/questions';
-import * as reviewService from './services/reviewService';
 import { announcements as initialAnnouncements, trainings as initialTrainings, marketingAssets as initialMarketingAssets } from './data/communications';
 import { initialAbandonedCarts } from './data/abandonedCarts';
 import { initialCharges } from './data/charges';
@@ -153,6 +153,20 @@ const initialDashboardSettings: DashboardSettings = {
 };
 
 const App: React.FC = () => {
+    // Identidade Única da Instância v3.4 (Diferencia Editor de Preview)
+    const instanceId = useMemo(() => Math.random().toString(36).substring(2, 11), []);
+
+    // v6.0: Detecção de Preview Consolidada e Imutável no Ciclo da Janela
+    const isPreviewDetected = useMemo(() => {
+        if (typeof window === 'undefined') return false;
+        return window.name === 'preview-iframe' || window.location.search.includes('preview=true');
+    }, []);
+
+    const [isLivePreview] = useState(isPreviewDetected);
+    const isLivePreviewRef = useRef(isPreviewDetected);
+    // Trava de loop v3.6: Previne que o estado recebido via rede reative o envio.
+    const [isReceivingSync, setIsReceivingSync] = useState(false);
+
     const [view, setView] = useState<View>('home');
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
     const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -161,6 +175,9 @@ const App: React.FC = () => {
     const [selectedMarketingPixel, setSelectedMarketingPixel] = useState<MarketingPixel | null>(null);
     const [selectedCollection, setSelectedCollection] = useState<Collection | null>(null);
     const [viewBeforeCheckout, setViewBeforeCheckout] = useState<View>('home');
+    const lastSyncTimestampRef = useRef<number>(0);
+    const lastSyncSourceRef = useRef<string>('NENHUMA'); // v9.0: Rastreia a fonte do sinal
+    const lastSyncVersionRef = useRef<string>('0.0'); // v9.0: Versão do payload
 
     // Data states
     const [products, setProducts] = useState<Product[]>(initialProducts);
@@ -172,11 +189,39 @@ const App: React.FC = () => {
     const [marketingPixels, setMarketingPixels] = useState<MarketingPixel[]>(initialMarketingPixels);
     const [partnerStores, setPartnerStores] = useState<PartnerStore[]>(initialPartnerStores);
     const [shortenedLinks, setShortenedLinks] = useState<ShortenedLink[]>(initialShortenedLinks);
-    // Limpar localStorage antigo com dados mock e usar dados corretos do código
-    if (typeof window !== 'undefined') {
-        try { localStorage.removeItem('rs-store-customization'); } catch (e) { }
-    }
-    const [storeCustomization, setStoreCustomization] = useState<StoreCustomization>(initialStoreCustomization);
+    // v4.4: Estado inicial inteligente: Prioriza o rascunho do editor se estiver em modo PREVIEW (Iframe)
+    const [storeCustomization, setStoreCustomization] = useState<StoreCustomization>(() => {
+        if (typeof window !== 'undefined') {
+            // v6.0: Uso da detecção consolidada para inicialização
+            const saved = isPreviewDetected ? localStorage.getItem('rs_editor_draft') : localStorage.getItem('rs-store-customization');
+            const fallback = localStorage.getItem('rs-store-customization');
+
+            const finalSaved = saved || fallback;
+            if (finalSaved) {
+                try {
+                    const parsed = JSON.parse(finalSaved);
+                    // Garante que o buffer de logo seja aplicado se o rascunho referenciá-lo v4.4
+                    if (parsed.logoUrl === 'BUFFERED_IN_LOGO_KEY') {
+                        const buffer = localStorage.getItem('rs_logo_buffer');
+                        if (buffer) parsed.logoUrl = buffer;
+                    }
+                    // Merge granular do footer: preserva links estáticos, só substitui campos personalizáveis
+                    const parsedFooter = parsed.footer || {};
+                    const safeFooter = {
+                        ...initialStoreCustomization.footer,
+                        ...(parsedFooter.description !== undefined && { description: parsedFooter.description }),
+                        ...(parsedFooter.socialLinks !== undefined && { socialLinks: parsedFooter.socialLinks }),
+                        ...(parsedFooter.contactEmail !== undefined && { contactEmail: parsedFooter.contactEmail }),
+                        ...(parsedFooter.cnpj !== undefined && { cnpj: parsedFooter.cnpj }),
+                        ...(parsedFooter.businessAddress !== undefined && { businessAddress: parsedFooter.businessAddress }),
+                    };
+                    return { ...initialStoreCustomization, ...parsed, footer: safeFooter };
+
+                } catch (e) { }
+            }
+        }
+        return initialStoreCustomization;
+    });
     const [paymentSettings, setPaymentSettings] = useState<PaymentSettings>(initialPaymentSettings);
     const [shippingSettings, setShippingSettings] = useState<ShippingSettings>(initialShippingSettings);
     const [compensationSettings, setCompensationSettings] = useState<CompensationSettings>(initialCompensationSettings);
@@ -188,12 +233,141 @@ const App: React.FC = () => {
     const [reviews, setReviews] = useState<Review[]>(initialReviews);
     const [questions, setQuestions] = useState<Question[]>(initialQuestions);
 
-    // Load reviews and questions from Supabase on mount
+    // v11.0: Carregamento Inicial Robusto via API (Banco de Dados)
     useEffect(() => {
+        const loadCustomization = async () => {
+            console.log('%c[App v11.0] 📡 Carregando customização do banco...', 'color: #ff00ff; font-weight: bold;');
+            const result = await storeCustomizationAPI.get();
+
+            if (result && result.success !== false && result.data) {
+                const dbData = result.data;
+                console.log('[App v11.0] ✅ Dados do banco recebidos:', dbData);
+
+                setStoreCustomization(prev => {
+                    // Missão 11.0: Preserva o rascunho local apenas se estiver em modo Preview
+                    if (isPreviewDetected) {
+                        const savedDraft = localStorage.getItem('rs_editor_draft');
+                        if (savedDraft) {
+                            try {
+                                const parsed = JSON.parse(savedDraft);
+                                console.log('[App v11.0] 📔 Mantendo rascunho local em modo Preview.');
+                                return { ...prev, ...parsed };
+                            } catch (e) { }
+                        }
+                    }
+
+                    // Se não for preview ou não tiver rascunho, usa o banco
+                    // Mas aplica o Auto-Reparo de seções dinâmicas (Missão 10.0/11.0)
+                    // Merge granular: preserve static links, only override customizable footer fields from DB
+                    const dbFooter = dbData.footer || {};
+                    const mergedFooter = {
+                        ...initialStoreCustomization.footer,  // starts with static links (buyerLinks, sellerLinks, companyLinks)
+                        // override only customizable fields from DB
+                        ...(dbFooter.description !== undefined && { description: dbFooter.description }),
+                        ...(dbFooter.socialLinks !== undefined && { socialLinks: dbFooter.socialLinks }),
+                        ...(dbFooter.contactEmail !== undefined && { contactEmail: dbFooter.contactEmail }),
+                        ...(dbFooter.cnpj !== undefined && { cnpj: dbFooter.cnpj }),
+                        ...(dbFooter.businessAddress !== undefined && { businessAddress: dbFooter.businessAddress }),
+                    };
+
+                    let finalCustom = {
+                        ...initialStoreCustomization,
+                        ...dbData,
+                        footer: mergedFooter,
+                        hero: dbData.hero && dbData.hero.title ? dbData.hero : initialStoreCustomization.hero,
+                        homepageSections: dbData.homepageSections || initialStoreCustomization.homepageSections
+                    };
+
+                    if (Array.isArray(finalCustom.homepageSections)) {
+                        const defaultSections = [
+                            { id: 'hero', name: 'Banner Principal (Hero)' },
+                            { id: 'carousel', name: 'Carrossel de Banners' },
+                            { id: 'featuredProducts', name: 'Produtos em Destaque' },
+                            { id: 'offers', name: 'Ofertas Especiais' },
+                            { id: 'bestsellers', name: 'Mais Vendidos' },
+                            { id: 'featuredCollections', name: 'Coleções em Destaque' },
+                            { id: 'recentlyViewed', name: 'Vistos Recentemente' },
+                            { id: 'midPageBanner', name: 'Banner de Meio da Página' },
+                        ];
+
+                        const dbSections = [...finalCustom.homepageSections];
+                        const existingIds = dbSections.map((s: any) => s.id);
+                        let changed = false;
+
+                        // Adiciona apenas o que falta, sem resetar o que já existe
+                        defaultSections.forEach((def) => {
+                            if (!existingIds.includes(def.id)) {
+                                dbSections.push({
+                                    id: def.id,
+                                    name: def.name,
+                                    enabled: true,
+                                    order: dbSections.length + 1
+                                });
+                                changed = true;
+                            }
+                        });
+
+                        // Garante que todos tenham uma ordem se estiverem nulos, mas respeita a ordem do DB
+                        dbSections.forEach((s: any, i: number) => {
+                            if (s.order === undefined || s.order === null) {
+                                s.order = i + 1;
+                                changed = true;
+                            }
+                        });
+
+                        finalCustom.homepageSections = dbSections.sort((a, b) => (a.order || 0) - (b.order || 0));
+                    }
+
+                    return finalCustom;
+                });
+            } else {
+                console.warn('[App v11.0] ⚠️ Falha ao carregar do banco. Usando fallback local.');
+            }
+        };
+
+        const loadCustomerSession = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session?.user) {
+                const { data: profile } = await supabase
+                    .from('consultores')
+                    .select('*')
+                    .eq('email', session.user.email)
+                    .single();
+
+                if (profile) {
+                    setCurrentCustomer({
+                        id: profile.id,
+                        name: profile.name || profile.full_name || 'Cliente',
+                        email: session.user.email!,
+                        passwordHash: ''
+                    });
+                } else {
+                    // Tenta na tabela profiles se não achar em consultores
+                    const { data: userProfile } = await supabase
+                        .from('profiles')
+                        .select('*')
+                        .eq('email', session.user.email)
+                        .single();
+
+                    if (userProfile) {
+                        setCurrentCustomer({
+                            id: userProfile.id,
+                            name: userProfile.full_name || 'Cliente',
+                            email: session.user.email!,
+                            passwordHash: ''
+                        });
+                    }
+                }
+            }
+        };
+
+        loadCustomization();
+        loadCustomerSession();
+
         reviewService.fetchAllReviews().then(data => {
             if (data.length > 0) setReviews(data);
         }).catch(() => { });
-    }, []);
+    }, [isPreviewDetected]);
     const [announcements, setAnnouncements] = useState<Announcement[]>(initialAnnouncements);
     const [trainings, setTrainings] = useState<Training[]>(initialTrainings);
     const [marketingAssets, setMarketingAssets] = useState<MarketingAsset[]>(initialMarketingAssets);
@@ -268,7 +442,14 @@ const App: React.FC = () => {
         localStorage.setItem('rs-marketplace-cart', JSON.stringify(cart));
     }, [cart]);
 
-    const offerProducts = useMemo(() => products.filter(p => p.compareAtPrice && p.compareAtPrice > p.price), [products]);
+    // Offer products: has compareAtPrice OR is marked as 'Sale'. Falls back to first 4 active products so the section always renders.
+    const offerProducts = useMemo(() => {
+        const markedOffers = products.filter(p =>
+            (p.compareAtPrice && p.compareAtPrice > p.price) ||
+            (p.status && ['Sale', 'Oferta', 'Promoção'].includes(p.status))
+        );
+        return markedOffers.length > 0 ? markedOffers : products.filter(p => p.status === 'Ativo').slice(0, 4);
+    }, [products]);
     const recentlyViewedProducts = useMemo(() => recentlyViewedIds.map(id => products.find(p => p.id === id)).filter((p): p is Product => Boolean(p)), [recentlyViewedIds, products]);
 
     const filteredProducts = useMemo(() => {
@@ -284,6 +465,99 @@ const App: React.FC = () => {
     useEffect(() => {
         window.scrollTo(0, 0);
     }, [view]);
+
+    // Sincronização em Tempo Real (Triple Channel) v4.2
+    useEffect(() => {
+        let heartbeatInterval: any = null;
+
+        if (isLivePreview) {
+            // Handshake Heartbeat v3.1
+            const handshakeChannelToken = new BroadcastChannel('rs_live_preview_handshake');
+            const sendHandshake = () => {
+                handshakeChannelToken.postMessage({ type: 'PREVIEW_READY', timestamp: Date.now() });
+            };
+            sendHandshake();
+            heartbeatInterval = setInterval(sendHandshake, 2000);
+        }
+
+        const channel = new BroadcastChannel('rs_live_preview');
+        const handleSync = (payload: any) => {
+            // v6.0 Blindagem Absoluta: Apenas a instância PREVIEW processa sync. 
+            // Ignora se for enviada pela própria instância (loop prevention).
+            if (!isLivePreviewRef.current) return;
+            if (payload.senderId === instanceId) return;
+
+            if (payload?.type === 'LIVE_PREVIEW_UPDATE' && payload.data) {
+                const msgTimestamp = payload.timestamp || Date.now();
+                if (msgTimestamp <= lastSyncTimestampRef.current && lastSyncTimestampRef.current !== 0) {
+                    return;
+                }
+                lastSyncTimestampRef.current = msgTimestamp;
+
+                let finalData = { ...payload.data };
+                const dataVersion = payload.version || 'unknown';
+                lastSyncVersionRef.current = dataVersion;
+                lastSyncSourceRef.current = payload.source || 'UNK';
+
+                console.log(`%c[Sync ${dataVersion}] 📥 Recebido: ${payload.data.hero?.title || 'Update'} | Logo: ${finalData.logoUrl ? (finalData.logoUrl.length > 50 ? finalData.logoUrl.substring(0, 30) + '...' : finalData.logoUrl) + ' (' + finalData.logoUrl.length + ' ch)' : 'N/A'}`, 'color: #00ff00; font-weight: bold;');
+
+                try {
+                    // v8.0: Recuperação de Buffer só se necessário
+                    if (finalData.logoUrl === 'BUFFERED_IN_LOGO_KEY') {
+                        const bufferedLogo = localStorage.getItem('rs_logo_buffer');
+                        if (bufferedLogo) {
+                            finalData.logoUrl = bufferedLogo;
+                            console.log(`%c[Sync v8.0] 📦 Logo pesado recuperado do BUFFER (${bufferedLogo.length} chars)`, 'color: #00ffff;');
+                        } else {
+                            console.warn('[Sync v8.0] ⚠️ Buffer placeholder found but no data in storage!');
+                        }
+                    }
+
+                    // v4.1: Recuperação Universal de Buffer (Banners)
+                    const hasBufferedBanners = finalData.carouselBanners?.some((b: any) => b.desktopImage === 'BUFFERED' || b.id === 'BUFFERED');
+                    if (hasBufferedBanners || (!finalData.carouselBanners?.length && localStorage.getItem('rs_banners_buffer'))) {
+                        const bufferedBanners = localStorage.getItem('rs_banners_buffer');
+                        if (bufferedBanners) {
+                            try {
+                                finalData.carouselBanners = JSON.parse(bufferedBanners);
+                                console.log('[Sync v8.0] 📦 Banners recuperados do buffer');
+                            } catch (e) { }
+                        }
+                    }
+                } catch (e) {
+                    console.warn('[Sync Receptor] Storage access failed', e);
+                }
+
+                setStoreCustomization(finalData);
+            }
+        };
+
+        channel.onmessage = (event) => {
+            if (event.data) handleSync({ ...event.data, source: 'BROADCAST' });
+        };
+
+        const handleWindowMessage = (event: MessageEvent) => {
+            if (event.data?.type === 'LIVE_PREVIEW_UPDATE') handleSync({ ...event.data, source: 'WINDOW' });
+        };
+        window.addEventListener('message', handleWindowMessage);
+
+        const handleStorageChange = (event: StorageEvent) => {
+            if (event.key === 'rs_preview_buffer' && event.newValue) {
+                try {
+                    const payload = JSON.parse(event.newValue);
+                    if (payload.type === 'LIVE_PREVIEW_UPDATE') handleSync({ ...payload, source: 'STORAGE' });
+                } catch (e) { }
+            }
+        };
+        window.addEventListener('storage', handleStorageChange);
+
+        return () => {
+            if (heartbeatInterval) clearInterval(heartbeatInterval);
+            channel.close();
+            window.removeEventListener('message', handleWindowMessage);
+            window.removeEventListener('storage', handleStorageChange);
+        };
+    }, [instanceId]); // v4.3: Removido isLivePreview para evitar reconexão constante
 
     // Master Identity Cleanup & Enforcement
     useEffect(() => {
@@ -708,17 +982,17 @@ const App: React.FC = () => {
     };
 
     const handleStoreCustomizationChange = (updatedData: Partial<StoreCustomization>) => {
-        const newCustomization = { ...storeCustomization, ...updatedData };
-        setStoreCustomization(newCustomization);
+        setStoreCustomization(prev => {
+            const newCustomization = { ...prev, ...updatedData };
+            try {
+                localStorage.setItem('rs-store-customization', JSON.stringify(newCustomization));
+            } catch (e) {
+                console.error('Erro ao salvar customização:', e);
+            }
+            return newCustomization;
+        });
 
-        // Salva no localStorage para persistir
-        try {
-            localStorage.setItem('rs-store-customization', JSON.stringify(newCustomization));
-        } catch (e) {
-            console.error('Erro ao salvar customização:', e);
-        }
-
-        alert('Aparência da loja atualizada com sucesso!');
+        // alert('Aparência da loja atualizada com sucesso!'); // v9.0: Removido para não travar thread de edição
     };
 
     const handleDashboardBannersUpdate = (newBanners: Banner[]) => {
@@ -980,13 +1254,7 @@ const App: React.FC = () => {
         handleNavigate('home');
     };
 
-    const handleCustomerRegister = (customerData: Omit<Customer, 'id'>) => {
-        const newCustomer: Customer = {
-            id: `cust-${Date.now()}`,
-            ...customerData,
-        };
-        setCustomers(prev => [...prev, newCustomer]);
-        alert('Cadastro realizado com sucesso! Faça seu login para continuar.');
+    const handleCustomerRegister = () => {
         handleNavigate('customerLogin');
     };
 
@@ -1248,8 +1516,8 @@ const App: React.FC = () => {
                     <RSControleDropApp />
                 </Suspense>
             ); break;
-            case 'storeEditor': content = <StorefrontEditor customization={storeCustomization} onUpdate={handleStoreCustomizationChange} onNavigate={handleNavigate} />; break;
-            case 'storeBannerEditor': content = <StoreBannerEditor customization={storeCustomization} onUpdate={handleStoreCustomizationChange} />; break;
+            case 'storeEditor': content = <StorefrontEditor senderId={instanceId} customization={storeCustomization} isReceivingSync={isReceivingSync} onUpdate={handleStoreCustomizationChange} onNavigate={handleNavigate} />; break;
+            case 'storeBannerEditor': content = <StoreBannerEditor senderId={instanceId} customization={storeCustomization} onUpdate={handleStoreCustomizationChange} />; break;
             case 'virtualOfficeDropshipping': content = <VirtualOfficeDropshipping products={dropshippingProducts} onEditProduct={handleNavigateToEditDropshipping} />; break;
             case 'virtualOfficeAffiliateLinks': content = <ManageAffiliateLinks stores={partnerStores} onCommissionChange={handlePartnerStoreCommissionChange} />; break;
             case 'virtualOfficePixels': content = <ManageMarketingPixels pixels={marketingPixels} onNavigate={handleNavigate} onDelete={handleMarketingPixelDelete} onStatusToggle={handleMarketingPixelStatusToggle} onDuplicate={handleMarketingPixelDuplicate} />; break;
@@ -1270,7 +1538,7 @@ const App: React.FC = () => {
             case 'walletCharges': content = <WalletCharges charges={charges} products={products} onSave={handleChargeSave} />; break;
             case 'walletSettings': content = <WalletSettingsComponent settings={initialWalletSettings} onSave={() => alert('Settings saved!')} paymentSettings={paymentSettings} onNavigate={handleNavigate} />; break;
             case 'rsStudio': content = <RSStudio products={products} onNavigate={handleNavigate} />; break;
-            case 'communication': content = <CommunicationCenter onNavigate={handleNavigate} />; break;
+            case 'communication': content = <CommunicationCenter onNavigate={(v: any) => handleNavigate(v)} />; break;
             case 'manageOrderBump': content = <ManageOrderBump settings={storeCustomization.orderBump} products={products} onSave={(s) => handleStoreCustomizationChange({ orderBump: s })} />; break;
             case 'manageUpsell': content = <ManageUpsell settings={storeCustomization.upsell} products={products} onSave={(s) => handleStoreCustomizationChange({ upsell: s })} />; break;
             case 'manageAbandonedCarts': content = <ManageAbandonedCarts carts={abandonedCarts} />; break;
@@ -1300,7 +1568,7 @@ const App: React.FC = () => {
             default: content = <div>View not found</div>;
         }
         return (
-            <AdminLayout title={adminViewTitles[view]} currentView={view} onNavigate={handleNavigate} onLogout={() => { setCurrentCustomer(null); setView('home'); }}>
+            <AdminLayout title={adminViewTitles[view]} currentView={view} onNavigate={handleNavigate} onLogout={async () => { await customersAPI.logout(); setCurrentCustomer(null); setView('home'); }}>
                 {content}
             </AdminLayout>
         );
@@ -1327,64 +1595,158 @@ const App: React.FC = () => {
             case 'collectionView':
                 return selectedCollection && <CollectionView collection={selectedCollection} products={products} onProductClick={(p) => handleNavigate('productDetail', p)} onBack={() => handleNavigate('home')} wishlist={wishlist} onToggleWishlist={handleToggleWishlist} />;
             case 'customerAccount':
-                return currentCustomer && <CustomerAccount customer={currentCustomer} orders={orders} onNavigate={handleNavigate} />;
+                return currentCustomer && <CustomerAccount customer={currentCustomer} onNavigate={handleNavigate} />;
             case 'customerWishlist':
                 return currentCustomer && <CustomerWishlist wishlist={wishlist} products={products} onNavigate={handleNavigate} onToggleWishlist={handleToggleWishlist} />;
             case 'orderConfirmation':
                 return <OrderConfirmation order={lastConfirmedOrder} onContinueShopping={() => handleNavigate('home')} upsellSettings={storeCustomization.upsell} allProducts={products} onAcceptUpsell={handleAcceptUpsell} />;
             case 'orderLookup':
-                return <OrderLookupView orders={orders} onOrderFound={(order) => handleNavigate('orderStatus', order)} />;
+                return <OrderLookupView onOrderFound={(order) => handleNavigate('orderStatus', order)} />;
             case 'orderStatus':
                 return selectedOrder && <OrderStatusView order={selectedOrder} onBack={() => handleNavigate('home')} />;
             case 'home':
             default:
+                const renderHomepageSection = (sectionId: string) => {
+                    const section = storeCustomization.homepageSections.find(s => s.id === sectionId);
+                    if (!section || !section.enabled) return null;
+
+                    const sectionProps = {
+                        title: section.name,
+                        subtitle: section.subtitle,
+                        titleColor: section.titleColor,
+                        subtitleColor: section.subtitleColor,
+                        backgroundColor: section.backgroundColor
+                    };
+
+                    switch (sectionId) {
+                        case 'hero':
+                            return <Hero key="hero" content={{
+                                ...storeCustomization.hero,
+                                title: section.name || storeCustomization.hero.title,
+                                subtitle: section.subtitle || storeCustomization.hero.subtitle,
+                                titleColor: section.titleColor || storeCustomization.hero.titleColor,
+                                subtitleColor: section.subtitleColor || storeCustomization.hero.subtitleColor || section.titleColor,
+                                backgroundColor: section.backgroundColor || storeCustomization.hero.backgroundColor
+                            }} />;
+                        case 'carousel':
+                            return (
+                                <Carousel
+                                    key="carousel"
+                                    banners={storeCustomization.carouselBanners}
+                                    height={storeCustomization.carouselHeight}
+                                    mobileHeight={storeCustomization.carouselHeightMobile}
+                                    fullWidth={storeCustomization.carouselFullWidth}
+                                />
+                            );
+                        case 'featuredProducts':
+                            return <FeaturedProducts
+                                key="featuredProducts"
+                                products={searchQuery ? filteredProducts : products.filter(p => !p.collectionId || p.collectionId === 'featured')}
+                                onProductClick={(p) => handleNavigate('productDetail', p)}
+                                wishlist={wishlist}
+                                onToggleWishlist={handleToggleWishlist}
+                                {...sectionProps}
+                            />;
+                        case 'offers':
+                            return offerProducts.length > 0 ? (
+                                <Offers
+                                    key="offers"
+                                    products={offerProducts}
+                                    onProductClick={(p) => handleNavigate('productDetail', p)}
+                                    wishlist={wishlist}
+                                    onToggleWishlist={handleToggleWishlist}
+                                    {...sectionProps}
+                                />
+                            ) : null;
+                        case 'bestsellers':
+                            return (
+                                <Bestsellers
+                                    key="bestsellers"
+                                    products={products}
+                                    onProductClick={(p) => handleNavigate('productDetail', p)}
+                                    orders={orders}
+                                    wishlist={wishlist}
+                                    onToggleWishlist={handleToggleWishlist}
+                                    {...sectionProps}
+                                />
+                            );
+                        case 'featuredCollections':
+                            return <FeaturedCollections key="featuredCollections" collections={collections} onNavigate={handleNavigate} {...sectionProps} />;
+                        case 'recentlyViewed':
+                            return (
+                                <RecentlyViewed
+                                    key="recentlyViewed"
+                                    products={recentlyViewedProducts}
+                                    onProductClick={(p) => handleNavigate('productDetail', p)}
+                                    wishlist={wishlist}
+                                    onToggleWishlist={handleToggleWishlist}
+                                    {...sectionProps}
+                                />
+                            );
+                        case 'midPageBanner':
+                            return (
+                                <MidPageBanner
+                                    key="midPageBanner"
+                                    banner={{
+                                        ...storeCustomization.midPageBanner,
+                                        title: section.name || storeCustomization.midPageBanner.title,
+                                        backgroundColor: section.backgroundColor || storeCustomization.midPageBanner.backgroundColor,
+                                        titleColor: section.titleColor,
+                                        subtitle: section.subtitle,
+                                        subtitleColor: section.subtitleColor
+                                    }}
+                                />
+                            );
+                        default:
+                            return null;
+                    }
+                };
+
                 return (
-                    <>
-                        <Hero
-                            content={storeCustomization.hero}
-                        />
-                        <Carousel banners={storeCustomization.carouselBanners} />
-                        {searchQuery && (
-                            <div className="container mx-auto px-4 mt-8">
-                                <h2 className="text-2xl font-display text-[rgb(var(--color-brand-gold))]">
-                                    Resultados para: "{searchQuery}"
-                                    <span className="ml-4 text-sm font-sans text-[rgb(var(--color-brand-text-dim))] uppercase tracking-widest">
-                                        {filteredProducts.length} {filteredProducts.length === 1 ? 'produto encontrado' : 'produtos encontrados'}
-                                    </span>
-                                </h2>
-                            </div>
-                        )}
-                        {filteredProducts.length > 0 ? (
+                    <div style={{ backgroundColor: storeCustomization.storeBackgroundColor || 'transparent' }}>
+                        {/* Se houver busca, mantém Hero e Carousel no topo, mas foca nos resultados */}
+                        {searchQuery ? (
                             <>
-                                <FeaturedProducts products={filteredProducts} onProductClick={(p) => handleNavigate('productDetail', p)} wishlist={wishlist} onToggleWishlist={handleToggleWishlist} />
-                                <FeaturedCollections collections={collections} onNavigate={handleNavigate} />
-                                {!searchQuery && (
-                                    <>
-                                        {offerProducts.length > 0 && <Offers products={offerProducts} onProductClick={(p) => handleNavigate('productDetail', p)} wishlist={wishlist} onToggleWishlist={handleToggleWishlist} />}
-                                        <Bestsellers products={products} onProductClick={(p) => handleNavigate('productDetail', p)} orders={orders} wishlist={wishlist} onToggleWishlist={handleToggleWishlist} />
-                                        <RecentlyViewed products={recentlyViewedProducts} onProductClick={(p) => handleNavigate('productDetail', p)} wishlist={wishlist} onToggleWishlist={handleToggleWishlist} />
-                                    </>
+                                <Hero content={storeCustomization.hero} />
+                                <Carousel
+                                    banners={storeCustomization.carouselBanners}
+                                    height={storeCustomization.carouselHeight}
+                                    mobileHeight={storeCustomization.carouselHeightMobile}
+                                />
+                                <div className="container mx-auto px-4 mt-8">
+                                    <h2 className="text-2xl font-display text-[rgb(var(--color-brand-gold))]">
+                                        Resultados para: "{searchQuery}"
+                                        <span className="ml-4 text-sm font-sans text-[rgb(var(--color-brand-text-dim))] uppercase tracking-widest">
+                                            {filteredProducts.length} {filteredProducts.length === 1 ? 'produto encontrado' : 'produtos encontrados'}
+                                        </span>
+                                    </h2>
+                                </div>
+                                {filteredProducts.length > 0 ? (
+                                    <FeaturedProducts products={filteredProducts} onProductClick={(p) => handleNavigate('productDetail', p)} wishlist={wishlist} onToggleWishlist={handleToggleWishlist} />
+                                ) : (
+                                    <div className="container mx-auto px-4 py-20 text-center">
+                                        <div className="max-w-md mx-auto bg-[rgb(var(--color-brand-gray))]/[.50] backdrop-blur-md border border-[rgb(var(--color-brand-gold))]/[.20] p-10 rounded-2xl shadow-2xl">
+                                            <div className="text-6xl mb-4">🔍</div>
+                                            <h3 className="text-2xl font-display text-[rgb(var(--color-brand-gold))] mb-2">Ops! Nenhum produto encontrado</h3>
+                                            <p className="text-[rgb(var(--color-brand-text-dim))] mb-6">Não encontramos resultados para "{searchQuery}". Tente usar palavras-chave diferentes ou verifique a ortografia.</p>
+                                            <button
+                                                onClick={() => setSearchQuery('')}
+                                                className="bg-[rgb(var(--color-brand-gold))] text-[rgb(var(--color-brand-dark))] px-8 py-3 rounded-full font-bold hover:shadow-[0_0_20px_rgba(255,215,0,0.4)] transition-all transform hover:scale-105"
+                                            >
+                                                Limpar Busca
+                                            </button>
+                                        </div>
+                                    </div>
                                 )}
                             </>
                         ) : (
-                            <div className="container mx-auto px-4 py-20 text-center">
-                                <div className="max-w-md mx-auto bg-[rgb(var(--color-brand-gray))]/[.50] backdrop-blur-md border border-[rgb(var(--color-brand-gold))]/[.20] p-10 rounded-2xl shadow-2xl">
-                                    <div className="text-6xl mb-4">🔍</div>
-                                    <h3 className="text-2xl font-display text-[rgb(var(--color-brand-gold))] mb-2">Ops! Nenhum produto encontrado</h3>
-                                    <p className="text-[rgb(var(--color-brand-text-dim))] mb-6">Não encontramos resultados para "{searchQuery}". Tente usar palavras-chave diferentes ou verifique a ortografia.</p>
-                                    <button
-                                        onClick={() => setSearchQuery('')}
-                                        className="bg-[rgb(var(--color-brand-gold))] text-[rgb(var(--color-brand-dark))] px-8 py-3 rounded-full font-bold hover:shadow-[0_0_20px_rgba(255,215,0,0.4)] transition-all transform hover:scale-105"
-                                    >
-                                        Limpar Busca
-                                    </button>
-                                </div>
-                            </div>
+                            /* Renderização Dinâmica por Ordem das Seções */
+                            [...(storeCustomization.homepageSections || [])]
+                                .sort((a, b) => (a.order || 0) - (b.order || 0))
+                                .map(section => section.enabled && renderHomepageSection(section.id))
                         )}
-                        <MidPageBanner banner={storeCustomization.midPageBanner} />
-                        <CallToAction onConsultantClick={() => handleNavigate('consultantLogin')} onBecomeSellerClick={() => handleNavigate('sellerRegistration')} />
                         <CustomerChatWidget orders={orders} />
-                    </>
+                    </div>
                 );
         }
     };
@@ -1408,8 +1770,8 @@ const App: React.FC = () => {
         switch (view) {
             case 'consultantLogin': return <ConsultantLogin onLoginSuccess={() => handleNavigate('consultantStore')} onBackToHome={() => handleNavigate('home')} />;
             case 'sellerRegistration': return <SellerRegistration onRegisterSuccess={() => handleNavigate('home')} onBackToHome={() => handleNavigate('home')} />;
-            case 'customerLogin': return <CustomerLogin customers={customers} onLoginSuccess={handleCustomerLogin} onBackToHome={() => handleNavigate('home')} onNavigateToRegister={() => handleNavigate('customerRegister')} onNavigateToForgotPassword={() => handleNavigate('customerForgotPassword')} />;
-            case 'customerRegister': return <CustomerRegister existingCustomers={customers} onRegister={handleCustomerRegister} onBackToHome={() => handleNavigate('home')} onNavigateToLogin={() => handleNavigate('customerLogin')} />;
+            case 'customerLogin': return <CustomerLogin onLoginSuccess={handleCustomerLogin} onBackToHome={() => handleNavigate('home')} onNavigateToRegister={() => handleNavigate('customerRegister')} onNavigateToForgotPassword={() => handleNavigate('customerForgotPassword')} />;
+            case 'customerRegister': return <CustomerRegister onRegister={handleCustomerRegister} onBackToHome={() => handleNavigate('home')} onNavigateToLogin={() => handleNavigate('customerLogin')} />;
             case 'customerForgotPassword': return <CustomerForgotPassword onForgotPasswordRequest={(email) => alert(`Link de recuperação enviado para ${email}`)} onBackToLogin={() => handleNavigate('customerLogin')} />;
             default: return null; // Should not happen
         }
@@ -1448,18 +1810,41 @@ const App: React.FC = () => {
 
     if (isAdminDashboardView) {
         return (
-            <>
+            <ErrorBoundary>
                 <style>{storeCustomization.customCss}</style>
                 {renderAdminContent()}
-            </>
+            </ErrorBoundary>
         );
     }
 
     return (
-        <>
+        <ErrorBoundary>
             <style>{storeCustomization.customCss}</style>
-            <div className="bg-[rgb(var(--color-brand-dark))] text-[rgb(var(--color-brand-text-light))] font-sans">
-                {userProfile.name && (
+            <div className="bg-[rgb(var(--color-brand-dark))] text-[rgb(var(--color-brand-text-light))] font-sans relative">
+                {isLivePreview && (
+                    <div className="fixed top-4 right-4 z-[9999] flex flex-col items-end gap-2 pointer-events-none">
+                        <div className="flex items-center gap-2 bg-[rgb(var(--color-brand-gold))] text-[rgb(var(--color-brand-dark))] px-3 py-1 rounded-full text-[10px] font-bold shadow-[0_0_15px_rgba(255,215,0,0.4)] animate-pulse border border-[rgb(var(--color-brand-gold-light))]">
+                            <span className="w-1.5 h-1.5 bg-[rgb(var(--color-brand-dark))] rounded-full"></span>
+                            PREVIEW: {userProfile.name?.toUpperCase() || 'MODO LIVE'}
+                        </div>
+                        <div className="bg-black/95 border border-[rgb(var(--color-brand-gold))]/40 p-3 rounded-lg text-[10px] font-mono text-white/90 backdrop-blur-xl shadow-[0_10px_40px_rgba(0,0,0,0.8)] border-l-4 border-l-[rgb(var(--color-brand-gold))]">
+                            <div className="text-[rgb(var(--color-brand-gold))] border-b border-[rgb(var(--color-brand-gold))]/20 mb-2 pb-1 font-black tracking-widest flex justify-between items-center">
+                                <span>RS SYNC HUD v9.5</span>
+                                <span className="opacity-40 text-[8px] bg-white/10 px-1 rounded">{instanceId.substring(0, 4)}</span>
+                            </div>
+                            <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                                <span className="text-white/40 uppercase">Status:</span> <span className={lastSyncTimestampRef.current ? "text-green-400 font-bold" : "text-amber-400"}>{lastSyncTimestampRef.current ? 'SINCRO OK' : 'AGUARDANDO...'}</span>
+                                <span className="text-white/40 uppercase">Fonte:</span> <span className="text-gold-400 font-bold">{lastSyncSourceRef.current}</span>
+                                <span className="text-white/40 uppercase">Versão:</span> <span className="text-white/70">{lastSyncVersionRef.current}</span>
+                                <span className="text-white/40 uppercase">Última:</span> <span className="text-white/70">{lastSyncTimestampRef.current ? new Date(lastSyncTimestampRef.current).toLocaleTimeString() : '--:--:--'}</span>
+                                <span className="text-white/40 uppercase">Logo:</span> <span className="text-purple-400 font-bold">{storeCustomization.logoUrl ? (storeCustomization.logoUrl.startsWith('data:') ? 'BASE64' : 'URL') : 'VAZIO'}</span>
+                                <span className="text-white/40 uppercase">Tamanho:</span> <span className="text-blue-400">{storeCustomization.logoUrl?.length || 0} bytes</span>
+                                <span className="text-white/40 uppercase">Hero Text:</span> <span className="text-white truncate max-w-[80px]" title={storeCustomization.hero?.title}>{storeCustomization.hero?.title || '---'}</span>
+                            </div>
+                        </div>
+                    </div>
+                )}
+                {userProfile.name && !isLivePreview && (
                     <div className="bg-[rgb(var(--color-brand-gray))] border-b border-[rgb(var(--color-brand-gold))]/[.20] py-1.5 text-center relative z-50">
                         <div className="container mx-auto px-4 flex items-center justify-center gap-2">
                             <span className="text-[10px] font-bold text-[rgb(var(--color-brand-gold))] uppercase tracking-widest opacity-80">Consultor Oficial:</span>
@@ -1469,6 +1854,7 @@ const App: React.FC = () => {
                 )}
                 <Header
                     logoUrl={storeCustomization.logoUrl}
+                    logoMaxWidth={storeCustomization.logoMaxWidth}
                     onLogoClick={() => handleNavigate('home')}
                     onConsultantClick={() => handleNavigate(currentCustomer ? 'consultantStore' : 'consultantLogin')}
                     cartItems={cart}
@@ -1476,7 +1862,7 @@ const App: React.FC = () => {
                     collections={collections}
                     onNavigate={handleNavigate}
                     currentCustomer={currentCustomer}
-                    onLogout={() => setCurrentCustomer(null)}
+                    onLogout={async () => { await customersAPI.logout(); setCurrentCustomer(null); }}
                     searchQuery={searchQuery}
                     onSearch={setSearchQuery}
                 />
@@ -1499,7 +1885,7 @@ const App: React.FC = () => {
                 onRemoveItem={handleRemoveFromCart}
                 onNavigate={handleNavigate}
             />
-        </>
+        </ErrorBoundary>
     );
 };
 

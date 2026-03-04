@@ -1,7 +1,7 @@
 /**
- * RS PRÓLIPSI - MARKETPLACE API
  * Service layer para integração completa com backend
  */
+import { supabase } from './supabase';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
 const TENANT_ID = import.meta.env.VITE_TENANT_ID || '';
@@ -120,6 +120,87 @@ export const ordersAPI = {
             method: 'PATCH',
             body: JSON.stringify({ status })
         });
+    },
+
+    getCustomerOrders: async (customerId: string) => {
+        const { data, error } = await supabase
+            .from('orders')
+            .select('*')
+            .eq('buyer_id', customerId)
+            .order('created_at', { ascending: false });
+
+        if (error) return { success: false, error: error.message };
+        return { success: true, data };
+    },
+
+    trackByCode: async (code: string) => {
+        const { data, error } = await supabase
+            .from('orders')
+            .select('*, order_items(*)')
+            .eq('order_code', code)
+            .single();
+
+        if (error) return { success: false, error: error.message };
+        return { success: true, data };
+    }
+};
+
+// =====================================================
+// CLIENTES / AUTH
+// =====================================================
+
+export const customersAPI = {
+    login: async (email: string, password: string) => {
+        const { data, error } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+        });
+
+        if (error) return { success: false, error: error.message };
+
+        // Buscar perfil do cliente (pode estar em 'consultores' ou 'profiles')
+        const { data: profile, error: profileError } = await supabase
+            .from('consultores')
+            .select('*')
+            .eq('user_id', data.user.id)
+            .single();
+
+        if (profileError) {
+            // Se não for consultor, tenta perfil básico
+            const { data: basicProfile } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', data.user.id)
+                .single();
+
+            return { success: true, user: data.user, profile: basicProfile || { id: data.user.id, email: data.user.email } };
+        }
+
+        return { success: true, user: data.user, profile };
+    },
+
+    register: async (userData: any) => {
+        const { data, error } = await supabase.auth.signUp({
+            email: userData.email,
+            password: userData.password,
+            options: {
+                data: {
+                    full_name: userData.name,
+                }
+            }
+        });
+
+        if (error) return { success: false, error: error.message };
+
+        // Criar perfil básico na tabela de consultores/clientes se necessário
+        // (Geralmente triggers no Supabase cuidam disso, mas vamos garantir ou retornar sucesso)
+        return { success: true, user: data.user };
+    },
+
+    logout: async () => {
+        const { error } = await supabase.auth.signOut();
+        if (error) return { success: false, error: error.message };
+        return { success: true };
     }
 };
 
@@ -174,7 +255,8 @@ export const distributorsAPI = {
 export default {
     products: productsAPI,
     collections: collectionsAPI,
-    orders: ordersAPI
+    orders: ordersAPI,
+    customers: customersAPI
 };
 
 // Perfil do consultor

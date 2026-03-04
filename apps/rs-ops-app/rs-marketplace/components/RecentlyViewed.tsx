@@ -8,9 +8,24 @@ interface RecentlyViewedProps {
   products: Product[];
   wishlist: string[];
   onToggleWishlist: (productId: string) => void;
+  title?: string;
+  subtitle?: string;
+  titleColor?: string;
+  subtitleColor?: string;
+  backgroundColor?: string;
 }
 
-const RecentlyViewed: React.FC<RecentlyViewedProps> = ({ onProductClick, products, wishlist, onToggleWishlist }) => {
+const RecentlyViewed: React.FC<RecentlyViewedProps> = ({
+  onProductClick,
+  products,
+  wishlist,
+  onToggleWishlist,
+  title = 'Vistos Recentemente',
+  subtitle,
+  titleColor,
+  subtitleColor,
+  backgroundColor
+}) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [itemsVisible, setItemsVisible] = useState(4);
   const autoPlayRef = useRef<NodeJS.Timeout | null>(null);
@@ -72,10 +87,25 @@ const RecentlyViewed: React.FC<RecentlyViewedProps> = ({ onProductClick, product
   };
 
   return (
-    <section id="recently-viewed" className="py-12 sm:py-16 bg-[rgb(var(--color-brand-dark))] overflow-hidden">
+    <section
+      id="recently-viewed"
+      className="py-12 sm:py-16 overflow-hidden border-b border-[rgb(var(--color-brand-gold))]/[0.10]"
+      style={{ backgroundColor: backgroundColor || 'rgb(var(--color-brand-gray-light))' }}
+    >
       <div className="container mx-auto px-4 relative">
         <div className="text-center mb-10">
-          <h2 className="text-2xl md:text-3xl font-bold font-display text-[rgb(var(--color-brand-text-light))] uppercase tracking-widest">Vistos Recentemente</h2>
+          <h2
+            className="text-2xl md:text-3xl font-bold font-display uppercase tracking-widest"
+            style={{ color: titleColor || 'rgb(var(--color-brand-text-light))' }}
+          >
+            {title}
+          </h2>
+          {subtitle && (
+            <p className="mt-2 text-gray-400" style={{ color: subtitleColor || (titleColor ? `${titleColor}cc` : undefined) }}
+            >
+              {subtitle}
+            </p>
+          )}
           <div className="w-16 h-1 bg-[rgb(var(--color-brand-gold))] mx-auto mt-3 rounded-full"></div>
         </div>
 

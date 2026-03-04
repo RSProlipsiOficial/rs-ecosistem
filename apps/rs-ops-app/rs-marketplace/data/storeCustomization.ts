@@ -3,12 +3,15 @@ import { StoreCustomization } from '../types';
 
 export const initialStoreCustomization: StoreCustomization = {
   logoUrl: '', // Default to text logo
+  logoMaxWidth: 200,
   faviconUrl: '',
+  faviconMaxWidth: 32,
   hero: {
     title: 'Elegância, Redefinida.',
     subtitle: 'Descubra um mercado selecionado de produtos premium de vendedores confiáveis. Sua jornada para o luxo começa aqui.',
     desktopImage: 'https://picsum.photos/seed/hero-desktop/1600/900?grayscale',
     mobileImage: 'https://picsum.photos/seed/hero-mobile/800/1200?grayscale',
+    buttonAnchor: '#featuredProducts',
   },
   carouselBanners: [
     {
@@ -16,18 +19,21 @@ export const initialStoreCustomization: StoreCustomization = {
       desktopImage: 'https://picsum.photos/seed/carousel1-desktop/1200/400',
       mobileImage: 'https://picsum.photos/seed/carousel1-mobile/400/300',
       link: '#',
+      position: 'top',
     },
     {
       id: 'banner-2',
       desktopImage: 'https://picsum.photos/seed/carousel2-desktop/1200/400',
       mobileImage: 'https://picsum.photos/seed/carousel2-mobile/400/300',
       link: '#',
+      position: 'middle',
     },
     {
       id: 'banner-3',
       desktopImage: 'https://picsum.photos/seed/carousel3-desktop/1200/400',
       mobileImage: 'https://picsum.photos/seed/carousel3-mobile/400/300',
       link: '#',
+      position: 'bottom',
     },
   ],
   midPageBanner: {
@@ -78,13 +84,17 @@ export const initialStoreCustomization: StoreCustomization = {
     declineButtonText: 'Não, obrigado. Perder esta oferta.',
   },
   homepageSections: [
-    { id: 'featuredProducts', name: 'Produtos em Destaque', enabled: true },
-    { id: 'offers', name: 'Ofertas Especiais', enabled: true },
-    { id: 'bestsellers', name: 'Mais Vendidos', enabled: true },
-    { id: 'featuredCollections', name: 'Coleções em Destaque', enabled: true },
-    { id: 'recentlyViewed', name: 'Vistos Recentemente', enabled: true },
-    { id: 'midPageBanner', name: 'Banner de Meio da Página', enabled: true },
+    { id: 'hero', name: 'Banner Principal (Hero)', enabled: true, order: 1 },
+    { id: 'carousel', name: 'Carrossel de Banners', enabled: true, order: 2 },
+    { id: 'featuredProducts', name: 'Produtos em Destaque', enabled: true, order: 3 },
+    { id: 'offers', name: 'Ofertas Especiais', enabled: true, order: 4 },
+    { id: 'bestsellers', name: 'Mais Vendidos', enabled: true, order: 5 },
+    { id: 'featuredCollections', name: 'Coleções em Destaque', enabled: true, order: 6 },
+    { id: 'recentlyViewed', name: 'Vistos Recentemente', enabled: true, order: 7 },
+    { id: 'midPageBanner', name: 'Banner de Meio da Página', enabled: true, order: 8 },
   ],
+  carouselHeight: 400,
+  carouselHeightMobile: 300,
   customCss: `/*
 ============================================================
   CSS DA LOJA OFICIAL - RS Prólipsi

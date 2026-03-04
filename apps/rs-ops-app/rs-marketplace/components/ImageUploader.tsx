@@ -18,8 +18,12 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({ currentImage, onIm
 
     const handleFileSelect = (files: FileList | null) => {
         if (files && files[0]) {
-            const url = URL.createObjectURL(files[0]);
-            onImageUpload(url);
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                const base64 = reader.result as string;
+                onImageUpload(base64);
+            };
+            reader.readAsDataURL(files[0]);
         }
     };
 
