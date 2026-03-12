@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { UserProfile } from '../types';
 import { ImageUploader } from './ImageUploader';
+import { supabase } from '../services/supabase';
 
 interface ConsultantData extends UserProfile {
     cep?: string;
@@ -60,18 +61,146 @@ const ConsultantProfileForm: React.FC = () => {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleImageUpload = (url: string) => {
-        setFormData(prev => ({ ...prev, avatarUrl: url }));
+    const [isSaving, setIsSaving] = useState(false);
+
+    const persistProfileLocally = (profile: ConsultantData) => {
+        localStorage.setItem('rs-consultant-full-profile', JSON.stringify(profile));
+        localStorage.setItem('rs-consultant-profile', JSON.stringify(profile));
+        window.dispatchEvent(new CustomEvent('rs-consultant-profile-updated', { detail: profile }));
     };
 
-    const handleSave = () => {
+    // Sincroniza email e nome com a sessão Supabase se estiverem vazios
+    useEffect(() => {
+        const syncFromSession = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session?.user) return;
+
+            const user = session.user;
+
+            // [RS-SYNC v12.0] Busca paralela para garantir dados de carreira e avatar
+            const [profileRes, consultorRes] = await Promise.all([
+                supabase.from('user_profiles').select('*').eq('user_id', user.id).maybeSingle(),
+                supabase.from('consultores').select('*').eq('user_id', user.id).maybeSingle()
+            ]);
+
+            const profile = profileRes.data;
+            const consultor = consultorRes.data;
+
+            setFormData(prev => {
+                const updated = {
+                    ...prev,
+                    id: user.id,
+                    email: prev.email || user.email || '',
+                    name: profile?.full_name || consultor?.nome_completo || prev.name || user.user_metadata?.full_name || '',
+                    avatarUrl: profile?.avatar_url || consultor?.avatar_url || (consultor as any)?.foto || prev.avatarUrl || user.user_metadata?.avatar_url || '',
+                    cpfCnpj: profile?.cpf_cnpj || consultor?.cpf_cnpj || prev.cpfCnpj || '',
+                    graduation: consultor?.graduacao || profile?.graduation || prev.graduation || '',
+                    category: consultor?.categoria || profile?.category || prev.category || '',
+                    accountStatus: consultor?.status_conta || profile?.account_status || prev.accountStatus || 'Ativo',
+                    monthlyActivity: consultor?.atividade_mensal || profile?.monthly_activity || prev.monthlyActivity || 'Ativo',
+                    phone: profile?.phone_number || consultor?.telefone || prev.phone || ''
+                };
+
+                // Mantém sincronizado o avatar do topo no mesmo instante
+                persistProfileLocally(updated);
+                return updated;
+            });
+        };
+        syncFromSession();
+    }, []);
+
+    const handleImageUpload = (url: string) => {
+        setFormData(prev => {
+            const updated = { ...prev, avatarUrl: url };
+            persistProfileLocally(updated);
+            return updated;
+        });
+    };
+
+    const handleFileUpload = async (file: File, base64: string) => {
         try {
-            localStorage.setItem('rs-consultant-full-profile', JSON.stringify(formData));
-            localStorage.setItem('rs-consultant-profile', JSON.stringify(formData));
-        } catch {
+            setFormData(prev => {
+                const updated = { ...prev, avatarUrl: base64 };
+                persistProfileLocally(updated);
+                return updated;
+            }); // Optimistic UI
+
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session?.user) return;
+
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${session.user.id}-${Date.now()}.${fileExt}`;
+            const filePath = `availables/${fileName}`;
+
+            let publicUrl = '';
+            let uploadedBucket = null;
+            const bucketsToTry = ['avatars', 'public', 'images', 'geral'];
+
+            for (const bucket of bucketsToTry) {
+                try {
+                    const path = bucket === 'public' ? `avatars/${filePath}` : filePath;
+                    const { error } = await supabase.storage.from(bucket).upload(path, file);
+                    if (!error) {
+                        uploadedBucket = bucket;
+                        const { data } = supabase.storage.from(bucket).getPublicUrl(path);
+                        publicUrl = data.publicUrl;
+                        break;
+                    }
+                } catch (err) { }
+            }
+
+            if (!publicUrl) {
+                console.warn("[Avatar] Storage indisponível. Usando fallback Base64.");
+                publicUrl = base64;
+            }
+
+            setFormData(prev => {
+                const updated = { ...prev, avatarUrl: publicUrl };
+                persistProfileLocally(updated);
+                return updated;
+            });
+
+        } catch (error) {
+            console.error('[Avatar] Erro no upload:', error);
+            alert('Erro ao processar imagem no servidor.');
         }
-        alert('✅ Perfil salvo! Recarregando...');
-        setTimeout(() => window.location.reload(), 300);
+    };
+
+    const handleSave = async () => {
+        if (isSaving) return;
+        setIsSaving(true);
+        try {
+            persistProfileLocally(formData);
+
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session?.user) {
+                // Atualiza no banco real
+                await supabase
+                    .from('user_profiles')
+                    .update({
+                        full_name: formData.name,
+                        avatar_url: formData.avatarUrl,
+                        cpf_cnpj: formData.cpfCnpj,
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('user_id', session.user.id);
+
+                // Atualiza metadados do auth
+                await supabase.auth.updateUser({
+                    data: {
+                        name: formData.name,
+                        full_name: formData.name,
+                        avatar_url: formData.avatarUrl
+                    }
+                });
+            }
+        } catch (error) {
+            console.error('Erro ao salvar perfil no DB:', error);
+        } finally {
+            setIsSaving(false);
+            alert('✅ Perfil salvo com sucesso!');
+            setTimeout(() => window.location.reload(), 300);
+        }
     };
 
     return (
@@ -80,9 +209,10 @@ const ConsultantProfileForm: React.FC = () => {
                 <h2 className="text-xl font-semibold text-white">Perfil do Consultor</h2>
                 <button
                     onClick={handleSave}
-                    className="text-sm font-bold bg-[#d4af37] text-black py-2 px-4 rounded-lg hover:bg-yellow-500"
+                    disabled={isSaving}
+                    className="text-sm font-bold bg-[#d4af37] text-black py-2 px-4 rounded-lg hover:bg-yellow-500 disabled:opacity-50"
                 >
-                    Salvar Perfil
+                    {isSaving ? 'Salvando...' : 'Salvar Perfil'}
                 </button>
             </div>
 
@@ -91,8 +221,8 @@ const ConsultantProfileForm: React.FC = () => {
                 <button
                     onClick={() => setActiveTab('personal')}
                     className={`px-4 py-2 text-sm font-semibold transition-all ${activeTab === 'personal'
-                            ? 'border-b-2 border-[#d4af37] text-[#d4af37]'
-                            : 'text-slate-400 hover:text-slate-200'
+                        ? 'border-b-2 border-[#d4af37] text-[#d4af37]'
+                        : 'text-slate-400 hover:text-slate-200'
                         }`}
                 >
                     Dados Pessoais
@@ -100,8 +230,8 @@ const ConsultantProfileForm: React.FC = () => {
                 <button
                     onClick={() => setActiveTab('address')}
                     className={`px-4 py-2 text-sm font-semibold transition-all ${activeTab === 'address'
-                            ? 'border-b-2 border-[#d4af37] text-[#d4af37]'
-                            : 'text-slate-400 hover:text-slate-200'
+                        ? 'border-b-2 border-[#d4af37] text-[#d4af37]'
+                        : 'text-slate-400 hover:text-slate-200'
                         }`}
                 >
                     Endereço
@@ -109,8 +239,8 @@ const ConsultantProfileForm: React.FC = () => {
                 <button
                     onClick={() => setActiveTab('payment')}
                     className={`px-4 py-2 text-sm font-semibold transition-all ${activeTab === 'payment'
-                            ? 'border-b-2 border-[#d4af37] text-[#d4af37]'
-                            : 'text-slate-400 hover:text-slate-200'
+                        ? 'border-b-2 border-[#d4af37] text-[#d4af37]'
+                        : 'text-slate-400 hover:text-slate-200'
                         }`}
                 >
                     Pagamento
@@ -126,6 +256,7 @@ const ConsultantProfileForm: React.FC = () => {
                             <ImageUploader
                                 currentImage={formData.avatarUrl}
                                 onImageUpload={handleImageUpload}
+                                onFileUpload={handleFileUpload}
                                 placeholderText="Enviar foto"
                                 aspectRatio="square"
                             />

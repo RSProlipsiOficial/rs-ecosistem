@@ -9,6 +9,132 @@ interface HeadquartersPanelProps {
     activeTab?: 'cds' | 'replenishment' | 'history' | 'rules' | 'OVERVIEW' | 'REQUESTS' | 'SALES' | 'RULES';
 }
 
+const SALE_STATUS: Record<string, { label: string; cls: string }> = {
+    'PENDING': { label: 'Pendente', cls: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' },
+    'PENDENTE': { label: 'Pendente', cls: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' },
+    'PAID': { label: 'Pago', cls: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
+    'PAGO': { label: 'Pago', cls: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
+    'SEPARACAO': { label: 'Em Separação', cls: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' },
+    'ENVIADO': { label: 'Enviado', cls: 'bg-purple-500/10 text-purple-400 border-purple-500/20' },
+    'SHIPPED': { label: 'Enviado', cls: 'bg-purple-500/10 text-purple-400 border-purple-500/20' },
+    'ENTREGUE': { label: 'Entregue', cls: 'bg-green-500/10 text-green-400 border-green-500/20' },
+    'DELIVERED': { label: 'Entregue', cls: 'bg-green-500/10 text-green-400 border-green-500/20' },
+    'COMPLETO': { label: 'Completo', cls: 'bg-green-500/10 text-green-400 border-green-500/20' },
+    'COMPLETED': { label: 'Completo', cls: 'bg-green-500/10 text-green-400 border-green-500/20' },
+    'CANCELADO': { label: 'Cancelado', cls: 'bg-red-500/10 text-red-400 border-red-500/20' },
+    'CANCELED': { label: 'Cancelado', cls: 'bg-red-500/10 text-red-400 border-red-500/20' },
+};
+
+interface SalesTabProps { sales: GlobalSalesOrder[]; onRefresh: () => void; }
+const SalesTab: React.FC<SalesTabProps> = ({ sales, onRefresh }) => {
+    const [search, setSearch] = useState('');
+    const [statusFilter, setStatusFilter] = useState('TODOS');
+
+    const allStatuses = ['TODOS', ...Array.from(new Set(sales.map(s => ((s as any).status || '').toUpperCase()))).filter(Boolean)];
+
+    const filtered = sales.filter(s => {
+        const rawStatus = ((s as any).status || '').toUpperCase();
+        const matchStatus = statusFilter === 'TODOS' || rawStatus === statusFilter;
+        const q = search.toLowerCase();
+        const matchSearch = !q ||
+            ((s as any).customerName || s.sellerName || '').toLowerCase().includes(q) ||
+            (s.id || '').toLowerCase().includes(q) ||
+            (s.sellerName || '').toLowerCase().includes(q);
+        return matchStatus && matchSearch;
+    });
+
+    const CONFIRMED = ['PAID', 'PAGO', 'ENTREGUE', 'DELIVERED', 'COMPLETO', 'COMPLETED', 'ENVIADO', 'SHIPPED', 'SEPARACAO'];
+    const totalConfirmed = sales
+        .filter(s => CONFIRMED.includes(((s as any).status || '').toUpperCase()))
+        .reduce((acc, s) => acc + Number(s.total || 0), 0);
+
+    return (
+        <div className="bg-[#1E1E1E] rounded-xl border border-gray-800 overflow-hidden shadow-2xl">
+            <div className="bg-gradient-to-r from-gray-900 to-black p-6 border-b border-gray-800">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                            <HistoryIcon className="w-6 h-6 text-yellow-500" />
+                            VENDAS DA REDE ({filtered.length})
+                        </h3>
+                        <p className="text-xs text-gray-500 mt-1">
+                            Receita confirmada: <span className="text-green-400 font-bold">R$ {totalConfirmed.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                            <span className="ml-3 text-gray-600">| {sales.length} pedidos totais</span>
+                        </p>
+                    </div>
+                    <button onClick={onRefresh} className="px-3 py-1.5 text-xs font-bold bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 rounded-lg hover:bg-yellow-500/20 transition-colors">
+                        🔄 Atualizar
+                    </button>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-3 mt-4">
+                    <div className="relative flex-1">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">🔍</span>
+                        <input
+                            type="text"
+                            placeholder="Buscar por cliente, ID ou vendedor..."
+                            className="w-full bg-black/40 border border-gray-800 text-white pl-9 pr-4 py-2 rounded-lg text-sm focus:outline-none focus:border-yellow-500/50"
+                            value={search}
+                            onChange={e => setSearch(e.target.value)}
+                        />
+                    </div>
+                    <div className="flex gap-2 flex-wrap">
+                        {allStatuses.slice(0, 6).map(s => (
+                            <button
+                                key={s}
+                                onClick={() => setStatusFilter(s)}
+                                className={`px-3 py-1.5 rounded-lg text-[10px] font-bold border transition-all ${statusFilter === s
+                                        ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/40'
+                                        : 'bg-black/20 text-gray-500 border-gray-800 hover:text-white'
+                                    }`}
+                            >{SALE_STATUS[s]?.label || s}</button>
+                        ))}
+                    </div>
+                </div>
+            </div>
+            <div className="overflow-x-auto">
+                <table className="w-full text-left">
+                    <thead>
+                        <tr className="bg-black/40 text-[10px] text-gray-500 font-bold uppercase tracking-widest">
+                            <th className="px-6 py-4">Data</th>
+                            <th className="px-6 py-4">ID</th>
+                            <th className="px-6 py-4">Cliente</th>
+                            <th className="px-6 py-4">Vendedor / CD</th>
+                            <th className="px-6 py-4">Pagamento</th>
+                            <th className="px-6 py-4">Valor</th>
+                            <th className="px-6 py-4 text-right">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-800">
+                        {filtered.length === 0 ? (
+                            <tr><td colSpan={7} className="px-6 py-20 text-center text-gray-600 font-medium">
+                                {search || statusFilter !== 'TODOS' ? 'Nenhum resultado para os filtros.' : 'Nenhuma venda registrada.'}
+                            </td></tr>
+                        ) : (
+                            filtered.map(sale => {
+                                const rawStatus = ((sale as any).status || 'PENDING').toUpperCase();
+                                const meta = SALE_STATUS[rawStatus] || { label: rawStatus, cls: 'bg-gray-500/10 text-gray-400 border-gray-500/20' };
+                                return (
+                                    <tr key={sale.id} className="hover:bg-white/5 transition-colors">
+                                        <td className="px-6 py-4 text-gray-400 text-xs">{sale.date ? new Date(sale.date).toLocaleDateString('pt-BR') : '—'}</td>
+                                        <td className="px-6 py-4 text-gray-500 font-mono text-xs">#{(sale.id || '').toString().toUpperCase().slice(0, 8)}</td>
+                                        <td className="px-6 py-4 text-white font-medium text-sm">{(sale as any).customerName || '—'}</td>
+                                        <td className="px-6 py-4 text-gray-300 text-sm">{sale.sellerName || 'Sede RS'}</td>
+                                        <td className="px-6 py-4 text-gray-500 text-xs">{(sale as any).paymentMethod || 'PIX'}</td>
+                                        <td className="px-6 py-4 text-green-400 font-black text-sm">R$ {Number(sale.total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                                        <td className="px-6 py-4 text-right">
+                                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${meta.cls}`}>{meta.label}</span>
+                                        </td>
+                                    </tr>
+                                );
+                            })
+                        )}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    );
+};
+
 const HeadquartersPanel: React.FC<HeadquartersPanelProps> = ({ activeTab: initialTabProp }) => {
     const [activeTab, setActiveTab] = useState<'cds' | 'replenishment' | 'history' | 'rules'>('cds');
     const [cdList, setCdList] = useState<CDRegistry[]>([]);
@@ -440,48 +566,9 @@ const HeadquartersPanel: React.FC<HeadquartersPanelProps> = ({ activeTab: initia
                         )}
 
                         {activeTab === 'history' && (
-                            <div className="bg-[#1E1E1E] rounded-xl border border-gray-800 overflow-hidden shadow-2xl">
-                                <div className="bg-gradient-to-r from-gray-900 to-black p-6 flex justify-between items-center border-b border-gray-800">
-                                    <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                                        <HistoryIcon className="w-6 h-6 text-yellow-500" />
-                                        RESUMO DE VENDAS DA REDE ({sales.length})
-                                    </h3>
-                                </div>
-                                <div className="overflow-x-auto">
-                                    <table className="w-full text-left">
-                                        <thead>
-                                            <tr className="bg-black/40 text-[10px] text-gray-500 font-bold uppercase tracking-widest">
-                                                <th className="px-6 py-4">Data</th>
-                                                <th className="px-6 py-4">Vendedor/CD</th>
-                                                <th className="px-6 py-4">Referência</th>
-                                                <th className="px-6 py-4">Valor</th>
-                                                <th className="px-6 py-4 text-right">Status</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-gray-800">
-                                            {sales.length === 0 ? (
-                                                <tr>
-                                                    <td colSpan={5} className="px-6 py-20 text-center text-gray-600 font-medium">Nenhuma venda registrada recentemente.</td>
-                                                </tr>
-                                            ) : (
-                                                sales.map((sale) => (
-                                                    <tr key={sale.id} className="hover:bg-white/5 transition-colors">
-                                                        {/* Implementação simplificada para exibição */}
-                                                        <td className="px-6 py-5 text-gray-400 text-xs">{new Date(sale.date).toLocaleDateString('pt-BR')}</td>
-                                                        <td className="px-6 py-5 text-white font-bold">{sale.sellerName}</td>
-                                                        <td className="px-6 py-5 text-gray-500 font-mono text-xs">{sale.id}</td>
-                                                        <td className="px-6 py-5 text-green-400 font-black">R$ {sale.total.toLocaleString('pt-BR')}</td>
-                                                        <td className="px-6 py-5 text-right">
-                                                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-green-500/10 text-green-500 border border-green-500/20">{sale.status}</span>
-                                                        </td>
-                                                    </tr>
-                                                ))
-                                            )}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
+                            <SalesTab sales={sales} onRefresh={fetchData} />
                         )}
+
 
                         {activeTab === 'rules' && (
                             <div className="bg-[#1E1E1E] rounded-xl border border-gray-800 p-8 shadow-2xl">

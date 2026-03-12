@@ -49,8 +49,16 @@ const CDSelectionModal: React.FC<CDSelectionModalProps> = ({
 
                 {/* Content */}
                 <div className="p-8 max-h-[60vh] overflow-y-auto custom-scrollbar">
-                    <div className="grid gap-4">
-                        {distributors.map((dist) => (
+                    {distributors.length === 0 ? (
+                        <div className="rounded-2xl border border-dashed border-white/10 bg-zinc-900/30 px-6 py-10 text-center">
+                            <p className="text-sm font-semibold text-white">Nenhum centro de distribuicao disponivel.</p>
+                            <p className="mt-2 text-xs text-zinc-500">
+                                Cadastre ou ative os CDs no RS Admin para liberar a escolha aqui.
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="grid gap-4">
+                            {distributors.map((dist) => (
                             <button
                                 key={dist.id}
                                 onClick={() => onSelect(dist)}
@@ -71,8 +79,9 @@ const CDSelectionModal: React.FC<CDSelectionModalProps> = ({
                                     <span className="text-lg">→</span>
                                 </div>
                             </button>
-                        ))}
-                    </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
 
                 {/* Footer */}

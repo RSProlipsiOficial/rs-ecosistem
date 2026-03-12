@@ -69,7 +69,7 @@ export const AdminPanel: React.FC = () => {
     const {
         logout, setEditMode, activeAdminTab, setActiveAdminTab,
         panelState, updatePanelState, isPanelMinimized, setIsPanelMinimized,
-        openItemId, editingContainerId
+        openItemId, editingContainerId, isEmbeddedAdmin
     } = useAdmin();
     const { t } = useLanguage();
 
@@ -88,14 +88,14 @@ export const AdminPanel: React.FC = () => {
     }, [openItemId, editingContainerId, setIsPanelMinimized]);
 
     const onDragMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
-        if (isMaximized || (e.target as HTMLElement).closest('button, .resize-handle')) return;
+        if (isEmbeddedAdmin || isMaximized || (e.target as HTMLElement).closest('button, .resize-handle')) return;
         setIsDragging(true);
         dragOffset.current = { x: e.clientX - panelState.x, y: e.clientY - panelState.y };
         e.preventDefault();
     };
     
     const onResizeMouseDown = (e: React.MouseEvent<HTMLDivElement>, direction: string) => {
-        if (isMaximized) return;
+        if (isEmbeddedAdmin || isMaximized) return;
         setIsResizing(true);
         setResizeDirection(direction);
         e.preventDefault();
@@ -164,11 +164,11 @@ export const AdminPanel: React.FC = () => {
     const activeTabLabel = TABS.find(tab => tab.id === activeAdminTab)?.labelKey || 'admin_dashboard';
     
     const panelStyle: React.CSSProperties = {
-        top: isMaximized ? 0 : `${panelState.y}px`,
-        left: isMaximized ? 0 : `${panelState.x}px`,
-        width: isMaximized ? '100vw' : `${panelState.width}px`,
-        height: isPanelMinimized ? '4rem' : (isMaximized ? '100vh' : `${panelState.height}px`),
-        borderRadius: isMaximized ? '0' : '0.5rem',
+        top: isEmbeddedAdmin || isMaximized ? 0 : `${panelState.y}px`,
+        left: isEmbeddedAdmin || isMaximized ? 0 : `${panelState.x}px`,
+        width: isEmbeddedAdmin ? '100%' : (isMaximized ? '100vw' : `${panelState.width}px`),
+        height: isEmbeddedAdmin ? '100%' : (isPanelMinimized ? '4rem' : (isMaximized ? '100vh' : `${panelState.height}px`)),
+        borderRadius: isEmbeddedAdmin || isMaximized ? '0' : '0.5rem',
         transition: isDragging || isResizing ? 'none' : 'width 0.2s, height 0.2s, top 0.2s, left 0.2s',
     };
     
@@ -178,7 +178,7 @@ export const AdminPanel: React.FC = () => {
             className="fixed bg-background/90 backdrop-blur-md border border-border z-[60] flex flex-col shadow-2xl"
         >
             {/* Resize Handles */}
-            {!isMaximized && !isPanelMinimized && (
+            {!isEmbeddedAdmin && !isMaximized && !isPanelMinimized && (
                 <>
                     <div onMouseDown={(e) => onResizeMouseDown(e, 'top')} className="absolute -top-1 left-2 right-2 h-2 cursor-ns-resize resize-handle"></div>
                     <div onMouseDown={(e) => onResizeMouseDown(e, 'bottom')} className="absolute -bottom-1 left-2 right-2 h-2 cursor-ns-resize resize-handle"></div>
@@ -193,14 +193,16 @@ export const AdminPanel: React.FC = () => {
 
             <header
                 onMouseDown={onDragMouseDown}
-                className={`flex-shrink-0 flex items-center justify-between h-16 border-b border-border px-4 ${isMaximized ? '' : 'cursor-move'}`}
+                className={`flex-shrink-0 flex items-center justify-between h-16 border-b border-border px-4 ${isEmbeddedAdmin || isMaximized ? '' : 'cursor-move'}`}
             >
                 <h2 className="text-lg font-bold text-accent tracking-wider select-none truncate">{t(activeTabLabel)}</h2>
-                <div className="flex items-center space-x-1">
-                    <button onClick={() => setIsPanelMinimized(!isPanelMinimized)} title={isPanelMinimized ? t('admin_panel_restore') : t('admin_panel_minimize')} className="p-2 text-text-secondary hover:text-text-primary"><MinusIcon className="w-5 h-5" /></button>
-                    <button onClick={toggleMaximize} title={isMaximized ? t('admin_panel_restore') : t('admin_panel_maximize')} className="p-2 text-text-secondary hover:text-text-primary">{isMaximized ? <ArrowsPointingInIcon className="w-5 h-5" /> : <ArrowsPointingOutIcon className="w-5 h-5" />}</button>
-                    <button onClick={() => setEditMode(false)} title={t('admin_panel_close')} className="p-2 text-text-secondary hover:text-text-primary"><XMarkIcon className="w-5 h-5" /></button>
-                </div>
+                {!isEmbeddedAdmin && (
+                    <div className="flex items-center space-x-1">
+                        <button onClick={() => setIsPanelMinimized(!isPanelMinimized)} title={isPanelMinimized ? t('admin_panel_restore') : t('admin_panel_minimize')} className="p-2 text-text-secondary hover:text-text-primary"><MinusIcon className="w-5 h-5" /></button>
+                        <button onClick={toggleMaximize} title={isMaximized ? t('admin_panel_restore') : t('admin_panel_maximize')} className="p-2 text-text-secondary hover:text-text-primary">{isMaximized ? <ArrowsPointingInIcon className="w-5 h-5" /> : <ArrowsPointingOutIcon className="w-5 h-5" />}</button>
+                        <button onClick={() => setEditMode(false)} title={t('admin_panel_close')} className="p-2 text-text-secondary hover:text-text-primary"><XMarkIcon className="w-5 h-5" /></button>
+                    </div>
+                )}
             </header>
             
             {!isPanelMinimized && (
@@ -218,10 +220,12 @@ export const AdminPanel: React.FC = () => {
                             <TabContent activeTab={activeAdminTab} />
                         </main>
                     </div>
-                    <footer className="flex-shrink-0 border-t border-border p-2 flex items-center justify-end space-x-2">
-                        <button onClick={() => setEditMode(false)} title={t('admin_panel_view_site')} className="h-12 w-12 flex items-center justify-center rounded-md text-text-secondary hover:bg-surface"><ViewfinderCircleIcon className="w-5 h-5" /></button>
-                        <button onClick={logout} title={t('admin_panel_logout')} className="h-12 w-12 flex items-center justify-center rounded-md text-text-secondary hover:bg-surface hover:text-red-400"><LogoutIcon className="w-5 h-5" /></button>
-                    </footer>
+                    {!isEmbeddedAdmin && (
+                        <footer className="flex-shrink-0 border-t border-border p-2 flex items-center justify-end space-x-2">
+                            <button onClick={() => setEditMode(false)} title={t('admin_panel_view_site')} className="h-12 w-12 flex items-center justify-center rounded-md text-text-secondary hover:bg-surface"><ViewfinderCircleIcon className="w-5 h-5" /></button>
+                            <button onClick={logout} title={t('admin_panel_logout')} className="h-12 w-12 flex items-center justify-center rounded-md text-text-secondary hover:bg-surface hover:text-red-400"><LogoutIcon className="w-5 h-5" /></button>
+                        </footer>
+                    )}
                 </>
             )}
         </div>

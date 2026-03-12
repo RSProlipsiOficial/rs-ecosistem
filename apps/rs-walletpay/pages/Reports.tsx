@@ -1,14 +1,29 @@
 
-
-import React, { useState, useMemo, useEffect } from 'react';
-import { MARKETING_PLAN_DATA, MOCK_USER_PROFILE, typeLabels } from '../constants';
-import { walletAPI } from '../src/services/api';
+import React, { useEffect, useMemo, useState } from 'react';
+import { typeLabels } from '../constants';
+import { careerAPI, walletAPI } from '../src/services/api';
 import { LedgerEntry, LedgerEventType } from '../types';
+import { getWalletUserId } from '../src/utils/walletSession';
 
-// Helper to format currency
 const formatCurrency = (value: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+const formatNumber = (value: number) => new Intl.NumberFormat('pt-BR').format(value);
 
-// KPI Card for the summary
+type CareerLevel = {
+    id?: string;
+    name: string;
+    requiredVolume: number;
+    imageUrl?: string;
+    displayOrder?: number;
+};
+
+type CareerProgress = {
+    currentVolume: number;
+    nextLevelVolume: number;
+    currentPin: string;
+    nextPin: string;
+    progressPercentage: number;
+};
+
 const SummaryCard: React.FC<{ title: string; value: string | number; description: string }> = ({ title, value, description }) => (
     <div className="bg-card p-6 rounded-2xl border border-border">
         <p className="text-sm text-text-soft">{title}</p>
@@ -17,21 +32,17 @@ const SummaryCard: React.FC<{ title: string; value: string | number; description
     </div>
 );
 
-// Tab Button component
 const TabButton: React.FC<{ label: string; active: boolean; onClick: () => void; }> = ({ label, active, onClick }) => (
     <button
         onClick={onClick}
-        className={`whitespace-nowrap py-4 px-4 border-b-2 font-medium text-sm transition-colors
-            ${active ? 'border-gold text-gold' : 'border-transparent text-text-soft hover:text-text-body hover:border-border'
-            }`}
+        className={`whitespace-nowrap py-4 px-4 border-b-2 font-medium text-sm transition-colors ${
+            active ? 'border-gold text-gold' : 'border-transparent text-text-soft hover:text-text-body hover:border-border'
+        }`}
     >
         {label}
     </button>
 );
 
-// --- TABS CONTENT ---
-
-// 1. Resumo de Ganhos Tab
 const EarningsSummaryTab: React.FC<{ earningsData: LedgerEntry[] }> = ({ earningsData }) => {
     const [searchTerm, setSearchTerm] = useState('');
 
@@ -59,11 +70,10 @@ const EarningsSummaryTab: React.FC<{ earningsData: LedgerEntry[] }> = ({ earning
             const type = typeLabels[entry.type] || entry.type;
             if (!acc[type]) {
                 acc[type] = { count: 0, total: 0, latestDate: entry.occurredAt };
-            } else {
-                if (new Date(entry.occurredAt) > new Date(acc[type].latestDate)) {
-                    acc[type].latestDate = entry.occurredAt;
-                }
+            } else if (new Date(entry.occurredAt) > new Date(acc[type].latestDate)) {
+                acc[type].latestDate = entry.occurredAt;
             }
+
             acc[type].count += 1;
             acc[type].total += entry.amount;
             return acc;
@@ -86,7 +96,7 @@ const EarningsSummaryTab: React.FC<{ earningsData: LedgerEntry[] }> = ({ earning
                     </span>
                     <input
                         type="text"
-                        placeholder="Filtrar ganhos por descrição ou Ref ID..."
+                        placeholder="Filtrar ganhos por descricao ou Ref ID..."
                         className="w-full sm:w-96 pl-10 pr-4 py-2 rounded-lg bg-surface border border-border focus:outline-none focus:ring-2 focus:ring-gold/25 focus:border-transparent transition-all"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
@@ -94,21 +104,21 @@ const EarningsSummaryTab: React.FC<{ earningsData: LedgerEntry[] }> = ({ earning
                 </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <SummaryCard title="Ganhos Totais" value={summary.totalEarnings} description="Soma de todos os bônus e comissões." />
-                <SummaryCard title="Total em Bônus" value={summary.totalBonuses} description="Ganhos de bônus de ciclo, profundidade, etc." />
-                <SummaryCard title="Total em Comissões" value={summary.totalCommissions} description="Ganhos de comissões por vendas e indicações." />
+                <SummaryCard title="Ganhos Totais" value={summary.totalEarnings} description="Soma de todos os bonus e comissoes." />
+                <SummaryCard title="Total em Bonus" value={summary.totalBonuses} description="Ganhos de bonus de ciclo, profundidade e similares." />
+                <SummaryCard title="Total em Comissoes" value={summary.totalCommissions} description="Ganhos de comissoes por vendas e indicacoes." />
             </div>
             <div className="bg-card rounded-2xl border border-border overflow-hidden">
                 <div className="p-6">
                     <h3 className="text-lg font-bold text-text-title">Detalhamento de Ganhos</h3>
-                    <p className="text-sm text-text-soft mt-1">Ganhos detalhados por tipo de transação no período.</p>
+                    <p className="text-sm text-text-soft mt-1">Ganhos detalhados por tipo de transacao no periodo.</p>
                 </div>
                 <div className="overflow-x-auto">
                     <table className="w-full text-left">
                         <thead className="bg-surface text-xs text-text-body uppercase tracking-wider">
                             <tr>
                                 <th className="px-6 py-4 font-semibold">Tipo de Ganho</th>
-                                <th className="px-6 py-4 font-semibold text-center">Nº de Transações</th>
+                                <th className="px-6 py-4 font-semibold text-center">Transacoes</th>
                                 <th className="px-6 py-4 font-semibold text-right">Valor Total</th>
                             </tr>
                         </thead>
@@ -121,7 +131,7 @@ const EarningsSummaryTab: React.FC<{ earningsData: LedgerEntry[] }> = ({ earning
                                 </tr>
                             )) : (
                                 <tr>
-                                    <td colSpan={3} className="text-center py-12 text-text-body">Nenhum ganho encontrado para o período selecionado.</td>
+                                    <td colSpan={3} className="text-center py-12 text-text-body">Nenhum ganho encontrado para o periodo selecionado.</td>
                                 </tr>
                             )}
                         </tbody>
@@ -130,17 +140,17 @@ const EarningsSummaryTab: React.FC<{ earningsData: LedgerEntry[] }> = ({ earning
             </div>
             <div className="bg-card rounded-2xl border border-border overflow-hidden">
                 <div className="p-6">
-                    <h3 className="text-lg font-bold text-text-title">Análise por Tipo de Ganho</h3>
-                    <p className="text-sm text-text-soft mt-1">Métricas adicionais para cada categoria de ganho.</p>
+                    <h3 className="text-lg font-bold text-text-title">Analise por Tipo de Ganho</h3>
+                    <p className="text-sm text-text-soft mt-1">Metricas adicionais para cada categoria de ganho.</p>
                 </div>
                 <div className="overflow-x-auto">
                     <table className="w-full text-left">
                         <thead className="bg-surface text-xs text-text-body uppercase tracking-wider">
                             <tr>
                                 <th className="px-6 py-4 font-semibold">Tipo de Ganho</th>
-                                <th className="px-6 py-4 font-semibold">Última Transação</th>
-                                <th className="px-6 py-4 font-semibold text-right">Valor Médio</th>
-                                <th className="px-6 py-4 font-semibold text-center">Total de Transações</th>
+                                <th className="px-6 py-4 font-semibold">Ultima Transacao</th>
+                                <th className="px-6 py-4 font-semibold text-right">Valor Medio</th>
+                                <th className="px-6 py-4 font-semibold text-center">Total</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border">
@@ -153,7 +163,7 @@ const EarningsSummaryTab: React.FC<{ earningsData: LedgerEntry[] }> = ({ earning
                                 </tr>
                             )) : (
                                 <tr>
-                                    <td colSpan={4} className="text-center py-12 text-text-body">Nenhum dado para analisar no período selecionado.</td>
+                                    <td colSpan={4} className="text-center py-12 text-text-body">Nenhum dado para analisar no periodo selecionado.</td>
                                 </tr>
                             )}
                         </tbody>
@@ -164,95 +174,155 @@ const EarningsSummaryTab: React.FC<{ earningsData: LedgerEntry[] }> = ({ earning
     );
 };
 
-// 2. Progresso de Carreira Tab
-const CareerProgressTab: React.FC = () => {
-    const { achievedPins, nextPin } = useMemo(() => {
-        const currentUserPinIndex = MARKETING_PLAN_DATA.careerPlan.findIndex(p => p.pin === MOCK_USER_PROFILE.currentPin);
+const CareerProgressTab: React.FC<{ levels: CareerLevel[]; progress: CareerProgress | null; loading: boolean }> = ({ levels, progress, loading }) => {
+    const achievedLevels = useMemo(() => {
+        if (!progress) return [];
+        return levels.filter(level => Number(level.requiredVolume || 0) <= Number(progress.currentVolume || 0));
+    }, [levels, progress]);
 
-        if (currentUserPinIndex === -1) {
-            return { achievedPins: [], nextPin: MARKETING_PLAN_DATA.careerPlan[0] };
-        }
+    const nextLevel = useMemo(() => {
+        if (!progress) return null;
+        return levels.find(level => level.name === progress.nextPin) ||
+            levels.find(level => Number(level.requiredVolume || 0) > Number(progress.currentVolume || 0)) ||
+            null;
+    }, [levels, progress]);
 
-        const achieved = MARKETING_PLAN_DATA.careerPlan.slice(0, currentUserPinIndex + 1);
-        const next = MARKETING_PLAN_DATA.careerPlan[currentUserPinIndex + 1] || null;
+    if (loading) {
+        return (
+            <div className="bg-card rounded-2xl border border-border p-8 text-center text-text-soft">
+                Carregando progresso de carreira...
+            </div>
+        );
+    }
 
-        return { achievedPins: achieved, nextPin: next };
-    }, []);
+    if (!progress) {
+        return (
+            <div className="bg-card rounded-2xl border border-border p-8 text-center text-text-soft">
+                Nao foi possivel carregar os dados de carreira.
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6">
-            <div className="bg-card rounded-2xl border border-border p-4 text-center text-sm text-info bg-info/5">
-                Nota: O progresso de carreira exibe dados cumulativos de toda a sua jornada e não é afetado pelo filtro de data.
+            <div className="bg-card rounded-2xl border border-border p-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <SummaryCard title="PIN Atual" value={progress.currentPin || 'Consultor'} description="Nivel atual consolidado pelo sistema." />
+                    <SummaryCard title="Volume Atual" value={formatNumber(progress.currentVolume || 0)} description="Volume acumulado para progressao." />
+                    <SummaryCard title="Proximo PIN" value={progress.nextPin || 'Sem proximo nivel'} description="Meta seguinte calculada pela API." />
+                </div>
             </div>
+
+            <div className="bg-card rounded-2xl border border-border p-6">
+                <h3 className="text-lg font-bold text-text-title">Progresso Atual</h3>
+                <p className="text-sm text-text-soft mt-1">
+                    {nextLevel
+                        ? `Faltam ${formatNumber(Math.max(0, Number(nextLevel.requiredVolume || 0) - Number(progress.currentVolume || 0)))} pontos para chegar em ${nextLevel.name}.`
+                        : 'Voce ja atingiu o ultimo nivel configurado.'}
+                </p>
+                <div className="mt-4">
+                    <div className="flex justify-between items-center mb-1">
+                        <span className="text-sm font-medium text-text-body">Progresso</span>
+                        <span className="text-sm font-bold text-gold">{Math.round(progress.progressPercentage || 0)}%</span>
+                    </div>
+                    <div className="w-full bg-surface rounded-full h-2.5">
+                        <div className="bg-gold h-2.5 rounded-full" style={{ width: `${Math.max(0, Math.min(progress.progressPercentage || 0, 100))}%` }}></div>
+                    </div>
+                </div>
+            </div>
+
             <div className="bg-card rounded-2xl border border-border overflow-hidden">
                 <div className="p-6">
-                    <h3 className="text-lg font-bold text-text-title">PINs Alcançados</h3>
-                    <p className="text-sm text-text-soft mt-1">Seu histórico de conquistas no plano de carreira.</p>
+                    <h3 className="text-lg font-bold text-text-title">Niveis Alcancados</h3>
+                    <p className="text-sm text-text-soft mt-1">Lista baseada nos niveis configurados no painel administrativo.</p>
                 </div>
                 <div className="overflow-x-auto">
                     <table className="w-full text-left">
                         <thead className="bg-surface text-xs text-text-body uppercase tracking-wider">
                             <tr>
-                                <th className="px-6 py-4 font-semibold">PIN</th>
-                                <th className="px-6 py-4 font-semibold">Ciclos Necessários</th>
-                                <th className="px-6 py-4 font-semibold text-right">Recompensa Ganhada</th>
+                                <th className="px-6 py-4 font-semibold">Nivel</th>
+                                <th className="px-6 py-4 font-semibold">Volume Requerido</th>
                                 <th className="px-6 py-4 font-semibold text-center">Status</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border">
-                            {achievedPins.map((pin) => (
-                                <tr key={pin.pin} className="hover:bg-surface/50">
-                                    <td className="px-6 py-4 font-medium text-gold">{pin.pin}</td>
-                                    <td className="px-6 py-4 text-text-body">{pin.cycles}</td>
-                                    <td className="px-6 py-4 text-right font-semibold text-success">{formatCurrency(pin.reward)}</td>
+                            {achievedLevels.length > 0 ? achievedLevels.map((level) => (
+                                <tr key={level.id || level.name} className="hover:bg-surface/50">
+                                    <td className="px-6 py-4 font-medium text-gold">{level.name}</td>
+                                    <td className="px-6 py-4 text-text-body">{formatNumber(Number(level.requiredVolume || 0))}</td>
                                     <td className="px-6 py-4 text-center">
                                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-success/10 text-success border border-success/20">
-                                            Alcançado
+                                            Alcancado
                                         </span>
                                     </td>
                                 </tr>
-                            ))}
+                            )) : (
+                                <tr>
+                                    <td colSpan={3} className="text-center py-12 text-text-body">Nenhum nivel alcancado ainda.</td>
+                                </tr>
+                            )}
                         </tbody>
                     </table>
                 </div>
             </div>
-
-            {nextPin && (
-                <div className="bg-card rounded-2xl border border-border p-6">
-                    <h3 className="text-lg font-bold text-text-title">Próximo Nível: <span className="text-gold">{nextPin.pin}</span></h3>
-                    <p className="text-sm text-text-soft mt-1">Faltam <span className="font-bold text-text-title">{nextPin.cycles - MOCK_USER_PROFILE.currentCycles}</span> ciclos para sua próxima graduação.</p>
-                    <div className="mt-4">
-                        <div className="flex justify-between items-center mb-1">
-                            <span className="text-sm font-medium text-text-body">Progresso</span>
-                            <span className="text-sm font-bold text-gold">{MOCK_USER_PROFILE.currentCycles} / {nextPin.cycles}</span>
-                        </div>
-                        <div className="w-full bg-surface rounded-full h-2.5">
-                            <div className="bg-gold h-2.5 rounded-full" style={{ width: `${(MOCK_USER_PROFILE.currentCycles / nextPin.cycles) * 100}%` }}></div>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 };
 
-// Main Reports Component
 const Reports: React.FC = () => {
     const [activeTab, setActiveTab] = useState('summary');
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
     const [entries, setEntries] = useState<LedgerEntry[]>([]);
+    const [careerLevels, setCareerLevels] = useState<CareerLevel[]>([]);
+    const [careerProgress, setCareerProgress] = useState<CareerProgress | null>(null);
+    const [careerLoading, setCareerLoading] = useState(true);
 
     useEffect(() => {
         const load = async () => {
             try {
-                const userId = localStorage.getItem('userId') || 'demo-user';
-                const res = await walletAPI.getTransactions(userId);
-                if (res?.data?.success) setEntries(res.data.transactions || []);
+                const userId = getWalletUserId();
+                if (!userId) {
+                    setEntries([]);
+                    setCareerLevels([]);
+                    setCareerProgress(null);
+                    setCareerLoading(false);
+                    return;
+                }
+
+                const [transactionsRes, levelsRes, progressRes] = await Promise.all([
+                    walletAPI.getTransactions(userId).catch(() => null),
+                    careerAPI.getLevel().catch(() => null),
+                    careerAPI.getProgress().catch(() => null),
+                ]);
+
+                if (transactionsRes?.data?.success) {
+                    setEntries(transactionsRes.data.transactions || []);
+                } else {
+                    setEntries([]);
+                }
+
+                if (levelsRes?.data?.success) {
+                    setCareerLevels(Array.isArray(levelsRes.data.data) ? levelsRes.data.data : []);
+                } else {
+                    setCareerLevels([]);
+                }
+
+                if (progressRes?.data?.success) {
+                    setCareerProgress(progressRes.data.data || null);
+                } else {
+                    setCareerProgress(null);
+                }
             } catch (err) {
-                console.error('Erro ao carregar transações para relatórios:', err);
+                console.error('Erro ao carregar relatorios:', err);
+                setEntries([]);
+                setCareerLevels([]);
+                setCareerProgress(null);
+            } finally {
+                setCareerLoading(false);
             }
         };
+
         load();
     }, []);
 
@@ -280,17 +350,18 @@ const Reports: React.FC = () => {
 
     const tabs = [
         { id: 'summary', label: 'Resumo de Ganhos', component: <EarningsSummaryTab earningsData={filteredEntries} /> },
+        { id: 'career', label: 'Carreira', component: <CareerProgressTab levels={careerLevels} progress={careerProgress} loading={careerLoading} /> },
     ];
 
     return (
         <div className="space-y-6">
             <div>
-                <h1 className="text-3xl font-bold text-text-title">Relatórios de Desempenho</h1>
+                <h1 className="text-3xl font-bold text-text-title">Relatorios de Desempenho</h1>
                 <p className="text-text-body mt-1">Acompanhe seus ganhos e seu progresso de carreira.</p>
             </div>
             <div className="bg-card p-4 rounded-2xl border border-border flex flex-col sm:flex-row items-center gap-4">
                 <div className="flex-1 w-full sm:w-auto">
-                    <label htmlFor="start-date" className="text-xs text-text-soft mb-1 block">Data de Início</label>
+                    <label htmlFor="start-date" className="text-xs text-text-soft mb-1 block">Data de Inicio</label>
                     <input
                         type="date"
                         id="start-date"

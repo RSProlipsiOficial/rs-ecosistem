@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, CreditCard, ShoppingBag, MapPin, User, Mail, Calendar, Phone, Hash, Loader2, ShieldCheck } from 'lucide-react';
+import { X, CreditCard, ShoppingBag, MapPin, User, Mail, Calendar, Phone, Hash, Loader2, ShieldCheck, Lock as LockIcon } from 'lucide-react';
 import { UserProfile, UserPlan, PlanDefinition } from '../types';
 
 interface CheckoutFormProps {
@@ -48,8 +48,7 @@ export const CheckoutForm: React.FC<CheckoutFormProps> = ({ user, plan, platform
         } catch (error) {
             console.error("ViaCEP Error:", error);
         } finally {
-            setIsZipLoading(true);
-            setTimeout(() => setIsZipLoading(false), 500);
+            setIsZipLoading(false);
         }
     };
 
@@ -270,7 +269,7 @@ export const CheckoutForm: React.FC<CheckoutFormProps> = ({ user, plan, platform
                 </div>
                 {platformSettings?.mpPublicKey && (
                     <div className="px-8 pb-4 flex items-center justify-center gap-2 text-[10px] text-gray-500 uppercase tracking-widest font-bold">
-                        <Lock size={12} className="text-rs-gold" />
+                            <LockIcon size={12} className="text-rs-gold" />
                         Processado por {platformSettings?.platformName || 'RS MiniSite'} Gateway
                     </div>
                 )}

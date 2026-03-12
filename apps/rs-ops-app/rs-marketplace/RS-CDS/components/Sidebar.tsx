@@ -1,8 +1,6 @@
-
-
 import React from 'react';
 import { ViewState } from '../types';
-import { LayoutDashboard, ShoppingBag, Package, Settings, LogOut, Bot, PieChart, History, X, Shield, Menu } from 'lucide-react';
+import { LayoutDashboard, ShoppingBag, Package, Settings, LogOut, Bot, PieChart, History, X, Menu } from 'lucide-react';
 
 interface SidebarProps {
   currentView: ViewState;
@@ -15,21 +13,29 @@ interface SidebarProps {
   onLogout?: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, isOpen, onClose, isCollapsed, onToggleCollapse, logoUrl, onLogout }) => {
+const Sidebar: React.FC<SidebarProps> = ({
+  currentView,
+  setView,
+  isOpen,
+  onClose,
+  isCollapsed,
+  onToggleCollapse,
+  logoUrl,
+  onLogout
+}) => {
   const menuItems: { id: ViewState; label: string; icon: React.ReactNode }[] = [
     { id: 'DASHBOARD', label: 'Painel', icon: <LayoutDashboard size={20} /> },
-    { id: 'PEDIDOS', label: 'Gestão Pedidos', icon: <ShoppingBag size={20} /> },
-    { id: 'HISTORICO', label: 'Histórico Vendas', icon: <History size={20} /> },
+    { id: 'PEDIDOS', label: 'Gestao Pedidos', icon: <ShoppingBag size={20} /> },
+    { id: 'HISTORICO', label: 'Historico Vendas', icon: <History size={20} /> },
     { id: 'ABASTECIMENTOS', label: 'Meus Abastecimentos', icon: <Package size={20} /> },
     { id: 'ESTOQUE', label: 'Estoque CD', icon: <Package size={20} /> },
     { id: 'FINANCEIRO', label: 'Financeiro', icon: <PieChart size={20} /> },
     { id: 'IA_ADVISOR', label: 'RS-IA', icon: <Bot size={20} /> },
-    { id: 'CONFIGURACOES', label: 'Configurações', icon: <Settings size={20} /> },
+    { id: 'CONFIGURACOES', label: 'Configuracoes', icon: <Settings size={20} /> },
   ];
 
   return (
     <>
-      {/* Overlay Escuro para Mobile */}
       {isOpen && (
         <div
           onClick={onClose}
@@ -37,34 +43,44 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, isOpen, onClose
         />
       )}
 
-      {/* Sidebar Container */}
       <aside
         className={`
           fixed top-0 left-0 h-screen bg-dark-950 border-r border-dark-800 flex flex-col z-50 transition-all duration-300 ease-in-out shadow-2xl
-          ${isOpen ? 'translate-x-0' : '-translate-x-full'} 
+          ${isOpen ? 'translate-x-0' : '-translate-x-full'}
           md:translate-x-0
           ${isCollapsed ? 'w-64 md:w-20' : 'w-64 md:w-64'}
         `}
       >
         <div className="p-6 flex justify-between items-start">
           <div className={isCollapsed ? 'hidden md:hidden' : ''}>
-            {logoUrl ? (
-              <img src={logoUrl} alt="Logo" className="h-8 w-auto object-contain mb-1" />
-            ) : (
-              <h1 className="text-xl font-bold text-gold-400 tracking-tight">RS Prólipsi</h1>
-            )}
-            <p className="text-xs text-gray-500 mt-1">Gestão de CD v2.0</p>
+            <img
+              src={logoUrl || '/logo-rs.png'}
+              alt="Logo RS Prolipsi"
+              className="h-10 w-auto object-contain mb-3"
+              onError={(event) => {
+                event.currentTarget.onerror = null;
+                event.currentTarget.src = '/logo-rs.png';
+              }}
+            />
+            <p className="text-[10px] text-gray-500 uppercase tracking-[0.22em] font-bold opacity-75">
+              Painel Operacional do CD
+            </p>
           </div>
+
           {isCollapsed && (
             <div className="hidden md:block w-full text-center">
-              {logoUrl ? (
-                <img src={logoUrl} alt="Logo" className="h-6 w-6 object-contain mx-auto" icon-only="true" />
-              ) : (
-                <span className="text-2xl font-bold text-gold-400">RS</span>
-              )}
+              <img
+                src={logoUrl || '/logo-rs.png'}
+                alt="Logo RS Prolipsi"
+                className="h-8 w-8 object-contain mx-auto"
+                onError={(event) => {
+                  event.currentTarget.onerror = null;
+                  event.currentTarget.src = '/logo-rs.png';
+                }}
+              />
             </div>
           )}
-          {/* Botão Fechar (Apenas Mobile) */}
+
           <button
             onClick={onClose}
             className="md:hidden text-gray-500 hover:text-white"
@@ -73,7 +89,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, isOpen, onClose
           >
             <X size={24} />
           </button>
-          {/* Botão Colapsar (Apenas Desktop) */}
+
           <button
             onClick={onToggleCollapse}
             className="hidden md:block text-gray-500 hover:text-gold-400 transition-colors"
@@ -89,10 +105,11 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, isOpen, onClose
             <button
               key={item.id}
               onClick={() => setView(item.id)}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${currentView === item.id
-                ? 'bg-gold-500 text-black shadow-lg shadow-gold-500/20'
-                : 'text-gray-400 hover:text-white hover:bg-dark-800'
-                } ${isCollapsed ? 'md:justify-center' : ''}`}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
+                currentView === item.id
+                  ? 'bg-gold-500 text-black shadow-lg shadow-gold-500/20'
+                  : 'text-gray-400 hover:text-white hover:bg-dark-800'
+              } ${isCollapsed ? 'md:justify-center' : ''}`}
               title={isCollapsed ? item.label : ''}
             >
               {item.icon}
@@ -100,8 +117,6 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, isOpen, onClose
             </button>
           ))}
         </nav>
-
-        {/* Administrador removido - gestão de CDs é feita pelo Admin central */}
 
         <div className="p-4 border-t border-dark-800">
           <button

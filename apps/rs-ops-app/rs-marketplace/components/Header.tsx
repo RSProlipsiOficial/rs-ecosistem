@@ -116,7 +116,18 @@ const Header: React.FC<HeaderProps> = ({
           <div className="flex items-center space-x-4">
             <div className="relative hidden sm:block">
               <button onBlur={() => setTimeout(() => setIsUserMenuOpen(false), 200)} onClick={() => setIsUserMenuOpen(!isUserMenuOpen)} className="text-[rgb(var(--color-brand-text-light))] hover:text-[rgb(var(--color-brand-gold))] transition-colors" title="Minha conta" aria-label="Minha conta">
-                <UserIcon className="h-6 w-6" />
+                {currentCustomer?.avatarUrl ? (
+                  <img
+                    src={currentCustomer.avatarUrl || 'https://raw.githubusercontent.com/RS-Prolipsi/assets/main/logo_rs_gold.png'}
+                    alt={currentCustomer.name}
+                    className="h-8 w-8 rounded-full border-2 border-[rgb(var(--color-brand-gold))] object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = 'https://raw.githubusercontent.com/RS-Prolipsi/assets/main/logo_rs_gold.png';
+                    }}
+                  />
+                ) : (
+                  <UserIcon className="h-6 w-6" />
+                )}
               </button>
               {isUserMenuOpen && (
                 <div className="absolute top-full right-0 mt-4 w-56 bg-[rgb(var(--color-brand-dark))] border-2 border-[rgb(var(--color-brand-gold))]/[.20] rounded-md shadow-lg animate-fade-in-down">

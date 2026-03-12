@@ -6,7 +6,7 @@ export const initialPages: EditablePage[] = [
     id: 'page_home',
     slug: 'home',
     route: 'home',
-    title: 'Home',
+    title: 'Início',
     showInNav: false, // Not explicitly in nav, but is the root
     isStatic: true,
     containers: [

@@ -24,24 +24,30 @@ const ManageCollections: React.FC<ManageCollectionsProps> = ({ collections, prod
     const filteredCollections = useMemo(() => {
         return collections.filter(c => c.title.toLowerCase().includes(searchTerm.toLowerCase()));
     }, [collections, searchTerm]);
-    
+
     return (
         <div className="bg-black border border-dark-800 rounded-lg">
-            <div className="p-4 border-b border-dark-800">
-                 <div className="relative max-w-lg">
+            <div className="p-4 border-b border-dark-800 flex justify-between items-center gap-4">
+                <div className="relative flex-grow max-w-lg">
                     <input
                         type="text"
                         placeholder="Buscar coleções..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full bg-dark-800 border-2 border-dark-700 rounded-md py-2 px-10 text-white"
+                        className="w-full bg-dark-800 border-2 border-dark-700 rounded-md py-2 pl-10 pr-4 text-white"
                     />
-                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <SearchIcon className="h-5 w-5 text-gray-400" />
                     </div>
                 </div>
+                <button
+                    onClick={() => onNavigate('addEditCollection')}
+                    className="text-sm font-bold bg-[rgb(var(--color-brand-gold))] text-[rgb(var(--color-brand-dark))] py-2 px-4 rounded-md hover:bg-[rgb(var(--color-brand-secondary))] transition-colors whitespace-nowrap"
+                >
+                    + Adicionar Coleção
+                </button>
             </div>
-             <div className="overflow-x-auto">
+            <div className="overflow-x-auto">
                 <table className="w-full text-sm text-left text-gray-400">
                     <thead className="text-xs text-gray-400 uppercase bg-black">
                         <tr>
@@ -67,8 +73,8 @@ const ManageCollections: React.FC<ManageCollectionsProps> = ({ collections, prod
                                     <td className="px-6 py-4">{productCount}</td>
                                     <td className="px-6 py-4 text-right">
                                         <div className="flex items-center justify-end gap-4">
-                                            <button onClick={() => onNavigate('addEditCollection', collection)} className="text-gray-400 hover:text-gold-400"><PencilIcon className="w-5 h-5"/></button>
-                                            <button onClick={() => handleDeleteCollection(collection.id)} className="text-gray-400 hover:text-red-500"><TrashIcon className="w-5 h-5"/></button>
+                                            <button onClick={() => onNavigate('addEditCollection', collection)} className="text-gray-400 hover:text-gold-400"><PencilIcon className="w-5 h-5" /></button>
+                                            <button onClick={() => handleDeleteCollection(collection.id)} className="text-gray-400 hover:text-red-500"><TrashIcon className="w-5 h-5" /></button>
                                         </div>
                                     </td>
                                 </tr>
@@ -76,7 +82,7 @@ const ManageCollections: React.FC<ManageCollectionsProps> = ({ collections, prod
                         })}
                     </tbody>
                 </table>
-             </div>
+            </div>
         </div>
     );
 };

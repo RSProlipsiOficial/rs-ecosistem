@@ -17,9 +17,10 @@ const UpsellOffer: React.FC<{
     order: Order;
     settings: UpsellSettings;
     product: Product;
+    triggerProductName?: string | null;
     onAccept: () => void;
     onDecline: () => void;
-}> = ({ order, settings, product, onAccept, onDecline }) => {
+}> = ({ order, settings, product, triggerProductName, onAccept, onDecline }) => {
     const [isLoading, setIsLoading] = useState(false);
 
     const handleAccept = () => {
@@ -46,6 +47,11 @@ const UpsellOffer: React.FC<{
             <div className="flex flex-col sm:flex-row items-center gap-6 mt-4">
                 <img src={product.images[0]} alt={product.name} className="w-32 h-32 object-cover rounded-md flex-shrink-0" />
                 <div>
+                    {triggerProductName && (
+                        <p className="mb-2 text-sm font-semibold text-[rgb(var(--color-brand-gold))]">
+                            Oferta liberada porque voce comprou {triggerProductName}.
+                        </p>
+                    )}
                     <p className="text-[rgb(var(--color-brand-text-dim))]">{settings.description}</p>
                     <div className="flex items-baseline gap-2 mt-2">
                         <span className="text-2xl font-bold text-[rgb(var(--color-brand-gold))]">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(settings.offerPrice)}</span>
@@ -75,10 +81,24 @@ const OrderConfirmation: React.FC<OrderConfirmationProps> = ({ order, onContinue
     const [upsellState, setUpsellState] = useState<'pending' | 'accepted' | 'declined'>('pending');
     const [pixCodeCopied, setPixCodeCopied] = useState(false);
 
+    const triggerProduct = useMemo(() => {
+        if (!upsellSettings.triggerProductId) return null;
+        return allProducts.find(product => product.id === upsellSettings.triggerProductId) || null;
+    }, [upsellSettings.triggerProductId, allProducts]);
+
+    const orderMatchesUpsellTrigger = useMemo(() => {
+        if (!order || !upsellSettings.enabled) return false;
+        if (!upsellSettings.triggerProductId) return true;
+
+        return order.items.some(item => item.productId === upsellSettings.triggerProductId);
+    }, [order, upsellSettings.enabled, upsellSettings.triggerProductId]);
+
     const upsellProduct = useMemo(() => {
-        if (!upsellSettings.enabled) return null;
+        if (!order || !upsellSettings.enabled || !orderMatchesUpsellTrigger) return null;
+        if (order.items.some(item => item.productId === upsellSettings.productId)) return null;
+
         return allProducts.find(p => p.id === upsellSettings.productId);
-    }, [upsellSettings, allProducts]);
+    }, [order, upsellSettings, allProducts, orderMatchesUpsellTrigger]);
 
     if (!order) {
         return (
@@ -108,7 +128,7 @@ const OrderConfirmation: React.FC<OrderConfirmationProps> = ({ order, onContinue
 
     const renderContent = () => {
         if (upsellProduct && upsellState === 'pending') {
-            return <UpsellOffer order={order} settings={upsellSettings} product={upsellProduct} onAccept={handleAccept} onDecline={() => setUpsellState('declined')} />;
+            return <UpsellOffer order={order} settings={upsellSettings} product={upsellProduct} triggerProductName={triggerProduct?.name} onAccept={handleAccept} onDecline={() => setUpsellState('declined')} />;
         }
         
         return (

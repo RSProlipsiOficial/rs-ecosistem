@@ -2,6 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { authAPI } from '../src/services/api';
 import { supabase } from '../src/lib/supabaseClient';
+import { useBranding } from '../src/contexts/BrandingContext';
+import {
+    extractWalletTokenFromLocation,
+    hydrateWalletSessionFromToken,
+    readWalletSession,
+    storeWalletSession,
+} from '../src/utils/walletSession';
 
 import { Eye, EyeOff } from 'lucide-react';
 
@@ -40,51 +47,44 @@ const InputField: React.FC<{ name: string, label: string, type?: string, placeho
     };
 
 const Login: React.FC = () => {
+    const { branding } = useBranding();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const navigate = useNavigate();
 
-    // AUTO-LOGIN quando vem do Marketplace ou Escritório
     useEffect(() => {
-        const getTokenFromUrl = (): string | null => {
-            const search = window.location.search;
-            if (search && search.includes('token=')) {
-                return new URLSearchParams(search).get('token');
+        let isMounted = true;
+
+        const bootstrapLogin = async () => {
+            const storedSession = readWalletSession();
+            if (storedSession.token && storedSession.userId) {
+                navigate('/app/dashboard', { replace: true });
+                return;
             }
-            const hash = window.location.hash;
-            if (hash && hash.includes('?')) {
-                const qs = hash.substring(hash.indexOf('?') + 1);
-                return new URLSearchParams(qs).get('token');
+
+            const token = extractWalletTokenFromLocation(window.location.search, window.location.hash);
+            if (!token) {
+                return;
             }
-            return null;
+
+            const session = await hydrateWalletSessionFromToken(token);
+            if (session?.userId && isMounted) {
+                navigate('/app/dashboard', { replace: true });
+                return;
+            }
+
+            if (isMounted) {
+                setError('Nao foi possivel validar o acesso automatico ao WalletPay.');
+            }
         };
 
-        const token = getTokenFromUrl();
+        bootstrapLogin();
 
-        if (token) {
-            try {
-                const authData = JSON.parse(atob(token));
-
-                if (authData.autoLogin === true) {
-                    console.log('🔓 Auto-login detectado:', authData.source);
-
-                    // Salvar dados no localStorage (modo demo)
-                    localStorage.setItem('token', token);
-                    localStorage.setItem('userId', authData.userId || 'auto-' + Date.now());
-                    localStorage.setItem('userName', 'Consultor');
-                    localStorage.setItem('userEmail', authData.email || 'consultor@rsprolipsi.com.br');
-                    localStorage.setItem('autoLogin', 'true');
-                    localStorage.setItem('loginSource', authData.source);
-
-                    // Redirecionar para dashboard
-                    navigate('/app/dashboard', { replace: true });
-                }
-            } catch (e) {
-                console.error('Token inválido:', e);
-            }
-        }
+        return () => {
+            isMounted = false;
+        };
     }, [navigate]);
 
     const handleForgotPassword = async (e: React.MouseEvent) => {
@@ -97,10 +97,10 @@ const Login: React.FC = () => {
         try {
             setLoading(true);
             await authAPI.forgotPassword(email);
-            alert('Email de recuperação enviado! Verifique sua caixa de entrada.');
+            alert('Email de recuperacao enviado! Verifique sua caixa de entrada.');
             setError('');
         } catch (err: any) {
-            setError(err.response?.data?.error || 'Erro ao enviar email de recuperação');
+            setError(err.response?.data?.error || 'Erro ao enviar email de recuperacao');
         } finally {
             setLoading(false);
         }
@@ -112,30 +112,31 @@ const Login: React.FC = () => {
         setLoading(true);
 
         try {
-            // LOGIN DIRETO VIA SUPABASE (Mais robusto que via API Proxy)
             const { data, error } = await supabase.auth.signInWithPassword({
                 email,
-                password
+                password,
             });
 
-            if (error) throw error;
+            if (error) {
+                throw error;
+            }
 
             if (data.session) {
-                // Salvar token e dados do usuário
-                localStorage.setItem('token', data.session.access_token);
-                localStorage.setItem('userId', data.user.id);
-                localStorage.setItem('userName', data.user.user_metadata?.nome || 'Consultor');
-                localStorage.setItem('userEmail', data.user.email || '');
+                storeWalletSession({
+                    token: data.session.access_token,
+                    userId: data.user.id,
+                    userName: data.user.user_metadata?.nome || data.user.user_metadata?.full_name || 'Consultor',
+                    userEmail: data.user.email || '',
+                    source: 'login',
+                });
 
-                // Navegar para dashboard
                 navigate('/app/dashboard');
             } else {
-                throw new Error('Sessão não criada');
+                throw new Error('Sessao nao criada');
             }
         } catch (err: any) {
             console.error('Erro no login:', err);
 
-            // Tratamento de erros específicos do Supabase
             if (err.message.includes('Invalid login')) {
                 setError('Email ou senha incorretos.');
             } else if (err.message.includes('Email not confirmed')) {
@@ -152,7 +153,17 @@ const Login: React.FC = () => {
         <div className="bg-base min-h-screen flex items-center justify-center p-4 sm:p-6 lg:p-8">
             <div className="w-full max-w-md mx-auto">
                 <div className="text-center mb-8">
-                    <h1 className="text-4xl font-bold text-gold">RS WalletPay</h1>
+                    <div className="mx-auto mb-5 flex justify-center">
+                        <img
+                            src={branding.logo}
+                            alt={branding.companyName}
+                            className="max-h-20 w-auto max-w-[260px] object-contain"
+                            onError={(event) => {
+                                event.currentTarget.src = '/logo-rs.png';
+                            }}
+                        />
+                    </div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.35em] text-gold/80">WalletPay</p>
                     <p className="text-text-body mt-2">Acesse sua conta de consultor</p>
                 </div>
 
@@ -207,7 +218,7 @@ const Login: React.FC = () => {
                         </button>
                     </form>
                     <p className="mt-8 text-center text-sm text-text-body">
-                        Ainda não tem uma conta?{' '}
+                        Ainda nao tem uma conta?{' '}
                         <Link to="/register" className="font-medium text-gold hover:text-gold-hover">
                             Cadastre-se
                         </Link>

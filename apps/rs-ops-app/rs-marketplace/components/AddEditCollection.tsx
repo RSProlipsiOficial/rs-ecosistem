@@ -14,10 +14,11 @@ interface AddEditCollectionProps {
 const AddEditCollection: React.FC<AddEditCollectionProps> = ({ collection, products, onSave, onCancel, onNavigate }) => {
     const isEditing = !!collection;
     const [formData, setFormData] = useState<Partial<Collection>>({
-        title: '',
-        description: '',
-        imageUrl: '',
-        productIds: [],
+        title: collection?.title || collection?.name || '',
+        description: collection?.description || '',
+        imageUrl: collection?.imageUrl || collection?.image || '',
+        productIds: collection?.productIds || collection?.products || [],
+        status: collection?.status || 'Ativo',
         ...collection,
     });
     const formRef = useRef<HTMLFormElement>(null);

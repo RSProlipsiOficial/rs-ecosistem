@@ -105,6 +105,21 @@ export interface Product {
   };
 }
 
+export interface InventoryMovement {
+  id: string;
+  productId: string;
+  productName: string;
+  productImageUrl?: string;
+  type: string;
+  quantity: number;
+  previousQuantity: number;
+  newQuantity: number;
+  reason?: string;
+  referenceId?: string;
+  referenceType?: string;
+  createdAt: string;
+}
+
 export interface OrderDetail {
   productId: string;
   productName: string;

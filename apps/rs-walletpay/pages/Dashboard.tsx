@@ -2,11 +2,11 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { EvolutionChart, IncomeBreakdownChart } from '../components/Chart';
 import { IconTrendingUp, IconTrendingDown, IconWallet, IconPayments, IconUsers } from '../constants';
-import { MOCK_LEDGER_ENTRIES } from '../constants';
 import StatusBadge from '../components/StatusBadge';
-import { LedgerEntry } from '../types';
+import { LedgerEntry, LedgerEventType } from '../types';
 import KPICard from '../components/KPICard';
 import { walletAPI, sigmaAPI, careerAPI } from '../src/services/api';
+import { getWalletUserId } from '../src/utils/walletSession';
 
 const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -65,7 +65,7 @@ const Dashboard: React.FC = () => {
             .reduce((sum, e) => sum + e.amount, 0);
     };
     const summaryData = useMemo(() => {
-        const src = transactions.length > 0 ? transactions : MOCK_LEDGER_ENTRIES;
+        const src = transactions;
         const balance = apiData.balance || (src[0]?.balanceAfter || 0);
         return {
             balance,
@@ -81,8 +81,13 @@ const Dashboard: React.FC = () => {
             try {
                 setLoadingData(true);
 
-                // TODO: Pegar userId do localStorage ou context
-                const userId = localStorage.getItem('userId') || 'demo-user';
+                const userId = getWalletUserId();
+                if (!userId) {
+                    setTransactions([]);
+                    setHasMore(false);
+                    setLoadingData(false);
+                    return;
+                }
 
                 // Buscar dados em paralelo
                 const [balanceRes, transactionsRes] = await Promise.all([
@@ -122,17 +127,27 @@ const Dashboard: React.FC = () => {
     const loadMoreTransactions = () => {
         if (isLoading || !hasMore) return;
 
-        setIsLoading(true);
-        setTimeout(() => { // Simulate API call
-            const nextPage = page + 1;
-            const recentActivity = MOCK_LEDGER_ENTRIES.filter(e => e.state !== 'pending');
-            const newTransactions = recentActivity.slice(0, nextPage * ITEMS_PER_PAGE);
+        const userId = getWalletUserId();
+        if (!userId) return;
 
-            setTransactions(newTransactions);
-            setPage(nextPage);
-            setHasMore(newTransactions.length < MOCK_LEDGER_ENTRIES.length);
-            setIsLoading(false);
-        }, 500); // 0.5s delay for loading simulation
+        setIsLoading(true);
+        const nextPage = page + 1;
+        const offset = (nextPage - 1) * ITEMS_PER_PAGE;
+
+        walletAPI.getTransactions(userId, { limit: ITEMS_PER_PAGE, offset })
+            .then((response) => {
+                const nextItems = Array.isArray(response?.data?.transactions) ? response.data.transactions : [];
+                setTransactions(prev => [...prev, ...nextItems]);
+                setPage(nextPage);
+                setHasMore(nextItems.length >= ITEMS_PER_PAGE);
+            })
+            .catch((error) => {
+                console.error('Erro ao carregar mais transacoes:', error);
+                setHasMore(false);
+            })
+            .finally(() => {
+                setIsLoading(false);
+            });
     };
 
     const handleScroll = () => {

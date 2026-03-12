@@ -2,6 +2,7 @@
 import React, { useState, useRef } from 'react';
 import { BioSite, Section, BlockType, SocialPlatform, SeoConfig, Theme, TrackingPixels, FaqItem, BentoItem, CarouselItem } from '../types';
 import { Renderer } from './Renderer';
+import { buildMiniSiteCheckoutUrl } from '../ecosystemUrls';
 import {
     Layout, Type, Image as ImageIcon, Link as LinkIcon,
     Trash2, MoveUp, MoveDown, Smartphone, Globe, Save,
@@ -16,7 +17,7 @@ const COMMON_BUTTON_LABELS = [
 
 interface EditorProps {
     site: BioSite;
-    onSave: (site: BioSite) => void;
+    onSave: (site: BioSite) => Promise<boolean> | boolean;
     onBack: () => void;
     toggleTheme: () => void;
     isDarkMode: boolean;
@@ -72,9 +73,13 @@ export const Editor: React.FC<EditorProps> = ({ site, onSave, onBack, toggleThem
         // Simulate network delay for UX
         await new Promise(resolve => setTimeout(resolve, 600));
 
-        onSave(currentSite);
+        const saved = await Promise.resolve(onSave(currentSite));
 
         setIsSaving(false);
+        if (saved === false) {
+            alert('Nao foi possivel salvar as alteracoes.');
+            return;
+        }
         alert('Alterações salvas com sucesso!');
     };
 
@@ -323,7 +328,7 @@ export const Editor: React.FC<EditorProps> = ({ site, onSave, onBack, toggleThem
 
     const renderSidebarContent = () => {
         if (sidebarTab === 'settings') {
-            const isProOrAgency = currentSite.plan === 'pro' || currentSite.plan === 'agency';
+            const isProOrAgency = currentSite.plan === 'pro' || currentSite.plan === 'agency' || currentSite.plan === 'admin_master';
 
             return (
                 <div className="space-y-6 animate-fade-in p-2">
@@ -889,7 +894,7 @@ export const Editor: React.FC<EditorProps> = ({ site, onSave, onBack, toggleThem
                                                 updateSection(section.id, {
                                                     label: `Kit Bio ${kit}`,
                                                     checkoutEnabled: true,
-                                                    url: `${window.location.origin}/checkout/${kit.toLowerCase()}`
+                                                    url: buildMiniSiteCheckoutUrl(kit)
                                                 });
                                             }}
                                             className="py-2 px-1 bg-rs-gold/5 border border-rs-gold/20 rounded text-[9px] font-bold hover:bg-rs-gold hover:text-black transition-all"

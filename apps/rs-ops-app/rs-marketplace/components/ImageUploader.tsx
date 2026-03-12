@@ -5,25 +5,32 @@ import { CloseIcon } from './icons/CloseIcon';
 interface ImageUploaderProps {
     currentImage: string;
     onImageUpload: (url: string) => void;
+    onFileUpload?: (file: File, base64: string) => void;
     placeholderText: string;
     aspectRatio?: 'video' | 'square';
     acceptMedia?: boolean;
 }
 
-export const ImageUploader: React.FC<ImageUploaderProps> = ({ currentImage, onImageUpload, placeholderText, aspectRatio = 'video', acceptMedia = false }) => {
+export const ImageUploader: React.FC<ImageUploaderProps> = ({ currentImage, onImageUpload, onFileUpload, placeholderText, aspectRatio = 'video', acceptMedia = false }) => {
     const [isDragging, setIsDragging] = useState(false);
+    const [imgError, setImgError] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const aspectClass = aspectRatio === 'square' ? 'aspect-square' : 'aspect-video';
 
     const handleFileSelect = (files: FileList | null) => {
         if (files && files[0]) {
+            const file = files[0];
             const reader = new FileReader();
             reader.onloadend = () => {
                 const base64 = reader.result as string;
-                onImageUpload(base64);
+                if (onFileUpload) {
+                    onFileUpload(file, base64);
+                } else {
+                    onImageUpload(base64);
+                }
             };
-            reader.readAsDataURL(files[0]);
+            reader.readAsDataURL(file);
         }
     };
 
@@ -56,7 +63,12 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({ currentImage, onIm
     if (currentImage) {
         return (
             <div className={`relative group ${aspectClass}`}>
-                <img src={currentImage} alt="Preview" className="w-full h-full object-cover rounded-md" />
+                <img
+                    src={imgError || !currentImage ? 'https://raw.githubusercontent.com/RS-Prolipsi/assets/main/logo_rs_gold.png' : currentImage}
+                    alt="Preview"
+                    className="w-full h-full object-cover rounded-md"
+                    onError={() => setImgError(true)}
+                />
                 <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                     <button type="button" onClick={removeImage} className="bg-red-600 text-white rounded-full p-2">
                         <CloseIcon className="w-5 h-5" />

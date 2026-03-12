@@ -127,11 +127,19 @@ export interface Consultant {
 }
 
 export interface Product {
-  id: number;
+  id: number | string;
   name: string;
   images: string[]; // First image is primary
+  videos: string[];
+  materials: Array<{
+    name: string;
+    url: string;
+    size?: number;
+    mimeType?: string;
+  }>;
   sku: string;
   description: string;
+  shortDescription?: string;
   category: string;
   tags: string[];
   fullPrice: number; // Preço cheio / sugerido para o cliente final
@@ -140,9 +148,130 @@ export interface Product {
   stock: number;
   trackStock: boolean;
   status: 'Ativo' | 'Inativo';
+  tenantId?: string;
+  featuredImage?: string | null;
+  collectionId?: string | null;
+  collectionIds?: string[];
+  subcategory?: string;
+  supplier?: string;
+  barcode?: string;
+  weight?: number;
+  weightUnit?: 'kg' | 'g' | 'lb' | 'oz';
+  merchandising?: ProductMerchandising;
   mlm: {
     qualifiesForCycle: boolean;
   };
+}
+
+export interface ProductMerchandising {
+  comboProductIds: Array<string | number>;
+  relatedProductIds: Array<string | number>;
+  sponsored: {
+    enabled: boolean;
+    priority?: number;
+    label?: string;
+    placements?: string[];
+    startsAt?: string;
+    endsAt?: string;
+  };
+}
+
+export interface Collection {
+  id: string;
+  name: string;
+  title?: string;
+  description?: string;
+  imageUrl?: string;
+  image?: string;
+  status?: 'Ativo' | 'Inativo';
+  productIds?: string[];
+}
+
+export interface SponsoredPlacement {
+  id: string;
+  label: string;
+  description: string;
+  active: boolean;
+}
+
+export interface SponsoredPackage {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  durationDays: number;
+  placementIds: string[];
+  maxProducts: number;
+  label: string;
+  priority: number;
+  active: boolean;
+}
+
+export interface SponsoredSettings {
+  placements: SponsoredPlacement[];
+  packages: SponsoredPackage[];
+  autoApprovePaidRequests?: boolean;
+  rotationEnabled?: boolean;
+  rotationWindowMinutes?: number;
+  maxVisibleProductsPerPlacement?: number;
+}
+
+export type SponsoredRequestStatus = 'rascunho' | 'pendente' | 'aprovado' | 'rejeitado';
+
+export interface SponsoredPlacementMetrics {
+  impressions: number;
+  clicks: number;
+  lastImpressionAt?: string;
+  lastClickAt?: string;
+}
+
+export interface SponsoredDailyMetrics {
+  impressions: number;
+  clicks: number;
+  byPlacement?: Record<string, SponsoredPlacementMetrics>;
+}
+
+export interface SponsoredRequestMetrics {
+  impressions: number;
+  clicks: number;
+  lastImpressionAt?: string;
+  lastClickAt?: string;
+  byPlacement?: Record<string, SponsoredPlacementMetrics>;
+  daily?: Record<string, SponsoredDailyMetrics>;
+}
+
+export interface SponsoredRequest {
+  id: string;
+  tenantId: string;
+  productId: string;
+  productName: string;
+  productImage?: string;
+  productSku?: string;
+  packageId: string;
+  packageName: string;
+  packagePrice: number;
+  durationDays: number;
+  placementIds: string[];
+  requesterName?: string;
+  requesterEmail?: string;
+  objective?: string;
+  notes?: string;
+  status: SponsoredRequestStatus;
+  campaignStartAt?: string;
+  campaignEndAt?: string;
+  paymentMethod?: 'pix' | 'boleto';
+  paymentStatus?: 'nao_gerado' | 'pendente' | 'pago' | 'cancelado' | 'falhou';
+  paymentAmount?: number;
+  paymentId?: string;
+  paymentQrCode?: string;
+  paymentQrCodeBase64?: string;
+  paymentTicketUrl?: string;
+  paymentGeneratedAt?: string;
+  paidAt?: string;
+  requestedAt: string;
+  updatedAt: string;
+  adminNotes?: string;
+  metrics?: SponsoredRequestMetrics;
 }
 
 export interface OrderItem {

@@ -7,9 +7,10 @@ interface LandingPageProps {
     onLogin: () => void;
     onGetStarted: (plan?: UserPlan) => void;
     plans: any;
+    branding?: { logo?: string; companyName?: string };
 }
 
-export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onGetStarted, plans }) => {
+export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onGetStarted, plans, branding }) => {
     return (
         <div className="min-h-screen bg-rs-black text-white font-sans overflow-x-hidden selection:bg-rs-gold selection:text-black">
             <style>{`
@@ -29,7 +30,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onGetStarted,
             <nav className="fixed top-0 left-0 right-0 z-50 bg-rs-black/80 backdrop-blur-md border-b border-white/10">
                 <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 bg-rs-gold rounded-sm flex items-center justify-center font-serif font-bold text-black text-lg">R</div>
+                        <img
+                            src={branding?.logo || '/logo-rs.png'}
+                            alt={branding?.companyName || 'RS Prólipsi'}
+                            className="h-10 w-auto object-contain"
+                            onError={event => {
+                                event.currentTarget.src = '/logo-rs.png';
+                            }}
+                        />
                         <span className="font-serif font-bold text-xl tracking-wide">RS MiniSite</span>
                     </div>
                     <div className="flex items-center gap-6">
@@ -536,7 +544,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onGetStarted,
             <footer className="border-t border-white/10 bg-black pt-16 pb-8 px-6">
                 <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
                     <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 bg-white/10 rounded-sm flex items-center justify-center font-serif font-bold text-rs-gold text-xs">R</div>
+                        <img
+                            src={branding?.logo || '/logo-rs.png'}
+                            alt={branding?.companyName || 'RS Prólipsi'}
+                            className="h-8 w-auto object-contain"
+                            onError={event => {
+                                event.currentTarget.src = '/logo-rs.png';
+                            }}
+                        />
                         <span className="font-serif font-bold text-lg text-gray-300">RS MiniSite</span>
                     </div>
 

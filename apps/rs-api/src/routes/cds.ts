@@ -2,6 +2,196 @@ import { Router, Request, Response } from 'express';
 import { supabase, supabaseAdmin } from '../lib/supabaseClient';
 
 const router = Router();
+const DEFAULT_CENTRAL_MARKETPLACE_REF = 'rsprolipsi';
+
+const normalizeCdStatus = (status?: string | null) => {
+  const normalized = String(status || '').trim().toLowerCase();
+  if (!normalized) return true;
+  return !['blocked', 'inactive', 'inativo', 'bloqueado'].includes(normalized);
+};
+
+const isLikelyCdMinisite = (row: any) => {
+  const type = String(row?.type || '').trim().toLowerCase();
+  const consultantId = String(row?.consultant_id || '').trim().toLowerCase();
+  const slug = String(row?.slug || '').trim().toLowerCase();
+  const name = String(row?.name || row?.manager_name || '').trim().toLowerCase();
+
+  if (Boolean(row?.is_federal_sede)) return true;
+  if (['cd', 'franquia', 'proprio', 'hibrido'].some((token) => type.includes(token))) return true;
+  if (type.includes('sede')) return true;
+  if (consultantId === DEFAULT_CENTRAL_MARKETPLACE_REF || slug === DEFAULT_CENTRAL_MARKETPLACE_REF) return true;
+  if (name.includes('sede rs prólipsi') || name.includes('sede rs prolipsi')) return true;
+
+  return false;
+};
+
+const buildCdMergeKey = (row: any) => {
+  const consultantId = String(row?.consultant_id || '').trim();
+  if (consultantId) return `consultant:${consultantId}`;
+
+  const name = String(row?.name || row?.manager_name || '').trim().toLowerCase();
+  const city = String(row?.address_city || row?.city || '').trim().toLowerCase();
+  const state = String(row?.address_state || row?.state || row?.uf || '').trim().toLowerCase();
+  if (name || city || state) return `profile:${name}:${city}:${state}`;
+
+  return `id:${String(row?.id || '').trim()}`;
+};
+
+const mapCdSourceRow = (row: any, source: 'distribution_centers' | 'cd_profiles' | 'minisite_profiles') => {
+  const city = String(row?.address_city || row?.city || '').trim();
+  const state = String(row?.address_state || row?.state || row?.uf || '').trim();
+  const street = String(row?.address_street || row?.address || '').trim();
+
+  return {
+    id: String(row?.id || ''),
+    consultant_id: String(row?.consultant_id || ''),
+    source,
+    sourcePriority: source === 'minisite_profiles' ? 3 : source === 'cd_profiles' ? 2 : 1,
+    mergeKey: buildCdMergeKey(row),
+    managerId: String(row?.consultant_id || row?.id || ''),
+    name: String(row?.name || row?.manager_name || 'CD'),
+    manager_name: String(row?.manager_name || row?.name || 'CD'),
+    owner_name: String(row?.manager_name || row?.name || 'CD'),
+    cnpj_cpf: String(row?.cpf || row?.cnpj || row?.document || ''),
+    cpf: String(row?.cpf || row?.cnpj || row?.document || ''),
+    email: String(row?.email || ''),
+    phone: String(row?.phone || row?.whatsapp || ''),
+    address_street: street,
+    address_number: String(row?.address_number || ''),
+    address_neighborhood: String(row?.address_neighborhood || ''),
+    address_city: city,
+    address_state: state,
+    address_zip: String(row?.address_zip || ''),
+    slug: String(row?.slug || ''),
+    type: String(row?.type || 'cd'),
+    status: String(row?.status || (normalizeCdStatus(row?.status) ? 'ATIVO' : 'BLOQUEADO')),
+    is_active: normalizeCdStatus(row?.status),
+    is_federal_sede: Boolean(row?.is_federal_sede),
+    avatar_url: String(row?.avatar_url || ''),
+    logo_url: String(row?.logo_url || ''),
+    favicon_url: String(row?.favicon_url || ''),
+    wallet_balance: row?.wallet_balance ?? 0,
+    created_at: row?.created_at || new Date().toISOString(),
+    stores: [{
+      id: `${String(row?.id || 'cd')}-store`,
+      name: String(row?.name || row?.manager_name || 'CD'),
+      city,
+      state,
+      address: street
+    }]
+  };
+};
+
+const mergeCdSources = (...sources: Array<{ rows: any[]; source: 'distribution_centers' | 'cd_profiles' | 'minisite_profiles' }>) => {
+  const merged = new Map<string, any>();
+
+  sources.forEach(({ rows, source }) => {
+    rows.forEach((row) => {
+      const candidate = mapCdSourceRow(row, source);
+      const existing = merged.get(candidate.mergeKey);
+
+      if (!existing) {
+        merged.set(candidate.mergeKey, candidate);
+        return;
+      }
+
+      const keep = existing.sourcePriority >= candidate.sourcePriority ? existing : candidate;
+      const fill = existing.sourcePriority >= candidate.sourcePriority ? candidate : existing;
+
+      merged.set(candidate.mergeKey, {
+        ...fill,
+        ...keep,
+        id: keep.id || fill.id,
+        managerId: keep.managerId || fill.managerId,
+        stores: Array.isArray(keep.stores) && keep.stores.length > 0 ? keep.stores : fill.stores,
+        is_federal_sede: Boolean(existing.is_federal_sede || candidate.is_federal_sede),
+        is_active: Boolean(existing.is_active || candidate.is_active),
+      });
+    });
+  });
+
+  return Array.from(merged.values()).sort((a, b) => {
+    if (a.is_federal_sede !== b.is_federal_sede) return a.is_federal_sede ? -1 : 1;
+    if (a.is_active !== b.is_active) return a.is_active ? -1 : 1;
+    return String(a.name || '').localeCompare(String(b.name || ''), 'pt-BR');
+  });
+};
+
+const isUuid = (value: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
+
+const resolveCdId = async (rawId: string) => {
+  if (isUuid(rawId)) return rawId;
+  const { data: profile } = await supabaseAdmin
+    .from('minisite_profiles')
+    .select('id')
+    .eq('consultant_id', rawId)
+    .maybeSingle();
+  return profile?.id || rawId;
+};
+
+const resolveCatalogProductIdFromCdRow = async (cdRow: any) => {
+  const directProductId = String(cdRow?.product_id || '').trim();
+  if (directProductId && isUuid(directProductId)) return directProductId;
+
+  const sku = String(cdRow?.sku || '').trim();
+  if (sku) {
+    const { data: productBySku } = await supabaseAdmin
+      .from('products')
+      .select('id')
+      .eq('sku', sku)
+      .maybeSingle();
+    if (productBySku?.id) return String(productBySku.id);
+  }
+
+  const name = String(cdRow?.name || '').trim();
+  if (name) {
+    const { data: productByName } = await supabaseAdmin
+      .from('products')
+      .select('id')
+      .ilike('name', name)
+      .maybeSingle();
+    if (productByName?.id) return String(productByName.id);
+  }
+
+  return null;
+};
+
+const insertInventoryMovement = async (payload: {
+  cdId: string;
+  productId: string | null;
+  type: string;
+  quantity: number;
+  previousQuantity: number;
+  newQuantity: number;
+  reason: string;
+  referenceId?: string | null;
+  referenceType?: string | null;
+  createdBy?: string | null;
+}) => {
+  if (!payload.cdId || !payload.productId) return;
+
+  const movementPayload = {
+    cd_id: payload.cdId,
+    product_id: payload.productId,
+    type: payload.type,
+    quantity: Math.max(0, Number(payload.quantity || 0)),
+    previous_quantity: Math.max(0, Number(payload.previousQuantity || 0)),
+    new_quantity: Math.max(0, Number(payload.newQuantity || 0)),
+    reason: payload.reason,
+    reference_id: payload.referenceId || null,
+    reference_type: payload.referenceType || null,
+    created_by: payload.createdBy || 'system',
+    created_at: new Date().toISOString(),
+  };
+
+  const { error } = await supabaseAdmin
+    .from('inventory_movements')
+    .insert(movementPayload);
+
+  if (error) {
+    console.warn('[CDS] Falha ao registrar inventory_movements:', error.message);
+  }
+};
 
 // ==========================================
 // 📦 CDs E PERFIS
@@ -10,34 +200,54 @@ const router = Router();
 // Listar todos os CDs (Admin / Marketplace)
 router.get('/v1/cds', async (req: Request, res: Response) => {
   try {
-    const { tenantId } = req.query;
-    let query = supabase
-      .from('minisite_profiles')
-      .select('*')
-      .or('type.ilike.cd,type.ilike.franquia,type.ilike.proprio,type.ilike.hibrido,type.ilike.%sede%')
-      .order('created_at', { ascending: false });
+    const [centersResult, cdProfilesResult, minisiteResult] = await Promise.allSettled([
+      supabaseAdmin
+        .from('distribution_centers')
+        .select('*')
+        .order('is_federal_sede', { ascending: false })
+        .order('name', { ascending: true }),
+      supabaseAdmin
+        .from('cd_profiles')
+        .select('*')
+        .order('created_at', { ascending: false }),
+      supabaseAdmin
+        .from('minisite_profiles')
+        .select('*')
+        .order('created_at', { ascending: false })
+    ]);
 
-    const { data, error } = await query;
-    if (error) return res.status(500).json({ success: false, error: error.message });
+    const centers = centersResult.status === 'fulfilled' && !centersResult.value.error ? (centersResult.value.data || []) : [];
+    const cdProfiles = cdProfilesResult.status === 'fulfilled' && !cdProfilesResult.value.error ? (cdProfilesResult.value.data || []) : [];
+    const minisitesRaw = minisiteResult.status === 'fulfilled' && !minisiteResult.value.error ? (minisiteResult.value.data || []) : [];
+    const minisites = minisitesRaw.filter(isLikelyCdMinisite);
 
-    const mapped = (data || []).map((p: any) => ({
-      id: p.id,
-      name: p.name,
-      owner_name: p.manager_name || p.name,
-      cnpj_cpf: p.cpf || '',
-      email: p.email || '',
-      phone: p.phone || '',
-      address_street: p.address_street,
-      address_number: p.address_number,
-      address_neighborhood: p.address_neighborhood,
-      address_city: p.address_city,
-      address_state: p.address_state,
-      address_zip: p.address_zip,
-      type: p.type,
-      is_active: p.status === 'active' || p.status === undefined || p.status === null
+    const merged = mergeCdSources(
+      { rows: centers, source: 'distribution_centers' },
+      { rows: cdProfiles, source: 'cd_profiles' },
+      { rows: minisites, source: 'minisite_profiles' }
+    ).map((item) => ({
+      id: item.id,
+      manager_id: item.managerId,
+      source: item.source,
+      name: item.name,
+      owner_name: item.owner_name,
+      cnpj_cpf: item.cnpj_cpf,
+      email: item.email,
+      phone: item.phone,
+      address_street: item.address_street,
+      address_number: item.address_number,
+      address_neighborhood: item.address_neighborhood,
+      address_city: item.address_city,
+      address_state: item.address_state,
+      address_zip: item.address_zip,
+      type: item.type,
+      is_active: item.is_active,
+      is_federal_sede: item.is_federal_sede,
+      stores: item.stores,
+      created_at: item.created_at
     }));
 
-    res.json({ success: true, data: mapped });
+    res.json({ success: true, data: merged });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
   }
@@ -49,32 +259,53 @@ router.post('/v1/cds', async (req: Request, res: Response) => {
     const body = req.body;
     if (!body.name) return res.status(400).json({ success: false, error: 'name é requerido' });
 
+    const authUserId = String(body.auth_user_id || body.consultant_id || '').trim();
+    if (!authUserId) return res.status(400).json({ success: false, error: 'consultant_id requerido' });
+
     const payload: any = {
       name: body.name,
       type: body.type || 'cd',
       email: body.email || null,
       phone: body.phone || null,
       cpf: body.cnpj_cpf || body.cpf || null,
-      manager_name: body.owner_name || body.name,
       address_street: body.address_street || null,
       address_number: body.address_number || null,
       address_neighborhood: body.address_neighborhood || null,
       address_city: body.address_city || null,
       address_state: body.address_state || null,
       address_zip: body.address_zip || null,
-      consultant_id: body.consultant_id || null,
-      created_at: new Date().toISOString(),
+      consultant_id: authUserId,
       updated_at: new Date().toISOString()
     };
 
+    const { data: existing, error: existingError } = await supabaseAdmin
+      .from('minisite_profiles')
+      .select('id')
+      .eq('consultant_id', authUserId)
+      .maybeSingle();
+
+    if (existingError) return res.status(500).json({ success: false, error: existingError.message });
+
+    if (existing?.id) {
+      const { data, error } = await supabaseAdmin
+        .from('minisite_profiles')
+        .update(payload)
+        .eq('id', existing.id)
+        .select()
+        .single();
+
+      if (error) return res.status(500).json({ success: false, error: error.message });
+      return res.json({ success: true, data, mode: 'updated' });
+    }
+
     const { data, error } = await supabaseAdmin
       .from('minisite_profiles')
-      .insert([payload])
+      .insert([{ id: authUserId, ...payload, created_at: new Date().toISOString() }])
       .select()
       .single();
 
     if (error) return res.status(500).json({ success: false, error: error.message });
-    res.json({ success: true, data });
+    res.json({ success: true, data, mode: 'created' });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
   }
@@ -83,16 +314,34 @@ router.post('/v1/cds', async (req: Request, res: Response) => {
 // Retorna o primeiro CD 
 router.get('/v1/cds/primary', async (req: Request, res: Response) => {
   try {
-    const { data, error } = await supabaseAdmin
-      .from('minisite_profiles')
-      .select('*')
-      .eq('type', 'cd')
-      .order('created_at', { ascending: true })
-      .limit(1)
-      .maybeSingle();
+    const [centersResult, cdProfilesResult, minisiteResult] = await Promise.allSettled([
+      supabaseAdmin
+        .from('distribution_centers')
+        .select('*')
+        .order('is_federal_sede', { ascending: false })
+        .order('name', { ascending: true }),
+      supabaseAdmin
+        .from('cd_profiles')
+        .select('*')
+        .order('created_at', { ascending: false }),
+      supabaseAdmin
+        .from('minisite_profiles')
+        .select('*')
+        .order('created_at', { ascending: false })
+    ]);
 
-    if (error) return res.status(500).json({ success: false, error: error.message });
-    res.json({ success: true, data });
+    const centers = centersResult.status === 'fulfilled' && !centersResult.value.error ? (centersResult.value.data || []) : [];
+    const cdProfiles = cdProfilesResult.status === 'fulfilled' && !cdProfilesResult.value.error ? (cdProfilesResult.value.data || []) : [];
+    const minisitesRaw = minisiteResult.status === 'fulfilled' && !minisiteResult.value.error ? (minisiteResult.value.data || []) : [];
+    const minisites = minisitesRaw.filter(isLikelyCdMinisite);
+
+    const [primary] = mergeCdSources(
+      { rows: centers, source: 'distribution_centers' },
+      { rows: cdProfiles, source: 'cd_profiles' },
+      { rows: minisites, source: 'minisite_profiles' }
+    );
+
+    res.json({ success: true, data: primary || null });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
   }
@@ -232,6 +481,7 @@ router.get('/v1/cds/:id/inventory', async (req: Request, res: Response) => {
 
     const mappedData = (data || []).map(p => ({
       id: p.id,
+      productId: p.product_id || null,
       sku: p.sku || 'N/A',
       name: p.name,
       category: p.category || 'Geral',
@@ -244,6 +494,111 @@ router.get('/v1/cds/:id/inventory', async (req: Request, res: Response) => {
     }));
 
     res.json({ success: true, data: mappedData });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.get('/v1/cds/:id/inventory-movements', async (req: Request, res: Response) => {
+  try {
+    const { id: rawId } = req.params;
+    const cdId = await resolveCdId(rawId);
+    const limit = Math.min(Math.max(Number(req.query.limit) || 30, 1), 100);
+
+    const { data: movements, error } = await supabaseAdmin
+      .from('inventory_movements')
+      .select('*')
+      .eq('cd_id', cdId)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (error) throw error;
+
+    const productIds = Array.from(new Set((movements || []).map((item: any) => String(item.product_id || '')).filter(Boolean)));
+    const { data: productRows } = productIds.length
+      ? await supabaseAdmin.from('products').select('id, name, image_url, images').in('id', productIds)
+      : { data: [] as any[] };
+
+    const productMap = new Map((productRows || []).map((product: any) => [String(product.id), product]));
+    const mapped = (movements || []).map((movement: any) => {
+      const product = productMap.get(String(movement.product_id || ''));
+      return {
+        id: movement.id,
+        productId: movement.product_id,
+        productName: product?.name || 'Produto',
+        productImageUrl: product?.image_url || (Array.isArray(product?.images) ? product.images[0] : null),
+        type: movement.type,
+        quantity: Number(movement.quantity) || 0,
+        previousQuantity: Number(movement.previous_quantity) || 0,
+        newQuantity: Number(movement.new_quantity) || 0,
+        reason: movement.reason || '',
+        referenceId: movement.reference_id || null,
+        referenceType: movement.reference_type || null,
+        createdAt: movement.created_at,
+      };
+    });
+
+    res.json({ success: true, data: mapped });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.patch('/v1/cds/:cdId/inventory/:productId', async (req: Request, res: Response) => {
+  try {
+    const cdId = await resolveCdId(req.params.cdId);
+    const { productId } = req.params;
+    const newLevel = Number(req.body?.stockLevel);
+    const minStock = Math.max(0, Number(req.body?.minStock ?? 5));
+
+    if (!Number.isFinite(newLevel) || newLevel < 0) {
+      return res.status(400).json({ success: false, error: 'stockLevel invalido' });
+    }
+
+    const { data: cdProduct, error: fetchError } = await supabaseAdmin
+      .from('cd_products')
+      .select('*')
+      .eq('id', productId)
+      .eq('cd_id', cdId)
+      .maybeSingle();
+
+    if (fetchError) throw fetchError;
+    if (!cdProduct) return res.status(404).json({ success: false, error: 'Produto do CD nao encontrado' });
+
+    const previousQuantity = Math.max(0, Number(cdProduct.stock_level || 0));
+    const normalizedLevel = Math.max(0, Math.trunc(newLevel));
+    const status = normalizedLevel <= 0 ? 'CRITICO' : (normalizedLevel <= minStock ? 'BAIXO' : 'OK');
+
+    const { error: updateError } = await supabaseAdmin
+      .from('cd_products')
+      .update({
+        stock_level: normalizedLevel,
+        min_stock: minStock,
+        status,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', productId)
+      .eq('cd_id', cdId);
+
+    if (updateError) throw updateError;
+
+    const catalogProductId = await resolveCatalogProductIdFromCdRow(cdProduct);
+    if (normalizedLevel !== previousQuantity) {
+      await insertInventoryMovement({
+        cdId,
+        productId: catalogProductId,
+        type: 'adjustment',
+        quantity: Math.abs(normalizedLevel - previousQuantity),
+        previousQuantity,
+        newQuantity: normalizedLevel,
+        reason: 'AJUSTE_MANUAL_CD',
+        referenceId: productId,
+        referenceType: 'cd_product',
+        createdBy: 'cd_admin',
+      });
+    }
+
+    res.json({ success: true });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
   }
@@ -385,12 +740,20 @@ router.patch('/v1/cds/orders/:id', async (req: Request, res: Response) => {
 
           // Preço de Consultor (50% do varejo)
           const retailPrice = catalogProd?.price ? (Number(catalogProd.price) * 0.5) : Number(item.unit_price);
+          const stockSku = catalogProd?.sku || item.sku || 'N/A';
+          const { data: existingCdProduct } = await supabaseAdmin
+            .from('cd_products')
+            .select('*')
+            .eq('cd_id', order.cd_id)
+            .eq('sku', stockSku)
+            .maybeSingle();
+          const previousQuantity = Math.max(0, Number(existingCdProduct?.stock_level || 0));
 
           await supabaseAdmin
             .from('cd_products')
             .upsert({
               cd_id: order.cd_id,
-              sku: catalogProd?.sku || item.sku || 'N/A',
+              sku: stockSku,
               name: catalogProd?.name || item.product_name || 'Produto',
               category: catalogProd?.category || 'Geral',
               stock_level: item.quantity, // O upsert no DB deve somar se quisermos, mas como é reconstrução ou incremento simplificado:
@@ -407,8 +770,28 @@ router.patch('/v1/cds/orders/:id', async (req: Request, res: Response) => {
           // Nota técnica: O upsert acima substitui o valor. Para somar via admin sem Trigger:
           await supabaseAdmin.rpc('increment_cd_stock', {
             p_cd_id: order.cd_id,
-            p_sku: catalogProd?.sku || item.sku,
+            p_sku: stockSku,
             p_qty: item.quantity
+          });
+
+          const { data: updatedCdProduct } = await supabaseAdmin
+            .from('cd_products')
+            .select('stock_level')
+            .eq('cd_id', order.cd_id)
+            .eq('sku', stockSku)
+            .maybeSingle();
+
+          await insertInventoryMovement({
+            cdId: order.cd_id,
+            productId: catalogProd?.id || String(item.product_id || ''),
+            type: 'in',
+            quantity: Math.max(0, Number(item.quantity || 0)),
+            previousQuantity,
+            newQuantity: Math.max(0, Number(updatedCdProduct?.stock_level || previousQuantity + Number(item.quantity || 0))),
+            reason: 'ABASTECIMENTO_ENTREGUE',
+            referenceId: id,
+            referenceType: 'cd_order',
+            createdBy: 'system',
           });
         }
 
@@ -743,8 +1126,8 @@ router.post('/v1/cds/:id/sync', async (req: Request, res: Response) => {
     ]);
 
     const masterData = {
-      // Preserve existing id or generate a new UUID (required NOT NULL)
-      id: minisite.data?.id || crypto.randomUUID(),
+      // minisite_profiles.id referencia o usuario dono do minisite/CD
+      id: minisite.data?.id || userId,
       consultant_id: userId,
       type: minisite.data?.type || 'cd',
       name: minisite.data?.name || consultor.data?.nome || profile.data?.nome_completo || 'CD Em Configuração',

@@ -7,6 +7,8 @@ interface CollectionCardProps {
 }
 
 const CollectionCard: React.FC<CollectionCardProps> = ({ collection, onClick }) => {
+    const imageUrl = collection.imageUrl || 'https://placehold.co/800x800?text=Colecao';
+
     return (
         <div
             onClick={onClick}
@@ -16,8 +18,10 @@ const CollectionCard: React.FC<CollectionCardProps> = ({ collection, onClick }) 
             onKeyPress={(e) => e.key === 'Enter' && onClick()}
         >
             <img
-                src={collection.imageUrl}
+                src={imageUrl}
                 alt={collection.title}
+                loading="lazy"
+                decoding="async"
                 className="w-full h-full object-cover transition-transform duration-700 ease-in-out group-hover:scale-110"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-80 group-hover:opacity-100 transition-opacity duration-300"></div>

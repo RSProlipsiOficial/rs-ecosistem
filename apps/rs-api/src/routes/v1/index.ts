@@ -22,6 +22,7 @@ import opsRoutes from './ops.routes';
 import uploadRoutes from './upload.routes';
 import reportsRoutes from './reports.routes';
 import careerRoutes from './career.routes';
+import siteBuilderRoutes from './siteBuilder.routes';
 
 // Configuração das rotas V1
 // Montagem explícita para garantir compatibilidade com apiUrls.ts e V1_ENDPOINTS
@@ -38,6 +39,7 @@ router.use('/ops', opsRoutes);
 router.use('/upload', uploadRoutes);
 router.use('/reports', reportsRoutes);
 router.use('/career', careerRoutes);
+router.use('/site-builder', siteBuilderRoutes);
 
 // Health check específico do V1
 router.get('/system/health', (req, res) => {

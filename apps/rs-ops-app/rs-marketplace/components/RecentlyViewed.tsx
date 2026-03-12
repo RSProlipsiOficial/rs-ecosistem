@@ -42,10 +42,6 @@ const RecentlyViewed: React.FC<RecentlyViewedProps> = ({
     return () => window.removeEventListener('resize', updateVisible);
   }, []);
 
-  if (products.length === 0) {
-    return null;
-  }
-
   const totalItems = products.length;
   const maxIndex = Math.max(0, totalItems - Math.floor(itemsVisible));
 
@@ -66,6 +62,10 @@ const RecentlyViewed: React.FC<RecentlyViewedProps> = ({
       if (autoPlayRef.current) clearInterval(autoPlayRef.current);
     };
   }, [maxIndex, itemsVisible, totalItems]);
+
+  if (products.length === 0) {
+    return null;
+  }
 
   const resetTimer = () => {
     if (autoPlayRef.current) clearInterval(autoPlayRef.current);
@@ -135,7 +135,7 @@ const RecentlyViewed: React.FC<RecentlyViewedProps> = ({
               {products.map((product) => (
                 <div
                   key={product.id}
-                  className="flex-shrink-0 px-4"
+                  className="flex-shrink-0 px-4 flex justify-center"
                   style={{ width: `${100 / itemsVisible}%` }}
                 >
                   <ProductCard

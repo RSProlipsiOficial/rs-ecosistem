@@ -16,10 +16,14 @@ export interface BankAccount {
   accountNumber: string;
   accountType: 'checking' | 'savings';
   pixKey: string;
+  pixKeyType?: 'email' | 'cpf' | 'phone' | 'random';
 }
 
 export interface User {
   id: string;
+  code?: string;
+  displayId?: string;
+  loginId?: string;
   name: string;
   email: string;
   avatarUrl: string;

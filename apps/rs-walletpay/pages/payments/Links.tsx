@@ -1,16 +1,16 @@
 
 import React, { useState } from 'react';
 import Modal from '../../components/Modal';
-import { MOCK_PAYMENT_LINKS } from '../../constants';
 import { walletAPI } from '../../src/services/api';
 import ActionMenu from '../../components/ActionMenu';
+import { getWalletUserId } from '../../src/utils/walletSession';
 
 const formatCurrency = (value: number | null) => {
     if (value === null) return "Aberto";
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value / 100);
 };
 
-const LinkCard: React.FC<{ link: typeof MOCK_PAYMENT_LINKS[0]; onAction: (action: string, link: any) => void; }> = ({ link, onAction }) => {
+const LinkCard: React.FC<{ link: any; onAction: (action: string, link: any) => void; }> = ({ link, onAction }) => {
     const actions = [
         { label: 'Copiar Link', onClick: () => onAction('copy', link) },
         { label: 'Ver QR Code', onClick: () => onAction('qr', link) },
@@ -36,7 +36,7 @@ const LinkCard: React.FC<{ link: typeof MOCK_PAYMENT_LINKS[0]; onAction: (action
 
 
 const Links: React.FC = () => {
-    const [links, setLinks] = useState(MOCK_PAYMENT_LINKS);
+    const [links, setLinks] = useState<any[]>([]);
     const [modal, setModal] = useState<{ type: 'create' | 'share' | null; data: any }>({ type: null, data: null });
     const [isFixedAmount, setIsFixedAmount] = useState(true);
 
@@ -56,7 +56,11 @@ const Links: React.FC = () => {
     const handleCreateLink = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         const formData = new FormData(e.currentTarget);
-        const userId = localStorage.getItem('userId') || 'demo-user';
+        const userId = getWalletUserId();
+        if (!userId) {
+            alert('Sessao invalida. Entre novamente no WalletPay.');
+            return;
+        }
         try {
             const name = String(formData.get('name') || 'Link');
             const amountCents = isFixedAmount ? parseInt(String(formData.get('amount') || '').replace(/\D/g, ''), 10) : null;
@@ -73,7 +77,7 @@ const Links: React.FC = () => {
             setLinks([newLink, ...links]);
             setModal({ type: 'share', data: newLink });
         } catch (err) {
-            alert('Falha ao criar link. Usando fallback local.');
+            alert('Falha ao criar link de pagamento.');
             const newLink = {
                 id: `link_${Date.now()}`,
                 name: String(formData.get('name') || 'Link'),
@@ -82,8 +86,6 @@ const Links: React.FC = () => {
                 url: `https://rs.wallet/pay/${String(formData.get('name') || 'link').toLowerCase().replace(/\s/g, '-')}`,
                 createdAt: new Date().toISOString()
             };
-            setLinks([newLink, ...links]);
-            setModal({ type: 'share', data: newLink });
         }
     };
 
@@ -142,7 +144,11 @@ const Links: React.FC = () => {
                 </button>
             </div>
             <div className="space-y-4">
-                {links.map(link => <LinkCard key={link.id} link={link} onAction={handleAction} />)}
+                {links.length > 0 ? links.map(link => <LinkCard key={link.id} link={link} onAction={handleAction} />) : (
+                    <div className="bg-card p-8 rounded-2xl border border-border text-center text-text-soft">
+                        Nenhum link criado ainda.
+                    </div>
+                )}
             </div>
 
             <Modal isOpen={!!modal.type} onClose={() => setModal({ type: null, data: null })} title={modal.type === 'create' ? 'Novo Link de Pagamento' : 'Compartilhar Link'}>

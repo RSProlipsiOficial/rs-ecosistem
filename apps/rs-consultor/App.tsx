@@ -29,6 +29,7 @@ import MeusDados from './consultant/shop/MeusDados';
 
 // Auth Page
 import Login from './auth/Login';
+import Signup from './auth/Signup';
 
 
 // Wallet Pages
@@ -53,6 +54,47 @@ import { supabase } from './consultant/services/supabaseClient';
 import { sigmaApi } from './consultant/services/sigmaApi';
 import { dashboardApi } from './consultant/services/dashboardApi';
 import { syncService } from './consultant/services/syncService';
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+
+const resolveConsultantNumericCode = async (params: { slug?: string | null; email?: string | null; name?: string | null; }): Promise<string> => {
+  const candidates = [params.slug, params.email, params.name]
+    .map(value => String(value || '').trim())
+    .filter(Boolean);
+
+  for (const candidate of candidates) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/admin/consultor/search?q=${encodeURIComponent(candidate)}`);
+      const payload = await response.json();
+      const results = Array.isArray(payload?.results) ? payload.results : [];
+      const match = results.find((item: any) => {
+        const sameEmail = params.email && item?.email && String(item.email).trim().toLowerCase() === String(params.email).trim().toLowerCase();
+        const sameName = params.name && item?.nome && String(item.nome).trim().toLowerCase() === String(params.name).trim().toLowerCase();
+        return sameEmail || sameName || candidate.toLowerCase() === String(item?.username || '').trim().toLowerCase();
+      }) || results[0];
+
+      if (match?.numericId) {
+        return String(match.numericId);
+      }
+    } catch {
+      // noop
+    }
+  }
+
+  return '';
+};
+
+const inferPixKeyType = (value?: string | null): 'email' | 'cpf' | 'phone' | 'random' => {
+  const raw = String(value || '').trim();
+  const digits = raw.replace(/\D/g, '');
+
+  if (!raw) return 'random';
+  if (raw.includes('@')) return 'email';
+  if (/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(raw)) return 'random';
+  if (raw.startsWith('+') || raw.includes('(') || raw.includes(')') || raw.includes('-') || digits.length >= 12) return 'phone';
+  if (digits.length === 11) return 'cpf';
+  return 'random';
+};
 
 
 // [RS-BRANDING] - Constantes Globais de Identidade
@@ -174,6 +216,66 @@ const getInitialConfig = (): DashboardConfig => {
   return defaultDashboardConfig;
 };
 
+const formatCpfCnpj = (value?: string | null): string => {
+  if (!value) return '';
+  const clean = String(value).replace(/\D/g, '');
+  if (clean.length === 11) {
+    return clean.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+  }
+  if (clean.length === 14) {
+    return clean.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
+  }
+  return String(value);
+};
+
+type ConsultorBridgePayload = {
+  token?: string;
+  accessToken?: string;
+  userId?: string;
+  uid?: string;
+  userEmail?: string;
+  email?: string;
+  source?: string;
+  autoLogin?: boolean;
+};
+
+const parseConsultorBridgePayload = (value: string): ConsultorBridgePayload | null => {
+  try {
+    const parsed = JSON.parse(value);
+    return parsed && typeof parsed === 'object' ? parsed as ConsultorBridgePayload : null;
+  } catch {
+    try {
+      const decoded = decodeURIComponent(escape(atob(value)));
+      const parsed = JSON.parse(decoded);
+      return parsed && typeof parsed === 'object' ? parsed as ConsultorBridgePayload : null;
+    } catch {
+      return null;
+    }
+  }
+};
+
+const extractConsultorBridgeToken = () => {
+  if (typeof window === 'undefined') return null;
+
+  const fromSearch = new URLSearchParams(window.location.search).get('token');
+  if (fromSearch) return fromSearch;
+
+  const hash = window.location.hash || '';
+  const queryIndex = hash.indexOf('?');
+  if (queryIndex >= 0) {
+    const params = new URLSearchParams(hash.slice(queryIndex + 1));
+    return params.get('token');
+  }
+
+  return null;
+};
+
+const normalizeConsultorAccessToken = (rawToken: string) => {
+  const payload = parseConsultorBridgePayload(rawToken);
+  const accessToken = String(payload?.accessToken || payload?.token || rawToken || '').trim();
+  return { payload, accessToken };
+};
+
 
 const ContextProviders: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // [RS-ENCARREGADO-SYNC] - FORÇANDO DADOS DO ROBERTO NO ESTADO INICIAL
@@ -194,6 +296,29 @@ const ContextProviders: React.FC<{ children: React.ReactNode }> = ({ children })
     setUser(prevUser => ({ ...prevUser, ...newUserData }));
   };
 
+  const fetchConsultorRecord = React.useCallback(async (authUserId?: string | null, email?: string | null) => {
+    if (!authUserId && !email) {
+      return null;
+    }
+
+    let query = supabase.from('consultores').select('*');
+    if (authUserId && email) {
+      query = query.or(`user_id.eq."${authUserId}",email.eq."${email}"`);
+    } else if (authUserId) {
+      query = query.eq('user_id', authUserId);
+    } else {
+      query = query.eq('email', email as string);
+    }
+
+    const { data, error } = await query.maybeSingle();
+    if (error) {
+      console.warn('[App] Fallback consultores indisponivel:', error.message);
+      return null;
+    }
+
+    return data;
+  }, []);
+
   const markMessageAsRead = (messageId: string) => {
     setMessages(prevMessages =>
       prevMessages.map(msg =>
@@ -202,9 +327,9 @@ const ContextProviders: React.FC<{ children: React.ReactNode }> = ({ children })
     );
   };
 
-  const checkSessionAndFetchUser = React.useCallback(async () => {
+  const checkSessionAndFetchUser = React.useCallback(async (sessionOverride?: any) => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const session = sessionOverride || (await supabase.auth.getSession()).data.session;
 
       if (session) {
         localStorage.setItem('consultorToken', session.access_token);
@@ -221,10 +346,12 @@ const ContextProviders: React.FC<{ children: React.ReactNode }> = ({ children })
           .eq('user_id', session.user.id)
           .maybeSingle();
 
-        // Busca dados legado em consultores (para garantir nome/whatsapp se faltar no profile)
-        let consultData = null;
+        // Sempre busca o legado em consultores tambem.
+        // Isso garante patrocinador_id, username e outros vinculos operacionais
+        // mesmo quando user_profiles vier "completo" mas sem os campos de rede.
+        let consultData = await fetchConsultorRecord(session.user.id, currentUserEmail);
         // Se perfil não existe OU se o nome está vazio/default
-        if (!profile || !profile.name || profile.name === 'Carregando...') {
+        if (false && (!profile || !profile.name || profile.name === 'Carregando...')) {
           const { data: c } = await supabase
             .from('consultores')
             .select('*')
@@ -236,22 +363,33 @@ const ContextProviders: React.FC<{ children: React.ReactNode }> = ({ children })
         if (profile || consultData) {
           console.log('[App] Merging User Data:', { profileId: profile?.id, consultorId: consultData?.id });
 
+          const isMasterAccount =
+            currentUserEmail?.toLowerCase().includes('rsprolipsi') ||
+            profile?.slug?.toLowerCase().includes('rsprolipsi') ||
+            consultData?.username?.toLowerCase().includes('rsprolipsi');
+
+          const resolvedName = isMasterAccount ? 'RS PRÓLIPSI' : (profile?.nome_completo || profile?.full_name || profile?.name || consultData?.nome || user.name);
+          const resolvedSlug = isMasterAccount ? 'rsprolipsi' : (profile?.slug || profile?.id_consultor || profile?.consultant_id || consultData?.username || consultData?.mmn_id || user.idConsultor);
+          const fallbackCode = await resolveConsultantNumericCode({
+            slug: resolvedSlug,
+            email: currentUserEmail || profile?.email || consultData?.email,
+            name: resolvedName,
+          });
+
           setUser(prev => {
             // [RS-UNIFY-LOGIC] - Forçar Identidade Mestre RS Prólipsi
-            const isMasterAccount =
-              currentUserEmail?.toLowerCase().includes('rsprolipsi') ||
-              profile?.slug?.toLowerCase().includes('rsprolipsi') ||
-              consultData?.username?.toLowerCase().includes('rsprolipsi');
-
-            const baseName = isMasterAccount ? 'RS PRÓLIPSI' : (profile?.full_name || profile?.name || consultData?.nome || prev.name);
-            const baseSlug = isMasterAccount ? 'rsprolipsi' : (profile?.id_consultor || profile?.consultant_id || consultData?.username || consultData?.mmn_id || prev.idConsultor);
-            const baseWhatsapp = profile?.phone || profile?.whatsapp || consultData?.whatsapp || consultData?.telefone || prev.whatsapp;
+            const baseName = isMasterAccount ? 'RS PRÓLIPSI' : (profile?.nome_completo || profile?.full_name || profile?.name || consultData?.nome || prev.name);
+            const baseSlug = isMasterAccount ? 'rsprolipsi' : (profile?.slug || profile?.id_consultor || profile?.consultant_id || consultData?.username || consultData?.mmn_id || prev.idConsultor);
+            const numericId = profile?.id_numerico || consultData?.id_numerico || consultData?.codigo_consultor || fallbackCode || prev.idNumerico;
+            const accountCode = numericId || consultData?.codigo_consultor || fallbackCode || prev.code;
+            const loginId = baseSlug || consultData?.username || consultData?.mmn_id || prev.loginId;
+            const baseWhatsapp = profile?.telefone || profile?.phone || profile?.whatsapp || consultData?.whatsapp || consultData?.telefone || prev.whatsapp;
             const baseCover = profile?.cover_url || '';
 
             // ... (avatar logic kept identical)
             let rawAvatar = profile?.avatar_url || consultData?.foto || prev.avatarUrl;
             if (!rawAvatar || BANNED_PATTERNS.some(p => rawAvatar?.includes(p))) rawAvatar = branding.logo;
-            let baseAvatar = isMasterAccount ? branding.logo : rawAvatar;
+            let baseAvatar = rawAvatar;
 
             // [RS-SYNC-LINKS] - Portas: 3002 (Cadastro), 3003 (Loja)
             const currentOrigin = window.location.origin;
@@ -259,9 +397,9 @@ const ContextProviders: React.FC<{ children: React.ReactNode }> = ({ children })
             const marketplaceDomain = isLocal ? 'http://localhost:3003' : 'https://marketplace.rsprolipsi.com.br';
             const rotaFacilDomain = isLocal ? 'http://localhost:3002' : 'https://rotafacil.rsprolipsi.com.br';
 
-            const linkLoja = marketplaceDomain;
-            const linkIndicacao = `${rotaFacilDomain}/indicacao/${baseSlug}`;
-            const linkCadastro = `${rotaFacilDomain}/indicacao/${baseSlug}`;
+            const linkLoja = `${marketplaceDomain}/loja/${baseSlug}`;
+            const linkIndicacao = `${rotaFacilDomain}/indicacao/${baseSlug}#/login`;
+            const linkCadastro = `${rotaFacilDomain}/indicacao/${baseSlug}#/signup`;
 
             return {
               ...prev,
@@ -276,23 +414,35 @@ const ContextProviders: React.FC<{ children: React.ReactNode }> = ({ children })
               whatsapp: baseWhatsapp,
               email: currentUserEmail,
               idConsultor: baseSlug,
+              idNumerico: numericId,
+              code: accountCode ? String(accountCode) : prev.code,
+              loginId: loginId || prev.loginId,
+              patrocinador_id: consultData?.patrocinador_id || (profile as any)?.sponsor_id || (profile as any)?.patrocinador_id || prev.patrocinador_id,
               avatarUrl: baseAvatar,
               coverUrl: baseCover,
               linkLoja,
               linkIndicacao,
 
               // Mapeamento Correto de CPF e Data
-              cpfCnpj: profile?.cpf || consultData?.cpf || prev.cpfCnpj,
-              birthDate: profile?.birth_date || consultData?.data_nascimento || prev.birthDate,
+              cpfCnpj: formatCpfCnpj(profile?.cpf || (profile as any)?.cpf_cnpj || consultData?.cpf || consultData?.cpf_cnpj || prev.cpfCnpj),
+              birthDate: profile?.data_nascimento || profile?.birth_date || consultData?.data_nascimento || prev.birthDate,
 
               // Mapeamento Correto do Objeto Address
               address: {
-                zipCode: profile?.address_zip || consultData?.cep || prev.address.zipCode,
-                street: profile?.address_street || consultData?.endereco || prev.address.street,
-                number: profile?.endereco_numero || prev.address.number, // Mantém prev.address.number se não vier do banco para evitar crash
-                neighborhood: profile?.address_neighborhood || consultData?.bairro || prev.address.neighborhood,
-                city: profile?.address_city || consultData?.cidade || prev.address.city,
-                state: profile?.address_state || consultData?.estado || prev.address.state,
+                zipCode: profile?.endereco_cep || profile?.address_zip || consultData?.cep || prev.address.zipCode,
+                street: profile?.endereco_rua || profile?.address_street || consultData?.endereco || prev.address.street,
+                number: profile?.endereco_numero || consultData?.numero || prev.address.number,
+                neighborhood: profile?.endereco_bairro || profile?.address_neighborhood || consultData?.bairro || prev.address.neighborhood,
+                city: profile?.endereco_cidade || profile?.address_city || consultData?.cidade || prev.address.city,
+                state: profile?.endereco_estado || profile?.address_state || consultData?.estado || prev.address.state,
+              },
+              bankAccount: {
+                bank: (profile as any)?.banco_nome || prev.bankAccount.bank,
+                agency: (profile as any)?.banco_agencia || prev.bankAccount.agency,
+                accountNumber: (profile as any)?.banco_conta || prev.bankAccount.accountNumber,
+                accountType: ((profile as any)?.banco_tipo as 'checking' | 'savings') || prev.bankAccount.accountType,
+                pixKey: (profile as any)?.banco_pix || prev.bankAccount.pixKey,
+                pixKeyType: inferPixKeyType((profile as any)?.banco_pix || prev.bankAccount.pixKey),
               }
             };
           });
@@ -306,7 +456,7 @@ const ContextProviders: React.FC<{ children: React.ReactNode }> = ({ children })
     } catch (err) {
       console.error('[App] Detailed fetch error:', err);
     }
-  }, []);
+  }, [branding.logo, fetchConsultorRecord]);
 
   const login = async (email: string, pass: string, callback: () => void): Promise<boolean> => {
     try {
@@ -345,7 +495,8 @@ const ContextProviders: React.FC<{ children: React.ReactNode }> = ({ children })
         return null;
       }
 
-      console.log("[Sync] Buscando user_profiles para:", authUser.id);
+        console.log("[Sync] Buscando user_profiles para:", authUser.id);
+        const consultData = await fetchConsultorRecord(authUser.id, authUser.email || null);
 
       // [RS-SYNC-FIX] - user_profiles (Source of Truth)
       const { data: profile, error: profileError } = await supabase
@@ -390,7 +541,7 @@ const ContextProviders: React.FC<{ children: React.ReactNode }> = ({ children })
 
         let rawAvatar = profile.avatar_url || user.avatarUrl;
         if (!rawAvatar || BANNED_PATTERNS.some(p => rawAvatar?.includes(p))) rawAvatar = branding.logo;
-        let finalAvatar = isMasterAccount ? branding.logo : rawAvatar;
+        let finalAvatar = rawAvatar;
 
         // Sempre usar minúsculas para o slug de links
         finalSlug = finalSlug.toLowerCase();
@@ -400,40 +551,53 @@ const ContextProviders: React.FC<{ children: React.ReactNode }> = ({ children })
           finalAvatar = branding.logo;
         }
 
-        // Forçar para master accounts
-        if (isMasterAccount) {
-          finalAvatar = branding.logo;
-        }
-
         // [RS-SYNC-LINKS] - Geração de links dinâmicos (Environment Aware)
         const currentOrigin = window.location.origin;
         const isLocal = currentOrigin.includes('localhost');
         const marketplaceDomain = isLocal ? 'http://localhost:3003' : 'https://marketplace.rsprolipsi.com.br';
         const rotaFacilDomain = isLocal ? 'http://localhost:3002' : 'https://rotafacil.rsprolipsi.com.br';
 
-        const linkLoja = marketplaceDomain;
-        const linkIndicacao = `${rotaFacilDomain}/indicacao/${finalSlug}`;
-        const linkCadastro = `${rotaFacilDomain}/indicacao/${finalSlug}`;
+        const linkLoja = `${marketplaceDomain}/loja/${finalSlug}`;
+        const linkIndicacao = `${rotaFacilDomain}/indicacao/${finalSlug}#/login`;
+        const linkCadastro = `${rotaFacilDomain}/indicacao/${finalSlug}#/signup`;
 
         // [FIX] Atualizar estado local imediatamente
+        const fallbackCode = await resolveConsultantNumericCode({
+          slug: finalSlug,
+          email: profile.email || consultData?.email || user.email,
+          name: finalName,
+        });
+        const numericId = profile.id_numerico || consultData?.id_numerico || consultData?.codigo_consultor || fallbackCode || user.idNumerico;
+        const finalLoginId = finalSlug || consultData?.username || consultData?.mmn_id || user.loginId;
         const updatedData = {
           name: finalName,
-          cpfCnpj: formatCpfCnpj(profile.cpf) || user.cpfCnpj,
-          whatsapp: profile.telefone || user.whatsapp,
+          cpfCnpj: formatCpfCnpj(profile.cpf || (profile as any).cpf_cnpj || consultData?.cpf || consultData?.cpf_cnpj) || user.cpfCnpj,
+          whatsapp: profile.telefone || consultData?.whatsapp || consultData?.telefone || user.whatsapp,
           avatarUrl: finalAvatar,
           coverUrl: profile.cover_url || '',
           idConsultor: finalSlug,
-          idNumerico: profile.id_numerico || 1,
+          idNumerico: numericId,
+          code: numericId ? String(numericId) : (fallbackCode || user.code),
+          loginId: finalLoginId,
+          patrocinador_id: consultData?.patrocinador_id || (profile as any).sponsor_id || (profile as any).patrocinador_id || user.patrocinador_id,
           linkIndicacao,
           linkLoja,
           linkCadastro,
           address: {
-            zipCode: profile.endereco_cep || user.address.zipCode,
-            street: profile.endereco_rua || user.address.street,
-            number: profile.endereco_numero || user.address.number,
-            neighborhood: profile.endereco_bairro || user.address.neighborhood,
-            city: profile.endereco_cidade || user.address.city,
-            state: profile.endereco_estado || user.address.state,
+            zipCode: profile.endereco_cep || consultData?.cep || user.address.zipCode,
+            street: profile.endereco_rua || consultData?.endereco || user.address.street,
+            number: profile.endereco_numero || consultData?.numero || user.address.number,
+            neighborhood: profile.endereco_bairro || consultData?.bairro || user.address.neighborhood,
+            city: profile.endereco_cidade || consultData?.cidade || user.address.city,
+            state: profile.endereco_estado || consultData?.estado || user.address.state,
+          },
+          bankAccount: {
+            bank: (profile as any).banco_nome || user.bankAccount.bank,
+            agency: (profile as any).banco_agencia || user.bankAccount.agency,
+            accountNumber: (profile as any).banco_conta || user.bankAccount.accountNumber,
+            accountType: ((profile as any).banco_tipo as 'checking' | 'savings') || user.bankAccount.accountType,
+            pixKey: (profile as any).banco_pix || user.bankAccount.pixKey,
+            pixKeyType: inferPixKeyType((profile as any).banco_pix || user.bankAccount.pixKey),
           }
         };
 
@@ -462,7 +626,51 @@ const ContextProviders: React.FC<{ children: React.ReactNode }> = ({ children })
 
   // Fetch user from Supabase and handle session
   React.useEffect(() => {
-    checkSessionAndFetchUser();
+    const hydrateUserFromBridgeToken = async (rawToken: string) => {
+      const { accessToken } = normalizeConsultorAccessToken(rawToken);
+      if (!accessToken) return false;
+
+      try {
+        const authApi = supabase.auth as any;
+        const response = await authApi.getUser(accessToken);
+        const bridgeUser = response?.data?.user;
+
+        if (!bridgeUser) {
+          return false;
+        }
+
+        localStorage.setItem('consultorToken', accessToken);
+        setIsAuthenticated(true);
+        await checkSessionAndFetchUser({
+          user: bridgeUser,
+          access_token: accessToken
+        });
+
+        if (typeof window !== 'undefined' && window.location.hash.includes('/sso')) {
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
+
+        return true;
+      } catch (error) {
+        console.error('[App] Consultor SSO failed:', error);
+        localStorage.removeItem('consultorToken');
+        return false;
+      }
+    };
+
+    const initializeAuth = async () => {
+      const bridgeToken = extractConsultorBridgeToken();
+      if (bridgeToken) {
+        const hydrated = await hydrateUserFromBridgeToken(bridgeToken);
+        if (hydrated) {
+          return;
+        }
+      }
+
+      await checkSessionAndFetchUser();
+    };
+
+    initializeAuth();
   }, [checkSessionAndFetchUser]);
 
   // Fetch dynamic SIGME config to populate PIN logos
@@ -566,6 +774,7 @@ const App: React.FC = () => {
     <ContextProviders>
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
 
         <Route path="/consultant" element={<ProtectedRoute><ConsultantLayout /></ProtectedRoute>}>
           <Route index element={<Navigate to="dashboard" replace />} />

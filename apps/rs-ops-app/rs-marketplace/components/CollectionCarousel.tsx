@@ -22,8 +22,6 @@ const CollectionCarousel: React.FC<CollectionCarouselProps> = ({
     const [showRightArrow, setShowRightArrow] = useState(true);
     const [isPaused, setIsPaused] = useState(false);
 
-    if (!collections || collections.length === 0) return null;
-
     const handleScroll = () => {
         if (!scrollRef.current) return;
         const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
@@ -45,7 +43,7 @@ const CollectionCarousel: React.FC<CollectionCarouselProps> = ({
     };
 
     useEffect(() => {
-        if (!autoPlay) return;
+        if (!autoPlay || collections.length === 0) return;
         const interval = setInterval(() => {
             if (isPaused || !scrollRef.current) return;
             const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
@@ -58,7 +56,9 @@ const CollectionCarousel: React.FC<CollectionCarouselProps> = ({
             }
         }, 4000);
         return () => clearInterval(interval);
-    }, [isPaused, autoPlay]);
+    }, [isPaused, autoPlay, collections.length]);
+
+    if (!collections || collections.length === 0) return null;
 
     return (
         <div

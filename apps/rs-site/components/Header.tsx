@@ -9,10 +9,12 @@ import { useTheme } from '../context/ThemeContext';
 import { useBanner } from '../context/BannerContext';
 import { useCart } from '../context/CartContext';
 import { ShoppingBagIcon } from './Icons';
+import { brandingApi } from '../services/brandingApi';
 
 const Header: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const { page, setPage } = useNavigation();
   const { pages, globalContent } = usePageBuilder();
   const { openLoginPanel } = useAdmin();
@@ -37,6 +39,30 @@ const Header: React.FC = () => {
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  useEffect(() => {
+    const fetchBranding = async () => {
+      try {
+        const res = await brandingApi.getBranding();
+        if (res.success && res.data) {
+          const nextLogo = res.data.logo || res.data.avatar || res.data.logoUrl || res.data.logo_url;
+          if (nextLogo) {
+            setLogoUrl(String(nextLogo));
+          }
+        }
+      } catch (error) {
+        console.error('[Header] Failed to fetch branding:', error);
+      }
+    };
+
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'rs-branding-update') fetchBranding();
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    fetchBranding();
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
   
   const closeMenu = () => setIsMobileMenuOpen(false);
@@ -120,7 +146,21 @@ const Header: React.FC = () => {
     <>
       <header className={headerClass}>
         <div className="container mx-auto px-6 py-4 flex justify-between items-center">
-          <button onClick={() => handleNavClick('home')} className="text-2xl text-accent tracking-wider" dangerouslySetInnerHTML={{ __html: headerContent.title || '' }} />
+          <button onClick={() => handleNavClick('home')} className="flex items-center">
+            {logoUrl ? (
+              <img
+                src={logoUrl}
+                alt="Logo RS Prolipsi"
+                className="h-14 w-auto object-contain"
+                onError={(event) => {
+                  event.currentTarget.onerror = null;
+                  setLogoUrl(null);
+                }}
+              />
+            ) : (
+              <span className="text-2xl text-accent tracking-wider" dangerouslySetInnerHTML={{ __html: headerContent.title || '' }} />
+            )}
+          </button>
           <nav className="hidden md:flex items-center space-x-8">
             {navLinks.map((link) => (
               <button key={link.page} onClick={() => handleNavClick(link.page)} className={`relative font-medium transition-colors duration-300 ${page === link.page ? 'text-accent' : 'text-text-primary hover:text-accent'}`}>

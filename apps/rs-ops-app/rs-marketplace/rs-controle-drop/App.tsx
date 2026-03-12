@@ -159,6 +159,7 @@ const App: React.FC<AppProps> = ({
   const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
   const [alerts, setAlerts] = useState<AppAlert[]>([]);
   const [selectedLogistaId, setSelectedLogistaId] = useState<string>('all');
+  const [branding, setBranding] = useState<any>(null);
 
   const visibleProducts = useMemo(() => [], []);
   const visibleOrders = useMemo(() => [], []);
@@ -170,6 +171,20 @@ const App: React.FC<AppProps> = ({
     // Configure the tracking service whenever pixels change
     marketingTrackingService.configure(trackingPixels);
   }, [trackingPixels]);
+
+  // Fetch Branding
+  useEffect(() => {
+    const fetchBranding = async () => {
+      try {
+        const res = await fetch('http://localhost:4000/v1/admin/settings/general');
+        const json = await res.json();
+        if (json.success) setBranding(json.data);
+      } catch (e) {
+        console.error('Error fetching branding:', e);
+      }
+    };
+    fetchBranding();
+  }, []);
 
   // --- INTERNAL NOTIFICATION TRIGGERS ---
   const prevOrdersCount = useRef(orders.length);
@@ -240,73 +255,106 @@ const App: React.FC<AppProps> = ({
     <div className="flex h-screen bg-rs-black text-slate-200 font-sans overflow-hidden">
       <ToastContainer />
       <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-rs-card border-r border-rs-goldDim/20 transform transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:relative md:translate-x-0`}>
-        <div className="p-6 border-b border-rs-goldDim/20 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-rs-gold tracking-tighter">RS <span className="text-white">DROP</span></h1>
-          <button onClick={() => setIsSidebarOpen(false)} className="md:hidden text-slate-400"><X size={24} /></button>
-        </div>
-
-        <div className="p-4 border-b border-white/5 bg-black/20">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-rs-gold flex items-center justify-center text-rs-black font-bold text-lg">{currentUser.name.charAt(0)}</div>
-            <div>
-              <div className="text-sm font-bold text-white">{currentUser.name}</div>
-              <div className="text-xs text-slate-500">{currentUser.role}</div>
-            </div>
+        {/* Sidebar Brand Section - Compacta & Alinhada ao Header (80px) */}
+        <div className="h-20 border-b border-rs-goldDim/10 flex items-center justify-center bg-black/40 overflow-hidden">
+          <div className="relative w-full h-full flex items-center justify-center px-4">
+            {branding?.logo ? (
+              <img src={branding.logo} alt="Logo" className="w-full h-12 object-contain drop-shadow-[0_0_10px_rgba(212,175,55,0.15)]" />
+            ) : (
+              <div className="w-10 h-10 rounded-lg bg-rs-gold/10 flex items-center justify-center text-rs-gold">
+                <Package size={24} />
+              </div>
+            )}
           </div>
         </div>
 
-        <nav className="p-4 space-y-2 overflow-y-auto h-[calc(100vh-180px)] custom-scrollbar">
-          <SidebarItem icon={<LayoutDashboard size={20} />} label="Dashboard" isActive={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} />
-          <SidebarItem icon={<Bot size={20} />} label="RS.AI Copiloto" isActive={activeTab === 'ai'} onClick={() => setActiveTab('ai')} />
 
-          <div className="pt-4 pb-2 text-xs font-bold text-slate-500 uppercase tracking-wider">Operação</div>
-          <SidebarItem icon={<ShoppingCart size={20} />} label="Pedidos" isActive={activeTab === 'orders'} onClick={() => setActiveTab('orders')} />
-          <SidebarItem icon={<Package size={20} />} label="Meus Produtos" isActive={activeTab === 'products'} onClick={() => setActiveTab('products')} />
-          <SidebarItem icon={<Globe size={20} />} label="Catálogo RS" isActive={activeTab === 'catalog'} onClick={() => setActiveTab('catalog')} />
-          <SidebarItem icon={<Users size={20} />} label="Clientes" isActive={activeTab === 'customers'} onClick={() => setActiveTab('customers')} />
-          <SidebarItem icon={<UserCheck size={20} />} label="CRM Clientes" isActive={activeTab === 'crm-clientes'} onClick={() => setActiveTab('crm-clientes')} />
-          <SidebarItem icon={<Repeat size={20} />} label="Assinaturas" isActive={activeTab === 'subscriptions'} onClick={() => setActiveTab('subscriptions')} />
-          <SidebarItem icon={<Building size={20} />} label="Fornecedores" isActive={activeTab === 'suppliers'} onClick={() => setActiveTab('suppliers')} />
-          <SidebarItem icon={<Ship size={20} />} label="Envios" isActive={activeTab === 'shipping'} onClick={() => setActiveTab('shipping')} />
-          {currentUser.role === 'Admin' && <SidebarItem icon={<Warehouse size={20} />} label="CDs" isActive={activeTab === 'distribution-centers'} onClick={() => setActiveTab('distribution-centers')} />}
-          <SidebarItem icon={<Headphones size={20} />} label="Atendimento" isActive={activeTab === 'support'} onClick={() => setActiveTab('support')} />
-          <SidebarItem icon={<RefreshCw size={20} />} label="Trocas & Devoluções" isActive={activeTab === 'rma'} onClick={() => setActiveTab('rma')} />
-          <SidebarItem icon={<Zap size={20} />} label="Automações" isActive={activeTab === 'automations'} onClick={() => setActiveTab('automations')} />
-          <SidebarItem icon={<AlertOctagon size={20} />} label="Recuperação" isActive={activeTab === 'recovery'} onClick={() => setActiveTab('recovery')} />
-          <SidebarItem icon={<ChevronsRight size={20} />} label="Monitor do Funil" isActive={activeTab === 'funnel-monitor'} onClick={() => setActiveTab('funnel-monitor')} />
-          <SidebarItem icon={<Map size={20} />} label="Página de Rastreio" isActive={activeTab === 'tracking'} onClick={() => setActiveTab('tracking')} />
 
-          <div className="pt-4 pb-2 text-xs font-bold text-slate-500 uppercase tracking-wider">Marketing & Análise</div>
-          <SidebarItem icon={<Tag size={20} />} label="Afiliados" isActive={activeTab === 'affiliates'} onClick={() => setActiveTab('affiliates')} />
-          <SidebarItem icon={<ImageIcon size={20} />} label="Landing Pages" isActive={activeTab === 'landing-pages'} onClick={() => setActiveTab('landing-pages')} />
-          <SidebarItem icon={<TestTube2 size={20} />} label="Testes A/B" isActive={activeTab === 'ab-tests'} onClick={() => setActiveTab('ab-tests')} />
-          <SidebarItem icon={<Sliders size={20} />} label="Otimizador de Preços" isActive={activeTab === 'price-optimizer'} onClick={() => setActiveTab('price-optimizer')} />
-          <SidebarItem icon={<Bell size={20} />} label="Notificações Push" isActive={activeTab === 'push-notifications'} onClick={() => setActiveTab('push-notifications')} />
-          <SidebarItem icon={<Star size={20} />} label="Avaliações" isActive={activeTab === 'reviews'} onClick={() => setActiveTab('reviews')} />
-          <SidebarItem icon={<BarChart3 size={20} />} label="Relatórios Produtos" isActive={activeTab === 'product-reports'} onClick={() => setActiveTab('product-reports')} />
-          <SidebarItem icon={<Filter size={20} />} label="Análise de Funil" isActive={activeTab === 'funnel-analysis'} onClick={() => setActiveTab('funnel-analysis')} />
-          <SidebarItem icon={<TrendingUp size={20} />} label="Qualidade Produtos" isActive={activeTab === 'product-quality'} onClick={() => setActiveTab('product-quality')} />
-          <SidebarItem icon={<BarChart3 size={20} />} label="Tráfego Pago" isActive={activeTab === 'traffic'} onClick={() => setActiveTab('traffic')} />
-          <SidebarItem icon={<Users size={20} />} label="Leads" isActive={activeTab === 'leads'} onClick={() => setActiveTab('leads')} />
-          <SidebarItem icon={<Target size={20} />} label="Ferramentas Mkt" isActive={activeTab === 'marketing-tools'} onClick={() => setActiveTab('marketing-tools')} />
-          <SidebarItem icon={<Store size={20} />} label="Canais & UTM" isActive={activeTab === 'channels'} onClick={() => setActiveTab('channels')} />
-          <SidebarItem icon={<Wallet size={20} />} label="Pagamentos" isActive={activeTab === 'payments'} onClick={() => setActiveTab('payments')} />
-          <SidebarItem icon={<TrendingDown size={20} />} label="Pós-Venda" isActive={activeTab === 'postsale'} onClick={() => setActiveTab('postsale')} />
+        <nav className="p-3 space-y-1 overflow-y-auto h-[calc(100vh-80px)] custom-scrollbar">
+          <SidebarItem icon={<LayoutDashboard size={18} />} label={<div className="flex items-center gap-2"><span className="text-[9px] font-black text-rs-gold/60 border-r border-white/10 pr-2">RS DROP</span> <span className="text-xs">Dashboard</span></div>} isActive={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} />
+          <SidebarItem icon={<Bot size={18} />} label={<span className="text-xs">RS.AI Copiloto</span>} isActive={activeTab === 'ai'} onClick={() => setActiveTab('ai')} />
 
-          <div className="pt-4 pb-2 text-xs font-bold text-slate-500 uppercase tracking-wider">Sistema</div>
-          <SidebarItem icon={<SettingsIcon size={20} />} label="Configurações" isActive={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
-          <SidebarItem icon={<Store size={20} />} label="Vitrine (Preview)" isActive={activeTab === 'storefront'} onClick={() => setActiveTab('storefront')} />
+          <div className="pt-3 pb-1 text-[10px] font-bold text-slate-500 uppercase tracking-wider pl-2">Operação</div>
+          <SidebarItem icon={<ShoppingCart size={18} />} label={<span className="text-xs">Pedidos</span>} isActive={activeTab === 'orders'} onClick={() => setActiveTab('orders')} />
+          <SidebarItem icon={<Package size={18} />} label={<span className="text-xs">Meus Produtos</span>} isActive={activeTab === 'products'} onClick={() => setActiveTab('products')} />
+          <SidebarItem icon={<Globe size={18} />} label={<span className="text-xs">Catálogo RS</span>} isActive={activeTab === 'catalog'} onClick={() => setActiveTab('catalog')} />
+          <SidebarItem icon={<Users size={18} />} label={<span className="text-xs">Clientes</span>} isActive={activeTab === 'customers'} onClick={() => setActiveTab('customers')} />
+          <SidebarItem icon={<UserCheck size={18} />} label={<span className="text-xs">CRM Clientes</span>} isActive={activeTab === 'crm-clientes'} onClick={() => setActiveTab('crm-clientes')} />
+          <SidebarItem icon={<Repeat size={18} />} label={<span className="text-xs">Assinaturas</span>} isActive={activeTab === 'subscriptions'} onClick={() => setActiveTab('subscriptions')} />
+          <SidebarItem icon={<Building size={18} />} label={<span className="text-xs">Fornecedores</span>} isActive={activeTab === 'suppliers'} onClick={() => setActiveTab('suppliers')} />
+          <SidebarItem icon={<Ship size={18} />} label={<span className="text-xs">Envios</span>} isActive={activeTab === 'shipping'} onClick={() => setActiveTab('shipping')} />
+          {currentUser.role === 'Admin' && <SidebarItem icon={<Warehouse size={18} />} label={<span className="text-xs">CDs</span>} isActive={activeTab === 'distribution-centers'} onClick={() => setActiveTab('distribution-centers')} />}
+          <SidebarItem icon={<Headphones size={18} />} label={<span className="text-xs">Atendimento</span>} isActive={activeTab === 'support'} onClick={() => setActiveTab('support')} />
+          <SidebarItem icon={<RefreshCw size={18} />} label={<span className="text-xs">Trocas & Devoluções</span>} isActive={activeTab === 'rma'} onClick={() => setActiveTab('rma')} />
+          <SidebarItem icon={<Zap size={18} />} label={<span className="text-xs">Automações</span>} isActive={activeTab === 'automations'} onClick={() => setActiveTab('automations')} />
+          <SidebarItem icon={<AlertOctagon size={18} />} label={<span className="text-xs">Recuperação</span>} isActive={activeTab === 'recovery'} onClick={() => setActiveTab('recovery')} />
+          <SidebarItem icon={<ChevronsRight size={18} />} label={<span className="text-xs">Monitor do Funil</span>} isActive={activeTab === 'funnel-monitor'} onClick={() => setActiveTab('funnel-monitor')} />
+          <SidebarItem icon={<Map size={18} />} label={<span className="text-xs">Página de Rastreio</span>} isActive={activeTab === 'tracking'} onClick={() => setActiveTab('tracking')} />
+
+          <div className="pt-3 pb-1 text-[10px] font-bold text-slate-500 uppercase tracking-wider pl-2">Marketing & Análise</div>
+          <SidebarItem icon={<Tag size={18} />} label={<span className="text-xs">Afiliados</span>} isActive={activeTab === 'affiliates'} onClick={() => setActiveTab('affiliates')} />
+          <SidebarItem icon={<ImageIcon size={18} />} label={<span className="text-xs">Landing Pages</span>} isActive={activeTab === 'landing-pages'} onClick={() => setActiveTab('landing-pages')} />
+          <SidebarItem icon={<TestTube2 size={18} />} label={<span className="text-xs">Testes A/B</span>} isActive={activeTab === 'ab-tests'} onClick={() => setActiveTab('ab-tests')} />
+          <SidebarItem icon={<Sliders size={18} />} label={<span className="text-xs">Otimizador de Preços</span>} isActive={activeTab === 'price-optimizer'} onClick={() => setActiveTab('price-optimizer')} />
+          <SidebarItem icon={<Bell size={18} />} label={<span className="text-xs">Notificações Push</span>} isActive={activeTab === 'push-notifications'} onClick={() => setActiveTab('push-notifications')} />
+          <SidebarItem icon={<Star size={18} />} label={<span className="text-xs">Avaliações</span>} isActive={activeTab === 'reviews'} onClick={() => setActiveTab('reviews')} />
+          <SidebarItem icon={<BarChart3 size={18} />} label={<span className="text-xs">Relatórios Produtos</span>} isActive={activeTab === 'product-reports'} onClick={() => setActiveTab('product-reports')} />
+          <SidebarItem icon={<Filter size={18} />} label={<span className="text-xs">Análise de Funil</span>} isActive={activeTab === 'funnel-analysis'} onClick={() => setActiveTab('funnel-analysis')} />
+          <SidebarItem icon={<TrendingUp size={18} />} label={<span className="text-xs">Qualidade Produtos</span>} isActive={activeTab === 'product-quality'} onClick={() => setActiveTab('product-quality')} />
+          <SidebarItem icon={<BarChart3 size={18} />} label={<span className="text-xs">Tráfego Pago</span>} isActive={activeTab === 'traffic'} onClick={() => setActiveTab('traffic')} />
+          <SidebarItem icon={<Users size={18} />} label={<span className="text-xs">Leads</span>} isActive={activeTab === 'leads'} onClick={() => setActiveTab('leads')} />
+          <SidebarItem icon={<Target size={18} />} label={<span className="text-xs">Ferramentas Mkt</span>} isActive={activeTab === 'marketing-tools'} onClick={() => setActiveTab('marketing-tools')} />
+          <SidebarItem icon={<Store size={18} />} label={<span className="text-xs">Canais & UTM</span>} isActive={activeTab === 'channels'} onClick={() => setActiveTab('channels')} />
+          <SidebarItem icon={<Wallet size={18} />} label={<span className="text-xs">Pagamentos</span>} isActive={activeTab === 'payments'} onClick={() => setActiveTab('payments')} />
+          <SidebarItem icon={<TrendingDown size={18} />} label={<span className="text-xs">Pós-Venda</span>} isActive={activeTab === 'postsale'} onClick={() => setActiveTab('postsale')} />
+
+          <div className="pt-3 pb-1 text-[10px] font-bold text-slate-500 uppercase tracking-wider pl-2 italic opacity-60">Sistema</div>
+          <div className="grid grid-cols-1 gap-0.5 scale-90 origin-left">
+            <SidebarItem icon={<SettingsIcon size={16} />} label={<span className="text-xs">Configurações</span>} isActive={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
+            <SidebarItem icon={<Store size={16} />} label={<span className="text-xs">Vitrine (Preview)</span>} isActive={activeTab === 'storefront'} onClick={() => setActiveTab('storefront')} />
+          </div>
         </nav>
       </div>
 
       <div className="flex-1 flex flex-col overflow-hidden bg-gradient-to-br from-rs-black to-rs-dark">
-        <header className="md:hidden bg-rs-card border-b border-rs-goldDim/20 p-4 flex justify-between items-center z-40">
-          <h1 className="text-xl font-bold text-rs-gold">RS DROP</h1>
-          <button onClick={() => setIsSidebarOpen(true)} className="text-slate-300"><Menu size={24} /></button>
+        {/* Simplified Top Header */}
+        <header className="h-20 bg-rs-card border-b border-rs-goldDim/10 px-8 flex justify-between items-center z-40 relative">
+          <div className="flex items-center gap-4">
+            <button onClick={() => setIsSidebarOpen(true)} className="md:hidden text-rs-gold"><Menu size={24} /></button>
+            <Breadcrumb path={BREADCRUMB_PATHS[activeTab] || [{ label: 'Dashboard' }]} />
+          </div>
+
+
+          <div className="flex items-center gap-6">
+            <div className="hidden sm:flex flex-col items-end">
+              <span className="text-sm font-bold text-white leading-none">{currentUser.name}</span>
+              <span className="text-[10px] text-rs-gold font-bold uppercase tracking-widest mt-1 opacity-80">{currentUser.role}</span>
+            </div>
+            <div className="relative group">
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-rs-gold to-rs-goldDim rounded-full blur opacity-30 group-hover:opacity-100 transition duration-300"></div>
+              <div className="relative w-12 h-12 rounded-full border-2 border-rs-gold/50 flex items-center justify-center bg-rs-black text-rs-gold font-bold text-xl cursor-all-scroll shadow-lg group-hover:scale-105 transition-transform overflow-hidden">
+                {(currentUser as any).avatar ? (
+                  <img
+                    src={(currentUser as any).avatar}
+                    alt="Avatar"
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = 'https://raw.githubusercontent.com/RS-Prolipsi/assets/main/logo_rs_gold.png';
+                    }}
+                  />
+                ) : (
+                  currentUser.name.charAt(0)
+                )}
+              </div>
+            </div>
+          </div>
         </header>
 
         <main className="flex-1 overflow-auto p-4 md:p-8 custom-scrollbar">
-          <Breadcrumb path={BREADCRUMB_PATHS[activeTab] || [{ label: 'Dashboard' }]} />
+          <div className="md:hidden mb-6">
+            <Breadcrumb path={BREADCRUMB_PATHS[activeTab] || [{ label: 'Dashboard' }]} />
+          </div>
+
 
           {activeTab === 'dashboard' && <Dashboard onAnalyze={() => { }} onAlertClick={() => { }} alerts={alerts} summary={monthlySummary} orders={visibleOrders} trafficData={traffic} products={visibleProducts} isAnalyzing={false} aiAnalysis={null} currentMonth={currentMonth} onMonthChange={setCurrentMonth} currentUser={currentUser} users={users} selectedLogistaId={selectedLogistaId} onLogistaChange={setSelectedLogistaId} setActiveTab={setActiveTab} />}
           {activeTab === 'products' && <ProductManager suppliers={suppliers} currentUser={currentUser} users={users} reviews={reviews} onUpdateReview={() => { }} onAddSupplier={() => { }} onViewOrders={(productName) => handleNavigate('orders', { search: productName })} distributionCenters={distributionCenters} stockLocations={stockLocations} onUpdateStockLocations={() => { }} productPageTemplates={productPageTemplates} onUpdateProductPageTemplates={() => { }} experiments={experiments} targetProductId={deepLinkParams?.id} onClearTargetProduct={() => setDeepLinkParams(null)} />}
@@ -352,7 +400,7 @@ const App: React.FC<AppProps> = ({
 
 interface SidebarItemProps {
   icon: React.ReactNode;
-  label: string;
+  label: React.ReactNode;
   isActive: boolean;
   onClick: () => void;
 }
@@ -360,10 +408,12 @@ interface SidebarItemProps {
 const SidebarItem: React.FC<SidebarItemProps> = ({ icon, label, isActive, onClick }) => (
   <button
     onClick={onClick}
-    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${isActive ? 'bg-rs-gold/10 text-rs-gold shadow-inner' : 'text-slate-400 hover:bg-white/5 hover:text-slate-200'}`}
+    className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${isActive ? 'bg-rs-gold/10 text-rs-gold shadow-inner' : 'text-slate-400 hover:bg-white/5 hover:text-slate-200'}`}
   >
-    {icon}
-    <span>{label}</span>
+    <div className={`${isActive ? 'scale-110' : 'scale-100'} transition-transform`}>
+      {icon}
+    </div>
+    <span className="truncate">{label}</span>
   </button>
 );
 

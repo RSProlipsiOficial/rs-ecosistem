@@ -10,6 +10,366 @@ import { supabaseAuth, requireRole, ROLES, AuthenticatedRequest } from '../../mi
 
 const router = express.Router();
 
+const defaultProfileEditPermissions = {
+  can_edit_name: true,
+  can_edit_birthDate: true,
+  can_edit_whatsapp: true,
+  can_edit_cep: true,
+  can_edit_street: true,
+  can_edit_number: true,
+  can_edit_neighborhood: true,
+  can_edit_city: true,
+  can_edit_state: true,
+  can_edit_bankName: true,
+  can_edit_agency: true,
+  can_edit_account: true,
+  can_edit_accountType: true,
+  can_edit_pix: true,
+  can_edit_avatar: true,
+  can_edit_cover: true,
+  can_edit_cpfCnpj: true,
+  can_edit_consultantId: false,
+  can_edit_registerDate: false,
+  can_edit_sponsor: false,
+};
+
+const permissionsKey = (id: string) => `consultant_edit_permissions:${id}`;
+
+const resolveCurrentConsultant = async (authUserId: string) => {
+  const { data, error } = await supabase
+    .from('consultores')
+    .select('id, user_id, nome, email, username, patrocinador_id, whatsapp, telefone')
+    .or(`user_id.eq."${authUserId}",id.eq."${authUserId}"`)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+};
+
+const isUuid = (value?: string | null) =>
+  Boolean(value && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value).trim()));
+
+const resolveSponsorConsultant = async (sponsorRef?: string | null) => {
+  const normalizedRef = String(sponsorRef || '').trim();
+  if (!normalizedRef) {
+    return null;
+  }
+
+  const normalizedDigits = normalizedRef.replace(/\D/g, '');
+
+  if (isUuid(normalizedRef)) {
+    const { data, error } = await supabase
+      .from('consultores')
+      .select('id, user_id, nome, email, username, whatsapp, telefone')
+      .eq('id', normalizedRef)
+      .maybeSingle();
+
+    if (error) {
+      throw error;
+    }
+
+    if (data) {
+      return data;
+    }
+  }
+
+  if (normalizedDigits) {
+    try {
+      const byNumericCode = await supabase
+        .from('consultores')
+        .select('id, user_id, nome, email, username, whatsapp, telefone')
+        .eq('codigo_consultor', normalizedDigits)
+        .maybeSingle();
+
+      if (byNumericCode.data) {
+        return byNumericCode.data;
+      }
+    } catch {
+      // noop
+    }
+
+    try {
+      const { data: profileByNumeric } = await supabase
+        .from('user_profiles')
+        .select('user_id')
+        .eq('id_numerico', normalizedDigits)
+        .maybeSingle();
+
+      if (profileByNumeric?.user_id) {
+        const { data: consultorByUserId } = await supabase
+          .from('consultores')
+          .select('id, user_id, nome, email, username, whatsapp, telefone')
+          .eq('user_id', profileByNumeric.user_id)
+          .maybeSingle();
+
+        if (consultorByUserId) {
+          return consultorByUserId;
+        }
+      }
+    } catch {
+      // noop
+    }
+  }
+
+  const { data, error } = await supabase
+    .from('consultores')
+    .select('id, user_id, nome, email, username, whatsapp, telefone')
+    .eq('username', normalizedRef)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  if (data) {
+    return data;
+  }
+
+  const byEmail = await supabase
+    .from('consultores')
+    .select('id, user_id, nome, email, username, whatsapp, telefone')
+    .eq('email', normalizedRef)
+    .maybeSingle();
+
+  if (byEmail.data) {
+    return byEmail.data;
+  }
+
+  const byName = await supabase
+    .from('consultores')
+    .select('id, user_id, nome, email, username, whatsapp, telefone')
+    .ilike('nome', normalizedRef)
+    .maybeSingle();
+
+  return byName.data || null;
+};
+
+const loadProfileEditPermissions = async (consultantId: string) => {
+  const { data, error } = await supabase
+    .from('settings')
+    .select('value')
+    .eq('key', permissionsKey(consultantId))
+    .maybeSingle();
+
+  if (error) {
+    const message = String(error.message || '');
+    const missingSettingsTable =
+      message.includes("Could not find the table 'public.settings'") ||
+      message.includes('relation "public.settings" does not exist') ||
+      message.includes('schema cache');
+
+    if (missingSettingsTable) {
+      console.warn('[consultor.profile.edit-permissions] tabela settings indisponivel; usando permissoes padrao');
+      return { ...defaultProfileEditPermissions };
+    }
+
+    throw error;
+  }
+
+  return {
+    ...defaultProfileEditPermissions,
+    ...((data as any)?.value || {}),
+  };
+};
+
+const isEditable = (permissions: Record<string, boolean>, key: keyof typeof defaultProfileEditPermissions) =>
+  permissions[key] === true;
+
+router.get('/profile/edit-permissions', supabaseAuth, requireRole([ROLES.CONSULTOR, ROLES.MASTER, ROLES.ADMIN]), async (req: AuthenticatedRequest, res) => {
+  try {
+    if (!req.user?.id) {
+      return res.status(401).json({ success: false, error: 'Usuário não autenticado' });
+    }
+
+    const consultant = await resolveCurrentConsultant(req.user.id);
+    if (!consultant?.id) {
+      return res.status(404).json({ success: false, error: 'Consultor não encontrado' });
+    }
+
+    const permissions = await loadProfileEditPermissions(consultant.id);
+    res.json({
+      success: true,
+      consultantId: consultant.id,
+      permissions,
+    });
+  } catch (error: any) {
+    console.error('Erro ao carregar permissões do perfil do consultor:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.get('/profile/sponsor', supabaseAuth, requireRole([ROLES.CONSULTOR, ROLES.MASTER, ROLES.ADMIN]), async (req: AuthenticatedRequest, res) => {
+  try {
+    if (!req.user?.id) {
+      return res.status(401).json({ success: false, error: 'Usuário não autenticado' });
+    }
+
+    const consultant = await resolveCurrentConsultant(req.user.id);
+    if (!consultant?.id) {
+      return res.status(404).json({ success: false, error: 'Consultor não encontrado' });
+    }
+
+    const currentProfileResult = await supabase
+      .from('user_profiles')
+      .select('*')
+      .eq('user_id', (consultant as any).user_id || req.user.id)
+      .maybeSingle();
+
+    const currentProfile = currentProfileResult.data || null;
+
+    const sponsorRef =
+      (consultant as any).patrocinador_id ||
+      (currentProfile as any)?.sponsor_id ||
+      (currentProfile as any)?.patrocinador_id ||
+      null;
+
+    const sponsor = await resolveSponsorConsultant(sponsorRef);
+    if (!sponsor?.id) {
+      return res.json({ success: true, data: { sponsor: null } });
+    }
+
+    let sponsorProfile: any = null;
+    if ((sponsor as any).user_id) {
+      const sponsorProfileResult = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('user_id', (sponsor as any).user_id)
+        .maybeSingle();
+      sponsorProfile = sponsorProfileResult.data || null;
+    }
+
+    res.json({
+      success: true,
+      data: {
+        sponsor: {
+          id: String((sponsor as any).id || ''),
+          name: String((sponsorProfile as any)?.nome_completo || (sponsor as any).nome || ''),
+          email: String((sponsorProfile as any)?.email || (sponsor as any).email || ''),
+          whatsapp: String((sponsorProfile as any)?.whatsapp || (sponsorProfile as any)?.telefone || (sponsor as any).whatsapp || (sponsor as any).telefone || ''),
+          loginId: String((sponsorProfile as any)?.slug || (sponsor as any).username || ''),
+          numericId: String((sponsorProfile as any)?.id_numerico || ''),
+        }
+      }
+    });
+  } catch (error: any) {
+    console.error('Erro ao carregar patrocinador do consultor:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.put('/profile', supabaseAuth, requireRole([ROLES.CONSULTOR, ROLES.MASTER, ROLES.ADMIN]), async (req: AuthenticatedRequest, res) => {
+  try {
+    if (!req.user?.id) {
+      return res.status(401).json({ success: false, error: 'Usuário não autenticado' });
+    }
+
+    const consultant = await resolveCurrentConsultant(req.user.id);
+    if (!consultant?.id) {
+      return res.status(404).json({ success: false, error: 'Consultor não encontrado' });
+    }
+
+    const permissions = await loadProfileEditPermissions(consultant.id);
+    const payload = req.body || {};
+    const blockedFields: string[] = [];
+    const consultorUpdate: Record<string, any> = {};
+    const profileUpdate: Record<string, any> = {
+      user_id: consultant.user_id || req.user.id,
+      updated_at: new Date().toISOString(),
+    };
+
+    const applyString = (
+      permissionKey: keyof typeof defaultProfileEditPermissions,
+      value: any,
+      target: Record<string, any>,
+      column: string,
+      blockedField: string
+    ) => {
+      if (value === undefined) {
+        return;
+      }
+
+      if (isEditable(permissions, permissionKey)) {
+        target[column] = value || null;
+      } else {
+        blockedFields.push(blockedField);
+      }
+    };
+
+    applyString('can_edit_name', payload.name, consultorUpdate, 'nome', 'name');
+    applyString('can_edit_name', payload.name, profileUpdate, 'nome_completo', 'name');
+    applyString('can_edit_cpfCnpj', payload.cpfCnpj, consultorUpdate, 'cpf', 'cpfCnpj');
+    applyString('can_edit_cpfCnpj', payload.cpfCnpj, profileUpdate, 'cpf', 'cpfCnpj');
+    applyString('can_edit_whatsapp', payload.whatsapp, consultorUpdate, 'telefone', 'whatsapp');
+    applyString('can_edit_whatsapp', payload.whatsapp, consultorUpdate, 'whatsapp', 'whatsapp');
+    applyString('can_edit_whatsapp', payload.whatsapp, profileUpdate, 'telefone', 'whatsapp');
+    applyString('can_edit_birthDate', payload.birthDate, profileUpdate, 'data_nascimento', 'birthDate');
+
+    if (payload.address) {
+      applyString('can_edit_cep', payload.address.zipCode, consultorUpdate, 'cep', 'address.zipCode');
+      applyString('can_edit_cep', payload.address.zipCode, profileUpdate, 'endereco_cep', 'address.zipCode');
+      applyString('can_edit_street', payload.address.street, consultorUpdate, 'endereco', 'address.street');
+      applyString('can_edit_street', payload.address.street, profileUpdate, 'endereco_rua', 'address.street');
+      applyString('can_edit_number', payload.address.number, consultorUpdate, 'numero', 'address.number');
+      applyString('can_edit_number', payload.address.number, profileUpdate, 'endereco_numero', 'address.number');
+      applyString('can_edit_neighborhood', payload.address.neighborhood, consultorUpdate, 'bairro', 'address.neighborhood');
+      applyString('can_edit_neighborhood', payload.address.neighborhood, profileUpdate, 'endereco_bairro', 'address.neighborhood');
+      applyString('can_edit_city', payload.address.city, consultorUpdate, 'cidade', 'address.city');
+      applyString('can_edit_city', payload.address.city, profileUpdate, 'endereco_cidade', 'address.city');
+      applyString('can_edit_state', payload.address.state, consultorUpdate, 'estado', 'address.state');
+      applyString('can_edit_state', payload.address.state, profileUpdate, 'endereco_estado', 'address.state');
+    }
+
+    if (payload.bankAccount) {
+      applyString('can_edit_bankName', payload.bankAccount.bank, profileUpdate, 'banco_nome', 'bank.bank');
+      applyString('can_edit_agency', payload.bankAccount.agency, profileUpdate, 'banco_agencia', 'bank.agency');
+      applyString('can_edit_account', payload.bankAccount.accountNumber, profileUpdate, 'banco_conta', 'bank.accountNumber');
+      applyString('can_edit_accountType', payload.bankAccount.accountType, profileUpdate, 'banco_tipo', 'bank.accountType');
+      applyString('can_edit_pix', payload.bankAccount.pixKey, profileUpdate, 'banco_pix', 'bank.pixKey');
+    }
+
+    if (payload.avatarUrl !== undefined) {
+      applyString('can_edit_avatar', payload.avatarUrl, profileUpdate, 'avatar_url', 'avatar');
+    }
+
+    if (payload.coverUrl !== undefined) {
+      applyString('can_edit_cover', payload.coverUrl, profileUpdate, 'cover_url', 'cover');
+    }
+
+    if (Object.keys(consultorUpdate).length > 0) {
+      const { error: consultorError } = await supabase
+        .from('consultores')
+        .update(consultorUpdate)
+        .eq('id', consultant.id);
+
+      if (consultorError) {
+        throw consultorError;
+      }
+    }
+
+    if (Object.keys(profileUpdate).length > 2) {
+      const { error: profileError } = await supabase
+        .from('user_profiles')
+        .upsert(profileUpdate, { onConflict: 'user_id' });
+
+      if (profileError) {
+        throw profileError;
+      }
+    }
+
+    res.json({
+      success: true,
+      blockedFields: [...new Set(blockedFields)],
+      permissions,
+    });
+  } catch (error: any) {
+    console.error('Erro ao salvar perfil do consultor com permissões:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // GET /v1/consultor/dashboard/overview
 router.get('/dashboard/overview', supabaseAuth, requireRole([ROLES.CONSULTOR, ROLES.MASTER, ROLES.ADMIN]), async (req: AuthenticatedRequest, res) => {
   // ... existing dashboard logic ...

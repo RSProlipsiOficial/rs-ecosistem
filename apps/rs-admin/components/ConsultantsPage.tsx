@@ -22,6 +22,67 @@ const TreeIcon: React.FC<{ className?: string }> = ({ className }) => (
 const mockOrders: Order[] = [];
 const detailedMockConsultants: Consultant[] = [];
 
+const normalizeConsultant = (c: any): Consultant => ({
+    id: c.id,
+    uuid: c.uuid || c.user_id || c.id,
+    code: c.code || String(c.id).slice(0, 8),
+    username: c.username || (c.email ? c.email.split('@')[0] : ''),
+    name: c.name || c.nome || 'Consultor',
+    avatar: (!c.avatar && !c.avatar_url) || String(c.avatar || c.avatar_url || '').includes('0aa67016')
+        ? '/logo-rs.png'
+        : (c.avatar || c.avatar_url),
+    pin: c.pin || c.pin_atual || 'Consultor',
+    digitalPin: c.digitalPin || c.pin_digital || 'RS One Star',
+    network: c.network || 'Escritorio',
+    balance: Number(c.balance || 0),
+    status: c.status === 'ativo' ? 'Ativo' : c.status === 'pendente' ? 'Pendente' : (c.status || 'Inativo'),
+    cpfCnpj: c.cpfCnpj || c.cpf || '',
+    address: {
+        street: c.address?.street || '',
+        city: c.address?.city || c.cidade || '',
+        state: c.address?.state || c.estado || '',
+        zip: c.address?.zip || c.cep || '',
+    },
+    contact: {
+        email: c.contact?.email || c.email || '',
+        phone: c.contact?.phone || c.whatsapp || c.telefone || '',
+    },
+    bankInfo: {
+        bank: c.bankInfo?.bank || c.banco || '',
+        agency: c.bankInfo?.agency || c.agencia || '',
+        account: c.bankInfo?.account || c.conta || '',
+        pixType: c.bankInfo?.pixType || c.pix_tipo || 'CPF',
+        pixKey: c.bankInfo?.pixKey || c.pix_chave || '',
+    },
+    cycle: Number(c.cycle || c.total_ciclos || 0),
+    networkDetails: {
+        directs: Number(c.networkDetails?.directs || 0),
+    },
+    activationHistory: Array.isArray(c.activationHistory) ? c.activationHistory : [],
+    walletStatement: Array.isArray(c.walletStatement) ? c.walletStatement : [],
+    permissions: {
+        personalDataLocked: !!c.permissions?.personalDataLocked,
+        bankDataLocked: c.permissions?.bankDataLocked ?? true,
+        bonus_cycle: c.permissions?.bonus_cycle ?? true,
+        bonus_fidelity: c.permissions?.bonus_fidelity ?? true,
+        bonus_matrix_fidelity: c.permissions?.bonus_matrix_fidelity ?? true,
+        bonus_leadership: c.permissions?.bonus_leadership ?? true,
+        bonus_career: c.permissions?.bonus_career ?? true,
+        bonus_digital: c.permissions?.bonus_digital ?? true,
+        access_platform: c.permissions?.access_platform ?? true,
+    },
+    sponsor: c.sponsor || null,
+    registrationDate: c.registrationDate || c.created_at || '',
+    salesHistory: Array.isArray(c.salesHistory) ? c.salesHistory : [],
+    commissionHistory: Array.isArray(c.commissionHistory) ? c.commissionHistory : [],
+    purchaseHistory: Array.isArray(c.purchaseHistory) ? c.purchaseHistory : [],
+    sigmaActive: c.sigmaActive ?? (c.status === 'Ativo' || c.status === 'ativo'),
+    sigmaCyclesMonth: Number(c.sigmaCyclesMonth || 0),
+    careerPoints: Number(c.careerPoints || 0),
+    careerPinCurrent: c.careerPinCurrent || c.pin || c.pin_atual || 'Consultor',
+    topSigmaPosition: c.topSigmaPosition ?? null,
+});
+
 // Helper para gerar dados financeiros de teste se a API não retornar
 const generateMockFinancialData = (consultants: Consultant[]): Consultant[] => {
     return consultants.map(c => {
@@ -114,7 +175,7 @@ const ConsultantsPage: React.FC<{ initialTab?: string }> = ({ initialTab = 'hier
                 const actualData = responseData?.data || responseData;
 
                 if (actualData?.success || Array.isArray(actualData) || responseData?.success) {
-                    const loadedConsultants = (actualData.consultants || actualData) || [];
+                    const loadedConsultants = ((actualData.consultants || actualData) || []).map(normalizeConsultant);
                     setConsultants(loadedConsultants);
                     setLoading(false);
                     return;
@@ -156,55 +217,7 @@ const ConsultantsPage: React.FC<{ initialTab?: string }> = ({ initialTab = 'hier
                 setError('Erro ao carregar consultores');
             } else {
                 // Transformar dados do Supabase para formato esperado
-                let transformed = (consultoresDB || []).map((c: any) => ({
-                    id: c.id,
-                    uuid: c.id,
-                    name: c.nome,
-                    contact: {
-                        email: c.email || '',
-                        phone: c.whatsapp || '',
-                    },
-                    address: {
-                        city: c.cidade || '',
-                        state: c.estado || '',
-                        country: 'Brasil',
-                        street: '',
-                        zip: ''
-                    },
-                    bankInfo: {
-                        bank: '',
-                        agency: '',
-                        account: '',
-                        pixType: 'CPF',
-                        pixKey: ''
-                    },
-                    status: c.status === 'ativo' ? 'Ativo' : 'Inativo',
-                    pin: c.pin_atual || '',
-                    digitalPin: c.pin_digital || 'RS One Star', // Default para testes, ajustar conforme real
-                    sponsor: null,
-                    salesHistory: [],
-                    commissionHistory: [],
-                    purchaseHistory: [],
-                    avatar: (!c.avatar_url || c.avatar_url.includes('0aa67016')) ? `/logo-rs.png` : c.avatar_url,
-                    // Permissions (Default) - Added
-                    permissions: {
-                        personalDataLocked: false,
-                        bankDataLocked: true,
-                        bonus_cycle: true,
-                        bonus_fidelity: true,
-                        bonus_matrix_fidelity: true,
-                        bonus_leadership: true,
-                        bonus_career: true, // Novo
-                        bonus_digital: true, // Novo
-                        access_platform: true
-                    },
-                    cycle: c.total_ciclos || 0,
-                    networkDetails: {
-                        directs: 0
-                    },
-                    walletStatement: [],
-                    activationHistory: []
-                }));
+                const transformed = (consultoresDB || []).map((c: any) => normalizeConsultant(c));
 
                 // REMOVIDO: generateMockFinancialData (causava confusão com dados falsos)
                 // transformed = generateMockFinancialData(transformed);
@@ -316,7 +329,7 @@ const ConsultantsPage: React.FC<{ initialTab?: string }> = ({ initialTab = 'hier
 
             {activeTab === 'hierarchy' && (
                 <NetworkTreeView
-                    initialId={selectedId?.toString() || '1'}
+                    initialId={selectedId?.toString()}
                     consultants={consultants}
                     onEdit={handleEdit}
                     onResetPassword={handleOpenResetModal}
@@ -509,7 +522,7 @@ const UserReportTab: React.FC<{ consultants: Consultant[], selectedId: number | 
                                 <img src={c.avatar} alt={c.name} className="w-12 h-12 rounded-full object-cover flex-shrink-0" />
                                 <div className="flex-1 min-w-0">
                                     <p className={`font-bold truncate ${selectedId === c.id ? 'text-yellow-400' : 'text-white'}`}>{c.code || c.id} - {c.name}</p>
-                                    {c.username && <p className="text-[10px] text-yellow-500/80 -mt-1 font-mono uppercase">MMN ID: {c.username}</p>}
+                                    {c.username && <p className="text-[10px] text-yellow-500/80 -mt-1 font-mono uppercase">LOGIN/MMN ID: {c.username}</p>}
                                     <div className="flex items-center flex-wrap gap-x-3 gap-y-1 text-xs text-gray-400 mt-1">
                                         <span>PIN: <span className="font-semibold text-yellow-500">{c.pin}</span></span>
                                         <span>Status: <span className={`font-semibold ${c.status === 'Ativo' ? 'text-green-400' : c.status === 'Inativo' ? 'text-red-400' : 'text-yellow-400'}`}>{c.status}</span></span>
@@ -684,8 +697,8 @@ const ReportDetailView: React.FC<{ consultant: Consultant, onViewOrder: (orderId
                 <div>
                     <h2 className="text-2xl font-bold text-white">{consultant.name}</h2>
                     <div className="flex items-center gap-4 text-sm text-gray-300">
-                        <span>ID: <span className="font-semibold text-yellow-400">{consultant.code || consultant.id}</span></span>
-                        {consultant.username && <span>MMN ID: <span className="font-semibold text-yellow-400 uppercase">{consultant.username}</span></span>}
+                        <span>ID CONTA: <span className="font-semibold text-yellow-400">{consultant.code || consultant.id}</span></span>
+                        {consultant.username && <span>LOGIN/MMN ID: <span className="font-semibold text-yellow-400 uppercase">{consultant.username}</span></span>}
                         <span>PIN: <span className="font-semibold text-yellow-400">{consultant.pin}</span></span>
                         <span>Status: <span className={`font-semibold ${statusClasses[consultant.status]}`}>{consultant.status}</span></span>
                     </div>

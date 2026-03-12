@@ -1,0 +1,1 @@
+ssh deploy@72.60.144.245 "bash /home/deploy/dev/rs-ecosystem/ops/scripts/start-rs-studio.sh"

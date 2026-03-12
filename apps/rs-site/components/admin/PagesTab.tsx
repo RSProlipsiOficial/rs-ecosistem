@@ -26,14 +26,76 @@ import DocumentViewerModal from '../DocumentViewerModal';
 
 const generateId = () => `id_${new Date().getTime()}_${Math.random().toString(36).substring(2, 9)}`;
 
-interface ContainerEditorModalProps {
+const CONTAINER_TYPE_LABELS: Record<ContentContainer['type'], string> = {
+    text: 'Texto',
+    image: 'Imagem',
+    textImage: 'Texto com imagem',
+    columns: 'Colunas',
+    contactForm: 'Formulário de contato',
+    video: 'Vídeo',
+    hero: 'Banner principal',
+    about: 'Seção institucional',
+    differentiators: 'Diferenciais',
+    productsCarousel: 'Vitrine de produtos',
+    promotionsCarousel: 'Carrossel de promoções',
+    teamMembers: 'Equipe',
+    downloadsList: 'Lista de downloads',
+    advertisingList: 'Lista de campanhas',
+    bulkOrderForm: 'Formulário de atacado',
+};
+
+const PAGE_DISPLAY_NAMES: Record<string, string> = {
+    home: 'Início',
+    about: 'Sobre nós',
+    'know-us': 'Conheça-nos',
+    store: 'Loja',
+    'pedidos-atacado': 'Pedidos por atacado',
+    'covid-19': 'COVID-19',
+    downloads: 'Downloads e materiais',
+    advertising: 'Nossas campanhas',
+};
+
+const getPageDisplayName = (page: CustomPage) => PAGE_DISPLAY_NAMES[page.slug] || page.title || page.route || page.id;
+
+const getContainerDisplayName = (container: ContentContainer, index: number) => {
+    const baseLabel = CONTAINER_TYPE_LABELS[container.type] || `Bloco ${index + 1}`;
+    const customTitle = container.title || container.subtitle || container.ctaText;
+
+    if (!customTitle) {
+        return baseLabel;
+    }
+
+    const plainTitle = customTitle.replace(/<[^>]+>/g, '').trim();
+    if (!plainTitle) {
+        return baseLabel;
+    }
+
+    if (plainTitle.toLowerCase() === baseLabel.toLowerCase()) {
+        return plainTitle;
+    }
+
+    return `${baseLabel}: ${plainTitle}`;
+};
+
+const notifyPreviewRefresh = () => {
+    if (typeof window === 'undefined') {
+        return;
+    }
+
+    try {
+        window.parent?.postMessage({ type: 'rs-site:refresh-preview' }, '*');
+    } catch (error) {
+        console.error('Falha ao solicitar atualizacao do preview do site.', error);
+    }
+};
+
+interface ContainerEditorPanelProps {
   container: ContentContainer;
   onSave: (container: ContentContainer) => void;
-  onClose: () => void;
-  pageIsStatic?: boolean;
+  onBackToPage: () => void;
 }
 
-const ContainerEditorModal: React.FC<ContainerEditorModalProps> = ({ container: initialContainer, onSave, onClose, pageIsStatic }) => {
+const ContainerEditorPanel: React.FC<ContainerEditorPanelProps> = ({ container: initialContainer, onSave, onBackToPage }) => {
     const [container, setContainer] = useState<ContentContainer>(initialContainer);
     const { t } = useLanguage();
     const { products } = useProductContext();
@@ -76,7 +138,7 @@ const ContainerEditorModal: React.FC<ContainerEditorModalProps> = ({ container: 
         newFeatures[index] = { ...newFeatures[index], [field]: value };
         setContainer(prev => ({ ...prev, features: newFeatures }));
     };
-    const addFeature = () => setContainer(prev => ({ ...prev, features: [...(prev.features || []), { iconSvg: '', title: 'New Feature', description: '' }] }));
+    const addFeature = () => setContainer(prev => ({ ...prev, features: [...(prev.features || []), { iconSvg: '', title: 'Novo item', description: '' }] }));
     const removeFeature = (index: number) => setContainer(prev => ({ ...prev, features: (prev.features || []).filter((_, i) => i !== index) }));
     const handleIconSelect = (svg: string) => {
         if (editingFeatureIndex !== null) {
@@ -167,8 +229,76 @@ const ContainerEditorModal: React.FC<ContainerEditorModalProps> = ({ container: 
             case 'differentiators':
                 return (
                     <div className="space-y-6">
-                        {/* Title, Subtitle fields... */}
-                        <h4 className="text-lg font-semibold text-text-primary border-b border-border pb-2 mt-4">Features</h4>
+                        <div className="space-y-4">
+                            <div data-field-path="title">
+                                <label className="block text-sm font-medium text-text-secondary mb-1">Título da seção</label>
+                                <div className="flex items-center space-x-2">
+                                    <input
+                                        type="text"
+                                        value={container.title || ''}
+                                        onChange={e => handleFieldChange('title', e.target.value)}
+                                        className="w-full bg-gray-800 border border-gray-600 rounded-md p-2"
+                                    />
+                                    <AITextGenerator
+                                        onInsert={v => handleFieldChange('title', v)}
+                                        buildInitialPrompt={() => `Gere um título em HTML para a seção ${container.type === 'about' ? 'institucional' : 'de diferenciais'}.`}
+                                        modalTitle="Gerar título com IA"
+                                        modalPlaceholder="Ex: Posicione a proposta principal da seção"
+                                        triggerText="IA"
+                                        className="bg-purple-600 text-white font-semibold rounded-md hover:bg-purple-700 px-3 py-2"
+                                    />
+                                </div>
+                            </div>
+
+                            {container.type === 'differentiators' && (
+                                <div data-field-path="subtitle">
+                                    <label className="block text-sm font-medium text-text-secondary mb-1">Subtítulo / texto de apoio</label>
+                                    <textarea
+                                        value={container.subtitle || ''}
+                                        onChange={e => handleFieldChange('subtitle', e.target.value)}
+                                        className="w-full bg-gray-800 border border-gray-600 rounded-md p-2"
+                                        rows={3}
+                                    />
+                                </div>
+                            )}
+
+                            {container.type === 'about' && (
+                                <>
+                                    <div data-field-path="content">
+                                        <label className="block text-sm font-medium text-text-secondary mb-1">Texto principal da seção</label>
+                                        <RichTextEditor value={container.content || ''} onChange={v => handleFieldChange('content', v)} />
+                                    </div>
+                                    <div data-field-path="imageUrl">
+                                        <ImageInput
+                                            label="Imagem principal da seção"
+                                            value={container.imageUrl || ''}
+                                            onChange={v => handleFieldChange('imageUrl', v)}
+                                            extraButtons={
+                                                <AIImageGenerator
+                                                    onInsert={v => handleFieldChange('imageUrl', v)}
+                                                    buildInitialPrompt={buildInitialImagePrompt}
+                                                    adTitle={container.title || ''}
+                                                    adDescription={container.content || ''}
+                                                    triggerText="IA"
+                                                    className="h-10 w-10 flex items-center justify-center bg-purple-600 text-white font-semibold rounded-md hover:bg-purple-700"
+                                                />
+                                            }
+                                        />
+                                    </div>
+                                    <div data-field-path="altText">
+                                        <label className="block text-sm font-medium text-text-secondary mb-1">Texto alternativo da imagem</label>
+                                        <input
+                                            type="text"
+                                            value={container.altText || ''}
+                                            onChange={e => handleFieldChange('altText', e.target.value)}
+                                            className="w-full bg-gray-800 border border-gray-600 rounded-md p-2"
+                                        />
+                                    </div>
+                                </>
+                            )}
+                        </div>
+
+                        <h4 className="text-lg font-semibold text-text-primary border-b border-border pb-2 mt-4">Itens da secao</h4>
                         <div className="space-y-4">
                             {(container.features || []).map((feature, index) => (
                                 <div key={index} className="bg-gray-800/50 p-3 rounded-md border border-border space-y-2 relative">
@@ -177,26 +307,26 @@ const ContainerEditorModal: React.FC<ContainerEditorModalProps> = ({ container: 
                                         <button 
                                             onClick={() => { setEditingFeatureIndex(index); setIsIconPickerOpen(true); }} 
                                             className="p-2 bg-gray-700 rounded-md text-text-primary hover:bg-gray-600"
-                                            title="Select Icon"
+                                            title="Escolher icone"
                                         >
                                             <div className="w-6 h-6" dangerouslySetInnerHTML={{__html: feature.iconSvg || '<svg viewBox="0 0 24 24"></svg>'}}></div>
                                         </button>
-                                        <button type="button" onClick={() => { setEditingFeatureIndex(index); setIsIconPickerOpen(true); }} className="text-sm text-accent hover:underline">Select Icon</button>
+                                        <button type="button" onClick={() => { setEditingFeatureIndex(index); setIsIconPickerOpen(true); }} className="text-sm text-accent hover:underline">Escolher icone</button>
                                     </div>
                                     <div data-field-path={`features.${index}.title`}>
-                                        <input type="text" value={feature.title} onChange={e => handleFeatureChange(index, 'title', e.target.value)} placeholder="Feature Title" className="w-full bg-gray-800 border border-gray-600 rounded-md p-2"/>
+                                        <input type="text" value={feature.title} onChange={e => handleFeatureChange(index, 'title', e.target.value)} placeholder="Titulo do item" className="w-full bg-gray-800 border border-gray-600 rounded-md p-2"/>
                                     </div>
                                     <div data-field-path={`features.${index}.description`}>
-                                        <textarea value={feature.description} onChange={e => handleFeatureChange(index, 'description', e.target.value)} placeholder="Feature Description" className="w-full bg-gray-800 border border-gray-600 rounded-md p-2 text-sm" rows={2}></textarea>
+                                        <textarea value={feature.description} onChange={e => handleFeatureChange(index, 'description', e.target.value)} placeholder="Descricao do item" className="w-full bg-gray-800 border border-gray-600 rounded-md p-2 text-sm" rows={2}></textarea>
                                     </div>
                                 </div>
                             ))}
                         </div>
-                        <button onClick={addFeature} type="button" className="text-sm text-accent hover:underline">Add Feature</button>
+                        <button onClick={addFeature} type="button" className="text-sm text-accent hover:underline">Adicionar item</button>
                     </div>
                 );
             case 'video':
-                return <div data-field-path="videoUrl"><label className="block text-sm font-medium text-text-secondary mb-1">Video URL (YouTube/Vimeo)</label><input type="text" value={container.videoUrl || ''} onChange={e => handleFieldChange('videoUrl', e.target.value)} className="w-full bg-gray-800 border border-gray-600 rounded-md p-2"/></div>;
+                return <div data-field-path="videoUrl"><label className="block text-sm font-medium text-text-secondary mb-1">URL do video (YouTube/Vimeo)</label><input type="text" value={container.videoUrl || ''} onChange={e => handleFieldChange('videoUrl', e.target.value)} className="w-full bg-gray-800 border border-gray-600 rounded-md p-2"/></div>;
              case 'productsCarousel':
                  return (
                     <div data-field-path="productIds">
@@ -226,40 +356,51 @@ const ContainerEditorModal: React.FC<ContainerEditorModalProps> = ({ container: 
     };
 
     return (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+        <div className="rounded-lg border border-border bg-surface/95 shadow-2xl">
             <style>{`.highlight-field { box-shadow: 0 0 0 3px var(--color-accent); transition: box-shadow 0.3s ease-in-out; border-radius: 6px; }`}</style>
             {isIconPickerOpen && <IconPickerModal isOpen={isIconPickerOpen} onClose={() => setIsIconPickerOpen(false)} onIconSelect={handleIconSelect} />}
-            <div className="bg-surface border border-border rounded-lg shadow-2xl w-full max-w-3xl flex flex-col max-h-[90vh]">
-                <header className="p-4 border-b border-border flex justify-between items-center flex-shrink-0">
-                    <h3 className="text-xl font-bold text-accent">{t('admin_container_edit_title')} <span className="text-sm font-normal text-text-secondary capitalize">({container.type})</span></h3>
-                    <button onClick={onClose} className="text-text-secondary hover:text-text-primary p-1"><CloseIcon/></button>
-                </header>
-                <main ref={formRef} className="flex-grow p-6 overflow-y-auto space-y-6">
-                    <div>
-                        <h4 className="text-lg font-semibold text-text-primary mb-3 border-b border-border pb-2">Conteúdo</h4>
+            <header className="flex flex-wrap items-start justify-between gap-4 border-b border-border p-4">
+                <div>
+                    <p className="text-xs uppercase tracking-[0.22em] text-accent">Editor do bloco</p>
+                    <h3 className="mt-1 text-xl font-bold text-text-primary">{getContainerDisplayName(container, 0)}</h3>
+                    <p className="mt-1 text-sm text-text-secondary">Tipo: {CONTAINER_TYPE_LABELS[container.type] || container.type}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                    <button onClick={onBackToPage} type="button" className="rounded-md border border-border bg-[#111827] px-4 py-2 text-sm font-semibold text-text-secondary hover:text-text-primary">
+                        Voltar para a pagina
+                    </button>
+                    <button onClick={handleSave} type="button" className="rounded-md bg-accent px-4 py-2 text-sm font-bold text-button-text hover:opacity-90" disabled={!hasChanged.current}>
+                        Salvar bloco
+                    </button>
+                </div>
+            </header>
+            <div ref={formRef} className="grid gap-6 p-6 xl:grid-cols-[minmax(0,1fr)_320px]">
+                    <section className="space-y-6">
+                        <h4 className="text-lg font-semibold text-text-primary mb-3 border-b border-border pb-2">Conteudo do bloco</h4>
                         {renderFields()}
-                    </div>
-                    <div>
-                        <h4 className="text-lg font-semibold text-text-primary mb-3 border-b border-border pb-2">Estilos e Aparência</h4>
+                    </section>
+                    <aside className="space-y-6">
+                        <div className="rounded-lg border border-border bg-[#111827]/50 p-4">
+                        <h4 className="text-lg font-semibold text-text-primary mb-3 border-b border-border pb-2">Estilo e aparencia</h4>
                         <div className="space-y-4">
                              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                <AdvancedColorInput label="Cor de Fundo" value={container.styles?.backgroundColor || ''} onChange={v => handleStyleChange('backgroundColor', v)} />
-                                <AdvancedColorInput label="Cor do Texto" value={container.styles?.textColor || ''} onChange={v => handleStyleChange('textColor', v)} />
+                                <AdvancedColorInput label="Cor de fundo" value={container.styles?.backgroundColor || ''} onChange={v => handleStyleChange('backgroundColor', v)} />
+                                <AdvancedColorInput label="Cor do texto" value={container.styles?.textColor || ''} onChange={v => handleStyleChange('textColor', v)} />
                                 <div className="md:col-span-2">
-                                    <ImageInput label="Imagem de Fundo (URL)" value={(container.styles?.backgroundImage || '').replace(/url\(['"]?(.*?)['"]?\)/, '$1')} onChange={v => handleStyleChange('backgroundImage', `url('${v}')`)} extraButtons={<AIImageGenerator onInsert={v => handleStyleChange('backgroundImage', `url('${v}')`)} buildInitialPrompt={buildInitialImagePrompt} adTitle={container.title||''} adDescription={container.content||''} triggerText="IA" className="h-10 w-10 flex items-center justify-center bg-purple-600 text-white font-semibold rounded-md hover:bg-purple-700"/>}/>
+                                    <ImageInput label="Imagem de fundo" value={(container.styles?.backgroundImage || '').replace(/url\(['"]?(.*?)['"]?\)/, '$1')} onChange={v => handleStyleChange('backgroundImage', `url('${v}')`)} extraButtons={<AIImageGenerator onInsert={v => handleStyleChange('backgroundImage', `url('${v}')`)} buildInitialPrompt={buildInitialImagePrompt} adTitle={container.title||''} adDescription={container.content||''} triggerText="IA" className="h-10 w-10 flex items-center justify-center bg-purple-600 text-white font-semibold rounded-md hover:bg-purple-700"/>}/>
                                 </div>
                             </div>
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-border">
+                            <div className="grid grid-cols-1 gap-4 pt-4 border-t border-border">
                                 <div>
-                                    <label className="block text-sm font-medium text-text-secondary mb-1">Padding Top</label>
-                                    <input type="text" value={container.styles?.paddingTop || ''} onChange={e => handleStyleChange('paddingTop', e.target.value)} className="w-full bg-gray-800 border border-gray-600 rounded-md p-2" placeholder="e.g., 6rem"/>
+                                    <label className="block text-sm font-medium text-text-secondary mb-1">Espacamento superior</label>
+                                    <input type="text" value={container.styles?.paddingTop || ''} onChange={e => handleStyleChange('paddingTop', e.target.value)} className="w-full bg-gray-800 border border-gray-600 rounded-md p-2" placeholder="Ex: 6rem"/>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-text-secondary mb-1">Padding Bottom</label>
-                                    <input type="text" value={container.styles?.paddingBottom || ''} onChange={e => handleStyleChange('paddingBottom', e.target.value)} className="w-full bg-gray-800 border border-gray-600 rounded-md p-2" placeholder="e.g., 6rem"/>
+                                    <label className="block text-sm font-medium text-text-secondary mb-1">Espacamento inferior</label>
+                                    <input type="text" value={container.styles?.paddingBottom || ''} onChange={e => handleStyleChange('paddingBottom', e.target.value)} className="w-full bg-gray-800 border border-gray-600 rounded-md p-2" placeholder="Ex: 6rem"/>
                                 </div>
-                                <div className="md:col-span-2">
-                                    <label className="block text-sm font-medium text-text-secondary mb-1">Alinhamento do Texto</label>
+                                <div>
+                                    <label className="block text-sm font-medium text-text-secondary mb-1">Alinhamento do texto</label>
                                      <select value={container.styles?.textAlign || 'left'} onChange={e => handleStyleChange('textAlign', e.target.value as 'left'|'center'|'right')} className="w-full bg-gray-800 border border-gray-600 rounded-md p-2">
                                         <option value="left">Esquerda</option>
                                         <option value="center">Centro</option>
@@ -268,12 +409,11 @@ const ContainerEditorModal: React.FC<ContainerEditorModalProps> = ({ container: 
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </main>
-                <footer className="p-4 border-t border-border flex justify-end space-x-3 flex-shrink-0">
-                    <button onClick={onClose} type="button" className="bg-gray-600 text-white font-semibold py-2 px-4 rounded-md">Cancelar</button>
-                    <button onClick={handleSave} type="button" className="bg-accent text-button-text font-bold py-2 px-4 rounded-md" disabled={!hasChanged.current}>Salvar</button>
-                </footer>
+                        </div>
+                        <div className="rounded-lg border border-accent/20 bg-accent/5 p-4 text-sm text-text-secondary">
+                            Salve este bloco para atualizar o preview do site ao lado.
+                        </div>
+                    </aside>
             </div>
         </div>
     );
@@ -294,10 +434,10 @@ const ContentPalette: React.FC = () => {
     };
     return (
         <div className="sticky top-4 bg-gray-900/80 backdrop-blur-md border border-border p-2 rounded-lg z-10">
-             <h4 className="text-sm font-semibold text-accent text-center mb-2">Content Palette</h4>
+             <h4 className="text-sm font-semibold text-accent text-center mb-2">Adicionar blocos</h4>
             <div className="grid grid-cols-2 gap-2">
                 {CONTENT_TYPES.map(({ type, labelKey, icon }) => (
-                    <button key={type} draggable onDragStart={(e) => handleDragStart(e, type)} className="flex flex-col items-center p-2 bg-surface rounded-md hover:bg-accent hover:text-button-text transition-colors group cursor-grab" title={`Drag to add ${t(labelKey)}`}>
+                    <button key={type} draggable onDragStart={(e) => handleDragStart(e, type)} className="flex flex-col items-center p-2 bg-surface rounded-md hover:bg-accent hover:text-button-text transition-colors group cursor-grab" title={`Arraste para adicionar ${t(labelKey)}`}>
                         <div className="w-6 h-6">{icon}</div>
                         <span className="text-xs mt-1 text-text-secondary group-hover:text-button-text">{t(labelKey)}</span>
                     </button>
@@ -328,6 +468,7 @@ const PageEditor: React.FC<PageEditorProps> = ({ page, onBack }) => {
 
     useEffect(() => {
         setEditingPage(page);
+        setEditingContainer(null);
     }, [page]);
     
     useEffect(() => {
@@ -339,6 +480,7 @@ const PageEditor: React.FC<PageEditorProps> = ({ page, onBack }) => {
 
     const handleSave = () => {
         updatePage(editingPage);
+        notifyPreviewRefresh();
         alert('Página salva!');
     };
     const handleMetaChange = (field: 'title' | 'slug' | 'showInNav' | 'linkedProductId', value: string | boolean) => setEditingPage(p => ({ ...p, [field]: value }));
@@ -354,22 +496,205 @@ const PageEditor: React.FC<PageEditorProps> = ({ page, onBack }) => {
     };
 
     const handleUpdateContainer = (updated: ContentContainer) => {
-        // This is a critical fix: update the context first
         updateContainer(editingPage.id, updated);
-        // Then update local state based on the *previous* state, not a stale closure
         setEditingPage(p => ({ ...p, containers: p.containers.map(c => c.id === updated.id ? updated : c) }));
+        setEditingContainer(updated);
+        clearOpenItem();
+        notifyPreviewRefresh();
+    };
+
+    const handleBackToPageSettings = () => {
         setEditingContainer(null);
         clearOpenItem();
     };
 
-    const handleCloseModal = () => {
-        setEditingContainer(null);
-        clearOpenItem();
+    const openContainerEditor = (container: ContentContainer) => {
+        setEditingContainer(container);
     };
+
+    const renderPageSettingsPanel = () => (
+        <div className="space-y-6">
+            <div className="bg-gray-800/50 p-4 rounded-lg border border-border">
+                <h3 className="text-lg font-semibold text-text-primary mb-3">Banner de fundo da pagina</h3>
+                <div className="space-y-4">
+                    <label className="flex items-center cursor-pointer">
+                        <div className="relative">
+                            <input type="checkbox" checked={editingPage.backgroundBanner?.enabled || false} onChange={e => handleBannerChange('enabled', e.target.checked)} className="sr-only peer" />
+                            <div className="w-11 h-6 bg-gray-600 rounded-full peer peer-focus:ring-2 peer-focus:ring-accent peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent"></div>
+                        </div>
+                        <span className="ml-3 text-sm font-medium text-text-secondary">Usar um banner de fundo proprio nesta pagina</span>
+                    </label>
+
+                    {editingPage.backgroundBanner?.enabled && (
+                        <div className="space-y-4 pt-4 border-t border-border animate-fade-in-down">
+                            <ImageInput label="Imagem do banner" value={editingPage.backgroundBanner?.imageUrl || ''} onChange={v => handleBannerChange('imageUrl', v)} />
+                            <div>
+                                <label className="block text-sm font-medium text-text-secondary mb-1">Opacidade ({Math.round((editingPage.backgroundBanner?.opacity || 0.3) * 100)}%)</label>
+                                <input type="range" min="0" max="1" step="0.01" value={editingPage.backgroundBanner?.opacity || 0.3} onChange={e => handleBannerChange('opacity', parseFloat(e.target.value))} className="w-full" />
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            <div className="grid gap-6 xl:grid-cols-2">
+                <div className="bg-gray-800/50 p-4 rounded-lg border border-border space-y-4">
+                    <h3 className="text-lg font-semibold text-text-primary mb-1">Dados da pagina</h3>
+                    <p className="text-sm text-text-secondary">Ajuste o nome, a URL e a navegacao dessa pagina.</p>
+
+                    <div>
+                        <label className="block text-sm font-medium text-text-secondary mb-1">Nome da pagina</label>
+                        <input type="text" value={editingPage.title || ''} onChange={e => handleMetaChange('title', e.target.value)} className="w-full bg-gray-800 border border-gray-600 rounded-md p-2" />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-text-secondary mb-1">Slug / URL</label>
+                        <input type="text" value={editingPage.slug || ''} onChange={e => handleMetaChange('slug', e.target.value)} className="w-full bg-gray-800 border border-gray-600 rounded-md p-2" />
+                    </div>
+
+                    <div>
+                        <label className="flex items-center gap-3 text-sm font-medium text-text-secondary">
+                            <input type="checkbox" checked={Boolean(editingPage.showInNav)} onChange={e => handleMetaChange('showInNav', e.target.checked)} className="h-4 w-4 rounded border-gray-600 bg-gray-800 text-accent" />
+                            Exibir no menu de navegacao
+                        </label>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-text-secondary mb-1">Produto vinculado</label>
+                        <select value={editingPage.linkedProductId || ''} onChange={e => handleMetaChange('linkedProductId', e.target.value)} className="w-full bg-gray-800 border border-gray-600 rounded-md p-2">
+                            <option value="">Sem produto vinculado</option>
+                            {products.map(product => (
+                                <option key={product.id} value={product.id}>
+                                    {product.translations?.pt?.name || product.id}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                </div>
+
+                <div className="bg-gray-800/50 p-4 rounded-lg border border-border space-y-4">
+                    <h3 className="text-lg font-semibold text-text-primary mb-1">SEO da pagina</h3>
+                    <p className="text-sm text-text-secondary">Defina o que aparece na aba e nas buscas.</p>
+
+                    <div>
+                        <label className="block text-sm font-medium text-text-secondary mb-1">Meta title</label>
+                        <input
+                            type="text"
+                            value={editingPage.seo?.metaTitle || ''}
+                            onChange={e => setEditingPage(prev => ({ ...prev, seo: { ...(prev.seo || {}), metaTitle: e.target.value } }))}
+                            className="w-full bg-gray-800 border border-gray-600 rounded-md p-2"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-text-secondary mb-1">Meta description</label>
+                        <textarea
+                            value={editingPage.seo?.metaDescription || ''}
+                            onChange={e => setEditingPage(prev => ({ ...prev, seo: { ...(prev.seo || {}), metaDescription: e.target.value } }))}
+                            rows={5}
+                            className="w-full bg-gray-800 border border-gray-600 rounded-md p-2"
+                        />
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+
+    const LegacyContainerEditor = ({
+        container,
+        onSave,
+        onClose,
+    }: {
+        container: ContentContainer;
+        onSave: (container: ContentContainer) => void;
+        onClose: () => void;
+        pageIsStatic?: boolean;
+    }) => (
+        <ContainerEditorPanel
+            container={container}
+            onSave={onSave}
+            onBackToPage={onClose}
+        />
+    );
+
+    return (
+        <div className="space-y-6">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                    <button onClick={onBack} className="mb-3 flex items-center space-x-2 text-text-secondary hover:text-text-primary">
+                        <ArrowLeftIcon className="w-5 h-5"/> <span>{t('admin_pages_title')}</span>
+                    </button>
+                    <p className="text-xs uppercase tracking-[0.2em] text-accent">Editor de pagina</p>
+                    <h2 className="mt-1 text-2xl font-semibold text-text-primary">{getPageDisplayName(editingPage)}</h2>
+                    <p className="mt-1 text-sm text-text-secondary">Escolha um bloco na lista para editar ou ajuste as configuracoes gerais da pagina.</p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                    <button onClick={handleBackToPageSettings} className={`rounded-md px-4 py-2 text-sm font-semibold ${!editingContainer ? 'bg-accent text-button-text' : 'border border-border bg-[#111827] text-text-secondary hover:text-text-primary'}`}>
+                        Configuracoes da pagina
+                    </button>
+                    <button onClick={handleSave} className="rounded-md bg-accent px-4 py-2 text-sm font-bold text-button-text hover:opacity-90" disabled={!hasChanged.current}>
+                        Salvar pagina
+                    </button>
+                </div>
+            </div>
+
+            <div className="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]">
+                <aside className="space-y-4">
+                    <div className="rounded-lg border border-border bg-gray-800/50 p-4">
+                        <h3 className="text-lg font-semibold text-text-primary">Navegacao da pagina</h3>
+                        <p className="mt-1 text-sm text-text-secondary">Use a lista abaixo para selecionar exatamente o bloco que voce quer mudar.</p>
+                    </div>
+
+                    <div className="rounded-lg border border-border bg-gray-800/50 p-4 space-y-3">
+                        <div className="flex items-start justify-between gap-4">
+                            <div>
+                                <h3 className="text-lg font-semibold text-text-primary">Blocos da pagina</h3>
+                                <p className="mt-1 text-sm text-text-secondary">Clique em um item para editar.</p>
+                            </div>
+                            <span className="rounded-full border border-accent/30 bg-accent/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-accent">
+                                {editingPage.containers.length} blocos
+                            </span>
+                        </div>
+
+                        <div className="space-y-2">
+                            {editingPage.containers.map((container, index) => {
+                                const isSelected = editingContainer?.id === container.id;
+                                return (
+                                    <button
+                                        key={container.id}
+                                        type="button"
+                                        onClick={() => openContainerEditor(container)}
+                                        className={`w-full rounded-lg border p-4 text-left transition-colors ${isSelected ? 'border-accent bg-accent/10' : 'border-border bg-[#111827]/50 hover:border-accent/40 hover:bg-[#111827]'}`}
+                                    >
+                                        <p className="text-xs uppercase tracking-[0.18em] text-accent">{CONTAINER_TYPE_LABELS[container.type] || container.type}</p>
+                                        <h4 className="mt-1 text-base font-semibold text-text-primary">{getContainerDisplayName(container, index)}</h4>
+                                        <p className="mt-1 text-sm text-text-secondary">ID tecnico: {container.id}</p>
+                                        {isSelected && <p className="mt-2 text-xs font-semibold uppercase tracking-[0.16em] text-accent">Selecionado para edicao</p>}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </aside>
+
+                <section className="space-y-6">
+                    {editingContainer ? (
+                        <ContainerEditorPanel
+                            container={editingContainer}
+                            onSave={handleUpdateContainer}
+                            onBackToPage={handleBackToPageSettings}
+                        />
+                    ) : (
+                        renderPageSettingsPanel()
+                    )}
+                </section>
+            </div>
+        </div>
+    );
     
     return (
         <div className="space-y-6">
-            {editingContainer && <ContainerEditorModal container={editingContainer} onSave={handleUpdateContainer} onClose={handleCloseModal} pageIsStatic={editingPage.isStatic} />}
+            {editingContainer && <LegacyContainerEditor container={editingContainer} onSave={handleUpdateContainer} onClose={handleBackToPageSettings} pageIsStatic={editingPage.isStatic} />}
             <div className="flex justify-between items-start">
                 <button onClick={onBack} className="flex items-center space-x-2 text-text-secondary hover:text-text-primary mb-4">
                     <ArrowLeftIcon className="w-5 h-5"/> <span>{t('admin_pages_title')}</span>
@@ -401,7 +726,132 @@ const PageEditor: React.FC<PageEditorProps> = ({ page, onBack }) => {
                     )}
                 </div>
             </div>
-            {/* Page Meta, SEO and Containers sections go here, same as before */}
+
+            <div className="grid gap-6 xl:grid-cols-2">
+                <div className="bg-gray-800/50 p-4 rounded-lg border border-border space-y-4">
+                    <h3 className="text-lg font-semibold text-text-primary mb-1">Dados da Página</h3>
+                    <p className="text-sm text-text-secondary">Ajuste identificação, navegação e vínculo da página.</p>
+
+                    <div>
+                        <label className="block text-sm font-medium text-text-secondary mb-1">Nome da Página</label>
+                        <input
+                            type="text"
+                            value={editingPage.title || ''}
+                            onChange={e => handleMetaChange('title', e.target.value)}
+                            className="w-full bg-gray-800 border border-gray-600 rounded-md p-2"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-text-secondary mb-1">Slug / URL</label>
+                        <input
+                            type="text"
+                            value={editingPage.slug || ''}
+                            onChange={e => handleMetaChange('slug', e.target.value)}
+                            className="w-full bg-gray-800 border border-gray-600 rounded-md p-2"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="flex items-center gap-3 text-sm font-medium text-text-secondary">
+                            <input
+                                type="checkbox"
+                                checked={Boolean(editingPage.showInNav)}
+                                onChange={e => handleMetaChange('showInNav', e.target.checked)}
+                                className="h-4 w-4 rounded border-gray-600 bg-gray-800 text-accent"
+                            />
+                            Exibir no menu de navegação
+                        </label>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-text-secondary mb-1">Produto vinculado</label>
+                        <select
+                            value={editingPage.linkedProductId || ''}
+                            onChange={e => handleMetaChange('linkedProductId', e.target.value)}
+                            className="w-full bg-gray-800 border border-gray-600 rounded-md p-2"
+                        >
+                            <option value="">Sem produto vinculado</option>
+                            {products.map(product => (
+                                <option key={product.id} value={product.id}>
+                                    {product.translations?.pt?.name || product.id}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                </div>
+
+                <div className="bg-gray-800/50 p-4 rounded-lg border border-border space-y-4">
+                    <h3 className="text-lg font-semibold text-text-primary mb-1">SEO da Página</h3>
+                    <p className="text-sm text-text-secondary">Defina o título e a descrição que aparecem no Google e na aba.</p>
+
+                    <div>
+                        <label className="block text-sm font-medium text-text-secondary mb-1">Titulo SEO</label>
+                        <input
+                            type="text"
+                            value={editingPage.seo?.metaTitle || ''}
+                            onChange={e => setEditingPage(prev => ({
+                                ...prev,
+                                seo: { ...(prev.seo || {}), metaTitle: e.target.value }
+                            }))}
+                            className="w-full bg-gray-800 border border-gray-600 rounded-md p-2"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-text-secondary mb-1">Descricao SEO</label>
+                        <textarea
+                            value={editingPage.seo?.metaDescription || ''}
+                            onChange={e => setEditingPage(prev => ({
+                                ...prev,
+                                seo: { ...(prev.seo || {}), metaDescription: e.target.value }
+                            }))}
+                            rows={5}
+                            className="w-full bg-gray-800 border border-gray-600 rounded-md p-2"
+                        />
+                    </div>
+                </div>
+            </div>
+
+            <div className="bg-gray-800/50 p-4 rounded-lg border border-border space-y-4">
+                <div className="flex items-start justify-between gap-4">
+                    <div>
+                        <h3 className="text-lg font-semibold text-text-primary mb-1">Blocos da Página</h3>
+                        <p className="text-sm text-text-secondary">
+                            Edite o hero, textos, seções e carrosséis desta página. Para trocar a imagem de fundo da home,
+                            abra o bloco <span className="text-accent font-medium">Banner principal</span>.
+                        </p>
+                    </div>
+                    <span className="rounded-full border border-accent/30 bg-accent/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-accent">
+                        {editingPage.containers.length} blocos
+                    </span>
+                </div>
+
+                <div className="space-y-3">
+                    {editingPage.containers.map((container, index) => (
+                        <div key={container.id} className="flex flex-col gap-3 rounded-lg border border-border bg-[#111827]/50 p-4 lg:flex-row lg:items-center lg:justify-between">
+                            <div className="min-w-0">
+                                <p className="text-xs uppercase tracking-[0.18em] text-accent">{CONTAINER_TYPE_LABELS[container.type] || container.type}</p>
+                                <h4 className="truncate text-base font-semibold text-text-primary">
+                                    {getContainerDisplayName(container, index)}
+                                </h4>
+                                <p className="mt-1 text-sm text-text-secondary">
+                                    ID: {container.id}
+                                </p>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => openContainerEditor(container)}
+                                    className="rounded-md bg-accent px-4 py-2 text-sm font-semibold text-button-text hover:opacity-90"
+                                >
+                                    Editar Bloco
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
         </div>
     );
 };
@@ -413,14 +863,14 @@ const PagesManager: React.FC = () => {
     const { openItemId, clearOpenItem } = useAdmin();
 
     useEffect(() => {
-      if (openItemId && !selectedPageId && pages.some(p => p.id === openItemId)) {
+      if (openItemId && pages.some(p => p.id === openItemId)) {
         setSelectedPageId(openItemId);
       }
-    }, [openItemId, selectedPageId, pages]);
+    }, [openItemId, pages]);
 
     const selectedPage = pages.find(p => p.id === selectedPageId);
     const handleDelete = (page: CustomPage) => {
-        if (page.isStatic) { alert("Static pages cannot be deleted."); return; }
+        if (page.isStatic) { alert("Paginas padrao nao podem ser excluidas."); return; }
         if (window.confirm(`Tem certeza que deseja excluir a página "${page.title}"?`)) deletePage(page.id);
     }
 
@@ -439,12 +889,12 @@ const PagesManager: React.FC = () => {
                             <button
                                 onClick={() => updatePage({ ...page, showInNav: !page.showInNav })}
                                 className={`p-2 rounded-full transition-colors ${page.showInNav ? 'text-green-400 hover:bg-green-500/10' : 'text-gray-500 hover:bg-gray-500/10'}`}
-                                title={page.showInNav ? "Visible in navigation" : "Hidden from navigation"}
+                                title={page.showInNav ? "Visivel no menu" : "Oculto no menu"}
                             >
                                 {page.showInNav ? <EyeIcon /> : <EyeSlashIcon />}
                             </button>
                             <div onClick={() => setSelectedPageId(page.id)} className="flex-grow text-left cursor-pointer overflow-hidden">
-                                <h3 className="text-lg font-semibold text-text-primary truncate">{page.title} {page.isStatic && <span className="text-xs text-gray-500">(Static)</span>}</h3>
+                                <h3 className="text-lg font-semibold text-text-primary truncate">{getPageDisplayName(page)} {page.isStatic && <span className="text-xs text-gray-500">(Página padrão)</span>}</h3>
                                 <span className="text-sm text-gray-400 truncate block">/{page.route || page.slug}</span>
                             </div>
                         </div>
@@ -667,8 +1117,8 @@ const DownloadsManager: React.FC = () => {
         <div className="space-y-6">
             <h3 className="text-xl font-semibold text-text-primary">{t('admin_downloads_title')}</h3>
             <div className="space-y-6">
-                <DownloadListEditor title={t('admin_downloads_plan')} pages={marketingPlanPages} onUpdate={(i, v) => handleUpdateList('marketing', i, v)} onAdd={() => handleAddPage('marketing')} onRemove={(i) => handleRemovePage('marketing')} />
-                <DownloadListEditor title={t('admin_downloads_catalog')} pages={productCatalogPages} onUpdate={(i, v) => handleUpdateList('catalog', i, v)} onAdd={() => handleAddPage('catalog')} onRemove={(i) => handleRemovePage('catalog')} />
+                <DownloadListEditor title={t('admin_downloads_plan')} pages={marketingPlanPages} onUpdate={(i, v) => handleUpdateList('marketing', i, v)} onAdd={() => handleAddPage('marketing')} onRemove={(i) => handleRemovePage('marketing', i)} />
+                <DownloadListEditor title={t('admin_downloads_catalog')} pages={productCatalogPages} onUpdate={(i, v) => handleUpdateList('catalog', i, v)} onAdd={() => handleAddPage('catalog')} onRemove={(i) => handleRemovePage('catalog', i)} />
             </div>
         </div>
     );
@@ -710,6 +1160,8 @@ const PagesTab: React.FC = () => {
             setActiveSubTab('advertising');
             setAdIdToEdit(openItemId);
             // Don't clearOpenItem here, so AdvertisingManager can see it
+        } else if (openItemId) {
+            setActiveSubTab('pages');
         }
     }, [openItemId, clearOpenItem]);
     

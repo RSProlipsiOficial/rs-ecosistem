@@ -3,18 +3,30 @@ import EditableButton from './EditableButton';
 import { useNavigation } from '../context/NavigationContext';
 import { useAdmin } from '../context/AdminContext';
 import { PencilSquareIcon } from './Icons';
-import { ContentContainer } from '../types';
+import { ContentContainer, EditablePage } from '../types';
 import EditableText from './EditableText';
 
 interface HeroSectionProps {
   container: ContentContainer;
   onEdit: () => void;
   pageId: string;
+  backgroundBanner?: EditablePage['backgroundBanner'];
 }
 
-const HeroSection: React.FC<HeroSectionProps> = ({ container, onEdit, pageId }) => {
+const HeroSection: React.FC<HeroSectionProps> = ({ container, onEdit, pageId, backgroundBanner }) => {
   const { setPage } = useNavigation();
-  const { isAdmin, isEditMode } = useAdmin();
+  const { isAdmin, isEditMode, isPreviewEditor } = useAdmin();
+
+  const heroBackgroundFromContainer = container.styles?.backgroundImage?.replace(/url\(['"]?(.*?)['"]?\)/, '$1') || 'https://picsum.photos/seed/dark-office/1920/1080?grayscale&blur=2';
+  const pageBannerBackground = backgroundBanner?.enabled && backgroundBanner.imageUrl
+    ? backgroundBanner.imageUrl
+    : null;
+  const heroBackgroundUrl = pageBannerBackground || heroBackgroundFromContainer;
+  const heroBackgroundOpacity = pageBannerBackground ? (backgroundBanner?.opacity ?? 0.42) : 1;
+  const overlayTopOpacity = pageBannerBackground ? Math.max(0.22, 0.92 - (heroBackgroundOpacity * 0.58)) : 0.8;
+  const overlayMidOpacity = pageBannerBackground ? Math.max(0.36, 0.96 - (heroBackgroundOpacity * 0.42)) : 0.9;
+  const overlayBottomOpacity = pageBannerBackground ? Math.max(0.88, 1 - (heroBackgroundOpacity * 0.08)) : 1;
+  const overlayBackground = `linear-gradient(to bottom, rgba(18, 18, 18, ${overlayTopOpacity}), rgba(18, 18, 18, ${overlayMidOpacity}), rgba(18, 18, 18, ${overlayBottomOpacity}))`;
 
   const handleCtaClick = () => {
     if (container.ctaLink) {
@@ -25,10 +37,19 @@ const HeroSection: React.FC<HeroSectionProps> = ({ container, onEdit, pageId }) 
   const sectionContent = (
     <section 
       id="hero" 
-      className={`relative flex items-center justify-center text-center text-text-primary bg-cover bg-center ${container.styles?.minHeight || 'h-screen'}`} 
-      style={{ backgroundImage: `url('${container.styles?.backgroundImage || 'https://picsum.photos/seed/dark-office/1920/1080?grayscale&blur=2'}')` }}
+      className={`relative flex items-center justify-center overflow-hidden text-center text-text-primary ${container.styles?.minHeight || 'h-screen'}`} 
     >
-      <div className={`absolute inset-0 bg-gradient-to-b from-background/80 via-background/90 to-background`}></div>
+      <div
+        className="absolute inset-0 bg-cover bg-center"
+        style={{
+          backgroundImage: `url('${heroBackgroundUrl}')`,
+          opacity: heroBackgroundOpacity,
+        }}
+      />
+      <div
+        className="absolute inset-0"
+        style={{ background: overlayBackground }}
+      />
       <div className="relative z-10 p-6 flex flex-col items-center">
         <h1 className="text-4xl md:text-6xl tracking-tight mb-4 leading-tight md:leading-snug text-shadow flex flex-col items-center">
           <EditableText as="span" className="text-accent" pageId={pageId} containerId={container.id} fieldPath="title" htmlContent={container.title || ''} />
@@ -60,17 +81,35 @@ const HeroSection: React.FC<HeroSectionProps> = ({ container, onEdit, pageId }) 
   );
 
   if (isAdmin && isEditMode) {
+    const handlePreviewEdit = (event: React.MouseEvent) => {
+      if (!isPreviewEditor) {
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+      onEdit();
+    };
+
     return (
-        <div className="relative group editable-section-wrapper">
+        <div
+            className={`relative group editable-section-wrapper ${isPreviewEditor ? 'cursor-pointer' : ''}`}
+            onClick={handlePreviewEdit}
+        >
             {sectionContent}
-            <div className="absolute inset-0 border-2 border-dashed border-transparent group-hover:border-accent transition-all pointer-events-none"></div>
+            <div className={`absolute inset-0 border-2 border-dashed transition-all pointer-events-none ${isPreviewEditor ? 'border-accent/50 group-hover:border-accent' : 'border-transparent group-hover:border-accent'}`}></div>
             <button
                 onClick={onEdit} // Use the onEdit callback from props
-                className="absolute top-4 right-4 w-8 h-8 bg-accent text-button-text rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-30"
+                className={`absolute top-4 right-4 w-8 h-8 bg-accent text-button-text rounded-full flex items-center justify-center transition-opacity z-30 ${isPreviewEditor ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
                 aria-label="Edit Hero Section"
             >
                 <PencilSquareIcon className="w-5 h-5" />
             </button>
+            {isPreviewEditor && (
+              <div className="pointer-events-none absolute bottom-6 right-6 rounded-full border border-accent/40 bg-background/85 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-accent">
+                Clique para editar
+              </div>
+            )}
         </div>
     );
   }

@@ -9,11 +9,18 @@ interface CustomerLoginProps {
   onBackToHome: () => void;
   onNavigateToRegister: () => void;
   onNavigateToForgotPassword: () => void;
+  branding?: { logo?: string; companyName?: string };
 }
 
-const CustomerLogin: React.FC<CustomerLoginProps> = ({ onLoginSuccess, onBackToHome, onNavigateToRegister, onNavigateToForgotPassword }) => {
-  const [email, setEmail] = useState('rsprolipsioficial@gmail.com');
-  const [password, setPassword] = useState('Yannis784512@');
+const CustomerLogin: React.FC<CustomerLoginProps> = ({
+  onLoginSuccess,
+  onBackToHome,
+  onNavigateToRegister,
+  onNavigateToForgotPassword,
+  branding,
+}) => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -24,22 +31,33 @@ const CustomerLogin: React.FC<CustomerLoginProps> = ({ onLoginSuccess, onBackToH
     setLoading(true);
 
     try {
-      const result = await customersAPI.login(email, password);
+      const result = await customersAPI.login(email.trim(), password);
 
       if (result.success) {
-        // Mapear o perfil do Supabase para o tipo Customer do frontend
+        const profile = result.profile || {};
+        const isConsultant = Boolean(
+          profile?.user_id ||
+          profile?.id_consultor ||
+          profile?.codigo_consultor ||
+          profile?.id_numerico
+        );
         const customer: Customer = {
-          id: result.profile.id,
-          name: result.profile.name || result.profile.full_name || 'Cliente',
+          id: result.user.id,
+          name: profile.name || profile.full_name || profile.nome_completo || 'Cliente',
           email: result.user.email!,
-          // Não expor hash no frontend se possível, mas mantemos interface por compatibilidade
           passwordHash: '',
+          isConsultant,
+          role: String(result.user.user_metadata?.role || result.user.app_metadata?.role || ''),
+          loginId: profile.username || profile.id_consultor || profile.slug || '',
+          numericId: String(profile.codigo_consultor || profile.id_numerico || ''),
+          cpfCnpj: profile.cpf_cnpj || '',
+          consultantCategory: profile.categoria || '',
         };
         onLoginSuccess(customer);
       } else {
-        setError(result.error || 'E-mail ou senha inválidos.');
+        setError(result.error || 'E-mail ou senha invalidos.');
       }
-    } catch (err: any) {
+    } catch {
       setError('Ocorreu um erro ao tentar fazer login. Tente novamente.');
     } finally {
       setLoading(false);
@@ -47,87 +65,121 @@ const CustomerLogin: React.FC<CustomerLoginProps> = ({ onLoginSuccess, onBackToH
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-black py-12">
-      <div className="w-full max-w-md p-8 space-y-8 bg-black border-2 border-yellow-600/30 rounded-lg shadow-2xl">
-        <div>
-          <h2 className="text-3xl font-bold text-center font-display text-gold-400">
-            Login
-          </h2>
-          <p className="mt-2 text-center text-gray-400">
-            Acesse sua conta para ver seus pedidos.
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#000000] px-4 py-10 text-white">
+      <div className="pointer-events-none absolute left-[-10%] top-[-10%] h-[38%] w-[38%] rounded-full bg-[rgba(212,175,55,0.05)] blur-[120px]" />
+      <div className="pointer-events-none absolute bottom-[-10%] right-[-10%] h-[38%] w-[38%] rounded-full bg-[rgba(212,175,55,0.05)] blur-[120px]" />
+
+      <div className="relative z-10 w-full max-w-md animate-fade-in">
+        <button
+          onClick={onBackToHome}
+          className="mb-8 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-gray-500 transition-colors hover:text-white"
+          type="button"
+        >
+          <span aria-hidden="true">←</span>
+          Voltar
+        </button>
+
+        <div className="mb-14 text-center">
+          <img
+            src={branding?.logo || '/logo-rs.png'}
+            alt={branding?.companyName || 'RS Prolipsi'}
+            className="mx-auto mb-4 h-20 w-auto object-contain"
+            onError={(event) => {
+              event.currentTarget.src = '/logo-rs.png';
+            }}
+          />
+          <p className="mt-3 text-center text-[10px] font-bold uppercase tracking-[0.3em] text-gray-500 opacity-70">
+            Painel do Marketplace
           </p>
         </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="space-y-4">
+
+        <div className="relative rounded-[2.5rem] border border-white/10 bg-black/80 p-10 pt-14 shadow-2xl backdrop-blur-xl">
+          <div className="absolute left-1/2 top-0 flex h-16 w-16 -translate-x-1/2 -translate-y-[35%] items-center justify-center rounded-2xl border border-white/10 bg-[#101010] shadow-[0_10px_30px_rgba(212,175,55,0.12)]">
+            <svg className="h-7 w-7 text-[#d4af37]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5.5 20a6.5 6.5 0 0 1 13 0" />
+            </svg>
+          </div>
+
+          <h2 className="mb-8 text-center text-2xl font-black text-white">Acesse sua conta</h2>
+
+          <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label htmlFor="email-address" className="sr-only">E-mail</label>
+              <label className="mb-2 block px-1 text-[10px] font-bold uppercase tracking-widest text-gray-500">
+                E-mail de acesso
+              </label>
               <input
-                id="email-address"
-                name="email"
                 type="email"
                 autoComplete="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="appearance-none relative block w-full px-3 py-3 border-2 border-slate-700 bg-slate-800 text-white placeholder-gray-400 rounded-md focus:outline-none focus:ring-amber-500 focus:border-amber-500 sm:text-sm"
-                placeholder="E-mail"
+                className="w-full rounded-xl border border-white/5 bg-black/60 px-4 py-3 text-white outline-none transition-all duration-300 placeholder:text-white/20 focus:border-[#d4af37] focus:ring-1 focus:ring-[#d4af37]/50"
+                placeholder="seuemail@exemplo.com"
               />
             </div>
-            <div className="relative">
-              <label htmlFor="password" className="sr-only">Senha</label>
-              <input
-                id="password"
-                name="password"
-                type={showPassword ? 'text' : 'password'}
-                autoComplete="current-password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="appearance-none relative block w-full px-3 py-3 border-2 border-slate-700 bg-slate-800 text-white placeholder-gray-400 rounded-md focus:outline-none focus:ring-amber-500 focus:border-amber-500 sm:text-sm pr-10"
-                placeholder="Senha"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute inset-y-0 right-0 px-3 flex items-center text-gray-400 hover:text-gold-400"
-                aria-label={showPassword ? "Esconder senha" : "Mostrar senha"}
-              >
-                {showPassword ? (
-                  <EyeOffIcon className="h-5 w-5" />
-                ) : (
-                  <EyeIcon className="h-5 w-5" />
-                )}
-              </button>
+
+            <div>
+              <div className="mb-2 flex items-center justify-between px-1">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500">
+                  Senha exclusiva
+                </label>
+                <button
+                  type="button"
+                  onClick={onNavigateToForgotPassword}
+                  className="text-[11px] font-bold uppercase tracking-tight text-gray-500 opacity-60 transition-all hover:text-[#d4af37] hover:opacity-100"
+                >
+                  Esqueceu sua senha?
+                </button>
+              </div>
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  autoComplete="current-password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full rounded-xl border border-white/5 bg-black/60 px-4 py-3 pr-12 text-white outline-none transition-all duration-300 placeholder:text-white/20 focus:border-[#d4af37] focus:ring-1 focus:ring-[#d4af37]/50"
+                  placeholder="••••••••••••"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-white/25 transition-colors hover:text-[#d4af37]"
+                  aria-label={showPassword ? 'Esconder senha' : 'Mostrar senha'}
+                >
+                  {showPassword ? <EyeOffIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
+                </button>
+              </div>
             </div>
-          </div>
 
-          {error && (
-            <p className="text-red-500 text-sm text-center !mt-4">{error}</p>
-          )}
-          <div className="text-right">
-            <button onClick={onNavigateToForgotPassword} type="button" className="text-sm font-medium text-gold-500 hover:text-gold-400">Esqueceu sua senha?</button>
-          </div>
+            {error && (
+              <div className="rounded-lg border border-red-400/20 bg-red-400/10 px-4 py-2 text-center text-xs text-red-400">
+                {error}
+              </div>
+            )}
 
-          <div>
             <button
               type="submit"
               disabled={loading}
-              className={`group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-bold rounded-md text-black bg-amber-500 hover:bg-amber-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-amber-500 transition-colors mt-2 ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className="flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-[#d4af37] via-[#cfb45f] to-[#d4af37] py-4 text-sm font-black uppercase tracking-widest text-black shadow-lg shadow-[#d4af37]/10 transition-all duration-500 hover:scale-[1.02] hover:shadow-[#d4af37]/30 active:scale-[0.98] disabled:opacity-50 disabled:hover:scale-100"
             >
-              {loading ? 'Entrando...' : 'Entrar'}
+              {loading ? 'Entrando...' : 'Entrar no ecossistema'}
             </button>
+          </form>
+
+          <div className="mt-8 border-t border-white/5 pt-6 text-center">
+            <p className="text-sm text-gray-400">
+              Nao tem uma conta?{' '}
+              <button onClick={onNavigateToRegister} className="font-bold text-[#d4af37] hover:underline" type="button">
+                Criar conta gratis
+              </button>
+            </p>
           </div>
-        </form>
-        <div className="text-center space-y-2">
-          <p className="text-sm text-gray-400">
-            Não tem uma conta?{' '}
-            <button onClick={onNavigateToRegister} className="font-medium text-gold-500 hover:text-gold-400">
-              Cadastre-se
-            </button>
-          </p>
-          <button onClick={onBackToHome} className="font-medium text-sm text-gold-500 hover:text-gold-400">
-            Voltar para a loja
-          </button>
+        </div>
+
+        <div className="mt-12 text-center">
+          <p className="text-[10px] uppercase tracking-[0.2em] text-gray-600 opacity-40">© 2026 RS Prolipsi Ecosystem</p>
         </div>
       </div>
     </div>

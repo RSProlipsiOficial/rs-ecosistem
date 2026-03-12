@@ -4,7 +4,51 @@
 import { supabase } from './supabase';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
-const TENANT_ID = import.meta.env.VITE_TENANT_ID || '';
+const DEFAULT_TENANT_ID = 'd107da4e-e266-41b0-947a-0c66b2f2b9ef';
+const PLACEHOLDER_TENANT_ID = '00000000-0000-0000-0000-000000000000';
+
+function isValidTenantId(value?: string | null): value is string {
+    return Boolean(value && value.trim() && value !== PLACEHOLDER_TENANT_ID);
+}
+
+function resolveTenantId(): string {
+    const envTenant = import.meta.env.VITE_TENANT_ID;
+
+    try {
+        const qs = new URLSearchParams(window.location.search);
+        const fromQuery = qs.get('tenantId');
+        if (isValidTenantId(fromQuery)) {
+            localStorage.setItem('rs-tenant-id', fromQuery);
+            return fromQuery;
+        }
+
+        const hash = (window.location.hash || '').toLowerCase();
+        const hashMatch = hash.match(/tenant=([0-9a-f\-]{36})/);
+        if (isValidTenantId(hashMatch?.[1])) {
+            localStorage.setItem('rs-tenant-id', hashMatch[1]);
+            return hashMatch[1];
+        }
+
+        if (isValidTenantId(envTenant)) {
+            localStorage.setItem('rs-tenant-id', envTenant);
+            return envTenant;
+        }
+
+        const fromStorage = localStorage.getItem('rs-tenant-id');
+        if (isValidTenantId(fromStorage)) {
+            return fromStorage;
+        }
+    } catch { }
+
+    return isValidTenantId(envTenant) ? envTenant : DEFAULT_TENANT_ID;
+}
+
+let TENANT_ID = resolveTenantId();
+
+if (typeof window !== 'undefined') {
+    window.addEventListener('hashchange', () => { TENANT_ID = resolveTenantId(); });
+    window.addEventListener('popstate', () => { TENANT_ID = resolveTenantId(); });
+}
 
 const apiFetch = async (path: string, options: RequestInit = {}) => {
     const headers = {
@@ -13,7 +57,8 @@ const apiFetch = async (path: string, options: RequestInit = {}) => {
     };
 
     try {
-        const response = await fetch(`${API_URL}${path}`, { ...options, headers });
+        const fullUrl = path.startsWith('http') ? path : `${API_URL}${path}`;
+        const response = await fetch(fullUrl, { ...options, headers });
         const data = await response.json();
         if (!response.ok) {
             return { success: false, error: data.error || `HTTP error! status: ${response.status}` };
@@ -43,6 +88,7 @@ export const productsAPI = {
         if (!TENANT_ID) return { success: false, error: 'VITE_TENANT_ID não configurado' };
         return apiFetch('/v1/marketplace/products', {
             method: 'POST',
+            headers: await getAuthHeaders(),
             body: JSON.stringify({ ...product, tenantId: TENANT_ID })
         });
     },
@@ -50,12 +96,38 @@ export const productsAPI = {
     update: async (id: string, product: any) => {
         return apiFetch(`/v1/marketplace/products/${id}`, {
             method: 'PUT',
+            headers: await getAuthHeaders(),
             body: JSON.stringify(product)
         });
     },
 
     delete: async (id: string) => {
-        return apiFetch(`/v1/marketplace/products/${id}`, { method: 'DELETE' });
+        return apiFetch(`/v1/marketplace/products/${id}`, {
+            method: 'DELETE',
+            headers: await getAuthHeaders()
+        });
+    },
+
+    uploadAsset: async (file: File, type: 'products' | 'videos' | 'materials' = 'products') => {
+        if (!TENANT_ID) return { success: false, error: 'VITE_TENANT_ID não configurado' };
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('type', type);
+        formData.append('tenantId', TENANT_ID);
+
+        try {
+            const response = await fetch(`${API_URL}/v1/marketplace/upload`, {
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+            if (!response.ok) {
+                return { success: false, error: data.error || `HTTP error! status: ${response.status}` };
+            }
+            return data;
+        } catch (error: any) {
+            return { success: false, error: error.message };
+        }
     },
 
     updateStock: async (id: string, stock: number) => {
@@ -73,13 +145,16 @@ export const productsAPI = {
 export const collectionsAPI = {
     getAll: async () => {
         if (!TENANT_ID) return { success: false, error: 'VITE_TENANT_ID não configurado' };
-        return apiFetch(`/v1/marketplace/collections?tenantId=${TENANT_ID}`);
+        return apiFetch(`/v1/marketplace/collections?tenantId=${TENANT_ID}`, {
+            headers: await getAuthHeaders()
+        });
     },
 
     create: async (collection: any) => {
         if (!TENANT_ID) return { success: false, error: 'VITE_TENANT_ID não configurado' };
         return apiFetch('/v1/marketplace/collections', {
             method: 'POST',
+            headers: await getAuthHeaders(),
             body: JSON.stringify({ ...collection, tenantId: TENANT_ID })
         });
     },
@@ -87,12 +162,16 @@ export const collectionsAPI = {
     update: async (id: string, collection: any) => {
         return apiFetch(`/v1/marketplace/collections/${id}`, {
             method: 'PUT',
+            headers: await getAuthHeaders(),
             body: JSON.stringify(collection)
         });
     },
 
     delete: async (id: string) => {
-        return apiFetch(`/v1/marketplace/collections/${id}`, { method: 'DELETE' });
+        return apiFetch(`/v1/marketplace/collections/${id}`, {
+            method: 'DELETE',
+            headers: await getAuthHeaders()
+        });
     }
 };
 
@@ -104,7 +183,9 @@ export const ordersAPI = {
     getAll: async (status?: string) => {
         if (!TENANT_ID) return { success: false, error: 'VITE_TENANT_ID não configurado' };
         const query = status ? `&status=${status}` : '';
-        return apiFetch(`/v1/marketplace/orders?tenantId=${TENANT_ID}${query}`);
+        return apiFetch(`/v1/marketplace/orders?tenantId=${TENANT_ID}${query}`, {
+            headers: await getAuthHeaders()
+        });
     },
 
     create: async (order: any) => {
@@ -118,6 +199,7 @@ export const ordersAPI = {
     updateStatus: async (id: string, status: string) => {
         return apiFetch(`/v1/marketplace/orders/${id}/status`, {
             method: 'PATCH',
+            headers: await getAuthHeaders(),
             body: JSON.stringify({ status })
         });
     },
@@ -200,8 +282,19 @@ export const customersAPI = {
     logout: async () => {
         const { error } = await supabase.auth.signOut();
         if (error) return { success: false, error: error.message };
+        if (typeof window !== 'undefined') {
+            localStorage.removeItem('token');
+            localStorage.removeItem('rs-role');
+            window.dispatchEvent(new Event('rs-marketplace-auth-updated'));
+        }
         return { success: true };
     }
+};
+
+const getAuthHeaders = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token || localStorage.getItem('token') || '';
+    return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
 // =====================================================
@@ -241,10 +334,135 @@ export const distributorsAPI = {
     },
     // Estoque
     getStock: async (cdId: string) => {
-        return apiFetch(`/v1/cds/${cdId}/stock`);
+        return apiFetch(`/v1/cds/${cdId}/inventory`);
+    },
+    getInventory: async (cdId: string) => {
+        return apiFetch(`/v1/cds/${cdId}/inventory`);
     },
     adjustStock: async (cdId: string, payload: any) => {
         return apiFetch(`/v1/cds/${cdId}/stock`, { method: 'PATCH', body: JSON.stringify(payload) });
+    }
+};
+
+export const adminSettingsAPI = {
+    getGeneralSettings: async () => {
+        return apiFetch('/v1/admin/settings/general');
+    },
+
+    getPublicSponsoredSettings: async () => {
+        return apiFetch('/v1/public/marketplace/sponsored-settings');
+    },
+
+    trackSponsoredEvent: async (payload: {
+        tenantId: string;
+        productId: string;
+        placementId: string;
+        type: 'impression' | 'click';
+    }) => {
+        return apiFetch('/v1/public/marketplace/sponsored-events', {
+            method: 'POST',
+            body: JSON.stringify(payload)
+        });
+    },
+
+    getSponsoredSettings: async () => {
+        return apiFetch('/v1/admin/marketplace/sponsored-settings', {
+            headers: await getAuthHeaders()
+        });
+    },
+
+    createSponsoredRequestPayment: async (requestId: string, payload: any) => {
+        return apiFetch(`/v1/admin/marketplace/sponsored-requests/${requestId}/payment`, {
+            method: 'POST',
+            headers: await getAuthHeaders(),
+            body: JSON.stringify(payload)
+        });
+    },
+
+    syncSponsoredRequestPaymentStatus: async (requestId: string, tenantId: string) => {
+        return apiFetch(`/v1/admin/marketplace/sponsored-requests/${requestId}/payment-status?tenantId=${encodeURIComponent(tenantId)}`, {
+            headers: await getAuthHeaders()
+        });
+    },
+
+    getPublicPaymentSettings: async () => {
+        return apiFetch('/v1/admin/settings/payment/public');
+    },
+
+    getPaymentSettings: async () => {
+        return apiFetch('/v1/admin/settings/payment', {
+            headers: await getAuthHeaders()
+        });
+    },
+
+    updatePaymentSettings: async (settings: any) => {
+        return apiFetch('/v1/admin/settings/payment', {
+            method: 'PUT',
+            headers: await getAuthHeaders(),
+            body: JSON.stringify(settings)
+        });
+    },
+
+    getShippingSettings: async () => {
+        return apiFetch('/v1/admin/settings/shipping', {
+            headers: await getAuthHeaders()
+        });
+    },
+
+    updateShippingSettings: async (settings: any) => {
+        return apiFetch('/v1/admin/settings/shipping', {
+            method: 'PUT',
+            headers: await getAuthHeaders(),
+            body: JSON.stringify(settings)
+        });
+    },
+
+    getWalletSettings: async () => {
+        return apiFetch('/v1/admin/settings/wallet', {
+            headers: await getAuthHeaders()
+        });
+    },
+
+    updateWalletSettings: async (settings: any) => {
+        return apiFetch('/v1/admin/settings/wallet', {
+            method: 'PUT',
+            headers: await getAuthHeaders(),
+            body: JSON.stringify(settings)
+        });
+    }
+};
+
+export const dashboardLayoutAPI = {
+    getConsultantLayoutConfig: async () => {
+        return apiFetch('/v1/admin/dashboard/layout/consultant', {
+            headers: await getAuthHeaders()
+        });
+    },
+
+    getMarketplaceLayoutConfig: async () => {
+        return apiFetch('/v1/admin/dashboard/layout/marketplace', {
+            headers: await getAuthHeaders()
+        });
+    }
+};
+
+export const careerAPI = {
+    getDigitalLevels: async () => {
+        return apiFetch('/v1/career/digital-levels');
+    },
+
+    getDigitalStats: async () => {
+        return apiFetch('/v1/career/digital-stats', {
+            headers: await getAuthHeaders()
+        });
+    }
+};
+
+export const sigmaAPI = {
+    getBonuses: async () => {
+        return apiFetch('/v1/sigma/bonuses', {
+            headers: await getAuthHeaders()
+        });
     }
 };
 

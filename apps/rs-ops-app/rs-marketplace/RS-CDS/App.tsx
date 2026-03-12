@@ -19,6 +19,21 @@ interface RSCDAppProps {
   onLogout?: () => void;
 }
 
+function resolveBrandingUrl() {
+  const rawBaseUrl = (import.meta as any).env?.VITE_API_URL || 'http://localhost:4000';
+  const normalizedBaseUrl = String(rawBaseUrl).replace(/\/+$/, '');
+
+  if (normalizedBaseUrl.endsWith('/api')) {
+    return `${normalizedBaseUrl.slice(0, -4)}/v1/admin/settings/general`;
+  }
+
+  if (normalizedBaseUrl.endsWith('/v1')) {
+    return `${normalizedBaseUrl}/admin/settings/general`;
+  }
+
+  return `${normalizedBaseUrl}/v1/admin/settings/general`;
+}
+
 const App: React.FC<RSCDAppProps> = ({ cdId: propCdId, userId: propUserId, onBackToAdmin, onLogout }) => {
   const [viewHistory, setViewHistory] = useState<ViewState[]>(['DASHBOARD']);
   const currentView = viewHistory[viewHistory.length - 1];
@@ -49,15 +64,41 @@ const App: React.FC<RSCDAppProps> = ({ cdId: propCdId, userId: propUserId, onBac
   const [cdBranding, setCdBranding] = useState<{ faviconUrl?: string; logoUrl?: string }>({});
 
   useEffect(() => {
-    if (!cdBranding.faviconUrl) return;
-    // Update favicon
+    const loadCentralBranding = async () => {
+      try {
+        const response = await fetch(resolveBrandingUrl());
+        const payload = await response.json();
+
+        if (!response.ok || !(payload?.success ?? payload?.ok)) {
+          return;
+        }
+
+        const branding = payload?.data || {};
+        const fallbackLogo = branding.logo || branding.avatar || branding.logoUrl || branding.logo_url;
+        const fallbackFavicon = branding.favicon || fallbackLogo;
+
+        setCdBranding((prev) => ({
+          faviconUrl: prev.faviconUrl || fallbackFavicon || prev.faviconUrl,
+          logoUrl: prev.logoUrl || fallbackLogo || prev.logoUrl,
+        }));
+      } catch {
+        // Mantem branding ja carregado do CD quando a API central falhar.
+      }
+    };
+
+    loadCentralBranding();
+  }, []);
+
+  useEffect(() => {
     let link = document.querySelector<HTMLLinkElement>("link[rel~='icon']");
     if (!link) {
       link = document.createElement('link');
       link.rel = 'icon';
       document.head.appendChild(link);
     }
-    link.href = cdBranding.faviconUrl;
+    if (cdBranding.faviconUrl) {
+      link.href = cdBranding.faviconUrl;
+    }
   }, [cdBranding.faviconUrl]);
 
   useEffect(() => {
@@ -77,7 +118,52 @@ const App: React.FC<RSCDAppProps> = ({ cdId: propCdId, userId: propUserId, onBac
         const urlCdId = urlParams.get('cdId');
         let targetCdId = urlCdId || propCdId || '';
 
-        // 2. If no specific ID, load the first/primary CD from the database
+        // 2. If a logged user exists and no explicit CD was forced, load the CD linked to that user
+        if (!targetCdId && propUserId) {
+          console.log(`[RS-CDS] Loading CD linked to authenticated user: ${propUserId}`);
+          const linkedProfile = await dataService.getCDProfile(propUserId);
+
+          if (linkedProfile) {
+            targetCdId = linkedProfile.id;
+            setUserProfile(linkedProfile);
+
+            if (linkedProfile.faviconUrl || linkedProfile.logoUrl) {
+              setCdBranding({
+                faviconUrl: linkedProfile.faviconUrl || undefined,
+                logoUrl: linkedProfile.logoUrl || undefined,
+              });
+            }
+
+            const linkedSettings = await dataService.getCDSettingsExt(targetCdId) || {};
+
+            setAppSettings({
+              profile: {
+                fantasyName: linkedProfile.name || '',
+                companyName: linkedProfile.managerName || linkedProfile.name || '',
+                document: linkedProfile.document || '',
+                email: linkedProfile.email || '',
+                phone: linkedProfile.phone || '',
+                avatarUrl: linkedProfile.avatarUrl || '',
+                faviconUrl: linkedProfile.faviconUrl || '',
+                logoUrl: linkedProfile.logoUrl || '',
+                address: {
+                  cep: linkedProfile.address?.cep || '',
+                  street: linkedProfile.address?.street || '',
+                  number: linkedProfile.address?.number || '',
+                  complement: linkedProfile.address?.complement || '',
+                  neighborhood: linkedProfile.address?.neighborhood || '',
+                  city: linkedProfile.address?.city || '',
+                  state: linkedProfile.address?.state || '',
+                }
+              },
+              bank: linkedSettings.bank || { bankName: '', accountType: 'CORRENTE', agency: '', accountNumber: '', pixKey: '', pixKeyType: 'CPF' },
+              paymentGateway: linkedSettings.paymentGateway || { provider: 'MERCADO_PAGO', enabled: false, apiKey: '', apiToken: '', environment: 'SANDBOX' },
+              shippingGateway: linkedSettings.shippingGateway || { provider: 'MELHOR_ENVIO', enabled: false, apiToken: '', environment: 'SANDBOX' }
+            });
+          }
+        }
+
+        // 3. If no specific ID, load the first/primary CD from the database
         if (!targetCdId) {
           console.log('[RS-CDS] No cdId provided, loading primary CD from database...');
           const cd = await dataService.getPrimaryCD();
@@ -186,7 +272,7 @@ const App: React.FC<RSCDAppProps> = ({ cdId: propCdId, userId: propUserId, onBac
 
         setCdRecordId(targetCdId);
 
-        // 3. Load orders, products, transactions in parallel
+        // 4. Load orders, products, transactions in parallel
         const [ordersData, productsData, transactionsData] = await Promise.all([
           dataService.getOrders(targetCdId),
           dataService.getProducts(targetCdId),
@@ -205,7 +291,7 @@ const App: React.FC<RSCDAppProps> = ({ cdId: propCdId, userId: propUserId, onBac
     };
 
     loadCDData();
-  }, [propCdId]);
+  }, [propCdId, propUserId]);
 
   const pendingNotifications = orders.filter(o => o.status === 'PENDENTE').length;
 

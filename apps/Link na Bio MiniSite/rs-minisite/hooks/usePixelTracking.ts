@@ -6,13 +6,37 @@ export const usePixelTracking = (tracking: TrackingPixels | undefined, isPreview
         // Only inject if not in preview mode and tracking is configured
         if (isPreview || !tracking) return;
 
+        const managedScriptIds = [
+            'meta-pixel',
+            'ga-external',
+            'ga-init',
+            'gads-init',
+            'tiktok-pixel',
+            'tiktok-external',
+            'pinterest-pixel',
+            'pinterest-external',
+            'taboola-pixel',
+            'taboola-external'
+        ];
+
+        managedScriptIds.forEach(id => {
+            document.getElementById(id)?.remove();
+        });
+
         // Helper to append script
         const injectScript = (id: string, content: string, type = 'text/javascript') => {
-            if (document.getElementById(id)) return; // prevent duplicate
             const script = document.createElement('script');
             script.id = id;
             script.type = type;
             script.innerHTML = content;
+            document.head.appendChild(script);
+        };
+
+        const ensureExternalScript = (id: string, src: string) => {
+            const script = document.createElement('script');
+            script.id = id;
+            script.async = true;
+            script.src = src;
             document.head.appendChild(script);
         };
 
@@ -33,16 +57,12 @@ export const usePixelTracking = (tracking: TrackingPixels | undefined, isPreview
         }
 
         // 2. Google Analytics (GA4)
-        if (tracking.googleAnalyticsId) {
-            // Load the external script first
-            if (!document.getElementById('ga-external')) {
-                const script = document.createElement('script');
-                script.id = 'ga-external';
-                script.async = true;
-                script.src = `https://www.googletagmanager.com/gtag/js?id=${tracking.googleAnalyticsId}`;
-                document.head.appendChild(script);
-            }
+        const gtagPrimaryId = tracking.googleAnalyticsId || tracking.googleAdsId;
+        if (gtagPrimaryId) {
+            ensureExternalScript('ga-external', `https://www.googletagmanager.com/gtag/js?id=${gtagPrimaryId}`);
+        }
 
+        if (tracking.googleAnalyticsId) {
             injectScript('ga-init', `
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
@@ -103,5 +123,10 @@ export const usePixelTracking = (tracking: TrackingPixels | undefined, isPreview
         `);
         }
 
+        return () => {
+            managedScriptIds.forEach(id => {
+                document.getElementById(id)?.remove();
+            });
+        };
     }, [tracking, isPreview]);
 };

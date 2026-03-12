@@ -1,7 +1,5 @@
 /**
- * 🔐 ROTAS DE AUTENTICAÇÃO - V1
- * 
- * Endpoints para login, logout e gestão de perfis
+ * Authentication routes - V1
  */
 
 import express from 'express';
@@ -12,108 +10,270 @@ import { adicionarNaMatriz } from '../../services/matrixService';
 
 const router = express.Router();
 
+const slugifyLoginBase = (value: string) =>
+  value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]/g, '') || 'consultor';
+
+const uploadAvatarFromDataUrl = async (userId: string, avatarDataUrl?: string | null) => {
+  if (!avatarDataUrl || typeof avatarDataUrl !== 'string' || !avatarDataUrl.startsWith('data:image/')) {
+    return null;
+  }
+
+  const match = avatarDataUrl.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/);
+  if (!match) {
+    return null;
+  }
+
+  const mimeType = match[1];
+  const base64Content = match[2];
+  const ext = mimeType.includes('png') ? 'png' : mimeType.includes('webp') ? 'webp' : 'jpg';
+  const filePath = `avatars/${userId}-${Date.now()}.${ext}`;
+
+  try {
+    const buffer = Buffer.from(base64Content, 'base64');
+    const { error } = await supabase.storage
+      .from('rsia-uploads')
+      .upload(filePath, buffer, { contentType: mimeType, upsert: true });
+
+    if (error) {
+      console.warn('[auth.register] Falha ao enviar avatar:', error.message);
+      return null;
+    }
+
+    const { data } = supabase.storage.from('rsia-uploads').getPublicUrl(filePath);
+    return data.publicUrl || null;
+  } catch (error: any) {
+    console.warn('[auth.register] Falha ao processar avatar:', error?.message || error);
+    return null;
+  }
+};
+
+const findConsultorByAuthId = async (authUserId: string) => {
+  const byUserId = await supabase
+    .from('consultores')
+    .select('*')
+    .eq('user_id', authUserId)
+    .maybeSingle();
+
+  if (byUserId.data) {
+    return byUserId;
+  }
+
+  return supabase
+    .from('consultores')
+    .select('*')
+    .eq('id', authUserId)
+    .maybeSingle();
+};
+
+const findSponsorId = async (sponsorId?: string | null) => {
+  if (sponsorId) {
+    const normalizedSponsor = String(sponsorId).trim();
+
+    const byUsername = await supabase
+      .from('consultores')
+      .select('id')
+      .eq('username', normalizedSponsor)
+      .maybeSingle();
+
+    if (byUsername.data?.id) {
+      return byUsername.data.id;
+    }
+
+    const byId = await supabase
+      .from('consultores')
+      .select('id')
+      .eq('id', normalizedSponsor)
+      .maybeSingle();
+
+    if (byId.data?.id) {
+      return byId.data.id;
+    }
+  }
+
+  const root = await supabase
+    .from('consultores')
+    .select('id')
+    .eq('username', 'rsprolipsi')
+    .maybeSingle();
+
+  return root.data?.id || null;
+};
+
 // POST /v1/auth/register
 router.post('/register', async (req, res) => {
   try {
-    const { email, password, nome, cpf, telefone, sponsorId } = req.body;
-
-    if (!email || !password || !nome || !cpf) {
-      return res.status(400).json({ error: 'Dados incompletos: email, password, nome e cpf são obrigatórios.' });
-    }
-
-    console.log('📝 Iniciando cadastro:', email);
-
-    // 1. Criar usuário no Auth (Admin)
-    const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
+    const {
       email,
       password,
-      email_confirm: true, // Auto confirm
-      user_metadata: { nome, cpf }
+      nome,
+      cpf,
+      telefone,
+      sponsorId,
+      birthDate,
+      cep,
+      street,
+      number,
+      complement,
+      neighborhood,
+      city,
+      state,
+      avatarDataUrl,
+    } = req.body;
+
+    if (!email || !password || !nome || !cpf) {
+      return res.status(400).json({ error: 'Dados incompletos: email, password, nome e cpf sao obrigatorios.' });
+    }
+
+    const normalizedEmail = String(email).trim().toLowerCase();
+    const normalizedCpf = String(cpf).replace(/\D/g, '');
+    const normalizedPhone = String(telefone || '').trim();
+
+    console.log('[auth.register] Iniciando cadastro:', normalizedEmail);
+
+    const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
+      email: normalizedEmail,
+      password,
+      email_confirm: true,
+      user_metadata: {
+        nome,
+        cpf: normalizedCpf,
+        telefone: normalizedPhone,
+      },
     });
 
-    if (authError) {
-      console.error('Erro auth:', authError);
-      return res.status(400).json({ error: authError.message });
+    if (authError || !authUser.user) {
+      console.error('[auth.register] Erro auth:', authError);
+      return res.status(400).json({ error: authError?.message || 'Nao foi possivel criar o usuario.' });
     }
 
     const userId = authUser.user.id;
-    console.log('✅ Usuário Auth criado:', userId);
+    const resolvedSponsorId = await findSponsorId(sponsorId);
 
-    // 2. Verificar Patrocinador
-    let sponsorDbId = null;
-
-    // Tentar encontrar pelo login fornecido
-    if (sponsorId) {
-      const { data: sponsor } = await supabase
-        .from('consultores')
-        .select('id')
-        .eq('username', sponsorId)
-        .single();
-      if (sponsor) sponsorDbId = sponsor.id;
+    if (!resolvedSponsorId) {
+      await supabase.auth.admin.deleteUser(userId);
+      return res.status(500).json({ error: 'Patrocinador raiz nao encontrado. Sistema nao inicializado.' });
     }
 
-    // Fallback para root (rsprolipsi) se não fornecido ou não encontrado
-    if (!sponsorDbId) {
-      const { data: root } = await supabase
-        .from('consultores')
-        .select('id')
-        .eq('username', 'rsprolipsi')
-        .single();
-      sponsorDbId = root?.id;
-    }
-
-    if (!sponsorDbId) {
-      // Se nem o root existir, falha crítica (ou usa o primeiro user?)
-      // Vamos tentar buscar qualquer um se o root falhar, ou retornar erro
-      return res.status(500).json({ error: 'Patrocinador raiz não encontrado. Sistema não inicializado.' });
-    }
-
-    // 3. Gerar Login (slug)
-    // Ex: Nome Sobrenome -> nomesobrenome1234
-    const loginBase = nome.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "");
     const randomSuffix = Math.floor(1000 + Math.random() * 9000);
-    const login = `${loginBase}${randomSuffix}`;
+    const login = `${slugifyLoginBase(String(nome))}${randomSuffix}`;
+    const avatarUrl = await uploadAvatarFromDataUrl(userId, avatarDataUrl);
 
-    // 4. Criar Consultor (Profile)
     const { error: profileError } = await supabase
       .from('consultores')
       .insert({
         id: userId,
+        user_id: userId,
         nome,
-        cpf,
-        email,
-        telefone: telefone || '',
-        patrocinador_id: sponsorDbId,
+        cpf: normalizedCpf,
+        email: normalizedEmail,
+        telefone: normalizedPhone,
+        patrocinador_id: resolvedSponsorId,
         username: login,
-        status: 'ativo', // Entra ativo conforme solicitado
-        pin_atual: 'Iniciante'
+        status: 'ativo',
+        pin_atual: 'Iniciante',
       });
 
     if (profileError) {
-      console.error('Erro profile:', profileError);
+      console.error('[auth.register] Erro consultores:', profileError);
+      await supabase.auth.admin.deleteUser(userId);
       return res.status(500).json({ error: 'Erro ao criar perfil: ' + profileError.message });
     }
 
-    // 5. Criar Wallet
+    const profilePayload = {
+      user_id: userId,
+      nome_completo: nome,
+      email: normalizedEmail,
+      telefone: normalizedPhone,
+      cpf: normalizedCpf,
+      sponsor_id: resolvedSponsorId,
+      perfil_completo: Boolean(
+        nome &&
+        normalizedEmail &&
+        normalizedCpf &&
+        normalizedPhone &&
+        birthDate &&
+        cep &&
+        street &&
+        number &&
+        neighborhood &&
+        city &&
+        state
+      ),
+      data_nascimento: birthDate || null,
+      endereco_cep: cep || null,
+      endereco_rua: street || null,
+      endereco_numero: number || null,
+      endereco_complemento: complement || null,
+      endereco_bairro: neighborhood || null,
+      endereco_cidade: city || null,
+      endereco_estado: state || null,
+      avatar_url: avatarUrl,
+      updated_at: new Date().toISOString(),
+    };
+
+    const { error: userProfileError } = await supabase
+      .from('user_profiles')
+      .upsert(profilePayload, { onConflict: 'user_id' });
+
+    if (userProfileError) {
+      console.error('[auth.register] Erro user_profiles:', userProfileError);
+
+      const { error: fallbackProfileError } = await supabase
+        .from('user_profiles')
+        .upsert({
+          user_id: userId,
+          nome_completo: nome,
+          email: normalizedEmail,
+          telefone: normalizedPhone,
+          cpf: normalizedCpf,
+          sponsor_id: resolvedSponsorId,
+          avatar_url: avatarUrl,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'user_id' });
+
+      if (fallbackProfileError) {
+        console.error('[auth.register] Erro fallback user_profiles:', fallbackProfileError);
+      }
+    }
+
     const { error: walletError } = await supabase
       .from('wallets')
       .insert({
         user_id: userId,
         consultor_id: userId,
-        balance: 0.00,
-        balance_blocked: 0.00
+        status: 'ativa',
+        balance: 0,
       });
 
     if (walletError) {
-      console.error('Erro wallet:', walletError);
+      console.error('[auth.register] Erro wallet:', walletError);
+    } else {
+      const walletUpdates = [
+        { balance_blocked: 0 },
+        { saldo_disponivel: 0, saldo_bloqueado: 0, saldo_total: 0 },
+        { available_balance: 0, blocked_balance: 0, currency: 'BRL' },
+      ];
+
+      for (const update of walletUpdates) {
+        const { error: walletSyncError } = await supabase
+          .from('wallets')
+          .update(update)
+          .eq('user_id', userId);
+
+        if (walletSyncError && walletSyncError.code !== '42703') {
+          console.error('[auth.register] Erro ao alinhar wallet:', walletSyncError);
+        }
+      }
     }
 
-    // 6. Posicionar na Matriz
     try {
       await adicionarNaMatriz(userId);
     } catch (matrixError: any) {
-      console.error('Erro matriz:', matrixError);
-      // Não retornar erro para o usuário se falhar a matriz, mas logar
+      console.error('[auth.register] Erro matriz:', matrixError);
     }
 
     res.status(201).json({
@@ -121,13 +281,13 @@ router.post('/register', async (req, res) => {
       message: 'Cadastro realizado com sucesso',
       user: {
         id: userId,
-        email,
-        login
-      }
+        email: normalizedEmail,
+        login,
+        avatar_url: avatarUrl,
+      },
     });
-
   } catch (error: any) {
-    console.error('Erro interno cadastro:', error);
+    console.error('[auth.register] Erro interno:', error);
     res.status(500).json({ error: 'Erro interno do servidor: ' + error.message });
   }
 });
@@ -137,30 +297,15 @@ router.get('/profile', supabaseAuth, async (req: AuthenticatedRequest, res) => {
   try {
     if (!req.user) {
       return res.status(401).json({
-        error: 'Usuário não autenticado',
-        code: 'USER_NOT_AUTHENTICATED'
+        error: 'Usuario nao autenticado',
+        code: 'USER_NOT_AUTHENTICATED',
       });
     }
 
-    console.log('🔍 [DEBUG] Buscando perfil para Auth User ID:', req.user.id);
+    const { data: profile, error: profileError } = await findConsultorByAuthId(req.user.id);
 
-    // Buscar perfil completo do usuário
-    const { data: profile, error: profileError } = await supabase
-      .from('consultores')
-      .select('*')
-      .eq('id', req.user.id)
-      .single();
-
-    if (profile) {
-      console.log('✅ [DEBUG] Perfil encontrado:', profile.nome, 'ID:', profile.id);
-    } else {
-      console.warn('⚠️ [DEBUG] Perfil NÃO encontrado para ID:', req.user.id);
-    }
-
-    if (profileError) {
-      console.error('Erro ao buscar perfil:', profileError);
-
-      // Se não encontrar perfil, retorna informações básicas do auth
+    if (profileError && !profile) {
+      console.error('[auth.profile] Erro ao buscar perfil:', profileError);
       return res.json({
         id: req.user.id,
         email: req.user.email,
@@ -168,36 +313,33 @@ router.get('/profile', supabaseAuth, async (req: AuthenticatedRequest, res) => {
         profile: {
           completed: false,
           needsSetup: true,
-          nome: (req.user as any).user_metadata?.name || req.user.email
-
+          nome: (req.user as any).user_metadata?.name || req.user.email,
         },
-        permissions: ['read:profile']
+        permissions: ['read:profile'],
       });
     }
 
-    // Buscar role do usuário
-    const { data: userRole, error: roleError } = await supabase
+    const { data: userRole } = await supabase
       .from('user_roles')
       .select('role')
       .eq('user_id', req.user.id)
-      .single();
+      .maybeSingle();
 
     res.json({
       id: req.user.id,
       email: req.user.email,
       role: userRole?.role || 'user',
       profile: {
-        ...profile,
-        completed: true
+        ...(profile || {}),
+        completed: Boolean(profile),
       },
-      permissions: getPermissionsForRole(userRole?.role || 'user')
+      permissions: getPermissionsForRole(userRole?.role || 'user'),
     });
-
   } catch (error) {
-    console.error('Erro no perfil:', error);
+    console.error('[auth.profile] Erro interno:', error);
     res.status(500).json({
       error: 'Erro interno do servidor',
-      code: 'INTERNAL_SERVER_ERROR'
+      code: 'INTERNAL_SERVER_ERROR',
     });
   }
 });
@@ -209,28 +351,21 @@ router.post('/login', async (req, res) => {
 
     if (!email || !password) {
       return res.status(400).json({
-        error: 'Email e senha são obrigatórios'
+        error: 'Email e senha sao obrigatorios',
       });
     }
 
-    // Login com Supabase Auth
     const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-      email,
-      password
+      email: String(email).trim().toLowerCase(),
+      password,
     });
 
-    if (authError) {
-      return res.status(401).json({ error: 'Email ou senha inválidos' });
+    if (authError || !authData.user || !authData.session) {
+      return res.status(401).json({ error: 'Email ou senha invalidos' });
     }
 
     const user = authData.user;
-
-    // Buscar dados do perfil
-    const { data: profile } = await supabase
-      .from('consultores')
-      .select('*')
-      .eq('id', user.id)
-      .single();
+    const { data: profile } = await findConsultorByAuthId(user.id);
 
     res.json({
       success: true,
@@ -238,16 +373,15 @@ router.post('/login', async (req, res) => {
       user: {
         id: user.id,
         email: user.email,
-        name: profile?.nome || 'Usuário',
-        ...profile
+        name: profile?.nome || (user.user_metadata as any)?.nome || 'Usuario',
+        ...profile,
       },
-      token: authData.session.access_token
+      token: authData.session.access_token,
     });
-
   } catch (error) {
-    console.error('Erro no login:', error);
+    console.error('[auth.login] Erro interno:', error);
     res.status(500).json({
-      error: 'Erro interno do servidor'
+      error: 'Erro interno do servidor',
     });
   }
 });
@@ -259,7 +393,7 @@ router.post('/forgot-password', async (req, res) => {
 
     if (!email) {
       return res.status(400).json({
-        error: 'Email é obrigatório'
+        error: 'Email e obrigatorio',
       });
     }
 
@@ -268,45 +402,39 @@ router.post('/forgot-password', async (req, res) => {
     });
 
     if (error) {
-      console.error('Erro ao enviar email de recuperação:', error);
+      console.error('[auth.forgot-password] Erro:', error);
       return res.status(400).json({ error: error.message });
     }
 
     res.json({
       success: true,
-      message: 'Email de recuperação enviado com sucesso'
+      message: 'Email de recuperacao enviado com sucesso',
     });
-
   } catch (error) {
-    console.error('Erro no forgot-password:', error);
+    console.error('[auth.forgot-password] Erro interno:', error);
     res.status(500).json({
-      error: 'Erro interno do servidor'
+      error: 'Erro interno do servidor',
     });
   }
 });
 
 // POST /v1/auth/logout
-router.post('/logout', (req, res) => {
-  // TODO: Implementar logout com Supabase Auth
+router.post('/logout', (_req, res) => {
   res.json({
     success: true,
-    message: 'Logout realizado com sucesso'
+    message: 'Logout realizado com sucesso',
   });
 });
 
 // POST /v1/auth/refresh
-router.post('/refresh', (req, res) => {
-  // TODO: Implementar refresh token com Supabase Auth
+router.post('/refresh', (_req, res) => {
   res.json({
     success: true,
     token: 'new-mock-jwt-token-789012',
-    expires_in: 3600
+    expires_in: 3600,
   });
 });
 
-/**
- * Retorna as permissões baseadas no role do usuário
- */
 function getPermissionsForRole(role: string): string[] {
   const basePermissions = ['read:profile', 'read:wallet'];
 
@@ -317,32 +445,32 @@ function getPermissionsForRole(role: string): string[] {
       'manage:users',
       'manage:consultants',
       'view:reports',
-      'manage:system'
+      'manage:system',
     ],
     consultor: [
       'read:dashboard',
       'read:network',
       'manage:referrals',
       'view:sales',
-      'request:withdraw'
+      'request:withdraw',
     ],
     master: [
       'read:dashboard',
       'read:network',
       'manage:team',
       'view:team-reports',
-      'request:withdraw'
+      'request:withdraw',
     ],
     lojista: [
       'read:store',
       'manage:products',
       'view:sales',
-      'request:withdraw'
+      'request:withdraw',
     ],
     user: [
       'read:profile',
-      'read:wallet'
-    ]
+      'read:wallet',
+    ],
   };
 
   return [...basePermissions, ...(rolePermissions[role] || [])];

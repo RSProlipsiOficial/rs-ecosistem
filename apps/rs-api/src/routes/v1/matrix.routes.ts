@@ -1,9 +1,89 @@
 
 import { Router } from 'express';
+import fs from 'fs';
+import path from 'path';
 import { supabase } from '../../lib/supabaseClient';
 import { supabaseAuth } from '../../middlewares/supabaseAuth';
+import { collectExistingIdentifiers, normalizeLookupText, persistConsultantIdentifiers, resolveConsultantIdentifiers } from '../../utils/consultantIdentifiers';
 
 const router = Router();
+
+type DetailedMappingEntry = {
+    code?: string;
+    username?: string | null;
+    order?: number;
+    name?: string;
+    email?: string;
+    sourceKey?: string;
+};
+
+const detailedMappingCache = (() => {
+    const mapping = {
+        byCode: new Map<string, DetailedMappingEntry>(),
+        byOrder: new Map<string, DetailedMappingEntry>(),
+        byName: new Map<string, DetailedMappingEntry>(),
+        byEmail: new Map<string, DetailedMappingEntry>(),
+        byUsername: new Map<string, DetailedMappingEntry>(),
+    };
+
+    const mappingCandidates = [
+        path.join(__dirname, 'detailed_id_mapping.json'),
+        path.join(process.cwd(), 'src', 'routes', 'v1', 'detailed_id_mapping.json'),
+    ];
+    const mappingPath = mappingCandidates.find((candidate) => fs.existsSync(candidate));
+
+    if (!mappingPath) {
+        return mapping;
+    }
+
+    try {
+        const rawMapping = JSON.parse(fs.readFileSync(mappingPath, 'utf8'));
+        for (const [sourceKey, rawEntry] of Object.entries(rawMapping)) {
+            const entry = {
+                ...(rawEntry as Record<string, any>),
+                sourceKey,
+            } as DetailedMappingEntry;
+
+            if (entry.code) mapping.byCode.set(String(entry.code).replace(/\D/g, ''), entry);
+            if (entry.order !== undefined && entry.order !== null) mapping.byOrder.set(String(entry.order), entry);
+            if (entry.name) mapping.byName.set(normalizeLookupText(entry.name), entry);
+            if (sourceKey) mapping.byName.set(normalizeLookupText(sourceKey), entry);
+            if (entry.email) mapping.byEmail.set(normalizeLookupText(entry.email), entry);
+            if (entry.username) mapping.byUsername.set(normalizeLookupText(entry.username), entry);
+        }
+    } catch (error) {
+        console.error('[Matrix] Erro ao ler detailed_id_mapping.json:', error);
+    }
+
+    return mapping;
+})();
+
+const resolveMappingForConsultor = (consultor: any, profile?: any) => {
+    const numericCandidates = [
+        profile?.id_numerico,
+        consultor?.codigo_consultor,
+    ]
+        .map((value) => String(value || '').replace(/\D/g, ''))
+        .filter(Boolean);
+
+    for (const candidate of numericCandidates) {
+        const mappedByCode = detailedMappingCache.byCode.get(candidate);
+        if (mappedByCode) return mappedByCode;
+        const mappedByOrder = detailedMappingCache.byOrder.get(candidate);
+        if (mappedByOrder) return mappedByOrder;
+    }
+
+    const emailKey = normalizeLookupText(consultor?.email);
+    const usernameKey = normalizeLookupText(consultor?.username);
+    const nameKey = normalizeLookupText(consultor?.nome);
+
+    return (
+        (emailKey ? detailedMappingCache.byEmail.get(emailKey) : undefined) ||
+        (usernameKey ? detailedMappingCache.byUsername.get(usernameKey) : undefined) ||
+        (nameKey ? detailedMappingCache.byName.get(nameKey) : undefined) ||
+        null
+    );
+};
 
 const generateInitials = (name: string): string => {
     if (!name) return '?';
@@ -27,7 +107,7 @@ router.get('/tree/:id', supabaseAuth, async (req: any, res) => {
         const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
 
         // 1. Buscar nó raiz com blindagem total
-        let query = supabase.from('consultores').select('id, nome, email, username, pin_atual, status, created_at, whatsapp, patrocinador_id');
+        let query = supabase.from('consultores').select('id, user_id, nome, email, username, pin_atual, status, created_at, whatsapp, patrocinador_id');
 
         if (isUUID) {
             query = query.or(`id.eq.${id},user_id.eq.${id}`);
@@ -57,12 +137,12 @@ router.get('/tree/:id', supabaseAuth, async (req: any, res) => {
         // Como não podemos fazer join direto (tabelas desconexas), buscamos em paralelo
         const { data: profiles } = await supabase
             .from('user_profiles')
-            .select('user_id, avatar_url');
+            .select('user_id, avatar_url, id_numerico');
 
-        const avatarMap = new Map<string, string>();
+        const profileMap = new Map<string, any>();
         if (profiles) {
             profiles.forEach(p => {
-                if (p.avatar_url) avatarMap.set(p.user_id, p.avatar_url);
+                profileMap.set(p.user_id, p);
             });
         }
 
@@ -73,12 +153,15 @@ router.get('/tree/:id', supabaseAuth, async (req: any, res) => {
             // Na estrutura atual, consultores.id é o UUID do usuário no Auth? Ou é consultores.user_id?
             // Vamos tentar buscar por ambos para garantir
 
-            const customAvatar = avatarMap.get(user.user_id) || avatarMap.get(user.id);
+            const customAvatar = profileMap.get(user.user_id)?.avatar_url || profileMap.get(user.id)?.avatar_url;
             if (customAvatar) return customAvatar;
 
             // 2. Fallback UI Avatars
             return `https://ui-avatars.com/api/?name=${encodeURIComponent(user.nome)}&background=random`;
         };
+
+        const resolveProfile = (user: any) =>
+            profileMap.get(user?.user_id) || profileMap.get(user?.id) || null;
 
         // [UNIFIED LOGIC] 
         // Logic for 'Official' accounts removed to ensure ALL accounts use the new 
@@ -102,6 +185,7 @@ router.get('/tree/:id', supabaseAuth, async (req: any, res) => {
 
         const { data: allConsultants } = await consultQuery
             .order('created_at', { ascending: true });
+        const { usedCodes, usedLogins } = collectExistingIdentifiers(allConsultants || [], profileMap);
 
         console.log(`[Matrix] Root patrocinador_id: ${root.patrocinador_id}`);
         console.log(`[Matrix] Total consultants loaded: ${allConsultants?.length || 0}`);
@@ -142,8 +226,25 @@ router.get('/tree/:id', supabaseAuth, async (req: any, res) => {
             const treeMap = new Map<string, any>();
 
             // Inicializando Root
+            const rootProfile = resolveProfile(rootNodeData);
+            const rootIdentifiers = resolveConsultantIdentifiers({
+                consultor: rootNodeData,
+                profile: rootProfile,
+                mapping: resolveMappingForConsultor(rootNodeData, rootProfile),
+                usedCodes,
+                usedLogins,
+            });
+            void persistConsultantIdentifiers({
+                supabase,
+                consultor: rootNodeData,
+                profile: rootProfile,
+                identifiers: rootIdentifiers,
+            }).catch(() => undefined);
             const rootNode = {
                 id: rootNodeData.id,
+                displayId: rootIdentifiers.displayId,
+                code: rootIdentifiers.accountCode,
+                idConsultor: rootIdentifiers.loginId,
                 name: rootNodeData.nome,
                 pin: rootNodeData.pin_atual || 'Iniciante',
                 status: rootNodeData.status === 'ativo' ? 'active' : 'inactive',
@@ -152,7 +253,7 @@ router.get('/tree/:id', supabaseAuth, async (req: any, res) => {
                 joinedDate: rootNodeData.created_at,
                 whatsapp: rootNodeData.whatsapp, // [FIX] Preserving WhatsApp
                 email: rootNodeData.email,       // [FIX] Preserving Email
-                username: rootNodeData.username, // [FIX] Preserving Username for linkage
+                username: rootNodeData.username || rootIdentifiers.loginId, // [FIX] Preserving Username for linkage
                 isEmpty: false,
                 children: [] as any[]
             };
@@ -229,8 +330,25 @@ router.get('/tree/:id', supabaseAuth, async (req: any, res) => {
 
                             const bestParent = candidates[0];
 
+                            const personProfile = resolveProfile(person);
+                            const personIdentifiers = resolveConsultantIdentifiers({
+                                consultor: person,
+                                profile: personProfile,
+                                mapping: resolveMappingForConsultor(person, personProfile),
+                                usedCodes,
+                                usedLogins,
+                            });
+                            void persistConsultantIdentifiers({
+                                supabase,
+                                consultor: person,
+                                profile: personProfile,
+                                identifiers: personIdentifiers,
+                            }).catch(() => undefined);
                             const newNode = {
                                 id: person.id,
+                                displayId: personIdentifiers.displayId,
+                                code: personIdentifiers.accountCode,
+                                idConsultor: personIdentifiers.loginId,
                                 name: person.nome,
                                 pin: person.pin_atual || 'Iniciante',
                                 status: person.status === 'ativo' ? 'active' : 'inactive',
@@ -240,7 +358,7 @@ router.get('/tree/:id', supabaseAuth, async (req: any, res) => {
                                 joinedDate: person.created_at,
                                 whatsapp: person.whatsapp,
                                 email: person.email,
-                                username: person.username,
+                                username: person.username || personIdentifiers.loginId,
                                 isEmpty: false,
                                 children: [] as any[]
                             };

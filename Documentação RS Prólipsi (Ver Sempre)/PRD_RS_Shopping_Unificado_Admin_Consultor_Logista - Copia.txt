@@ -1,0 +1,144 @@
+PRD – RS SHOPPING UNIFICADO (ADMIN / CONSULTOR / LOGISTA)
+Documento completo da nova estrutura unificada do Marketplace RS Prólipsi – contemplando o painel administrativo, consultor e logista, com todos os módulos, permissões e fluxos já finalizados.
+1. Estrutura Conceitual
+
+O novo RS Marketplace Unificado é composto por três perfis principais:
+
+Perfil | Acesso | Descrição
+--------|--------|-----------
+Administrador | Painel completo (controle global) | Gerencia produtos, lojas, afiliados, fretes, pagamentos e relatórios.
+Consultor | Painel unificado (versão básica) | Vende produtos, acompanha comissões e pedidos. Pode migrar para Premium.
+Logista (Parceiro / Vendedor) | Painel idêntico ao do consultor | Cadastra produtos próprios e participa do programa de afiliados.
+
+Consultor e Logista compartilham o mesmo painel, mas:
+- O Consultor faz parte da rede MMN (SIGMA + Wallet Pay).
+- O Logista não é afiliado até optar por ativar o modo afiliado.
+
+2. Estrutura Hierárquica de Módulos
+
+Painel atual do Marketplace, replicado dentro do painel unificado (Consultor / Logista):
+
+1. Dashboard Geral
+2. Produtos
+3. Pedidos e Faturamento
+4. Frete e Logística
+5. Pagamentos
+6. Afiliação e Dropshipping
+7. Lojas e Logistas
+8. Financeiro e Wallet Pay
+9. Relatórios e BI
+10. Marketing e Pixels
+11. Treinamentos e Comunicação
+12. Configurações / Template Premium
+
+3. Módulo 1 – Dashboard Geral
+
+- Total de vendas (mês / total acumulado)
+- Pedidos pendentes, produtos ativos, clientes cadastrados
+- Ticket médio de compra
+- Gráficos de desempenho e KPIs (Recharts)
+
+4. Módulo 2 – Produtos
+
+- Cadastro, edição e exclusão de produtos
+- Campos: título, descrição, preço, SKU, variação, peso, estoque
+- Categorias hierárquicas em 3 níveis
+- Histórico de alterações e logs de edição
+
+5. Módulo 3 – Pedidos e Faturamento
+
+- Lista de pedidos com filtros por status
+- Detalhes: cliente, valor, data, transportadora, pagamento
+- Ações: aprovar, cancelar, reenviar e-mail de confirmação
+
+6. Módulo 4 – Frete e Logística
+
+- Integrações: Correios, Melhor Envio, Azul Cargo, Total Express, Loggi, Jadlog, SuperFrete
+- Cálculo automático de frete e rastreamento
+- Frete personalizado por loja
+
+7. Módulo 5 – Pagamentos
+
+- Gateways integrados: MercadoPago, PagSeguro, PIX, Boleto
+- Split automático entre vendedor, afiliado e plataforma
+- Logs antifraude e conciliação automática
+
+8. Módulo 6 – Afiliação e Dropshipping
+
+- Link único por consultor/logista (ex: loja.rsprolipsi.com.br/consultor/nome)
+- Comissão direta e pontos de rede
+- Dropshipping com fornecedores oficiais e webhooks
+
+9. Módulo 7 – Lojas e Logistas
+
+- Painel do logista idêntico ao do consultor
+- Meus Produtos, Afiliados, Financeiro, Minha Loja
+- Logista pode comprar ou publicar templates Premium
+
+10. Módulo 8 – Financeiro e Wallet Pay
+
+- Extrato de comissões e vendas
+- Saques e transferências
+- Lançamentos automáticos (commission_shop, bonus, fees)
+- Exportação de relatórios
+
+11. Módulo 9 – Relatórios e BI
+
+- Relatórios: vendas por produto, loja, afiliado, lucro líquido
+- Exportação CSV / PDF
+- Dashboards integrados com filtros (Data, Consultor, Produto, Estado)
+
+12. Módulo 10 – Marketing e Pixels
+
+- Configuração de pixels (Google, Meta, TikTok, Taboola, LinkedIn)
+- Logs de firing e controle LGPD
+- Integração com RS.IA Marketing
+
+13. Módulo 11 – Treinamentos e Comunicação
+
+- Biblioteca de vídeos tutoriais
+- Notificações internas e campanhas
+- Canal de suporte via WhatsApp e RS.IA Chatbot
+
+14. Módulo 12 – Configurações / Template Premium
+
+Consultor Premium / Logista Premium pode:
+- Alterar cores, logos, banners
+- Editar layout (componentes e seções)
+- Publicar templates no marketplace de templates
+- Conectar domínio próprio
+
+Admin controla:
+- Permissões de edição
+- Aprovação de templates antes da publicação
+
+15. Fluxo de Acesso (Visão Lógica)
+
+1. Visitante compra ? pagamento ? entrega
+2. Consultor recebe comissão e pontos
+3. Logista recebe repasse
+4. Admin controla relatórios e templates
+5. Consultor/Logista Premium edita layout
+
+16. Permissões de Acesso
+
+Função | Consultor | Logista | Admin
+--------|------------|---------|-------
+Acesso à loja pessoal | ? | ? | ?
+Editar produtos | ? / ? Premium | ? | ?
+Gerenciar pedidos | ? | ? | ?
+Receber comissão | ? | ? | ?
+Acessar Wallet | ? | ? | ?
+Criar templates | ? / ? Premium | ? | ?
+Publicar template | ? | ? | ?
+Gerenciar logistas | ? | ? | ?
+
+17. Estrutura Final de Deploy
+
+Módulo | Caminho | Porta | Status
+--------|----------|-------|--------
+Admin | admin.rsprolipsi.com.br | 5001 | Ativo
+Consultor (Unificado) | consultor.rsprolipsi.com.br | 5002 | Ativo
+Marketplace / Loja Pública | marketplace.rsprolipsi.com.br | 5003 | Ativo
+Wallet Pay | wallet.rsprolipsi.com.br | 5004 | Integrado
+SIGMA | sigma.rsprolipsi.com.br | 5005 | Integrado

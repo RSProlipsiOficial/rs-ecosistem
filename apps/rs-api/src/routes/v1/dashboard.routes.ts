@@ -80,7 +80,7 @@ const DEFAULT_MARKETPLACE_CONFIG = {
 
 // GET /v1/admin/dashboard/layout/consultant
 // [SÊNIOR] Permitimos que 'consultor' também leia seu layout, mas apenas ADMIN edite (PUT)
-router.get('/layout/consultant', supabaseAuth, requireRole([ROLES.ADMIN, 'super_admin', 'superadmin', 'consultor']), async (req, res) => {
+router.get('/layout/consultant', supabaseAuth, requireRole([ROLES.ADMIN, 'super_admin', 'superadmin', 'consultor', ROLES.LOJISTA, ROLES.USER, 'authenticated']), async (req, res) => {
     const config = await getConfig('dashboard_layout_consultant', DEFAULT_CONSULTANT_CONFIG);
     res.json({ success: true, config });
 });
@@ -96,7 +96,7 @@ router.put('/layout/consultant', supabaseAuth, requireRole([ROLES.ADMIN, 'super_
 });
 
 // GET /v1/admin/dashboard/layout/marketplace
-router.get('/layout/marketplace', supabaseAuth, requireRole([ROLES.ADMIN, 'super_admin', 'superadmin', 'consultor']), async (req, res) => {
+router.get('/layout/marketplace', supabaseAuth, requireRole([ROLES.ADMIN, 'super_admin', 'superadmin', 'consultor', ROLES.LOJISTA, ROLES.USER, 'authenticated']), async (req, res) => {
     const config = await getConfig('dashboard_layout_marketplace', DEFAULT_MARKETPLACE_CONFIG);
     res.json({ success: true, config });
 });
@@ -112,7 +112,7 @@ router.put('/layout/marketplace', supabaseAuth, requireRole([ROLES.ADMIN, 'super
 });
 
 // Legacy/Generic endpoints
-router.get('/layout', supabaseAuth, requireRole([ROLES.ADMIN, 'super_admin', 'superadmin', 'consultor']), async (req, res) => {
+router.get('/layout', supabaseAuth, requireRole([ROLES.ADMIN, 'super_admin', 'superadmin', 'consultor', ROLES.LOJISTA, ROLES.USER, 'authenticated']), async (req, res) => {
     const config = await getConfig('dashboard_layout_consultant', DEFAULT_CONSULTANT_CONFIG);
     res.json({ success: true, config });
 });

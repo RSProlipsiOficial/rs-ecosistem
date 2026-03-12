@@ -4,6 +4,9 @@ import { IconChevronDown, IconChevronRight, IconUsers, IconChart, IconGitFork } 
 
 interface NetworkNode {
     id: string;
+    code?: string;
+    displayId?: string;
+    idConsultor?: string;
     name: string;
     pin: string;
     status: string;
@@ -60,6 +63,14 @@ const NetworkTreeView: React.FC<NetworkTreeViewProps> = ({ initialId }) => {
     const renderNode = (node: NetworkNode, level: number = 0) => {
         const isExpanded = expandedNodes[node.id];
         const hasChildren = node.children && node.children.length > 0;
+        const accountId = node.code || '---';
+        const loginId = node.idConsultor || node.displayId || '---';
+        const showLoginId = Boolean(
+            loginId &&
+            loginId !== '---' &&
+            loginId !== accountId &&
+            !/^0+$/.test(String(loginId))
+        );
 
         return (
             <div key={node.id} className={`${level > 0 ? 'ml-8' : ''} mt-4`}>
@@ -96,8 +107,13 @@ const NetworkTreeView: React.FC<NetworkTreeViewProps> = ({ initialId }) => {
                                     {node.pin}
                                 </span>
                                 <span className="text-[11px] font-black text-gray-400 uppercase tracking-widest bg-white/5 px-2 py-0.5 rounded border border-white/10">
-                                    ID: {node.id.split('-')[0].toUpperCase()}
+                                    ID CONTA: {accountId}
                                 </span>
+                                {showLoginId && (
+                                    <span className="text-[11px] font-black text-gray-400 uppercase tracking-widest bg-white/5 px-2 py-0.5 rounded border border-white/10">
+                                        LOGIN/MMN: {loginId}
+                                    </span>
+                                )}
                             </div>
                         </div>
 

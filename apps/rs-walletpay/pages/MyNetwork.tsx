@@ -1,11 +1,10 @@
 
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { MOCK_NETWORK_CONSULTANTS } from '../constants';
-import { walletAPI } from '../src/services/api';
 import { Consultant } from '../types';
 import Modal from '../components/Modal';
 import { sigmaAPI } from '../src/services/api';
+import { getWalletUserId } from '../src/utils/walletSession';
 
 const DetailRow: React.FC<{ label: string; value?: React.ReactNode }> = ({ label, value }) => (
     <div className="flex justify-between py-3 border-b border-border/50 text-sm items-center">
@@ -15,6 +14,8 @@ const DetailRow: React.FC<{ label: string; value?: React.ReactNode }> = ({ label
 );
 
 const ConsultantCard: React.FC<{ consultant: Consultant, onDetailsClick: () => void; }> = ({ consultant, onDetailsClick }) => {
+  const rawStatus = String((consultant as any).status || '').toLowerCase();
+  const isActive = rawStatus === 'active' || rawStatus === 'ativo';
   return (
     <div className="bg-card p-5 rounded-2xl border border-border shadow-custom-lg transition-all duration-300 hover:border-gold hover:shadow-gold/10 flex flex-col text-center items-center">
       <img src={consultant.avatarUrl} alt={consultant.name} className="w-20 h-20 rounded-full border-4 border-surface mb-4" />
@@ -24,8 +25,8 @@ const ConsultantCard: React.FC<{ consultant: Consultant, onDetailsClick: () => v
         {consultant.pin}
       </div>
       <div className="flex items-center text-sm mt-2">
-        <span className={`w-2.5 h-2.5 rounded-full mr-2 ${consultant.status === 'active' ? 'bg-success' : 'bg-text-soft/50'}`}></span>
-        {consultant.status === 'active' ? 'Ativo' : 'Inativo'}
+        <span className={`w-2.5 h-2.5 rounded-full mr-2 ${isActive ? 'bg-success' : 'bg-text-soft/50'}`}></span>
+        {isActive ? 'Ativo' : 'Inativo'}
       </div>
       <button onClick={onDetailsClick} className="mt-4 w-full px-4 py-2 text-sm font-semibold rounded-lg bg-surface text-text-body hover:bg-gold hover:text-base border border-border hover:border-gold transition-colors">
         Ver Detalhes
@@ -46,7 +47,12 @@ const MyNetwork: React.FC = () => {
         const loadNetwork = async () => {
             try {
                 setLoading(true);
-                const userId = localStorage.getItem('userId') || 'demo-user';
+                const userId = getWalletUserId();
+                if (!userId) {
+                    setNetworkData([]);
+                    setStats(null);
+                    return;
+                }
                 
                 const [networkRes, statsRes] = await Promise.all([
                     sigmaAPI.getDownlines(userId).catch(() => null),
@@ -71,9 +77,8 @@ const MyNetwork: React.FC = () => {
     }, []);
 
     const filteredConsultants = useMemo(() => {
-        const base = networkData.length > 0 ? networkData : (import.meta.env.DEV ? MOCK_NETWORK_CONSULTANTS : []);
-        if (!searchTerm.trim()) return base;
-        return base.filter((c: any) =>
+        if (!searchTerm.trim()) return networkData;
+        return networkData.filter((c: any) =>
             String(c.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
             String(c.id || '').toLowerCase().includes(searchTerm.toLowerCase())
         );
@@ -86,6 +91,11 @@ const MyNetwork: React.FC = () => {
 
         return (
             <div className="space-y-2">
+                {(() => {
+                    const rawStatus = String((selectedConsultant as any).status || '').toLowerCase();
+                    const isActive = rawStatus === 'active' || rawStatus === 'ativo';
+                    return (
+                        <>
                 <div className="flex flex-col items-center pb-4 mb-2 border-b border-border/50">
                     <img src={selectedConsultant.avatarUrl} alt={selectedConsultant.name} className="w-24 h-24 rounded-full border-4 border-surface mb-4" />
                     <h3 className="font-bold text-text-title text-xl">{selectedConsultant.name}</h3>
@@ -94,14 +104,16 @@ const MyNetwork: React.FC = () => {
                 <DetailRow label="PIN" value={selectedConsultant.pin} />
                 <DetailRow label="Status" value={
                     <div className="flex items-center justify-end">
-                        <span className={`w-2.5 h-2.5 rounded-full mr-2 ${selectedConsultant.status === 'active' ? 'bg-success' : 'bg-text-soft/50'}`}></span>
-                        {selectedConsultant.status === 'active' ? 'Ativo' : 'Inativo'}
+                        <span className={`w-2.5 h-2.5 rounded-full mr-2 ${isActive ? 'bg-success' : 'bg-text-soft/50'}`}></span>
+                        {isActive ? 'Ativo' : 'Inativo'}
                     </div>
                 } />
-                {/* Mock data for illustration */}
-                <DetailRow label="Email" value="email@exemplo.com" />
-                <DetailRow label="Telefone" value="(99) 99999-9999" />
-                <DetailRow label="Membro Desde" value="12/08/2023" />
+                <DetailRow label="Email" value={(selectedConsultant as any).email || 'Nao informado'} />
+                <DetailRow label="Telefone" value={(selectedConsultant as any).whatsapp || (selectedConsultant as any).phone || 'Nao informado'} />
+                <DetailRow label="Membro Desde" value={(selectedConsultant as any).createdAt ? new Date((selectedConsultant as any).createdAt).toLocaleDateString('pt-BR') : 'Nao informado'} />
+                        </>
+                    );
+                })()}
             </div>
         );
     };

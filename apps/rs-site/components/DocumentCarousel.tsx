@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { useAdmin } from '../context/AdminContext';
 
 interface DocumentCarouselProps {
     pages: string[];
@@ -7,6 +8,7 @@ interface DocumentCarouselProps {
 
 const DocumentCarousel: React.FC<DocumentCarouselProps> = ({ pages }) => {
     const [currentIndex, setCurrentIndex] = useState(0);
+    const { isPreviewEditor } = useAdmin();
 
     const nextSlide = useCallback(() => {
         setCurrentIndex((prevIndex) => (prevIndex === pages.length - 1 ? 0 : prevIndex + 1));
@@ -17,9 +19,13 @@ const DocumentCarousel: React.FC<DocumentCarouselProps> = ({ pages }) => {
     };
 
     useEffect(() => {
+        if (isPreviewEditor) {
+            return;
+        }
+
         const interval = setInterval(nextSlide, 7000);
         return () => clearInterval(interval);
-    }, [nextSlide]);
+    }, [isPreviewEditor, nextSlide]);
 
     if (!pages || pages.length === 0) {
         return (

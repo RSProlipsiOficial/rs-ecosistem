@@ -57,7 +57,7 @@ const HomeProductsSection: React.FC<HomeProductsSectionProps> = ({ container, on
     const { products } = useProductContext();
     const { language } = useLanguage();
     const { setPage } = useNavigation();
-    const { isAdmin, isEditMode } = useAdmin();
+    const { isAdmin, isEditMode, isPreviewEditor } = useAdmin();
     
     // Select first 4 products for the carousel, or use specific productIds if provided
     const productsToDisplay = (container.productIds && container.productIds.length > 0
@@ -87,13 +87,17 @@ const HomeProductsSection: React.FC<HomeProductsSectionProps> = ({ container, on
     };
     
     useEffect(() => {
+        if (isPreviewEditor) {
+            return;
+        }
+
         if (productsToDisplay.length > 0) {
             const interval = setInterval(() => {
                 nextSlide();
             }, 5000); // Rotate every 5 seconds
             return () => clearInterval(interval);
         }
-    }, [nextSlide, productsToDisplay.length]);
+    }, [isPreviewEditor, nextSlide, productsToDisplay.length]);
 
     if (productsToDisplay.length === 0) {
         return null;

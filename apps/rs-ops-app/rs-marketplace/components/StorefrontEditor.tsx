@@ -85,6 +85,16 @@ const StorefrontEditor: React.FC<StorefrontEditorProps> = ({ customization, onUp
     }, [localCustomization]);
     const hasChanges = JSON.stringify(localCustomization) !== JSON.stringify(customization);
 
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+
+        const savedDraft = localStorage.getItem('rs_editor_draft');
+        if (savedDraft) return;
+
+        setLocalCustomization(customization);
+        localCustomizationRef.current = customization;
+    }, [customization]);
+
     // Logs de Ciclo de Vida v4.2
     useEffect(() => {
         console.log(`%c[Editor v4.2] 🚀 Component MOUNTED. Instance: ${senderId}`, 'color: #ff00ff; font-weight: bold; border: 2px solid #ff00ff; padding: 4px;');
@@ -154,6 +164,19 @@ const StorefrontEditor: React.FC<StorefrontEditorProps> = ({ customization, onUp
             }
         } else if (!dataToSync.logoUrl) {
             localStorage.removeItem('rs_logo_buffer');
+        }
+
+        // v10.0: Salvar banners completos no buffer ANTES de marcar como BUFFERED
+        const heavyBanners = dataToSync.carouselBanners?.filter(b =>
+            (b.desktopImage?.startsWith('data:') && b.desktopImage.length > 500000) ||
+            (b.mobileImage?.startsWith('data:') && b.mobileImage.length > 500000)
+        );
+        if (heavyBanners && heavyBanners.length > 0) {
+            try {
+                localStorage.setItem('rs_banners_buffer', JSON.stringify(dataToSync.carouselBanners));
+            } catch (e) {
+                console.warn('[Editor] Banner buffer full - sending inline');
+            }
         }
 
         const lightDataForNetwork = {

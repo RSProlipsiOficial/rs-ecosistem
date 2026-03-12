@@ -12,8 +12,91 @@ import { getAdminOverview } from '../../services/adminDashboardService';
 import fs from 'fs';
 import path from 'path';
 import { cycleClosingService } from '../../services/cycleClosingService';
+import { collectExistingIdentifiers, isPlaceholderIdentifier, persistConsultantIdentifiers, resolveConsultantIdentifiers } from '../../utils/consultantIdentifiers';
 
 const router = Router();
+
+const SETTINGS_KEYS = {
+  payment: 'marketplace_payment_settings',
+  shipping: 'marketplace_shipping_settings',
+  wallet: 'marketplace_wallet_settings'
+} as const;
+
+const readAppConfig = async <T = any>(key: string): Promise<T | null> => {
+  const { data, error } = await supabaseAdmin
+    .from('app_configs')
+    .select('value')
+    .eq('key', key)
+    .maybeSingle();
+
+  if (error) throw error;
+  return (data?.value ?? null) as T | null;
+};
+
+const writeAppConfig = async (key: string, value: any) => {
+  const { data: existing, error: existingError } = await supabaseAdmin
+    .from('app_configs')
+    .select('key')
+    .eq('key', key)
+    .maybeSingle();
+
+  if (existingError) throw existingError;
+
+  if (existing) {
+    const { error } = await supabaseAdmin
+      .from('app_configs')
+      .update({
+        value,
+        updated_at: new Date().toISOString()
+      })
+      .eq('key', key);
+
+    if (error) throw error;
+    return;
+  }
+
+  const { error } = await supabaseAdmin
+    .from('app_configs')
+    .insert([{ key, value }]);
+
+  if (error) throw error;
+};
+
+const sanitizePaymentSettings = (settings: any) => ({
+  mercadoPago: {
+    enabled: Boolean(settings?.mercadoPago?.enabled),
+    publicKey: String(settings?.mercadoPago?.publicKey ?? ''),
+    accessToken: ''
+  },
+  pagSeguro: {
+    enabled: Boolean(settings?.pagSeguro?.enabled),
+    email: String(settings?.pagSeguro?.email ?? ''),
+    token: ''
+  },
+  pix: {
+    enabled: Boolean(settings?.pix?.enabled),
+    pixKeyType: String(settings?.pix?.pixKeyType ?? 'CPF'),
+    pixKey: String(settings?.pix?.pixKey ?? '')
+  },
+  appmax: {
+    enabled: Boolean(settings?.appmax?.enabled),
+    apiKey: ''
+  },
+  asaas: {
+    enabled: Boolean(settings?.asaas?.enabled),
+    apiKey: ''
+  },
+  pagarme: {
+    enabled: Boolean(settings?.pagarme?.enabled),
+    apiKey: '',
+    encryptionKey: ''
+  },
+  stripe: {
+    enabled: Boolean(settings?.stripe?.enabled),
+    publishableKey: String(settings?.stripe?.publishableKey ?? ''),
+    secretKey: ''
+  }
+});
 
 // Carregar mapeamento de IDs do excel
 const mappingPath = path.join(__dirname, 'detailed_id_mapping.json');
@@ -28,6 +111,76 @@ try {
 }
 
 router.use('/dashboard', dashboardRoutes);
+
+router.get('/settings/payment/public', async (_req, res) => {
+  try {
+    const settings = await readAppConfig(SETTINGS_KEYS.payment);
+    res.json({ success: true, data: sanitizePaymentSettings(settings) });
+  } catch (error: any) {
+    console.error('Erro ao buscar configurações públicas de pagamento:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.get('/settings/payment', supabaseAuth, async (_req, res) => {
+  try {
+    const settings = await readAppConfig(SETTINGS_KEYS.payment);
+    res.json({ success: true, data: settings });
+  } catch (error: any) {
+    console.error('Erro ao buscar configurações de pagamento:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.put('/settings/payment', supabaseAuth, async (req, res) => {
+  try {
+    await writeAppConfig(SETTINGS_KEYS.payment, req.body);
+    res.json({ success: true });
+  } catch (error: any) {
+    console.error('Erro ao salvar configurações de pagamento:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.get('/settings/shipping', supabaseAuth, async (_req, res) => {
+  try {
+    const settings = await readAppConfig(SETTINGS_KEYS.shipping);
+    res.json({ success: true, data: settings });
+  } catch (error: any) {
+    console.error('Erro ao buscar configurações de frete:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.put('/settings/shipping', supabaseAuth, async (req, res) => {
+  try {
+    await writeAppConfig(SETTINGS_KEYS.shipping, req.body);
+    res.json({ success: true });
+  } catch (error: any) {
+    console.error('Erro ao salvar configurações de frete:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.get('/settings/wallet', supabaseAuth, async (_req, res) => {
+  try {
+    const settings = await readAppConfig(SETTINGS_KEYS.wallet);
+    res.json({ success: true, data: settings });
+  } catch (error: any) {
+    console.error('Erro ao buscar configurações da carteira:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.put('/settings/wallet', supabaseAuth, async (req, res) => {
+  try {
+    await writeAppConfig(SETTINGS_KEYS.wallet, req.body);
+    res.json({ success: true });
+  } catch (error: any) {
+    console.error('Erro ao salvar configurações da carteira:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
 
 // GET /v1/admin/overview
 router.get('/overview', supabaseAuth, requireRole([ROLES.ADMIN, ROLES.SUPERADMIN]), async (req, res) => {
@@ -300,14 +453,17 @@ router.get('/consultants', supabaseAuth, requireRole([ROLES.ADMIN, ROLES.SUPERAD
     if (error) throw error;
 
     // 2. Buscar carteiras e rede em paralelo (Bypass RLS)
-    const [walletsRes, networksRes, sigmaRes] = await Promise.all([
+    const [walletsRes, networksRes, sigmaRes, profilesRes] = await Promise.all([
       supabaseAdmin.from('wallets').select('consultor_id, balance'),
       supabaseAdmin.from('downlines').select('upline_id, nivel'),
-      supabaseAdmin.from('sigma_accumulators').select('*')
+      supabaseAdmin.from('sigma_accumulators').select('*'),
+      supabaseAdmin.from('user_profiles').select('user_id, id_numerico')
     ]);
 
     const walletMap = new Map((walletsRes.data || []).map(w => [w.consultor_id, w.balance]));
     const sigmaMap = new Map((sigmaRes.data || []).map(s => [s.consultor_id, s]));
+    const profileMap = new Map((profilesRes.data || []).map((profile: any) => [profile.user_id, profile]));
+    const { usedCodes, usedLogins } = collectExistingIdentifiers(consultants || [], profileMap);
     const statsMap = new Map();
     (networksRes.data || []).forEach(n => {
       const current = statsMap.get(n.upline_id) || { total: 0, l1: 0, l2: 0, l3: 0 };
@@ -338,14 +494,28 @@ router.get('/consultants', supabaseAuth, requireRole([ROLES.ADMIN, ROLES.SUPERAD
       const emailKey = (c.email || '').toLowerCase().trim();
       const nameKey = (c.nome || '').toLowerCase().trim();
       const mapping = detailedMapping.byEmail[emailKey] || detailedMapping.byName[nameKey] || detailedMapping[nameKey];
+      const profile = profileMap.get(c.user_id) || profileMap.get(c.id);
+      const identifiers = resolveConsultantIdentifiers({
+        consultor: c,
+        profile,
+        mapping,
+        usedCodes,
+        usedLogins,
+      });
+      void persistConsultantIdentifiers({
+        supabase: supabaseAdmin,
+        consultor: c,
+        profile,
+        identifiers,
+      }).catch(() => undefined);
       const stats = statsMap.get(c.id) || { total: 0, l1: 0, l2: 0, l3: 0 };
       const sigma = sigmaMap.get(c.id);
 
       return {
         id: c.id,
         uuid: c.user_id,
-        code: mapping?.code || String(c.id).substring(0, 8),
-        username: mapping?.username || c.username || (c.email ? c.email.split('@')[0] : ''),
+        code: identifiers.accountCode,
+        username: identifiers.loginId,
         name: c.nome,
         registration_order: mapping?.order || c.registration_order || 9999,
         pin: c.pin_atual || 'Consultor',
@@ -384,6 +554,65 @@ router.get('/consultants', supabaseAuth, requireRole([ROLES.ADMIN, ROLES.SUPERAD
 
   } catch (error: any) {
     console.error('Erro na rota de consultores:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.post('/consultants/backfill-account-codes', supabaseAuth, requireRole([ROLES.ADMIN, ROLES.SUPERADMIN]), async (req, res) => {
+  try {
+    const { data: consultants, error: consultantsError } = await supabaseAdmin
+      .from('consultores')
+      .select('id, user_id, nome, email, username, codigo_consultor')
+      .order('created_at', { ascending: true });
+
+    if (consultantsError) throw consultantsError;
+
+    const { data: profiles, error: profilesError } = await supabaseAdmin
+      .from('user_profiles')
+      .select('user_id, id_numerico');
+
+    if (profilesError) throw profilesError;
+
+    const profileMap = new Map((profiles || []).map((profile: any) => [profile.user_id, profile]));
+    const { usedCodes, usedLogins } = collectExistingIdentifiers(consultants || [], profileMap);
+    const updated: Array<{ id: string; name: string; accountCode: string }> = [];
+
+    for (const consultant of consultants || []) {
+      const profile = profileMap.get((consultant as any).user_id) || profileMap.get((consultant as any).id);
+      const currentCode = String(profile?.id_numerico || (consultant as any).codigo_consultor || '').replace(/\D/g, '');
+
+      if (!isPlaceholderIdentifier(currentCode)) {
+        continue;
+      }
+
+      const identifiers = resolveConsultantIdentifiers({
+        consultor: consultant,
+        profile,
+        usedCodes,
+        usedLogins,
+      });
+
+      await persistConsultantIdentifiers({
+        supabase: supabaseAdmin,
+        consultor: consultant,
+        profile,
+        identifiers,
+      });
+
+      updated.push({
+        id: (consultant as any).id,
+        name: (consultant as any).nome || '',
+        accountCode: identifiers.accountCode,
+      });
+    }
+
+    res.json({
+      success: true,
+      processed: updated.length,
+      updated,
+    });
+  } catch (error: any) {
+    console.error('Erro ao vincular ID CONTA automatico:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });

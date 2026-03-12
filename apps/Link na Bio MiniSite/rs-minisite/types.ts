@@ -284,4 +284,23 @@ export interface BioSite {
   tracking?: TrackingPixels;
 }
 
+export interface MiniSiteTemplate {
+  id: string;
+  name: string;
+  niche: string;
+  category: string;
+  description: string;
+  sections: Section[];
+  theme: Theme;
+  seo: SeoConfig;
+  plan?: UserPlan;
+  previewText?: string;
+  previewAccent?: string;
+  ownerUserId?: string | null;
+  isPublic?: boolean;
+  isCompanyLibrary?: boolean;
+  source?: 'built_in' | 'community';
+  createdAt?: string;
+}
+
 export type ViewMode = 'dashboard' | 'editor' | 'preview' | 'landing' | 'login' | 'signup' | 'admin' | 'admin-login';

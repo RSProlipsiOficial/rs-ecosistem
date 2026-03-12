@@ -7,22 +7,13 @@ import { socialIcons } from '../config/socialIcons';
 import { usePageBuilder } from '../context/PageBuilderContext';
 
 const Footer: React.FC = () => {
-  const { isAdmin, openLoginPanel, setEditMode, setActiveAdminTab } = useAdmin();
+  const { isAdmin, setEditMode, setActiveAdminTab } = useAdmin();
   const { settings } = useSiteSettings();
   const { globalContent } = usePageBuilder();
   const { socialLinks } = settings;
 
   const footerContent = globalContent.footer;
   const copyrightContent = (footerContent.content || '').replace('{YEAR}', new Date().getFullYear().toString());
-
-  const handleAdminClick = () => {
-    if (isAdmin) {
-      setActiveAdminTab('home');
-      setEditMode(true);
-    } else {
-      openLoginPanel();
-    }
-  };
 
   const handleEditSocials = () => {
     setEditMode(true);
@@ -61,11 +52,6 @@ const Footer: React.FC = () => {
         )}
 
         <div className="text-sm prose-static" dangerouslySetInnerHTML={{ __html: copyrightContent }} />
-        <div className="mt-2">
-            <button onClick={handleAdminClick} title={isAdmin ? "Admin Panel" : "Admin Login"} className="ml-2 hover:text-accent transition-colors">
-                <AdminIcon />
-            </button>
-        </div>
       </div>
     </footer>
   );
@@ -77,13 +63,6 @@ const PencilIcon: React.FC = () => (
         <path fillRule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clipRule="evenodd" />
     </svg>
 );
-
-const AdminIcon: React.FC = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-        <path fillRule="evenodd" d="M10 2.036c.552 0 1.08.083 1.58.243l.09.028 6.16 2.464A1 1 0 0118.5 5.75v5.332c0 2.213-1.34 4.31-3.5 5.567l-.24.141c-2.08 1.2-4.64 1.2-6.72 0l-.24-.141C5.84 15.392 4.5 13.295 4.5 11.082V5.75a1 1 0 01.67-.96l6.16-2.464.09-.028A5.952 5.952 0 0110 2.036z" clipRule="evenodd" />
-    </svg>
-);
-
 
 const SocialIcon: React.FC<{ platform: string }> = ({ platform }) => {
     const iconData = socialIcons.find(icon => icon.platform === platform.toLowerCase());

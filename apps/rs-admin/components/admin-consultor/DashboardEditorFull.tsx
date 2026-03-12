@@ -75,7 +75,10 @@ const iconOptions = [
 ];
 
 type DashboardContext = 'consultant' | 'marketplace'
-const DashboardEditorFull: React.FC<{ context?: DashboardContext }> = ({ context = 'consultant' }) => {
+const DashboardEditorFull: React.FC<{ context?: DashboardContext; onSaveSuccess?: () => void }> = ({
+    context = 'consultant',
+    onSaveSuccess,
+}) => {
     const { config, setConfig } = useDashboardConfig();
     const [localConfig, setLocalConfig] = useState(config);
     const [saveStatus, setSaveStatus] = useState(false);
@@ -162,6 +165,7 @@ const DashboardEditorFull: React.FC<{ context?: DashboardContext }> = ({ context
             } else {
                 await dashboardLayoutAPI.updateMarketplaceLayoutConfig(persistConfig);
             }
+            onSaveSuccess?.();
             setSaveStatus(true);
             setTimeout(() => setSaveStatus(false), 2500);
         } catch (e) {

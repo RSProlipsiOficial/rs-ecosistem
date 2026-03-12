@@ -13,28 +13,38 @@ interface CarouselProps {
 
 const Carousel: React.FC<CarouselProps> = ({ banners, className, height = 400, mobileHeight = 300, fullWidth = true }) => {
     const [currentIndex, setCurrentIndex] = useState(0);
+    const validBanners = Array.isArray(banners)
+        ? banners.filter((banner) => Boolean(banner?.desktopImage || banner?.mobileImage))
+        : [];
 
     const goToPrevious = () => {
+        if (validBanners.length === 0) return;
         const isFirstSlide = currentIndex === 0;
-        const newIndex = isFirstSlide ? banners.length - 1 : currentIndex - 1;
+        const newIndex = isFirstSlide ? validBanners.length - 1 : currentIndex - 1;
         setCurrentIndex(newIndex);
     };
 
     const goToNext = useCallback(() => {
-        if (banners.length === 0) return;
-        const isLastSlide = currentIndex === banners.length - 1;
+        if (validBanners.length === 0) return;
+        const isLastSlide = currentIndex === validBanners.length - 1;
         const newIndex = isLastSlide ? 0 : currentIndex + 1;
         setCurrentIndex(newIndex);
-    }, [currentIndex, banners]);
+    }, [currentIndex, validBanners.length]);
 
     useEffect(() => {
-        if (banners.length > 1) {
+        if (currentIndex >= validBanners.length && validBanners.length > 0) {
+            setCurrentIndex(0);
+        }
+    }, [currentIndex, validBanners.length]);
+
+    useEffect(() => {
+        if (validBanners.length > 1) {
             const slideInterval = setInterval(goToNext, 5000);
             return () => clearInterval(slideInterval);
         }
-    }, [banners, goToNext]);
+    }, [validBanners.length, goToNext]);
 
-    if (!banners || !Array.isArray(banners) || banners.length === 0) {
+    if (validBanners.length === 0) {
         return <div className="h-4 bg-dark-900"></div>; // Placeholder em vez de crash
     }
 
@@ -49,24 +59,32 @@ const Carousel: React.FC<CarouselProps> = ({ banners, className, height = 400, m
                 className="w-full h-full flex transition-transform duration-700 ease-in-out"
                 style={{ transform: `translateX(-${currentIndex * 100}%)` }}
             >
-                {banners.map((banner) => (
-                    <a href={banner.link} key={banner.id} className="w-full h-full flex-shrink-0" aria-label={`Banner ${banner.id}`}>
-                        <picture className="w-full h-full">
-                            <source media="(min-width: 768px)" srcSet={banner.desktopImage} />
-                            <img
-                                src={banner.mobileImage}
-                                alt={`Banner ${banner.id}`}
-                                className="w-full h-full object-cover"
-                                onError={(e) => {
-                                    (e.target as HTMLImageElement).src = 'https://via.placeholder.com/1200x400?text=Imagem+Indispon%C3%ADvel';
-                                }}
-                            />
-                        </picture>
-                    </a>
-                ))}
+                {validBanners.map((banner, index) => {
+                    const desktopImage = banner.desktopImage || banner.mobileImage;
+                    const mobileImage = banner.mobileImage || banner.desktopImage;
+                    const shouldPrioritize = index === 0;
+
+                    return (
+                        <a href={banner.link || '#'} key={banner.id} className="w-full h-full flex-shrink-0" aria-label={`Banner ${banner.id}`}>
+                            <picture className="w-full h-full">
+                                {desktopImage ? <source media="(min-width: 768px)" srcSet={desktopImage} /> : null}
+                                <img
+                                    src={mobileImage}
+                                    alt={`Banner ${banner.id}`}
+                                    loading={shouldPrioritize ? 'eager' : 'lazy'}
+                                    decoding="async"
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => {
+                                        (e.target as HTMLImageElement).src = 'https://via.placeholder.com/1200x400?text=Imagem+Indispon%C3%ADvel';
+                                    }}
+                                />
+                            </picture>
+                        </a>
+                    );
+                })}
             </div>
 
-            {banners.length > 1 && (
+            {validBanners.length > 1 && (
                 <>
                     <button
                         onClick={goToPrevious}
@@ -83,7 +101,7 @@ const Carousel: React.FC<CarouselProps> = ({ banners, className, height = 400, m
                         <ArrowRightIcon className="w-6 h-6" />
                     </button>
                     <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 flex space-x-2">
-                        {banners.map((_, index) => (
+                        {validBanners.map((_, index) => (
                             <button
                                 key={index}
                                 onClick={() => setCurrentIndex(index)}

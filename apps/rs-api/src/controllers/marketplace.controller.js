@@ -185,13 +185,22 @@ exports.getUserOrders = async (req, res) => {
     
     const { data, error } = await supabase
       .from('orders')
-      .select('*, items:order_items(*)')
-      .eq('user_id', userId)
+      .select('*')
+      .or(`user_id.eq.${userId},customer_id.eq.${userId},buyer_id.eq.${userId},referrer_id.eq.${userId},distributor_id.eq.${userId}`)
       .order('created_at', { ascending: false });
     
     if (error) throw error;
     
-    res.json({ success: true, orders: data });
+    const normalizedOrders = (data || []).map((order) => ({
+      ...order,
+      user_id: order.user_id || order.customer_id || order.buyer_id || order.referrer_id || order.distributor_id || userId,
+      customer_name: order.customer_name || order.shipping_address?.name || order.customer?.name || '',
+      total_amount: Number(order.total_amount ?? order.total ?? 0),
+      status: order.status || order.payment_status || 'pending',
+      items: Array.isArray(order.items) ? order.items : []
+    }));
+
+    res.json({ success: true, orders: normalizedOrders });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }

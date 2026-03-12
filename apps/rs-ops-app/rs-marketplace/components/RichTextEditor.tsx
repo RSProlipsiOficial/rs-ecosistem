@@ -1,6 +1,6 @@
 
 
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useEditor, EditorContent, Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
@@ -45,15 +45,14 @@ interface MenuBarProps {
 
 const MenuBar = ({ editor, openLinkModal }: MenuBarProps) => {
     const imageInputRef = useRef<HTMLInputElement>(null);
+    const addImage = useCallback(() => {
+        imageInputRef.current?.click();
+    }, []);
 
     if (!editor) {
         return null;
     }
 
-    const addImage = useCallback(() => {
-        imageInputRef.current?.click();
-    }, []);
-    
     const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (!file || !editor) return;
@@ -62,7 +61,7 @@ const MenuBar = ({ editor, openLinkModal }: MenuBarProps) => {
             alert('Por favor, selecione um arquivo de imagem (JPG, PNG, GIF, etc.).');
             return;
         }
-    
+
         const reader = new FileReader();
         reader.onload = (e) => {
             const src = e.target?.result as string;
@@ -74,7 +73,7 @@ const MenuBar = ({ editor, openLinkModal }: MenuBarProps) => {
             alert('Ocorreu um erro ao ler o arquivo.');
         };
         reader.readAsDataURL(file);
-    
+
         if (event.target) {
             event.target.value = '';
         }
@@ -107,7 +106,7 @@ const MenuBar = ({ editor, openLinkModal }: MenuBarProps) => {
                 <RedoIcon className="w-5 h-5" />
             </ToolbarButton>
             <div className="border-l border-[rgb(var(--color-brand-gray-light))] mx-1 h-6 self-center"></div>
-             <select
+            <select
                 onChange={(e) => {
                     const value = e.target.value;
                     const level = parseInt(value, 10);
@@ -117,10 +116,10 @@ const MenuBar = ({ editor, openLinkModal }: MenuBarProps) => {
                         editor.chain().focus().toggleHeading({ level: level as 1 | 2 | 3 }).run();
                     }
                 }}
-                 value={
+                value={
                     editor.isActive('heading', { level: 1 }) ? '1' :
-                    editor.isActive('heading', { level: 2 }) ? '2' :
-                    editor.isActive('heading', { level: 3 }) ? '3' : '0'
+                        editor.isActive('heading', { level: 2 }) ? '2' :
+                            editor.isActive('heading', { level: 3 }) ? '3' : '0'
                 }
                 className="bg-[rgb(var(--color-brand-gray))] border-2 border-[rgb(var(--color-brand-gray-light))] text-[rgb(var(--color-brand-text-light))] py-2 px-2 rounded-md hover:bg-[rgb(var(--color-brand-gray-light))] transition-colors text-sm font-semibold focus:outline-none focus:border-[rgb(var(--color-brand-gold))]"
             >
@@ -142,13 +141,13 @@ const MenuBar = ({ editor, openLinkModal }: MenuBarProps) => {
             <ToolbarButton onClick={() => editor.chain().focus().toggleStrike().run()} isActive={editor.isActive('strike')} title="Tachado">
                 <StrikethroughIcon className="w-5 h-5" />
             </ToolbarButton>
-             <div className="relative">
-                <ToolbarButton onClick={() => {}} isActive={editor.isActive('textStyle')} title="Cor do Texto">
-                   <TextColorIcon className="w-5 h-5" />
-                   <div 
-                     className="w-full h-1 rounded-full mt-1 border border-[rgb(var(--color-brand-gray))] " 
-                     style={{ backgroundColor: editor.getAttributes('textStyle').color || 'currentColor' }}
-                   ></div>
+            <div className="relative">
+                <ToolbarButton onClick={() => { }} isActive={editor.isActive('textStyle')} title="Cor do Texto">
+                    <TextColorIcon className="w-5 h-5" />
+                    <div
+                        className="w-full h-1 rounded-full mt-1 border border-[rgb(var(--color-brand-gray))] "
+                        style={{ backgroundColor: editor.getAttributes('textStyle').color || 'currentColor' }}
+                    ></div>
                 </ToolbarButton>
                 <input
                     type="color"
@@ -158,11 +157,11 @@ const MenuBar = ({ editor, openLinkModal }: MenuBarProps) => {
                 />
             </div>
             <div className="relative">
-                <ToolbarButton onClick={() => {}} isActive={editor.isActive('highlight')} title="Cor de Destaque">
+                <ToolbarButton onClick={() => { }} isActive={editor.isActive('highlight')} title="Cor de Destaque">
                     <HighlightIcon className="w-5 h-5" />
-                     <div 
-                         className="w-full h-1 rounded-full mt-1 border border-[rgb(var(--color-brand-gray))]" 
-                         style={{ backgroundColor: editor.getAttributes('highlight').color || `rgb(var(--color-brand-gold))` }}
+                    <div
+                        className="w-full h-1 rounded-full mt-1 border border-[rgb(var(--color-brand-gray))]"
+                        style={{ backgroundColor: editor.getAttributes('highlight').color || `rgb(var(--color-brand-gold))` }}
                     ></div>
                 </ToolbarButton>
                 <input
@@ -185,7 +184,7 @@ const MenuBar = ({ editor, openLinkModal }: MenuBarProps) => {
             <ToolbarButton onClick={() => editor.chain().focus().setTextAlign('justify').run()} isActive={editor.isActive({ textAlign: 'justify' })} title="Justificar">
                 <AlignJustifyIcon className="w-5 h-5" />
             </ToolbarButton>
-             <div className="border-l border-[rgb(var(--color-brand-gray-light))] mx-1 h-6 self-center"></div>
+            <div className="border-l border-[rgb(var(--color-brand-gray-light))] mx-1 h-6 self-center"></div>
             <ToolbarButton onClick={openLinkModal} isActive={editor.isActive('link')} title="Adicionar Link">
                 <LinkIcon className="w-5 h-5" />
             </ToolbarButton>
@@ -195,7 +194,7 @@ const MenuBar = ({ editor, openLinkModal }: MenuBarProps) => {
             <ToolbarButton onClick={() => editor.chain().focus().setHorizontalRule().run()} title="Linha Horizontal">
                 <HorizontalRuleIcon className="w-5 h-5" />
             </ToolbarButton>
-             <div className="border-l border-[rgb(var(--color-brand-gray-light))] mx-1 h-6 self-center"></div>
+            <div className="border-l border-[rgb(var(--color-brand-gray-light))] mx-1 h-6 self-center"></div>
             <ToolbarButton onClick={() => editor.chain().focus().toggleBulletList().run()} isActive={editor.isActive('bulletList')} title="Lista com Marcadores">
                 <ListUnorderedIcon className="w-5 h-5" />
             </ToolbarButton>
@@ -209,7 +208,7 @@ const MenuBar = ({ editor, openLinkModal }: MenuBarProps) => {
                 <CodeIcon className="w-5 h-5" />
             </ToolbarButton>
             <div className="border-l border-[rgb(var(--color-brand-gray-light))] mx-1 h-6 self-center"></div>
-             <ToolbarButton onClick={() => editor.chain().focus().unsetAllMarks().clearNodes().run()} title="Limpar Formato">
+            <ToolbarButton onClick={() => editor.chain().focus().unsetAllMarks().clearNodes().run()} title="Limpar Formato">
                 <RemoveFormatIcon className="w-5 h-5" />
             </ToolbarButton>
         </div>
@@ -247,6 +246,13 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange }) => {
             },
         },
     });
+
+    // Sincronizar o conteúdo do editor quando a prop 'value' mudar externamente (ex: IA ou Reset)
+    useEffect(() => {
+        if (editor && value !== editor.getHTML()) {
+            editor.commands.setContent(value);
+        }
+    }, [value, editor]);
 
     const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
     const [linkUrl, setLinkUrl] = useState('');
@@ -332,7 +338,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange }) => {
 
             {isLinkModalOpen && (
                 <div className="fixed inset-0 bg-[rgb(var(--color-brand-dark))]/[.70] z-[101] flex items-center justify-center p-4" onClick={closeLinkModal}>
-                    <div 
+                    <div
                         className="bg-[rgb(var(--color-brand-dark))] border-2 border-[rgb(var(--color-brand-gold))]/[.30] rounded-lg shadow-2xl p-6 w-full max-w-md space-y-4"
                         onClick={e => e.stopPropagation()}
                     >

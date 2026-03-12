@@ -12,6 +12,8 @@ const MidPageBanner: React.FC<MidPageBannerProps> = ({ banner }) => {
 
     const isMobile = typeof window !== 'undefined' ? window.innerWidth < 768 : false;
     const currentHeight = isMobile ? (banner.mobileHeight || 300) : (banner.height || 400);
+    const desktopImage = banner.desktopImage || banner.mobileImage;
+    const mobileImage = banner.mobileImage || banner.desktopImage;
 
     return (
         <section
@@ -23,10 +25,12 @@ const MidPageBanner: React.FC<MidPageBannerProps> = ({ banner }) => {
                 style={{ height: `${currentHeight}px` }}
             >
                 <picture className="w-full h-full">
-                    <source media="(min-width: 768px)" srcSet={banner.desktopImage} />
+                    {desktopImage ? <source media="(min-width: 768px)" srcSet={desktopImage} /> : null}
                     <img
-                        src={banner.mobileImage || banner.desktopImage}
+                        src={mobileImage}
                         alt={banner.title || "Banner promocional"}
+                        loading="lazy"
+                        decoding="async"
                         className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                     />
                 </picture>

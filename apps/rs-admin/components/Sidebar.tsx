@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MARKETPLACE_URL, MARKETPLACE_ADMIN_DASHBOARD_EDITOR_URL, WALLETPAY_URL, CONSULTOR_DASHBOARD_URL } from '@/src/config/urls';
+import { MARKETPLACE_URL, MARKETPLACE_ADMIN_DASHBOARD_EDITOR_URL, WALLETPAY_URL, CONSULTOR_DASHBOARD_URL, MINISITE_URL } from '@/src/config/urls';
 import ExternalLinkItem from './ExternalLinkItem';
 import { settingsAPI } from '../src/services/api';
 import {
@@ -9,12 +9,7 @@ import {
   ArrowsRightLeftIcon, DocumentTextIcon, QrCodeIcon, CreditCardIcon,
   ChartBarIcon, ArrowTrendingUpIcon, ArrowDownTrayIcon, PuzzlePieceIcon
 } from './icons';
-
-const TreeIcon: React.FC<{ className?: string }> = ({ className }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A4.833 4.833 0 0118 9.75c-1.25 0-2.45.35-3.5.966-1.05-.616-2.25-.966-3.5-.966s-2.45.35-3.5.966c-1.05-.616-2.25-.966-3.5-.966a4.836 4.836 0 00-1.5.25v10.5h18z" />
-  </svg>
-);
+import { Globe } from 'lucide-react';
 
 interface SidebarProps {
   isSidebarOpen: boolean;
@@ -77,6 +72,27 @@ const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen, setSidebarOpen, setAct
       setSidebarOpen(false);
     }
   };
+
+  const buildEcosystemUrl = (baseUrl: string) => {
+    const token = localStorage.getItem('adminToken') || localStorage.getItem('consultorToken') || '';
+
+    if (!token) {
+      return baseUrl;
+    }
+
+    const payload = {
+      autoLogin: true,
+      source: 'rs-admin',
+      token,
+    };
+
+    const encodedPayload = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+    return `${baseUrl}/#/sso?token=${encodeURIComponent(encodedPayload)}`;
+  };
+
+  const consultorDashboardUrl = buildEcosystemUrl(CONSULTOR_DASHBOARD_URL);
+  const marketplaceUrl = buildEcosystemUrl(MARKETPLACE_URL);
+  const miniSiteUrl = buildEcosystemUrl(MINISITE_URL);
 
   const NavItem: React.FC<{
     icon?: React.ReactNode;
@@ -229,12 +245,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen, setSidebarOpen, setAct
 
             <SectionHeader title="Gestão" />
 
-            <NavItem icon={<TreeIcon className="w-6 h-6" />} label="Rede Inteligente" view="Rede Inteligente" activeView={activeView} onNavigate={handleViewChange} />
-            <NavItem icon={<UsersIcon className="w-6 h-6" />} label="Consultores" view="Consultores" activeView={activeView} onNavigate={handleViewChange} />
 
             {/* --- GESTÃO DE REDE (MASTER) --- */}
             {(typeof window !== 'undefined' && (['admin', 'super_admin'].includes(localStorage.getItem('rs-role') || '') || (localStorage.getItem('rs-user-permissions') || '').includes('super_admin'))) && (
-              <CollapsibleNavItem icon={<BuildingStorefrontIcon className="w-6 h-6" />} label="Gestão de Rede" menuKey="GestaoRede" openMenus={openMenus} onToggleMenu={handleMenuClick} activeView={activeView} onNavigate={handleViewChange}>
+              <CollapsibleNavItem icon={<BuildingStorefrontIcon className="w-6 h-6" />} label="Gestão de CDs" menuKey="GestaoRede" openMenus={openMenus} onToggleMenu={handleMenuClick} activeView={activeView} onNavigate={handleViewChange}>
                 <NavItem label="Rede de CDs" view="Rede de CDs" activeView={activeView} onNavigate={handleViewChange} />
                 <NavItem label="Abastecimento CDs" view="Abastecimento CDs" activeView={activeView} onNavigate={handleViewChange} />
                 <NavItem label="Vendas da Rede" view="Vendas da Rede" activeView={activeView} onNavigate={handleViewChange} />
@@ -244,25 +258,43 @@ const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen, setSidebarOpen, setAct
             )}
 
             <CollapsibleNavItem icon={<SettingsIcon className="w-6 h-6" />} label="Admin Consultor" menuKey="AdminConsultor" openMenus={openMenus} onToggleMenu={handleMenuClick} activeView={activeView} onNavigate={handleViewChange}>
+              <NavItem label="Rede Inteligente" view="Rede Inteligente" activeView={activeView} onNavigate={handleViewChange} />
               <NavItem label="Dados Pessoais" view="Admin Dados Pessoais" activeView={activeView} onNavigate={handleViewChange} />
               {(typeof window !== 'undefined' && (['admin', 'super_admin'].includes(localStorage.getItem('rs-role') || '') || (localStorage.getItem('rs-user-permissions') || '').includes('super_admin')))
                 ? (
                   <>
                     <NavItem label="Configurações do Painel" view="Admin Configurações do Painel" activeView={activeView} onNavigate={handleViewChange} />
                     <NavItem label="Editor Layout (Consultor)" view="Admin Dashboard Editor" activeView={activeView} onNavigate={handleViewChange} />
-                    <NavItem label="Editor Layout (MktPlace)" view="Admin Marketplace Editor" activeView={activeView} onNavigate={handleViewChange} />
                   </>
                 )
                 : null}
               <ExternalLinkItem
-                href={CONSULTOR_DASHBOARD_URL}
+                href={consultorDashboardUrl}
                 icon={<UsersIcon className="w-5 h-5" />}
                 label="Painel do Consultor"
                 ariaLabel="Abrir painel do consultor em nova aba"
               />
             </CollapsibleNavItem>
 
-            {/* Admin Marketplace moved to Admin Consultor > Configurações do Painel (tab). No menu duplicado aqui. */}
+            {/* ── Admin Marketplace Operacional ─────────────────────────────── */}
+            {(typeof window !== 'undefined' && (['admin', 'super_admin'].includes(localStorage.getItem('rs-role') || '') || (localStorage.getItem('rs-user-permissions') || '').includes('super_admin'))) && (
+              <CollapsibleNavItem icon={<BuildingStorefrontIcon className="w-6 h-6" />} label="Admin Marketplace" menuKey="AdminMarketplace" openMenus={openMenus} onToggleMenu={handleMenuClick} activeView={activeView} onNavigate={handleViewChange}>
+                <NavItem label="Visão Geral" view="Marketplace Visão Geral" activeView={activeView} onNavigate={handleViewChange} />
+                <NavItem label="Gestão de Pedidos" view="Marketplace Pedidos" activeView={activeView} onNavigate={handleViewChange} />
+                <NavItem label="Produtos" view="Marketplace Produtos" activeView={activeView} onNavigate={handleViewChange} />
+                <NavItem label="Produto Premium" view="Marketplace Produto Premium" activeView={activeView} onNavigate={handleViewChange} />
+                <NavItem label="Financeiro" view="Marketplace Financeiro" activeView={activeView} onNavigate={handleViewChange} />
+                <NavItem label="Editor Layout (MktPlace)" view="Admin Marketplace Editor" activeView={activeView} onNavigate={handleViewChange} />
+              </CollapsibleNavItem>
+            )}
+
+            {/* ── Admin MiniSite ─────────────────────────────── */}
+            {(typeof window !== 'undefined' && (['admin', 'super_admin'].includes(localStorage.getItem('rs-role') || '') || (localStorage.getItem('rs-user-permissions') || '').includes('super_admin'))) && (
+              <>
+                <NavItem icon={<Globe className="w-6 h-6" />} label="Admin MiniSite" view="Admin MiniSite" activeView={activeView} onNavigate={handleViewChange} />
+                <NavItem icon={<Globe className="w-6 h-6" />} label="Admin Site" view="Admin Site" activeView={activeView} onNavigate={handleViewChange} />
+              </>
+            )}
 
             {/* Painel SIGME removido: centralização em Configurações SIGMA */}
 
@@ -278,21 +310,24 @@ const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen, setSidebarOpen, setAct
               </CollapsibleNavItem>
             </CollapsibleNavItem>
 
+            <ExternalLinkItem
+              href={miniSiteUrl}
+              icon={<Globe className="w-6 h-6" />}
+              label="RS MiniSite"
+              ariaLabel="Abrir RS MiniSite em nova aba"
+            />
+
             {/* Marketplace - External Link */}
             <ExternalLinkItem
-              href={MARKETPLACE_URL}
+              href={marketplaceUrl}
               icon={<BuildingStorefrontIcon className="w-6 h-6" />}
               label="Marketplace"
               ariaLabel="Abrir Marketplace em nova aba"
             />
 
-            {/* WalletPay - External Link */}
-            <ExternalLinkItem
-              href={WALLETPAY_URL}
-              icon={<WalletIcon className="w-6 h-6" />}
-              label="WalletPay"
-              ariaLabel="Abrir WalletPay em nova aba"
-            />
+            {/* WalletPay Admin — painel master interno */}
+            <NavItem icon={<WalletIcon className="w-6 h-6" />} label="Admin WalletPay" view="Admin WalletPay" activeView={activeView} onNavigate={handleViewChange} />
+
 
             {/* WalletPay internal item removed as requested */}
 

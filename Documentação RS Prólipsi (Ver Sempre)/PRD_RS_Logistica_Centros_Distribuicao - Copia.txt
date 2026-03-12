@@ -1,0 +1,106 @@
+PRD – MÓDULO LOGÍSTICO (CENTROS DE DISTRIBUIÇÃO RS PRÓLIPSI)
+Documento técnico-funcional do módulo logístico RS Prólipsi, responsável pelos Centros de Distribuição (CDs). Define a estrutura de funcionamento, integrações, banco de dados e processos operacionais entre Admin, Marketplace, WalletPay, SIGMA e RS Studio.
+1. Visão Geral do Novo Modelo
+
+O módulo de Centros de Distribuição (CD) da RS Prólipsi permite que cada unidade funcione como uma loja autorizada, 
+espelhando o catálogo do Marketplace e operando de forma integrada com o SIGMA e WalletPay.
+Cada CD possui painel próprio para controle de estoque, pedidos, entregas e relatórios de vendas, com repasses automáticos via WalletPay.
+
+2. Estrutura de Banco de Dados (Proposta Completa)
+
+Tabela | Função | Origem / Módulo | Atualização
+--------|---------|-----------------|--------------
+distribution_centers | Cadastro dos CDs | Admin | Manual / Automática
+cd_products | Produtos disponíveis em cada CD | Marketplace | Automática (espelhamento)
+cd_orders | Pedidos feitos nos CDs | Marketplace / Logista | Automática
+cd_inventory | Controle de estoque local | CD / Admin | Em tempo real
+cd_shipments | Controle de entregas e transportes | CD | Manual / Automática
+cd_wallet | Movimentações financeiras do CD | WalletPay | Webhook
+cd_reports | Relatórios e indicadores | Admin | Diária
+cd_logs | Auditoria e histórico de ações | Admin | Automática
+
+3. Ficha Técnica do Centro de Distribuição
+
+Campos principais:
+- ID do CD (UUID)
+- Nome do CD / Fantasia
+- Razão social (opcional)
+- CNPJ / CPF responsável
+- Gestor vinculado (user_id)
+- Endereço completo
+- Telefone / WhatsApp
+- E-mail
+- Chave PIX
+- Data de cadastro / ativação
+- Status (ativo, bloqueado, pendente)
+- Tipo de CD (Regional, Estadual, Municipal, Delivery, Central)
+
+4. Integrações Entre Módulos
+
+Origem | Integração | Tipo de Dados | Descrição
+--------|-------------|---------------|-----------
+Marketplace | Espelhamento de produtos e pedidos | Produtos, preços, descrições, pedidos | Cada CD replica o catálogo do Marketplace
+WalletPay | Controle financeiro | Créditos, débitos, repasses | O CD recebe repasses automáticos das vendas
+SIGMA | Volume e pontuação | Pontos, ciclos, reativações | Cada venda do CD gera pontuação na rede
+Admin | Cadastro e controle | Status, auditoria, relatórios | Gestão global dos CDs
+RS Studio | Comunicação e treinamento | Mensagens, treinamentos e suporte | CD recebe avisos e treinamentos automáticos
+RS.IA | Inteligência operacional | Alertas, análise de estoque, performance | Geração de insights e alertas automáticos
+
+5. Espelhamento do Marketplace (Lógica Principal)
+
+1. Admin cadastra o CD e define tipo e região.
+2. Marketplace envia catálogo via API e o CD replica produtos (nome, imagem, preço, descrição, estoque).
+3. Pedidos feitos localmente são registrados em cd_orders.
+4. WalletPay registra as comissões de cada venda automaticamente.
+5. Admin acompanha as operações em tempo real.
+
+6. Painéis de Acesso
+
+Painel | Funções | Permissões
+---------|----------|------------
+Admin Logístico | Cadastro, estoque, auditoria e relatórios de todos os CDs | Total
+Gestor de CD | Visualização de pedidos, controle de estoque, financeiro e relatórios | Parcial
+Consultor (Rede) | Compra e retirada no CD, visualização de estoque local | Limitado
+Financeiro (WalletPay) | Repasse automático e controle de saldo | Restrito
+Auditor | Logs e movimentações | Leitura
+
+7. Relatórios Operacionais do CD
+
+Tipo de Relatório | Origem | Finalidade
+--------------------|---------|-------------
+Vendas diárias e mensais | Marketplace / CD | Controle financeiro e estatístico
+Estoque disponível | cd_inventory | Planejamento logístico
+Pedidos pendentes / entregues | cd_orders / cd_shipments | Controle de entregas
+Repasses financeiros | WalletPay | Auditoria e conciliação
+Ranking de CDs por desempenho | Admin | Comparativo de performance
+Produtos mais vendidos | Marketplace | Inteligência de mercado
+
+8. Fluxo de Operação
+
+1. Admin cadastra CD (define gestor e região).
+2. CD sincroniza catálogo com o Marketplace.
+3. Consultor realiza pedido e o CD processa localmente.
+4. WalletPay efetua repasse automático ao CD.
+5. SIGMA gera pontos de rede para o consultor.
+6. Admin monitora relatórios consolidados.
+
+9. Indicadores-Chave (KPIs)
+
+Indicador | Fonte | Descrição
+------------|--------|-----------
+Total de CDs ativos | Admin | Quantidade de CDs operacionais
+Volume total de vendas por CD | Marketplace / WalletPay | Soma de todas as vendas
+Ticket médio por CD | Marketplace | Valor médio das compras
+Pontuação total gerada | SIGMA | Pontos de rede vindos dos CDs
+Entregas atrasadas | cd_shipments | Monitoramento de SLA
+Repasses pendentes | WalletPay | Controle financeiro
+
+10. Roadmap de Implementação
+
+Fase | Entrega | Descrição
+------|----------|-----------
+Fase 1 | Base logística | Cadastro de CDs, controle de estoque e espelhamento
+Fase 2 | Integração Marketplace | Sincronização de produtos, pedidos e preços
+Fase 3 | Financeiro e WalletPay | Repasses automáticos e relatórios de saldo
+Fase 4 | SIGMA e Pontuação | Geração automática de volume de rede
+Fase 5 | Inteligência RS.IA | Monitoramento de performance e alertas preditivos

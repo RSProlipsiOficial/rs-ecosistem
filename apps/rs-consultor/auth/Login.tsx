@@ -7,6 +7,28 @@ import { dashboardApi } from '../consultant/services/dashboardApi';
 
 const { IconLock, IconUser, IconEye, IconEyeOff } = icons;
 
+const DEFAULT_SPONSOR_REF = 'rsprolipsi';
+
+const resolveConsultorSignupUrl = () => {
+    if (typeof window === 'undefined') return `http://localhost:3002/indicacao/${DEFAULT_SPONSOR_REF}#/signup`;
+
+    const currentOrigin = window.location.origin;
+    const isLocal = currentOrigin.includes('localhost');
+    const consultorDomain = isLocal ? 'http://localhost:3002' : 'https://rotafacil.rsprolipsi.com.br';
+
+    const searchParams = new URLSearchParams(window.location.search);
+    const directRef = [
+        searchParams.get('ref'),
+        searchParams.get('sponsor'),
+        searchParams.get('indicacao')
+    ].find((value) => typeof value === 'string' && value.trim().length > 0);
+
+    const pathMatch = window.location.pathname.match(/\/indicacao\/([a-zA-Z0-9-_]+)/i);
+    const sponsorRef = String(directRef || pathMatch?.[1] || DEFAULT_SPONSOR_REF).trim().toLowerCase() || DEFAULT_SPONSOR_REF;
+
+    return `${consultorDomain}/indicacao/${sponsorRef}#/signup`;
+};
+
 const Login: React.FC = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -20,6 +42,7 @@ const Login: React.FC = () => {
     const context = useContext(UserContext);
     const navigate = useNavigate();
     const location = useLocation();
+    const signupUrl = resolveConsultorSignupUrl();
 
     const from = location.state?.from?.pathname || '/consultant/dashboard';
 
@@ -152,8 +175,14 @@ const Login: React.FC = () => {
                         </button>
                     </form>
 
-                    <div className="text-center mt-8">
-                        <a href="#" className="text-[11px] font-bold text-text-muted hover:text-gold uppercase tracking-tighter transition-all opacity-50 hover:opacity-100">Esqueceu sua senha?</a>
+                    <div className="mt-6 border-t border-white/5 pt-5 text-center">
+                        <p className="text-sm text-text-muted">
+                            Nao tem cadastro?{' '}
+                            <a href={signupUrl} className="font-bold text-gold hover:underline">
+                                Criar conta gratis
+                            </a>
+                        </p>
+                        <a href="#" className="mt-4 inline-block text-[11px] font-bold text-text-muted hover:text-gold uppercase tracking-tighter transition-all opacity-50 hover:opacity-100">Esqueceu sua senha?</a>
                     </div>
                 </div>
 

@@ -1,8 +1,82 @@
 const express = require('express');
 const router = express.Router();
 const axios = require('axios');
+const { supabaseAdmin } = require('../lib/supabaseClient');
 
-// Rota para calcular o frete
+const SHIPPING_SETTINGS_KEY = 'marketplace_shipping_settings';
+
+async function readShippingSettings() {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('app_configs')
+      .select('value')
+      .eq('key', SHIPPING_SETTINGS_KEY)
+      .maybeSingle();
+
+    if (error) {
+      console.warn('[Shipping] Falha ao ler configuracoes de frete:', error.message);
+      return null;
+    }
+
+    return data?.value || null;
+  } catch (error) {
+    console.warn('[Shipping] Excecao ao ler configuracoes de frete:', error.message);
+    return null;
+  }
+}
+
+function buildFallbackCarrierOptions(settings, isLocalDelivery, totalWeight, totalValue) {
+  const options = [];
+  const safeWeight = Math.max(Number(totalWeight || 0), 0.3);
+  const safeValue = Math.max(Number(totalValue || 0), 0);
+
+  const maybeAdd = (enabled, id, name, basePrice, deliveryTime) => {
+    if (!enabled) return;
+    const calculated = Math.max(basePrice + safeWeight * 8 + safeValue * 0.005, 0);
+    options.push({
+      id,
+      name,
+      company: { name },
+      price: calculated.toFixed(2),
+      delivery_time: deliveryTime,
+      currency: 'R$',
+      custom: true
+    });
+  };
+
+  maybeAdd(settings?.correios?.enabled, 'correios-pac', 'PAC', isLocalDelivery ? 14.9 : 19.9, isLocalDelivery ? 3 : 7);
+  maybeAdd(settings?.correios?.enabled, 'correios-sedex', 'SEDEX', isLocalDelivery ? 24.9 : 32.9, isLocalDelivery ? 1 : 3);
+  maybeAdd(settings?.jadlog?.enabled, 'jadlog', 'Jadlog', isLocalDelivery ? 18.9 : 26.9, isLocalDelivery ? 2 : 5);
+  maybeAdd(settings?.loggi?.enabled, 'loggi', 'Loggi', isLocalDelivery ? 16.9 : 23.9, isLocalDelivery ? 1 : 3);
+  maybeAdd(settings?.superFrete?.enabled, 'superfrete', 'SuperFrete', isLocalDelivery ? 17.9 : 25.9, isLocalDelivery ? 2 : 4);
+  maybeAdd(settings?.frenet?.enabled, 'frenet', 'Entrega Padrao', isLocalDelivery ? 15.9 : 22.9, isLocalDelivery ? 2 : 6);
+
+  if (options.length === 0) {
+    options.push(
+      {
+        id: 'fallback-pac',
+        name: 'PAC',
+        company: { name: 'Correios' },
+        price: (isLocalDelivery ? 14.9 : 19.9).toFixed(2),
+        delivery_time: isLocalDelivery ? 3 : 7,
+        currency: 'R$',
+        custom: true
+      },
+      {
+        id: 'fallback-sedex',
+        name: 'SEDEX',
+        company: { name: 'Correios' },
+        price: (isLocalDelivery ? 24.9 : 32.9).toFixed(2),
+        delivery_time: isLocalDelivery ? 1 : 3,
+        currency: 'R$',
+        custom: true
+      }
+    );
+  }
+
+  return options;
+}
+
 router.post('/calculate', async (req, res) => {
   console.log('=== SHIPPING CALCULATE REQUEST ===');
   const { from, to, products } = req.body;
@@ -13,33 +87,21 @@ router.post('/calculate', async (req, res) => {
     });
   }
 
-  // Calcular dimensões totais do pacote
-  const totalWeight = products.reduce((sum, p) => sum + (p.weight * (p.quantity || 1)), 0);
-  const maxHeight = Math.max(...products.map(p => p.height));
-  const maxWidth = Math.max(...products.map(p => p.width));
-  const maxLength = Math.max(...products.map(p => p.length));
-  const totalValue = products.reduce((sum, p) => sum + (p.insurance_value * (p.quantity || 1)), 0);
+  const totalWeight = products.reduce((sum, p) => sum + ((Number(p.weight) || 0) * (p.quantity || 1)), 0);
+  const totalValue = products.reduce((sum, p) => sum + ((Number(p.insurance_value) || 0) * (p.quantity || 1)), 0);
 
-  // [RS-LOGISTICS] Regra de Frete Local
-  const toCEP = to.postal_code.replace(/\D/g, '');
-  const fromCEP = from.postal_code.replace(/\D/g, '');
+  const toCEP = String(to.postal_code || '').replace(/\D/g, '');
+  const fromCEP = String(from.postal_code || '').replace(/\D/g, '');
 
-  console.log(`[Shipping] Calculando Rota: ${fromCEP} -> ${toCEP}`);
+  console.log(`[Shipping] Calculando rota: ${fromCEP} -> ${toCEP}`);
 
-  // Faixas PR (Curitiba/Piraquara): 80-83
-  const isPiraquaraToPiraquara = toCEP.startsWith('833') && fromCEP.startsWith('833');
-  const isFromCuritibaRegion = (fromCEP.startsWith('80') || fromCEP.startsWith('81') || fromCEP.startsWith('82') || fromCEP.startsWith('83'));
-  const isToCuritibaRegion = (toCEP.startsWith('80') || toCEP.startsWith('81') || toCEP.startsWith('82') || toCEP.startsWith('83'));
+  const isFromCuritibaRegion = /^(80|81|82|83)/.test(fromCEP);
+  const isToCuritibaRegion = /^(80|81|82|83)/.test(toCEP);
+  const isLocalDelivery = isFromCuritibaRegion && isToCuritibaRegion;
 
-  const isRegionalManual = isFromCuritibaRegion && isToCuritibaRegion;
-
-  // Região de Curitiba e Piraquara (80xxx até 83xxx)
-  const isLocalDelivery = toCEP.startsWith('80') || toCEP.startsWith('81') || toCEP.startsWith('82') || toCEP.startsWith('83');
-
-  // Opção de Retirada (Grátis) para a região
   const pickupOption = {
     id: 'retirada-cd',
-    name: 'Retirada no Centro de Distribuição (Piraquara)',
+    name: 'Retirada no Centro de Distribuicao (Piraquara)',
     company: { name: 'SIGME' },
     price: '0.00',
     delivery_time: 0,
@@ -47,23 +109,15 @@ router.post('/calculate', async (req, res) => {
     custom: true
   };
 
-  const MELHOR_ENVIO_TOKEN = process.env.MELHOR_ENVIO_TOKEN;
+  const shippingSettings = await readShippingSettings();
+  const melhorEnvioToken =
+    process.env.MELHOR_ENVIO_TOKEN ||
+    (shippingSettings?.melhorEnvio?.enabled ? shippingSettings?.melhorEnvio?.apiToken : '');
 
-  // Se não tiver token, retornamos os mocks + Retirada se for o caso
-  if (!MELHOR_ENVIO_TOKEN) {
-    console.warn('⚠️ [Shipping] Token Melhor Envio não configurado. Usando Fallback.');
-
-    const mockOptions = [
-      { id: 'correios-pac-mock', name: 'PAC (Estimado)', company: { name: 'Correios' }, price: '12.90', delivery_time: 5, currency: 'R$' },
-      { id: 'correios-sedex-mock', name: 'SEDEX (Estimado)', company: { name: 'Correios' }, price: '15.90', delivery_time: 2, currency: 'R$' }
-    ];
-
-    const results = [...mockOptions];
-    if (isLocalDelivery) {
-      results.unshift(pickupOption);
-    }
-
-    return res.json(results);
+  if (!melhorEnvioToken) {
+    console.warn('[Shipping] Token Melhor Envio nao configurado. Usando fallback configurado.');
+    const carrierOptions = buildFallbackCarrierOptions(shippingSettings, isLocalDelivery, totalWeight, totalValue);
+    return res.json(isLocalDelivery ? [pickupOption, ...carrierOptions] : carrierOptions);
   }
 
   try {
@@ -72,70 +126,49 @@ router.post('/calculate', async (req, res) => {
       { from, to, items: products },
       {
         headers: {
-          'Accept': 'application/json',
+          Accept: 'application/json',
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${MELHOR_ENVIO_TOKEN}`,
+          Authorization: `Bearer ${melhorEnvioToken}`,
           'User-Agent': 'RS-Prolipsi (operacoes@rsprolipsi.com.br)'
         },
         timeout: 5000
       }
-    ).catch(e => {
-      console.warn('⚠️ Erro axios Melhor Envio:', e.message);
-      return { data: [] }; // Retorna vazio para cair no merge abaixo
+    ).catch((error) => {
+      console.warn('[Shipping] Erro axios Melhor Envio:', error.message);
+      return { data: [] };
     });
 
     let options = Array.isArray(response.data) ? response.data : [];
 
-    // DEBUG: Log da resposta bruta do Melhor Envio
-    console.log(`[Shipping] Melhor Envio retornou ${options.length} opções:`);
-    options.forEach(opt => {
-      console.log(`  -> ${opt.name || opt.id}: price=${opt.price}, error=${opt.error || 'none'}`);
-    });
+    console.log(`[Shipping] Melhor Envio retornou ${options.length} opcoes`);
 
-    // FILTRAR: Remover opções com erro ou preço inválido
-    // O Melhor Envio retorna TODOS os serviços, incluso os indisponíveis (com error e price null)
     options = options
-      .filter(opt => {
-        // Excluir opções com campo error (serviço indisponível para essa rota)
+      .filter((opt) => {
         if (opt.error) return false;
-        // Excluir opções sem preço ou com preço não-numérico
         const price = parseFloat(String(opt.price).replace(',', '.'));
-        if (isNaN(price) || price < 0) return false;
+        if (Number.isNaN(price) || price < 0) return false;
         return true;
       })
-      .map(opt => ({
+      .map((opt) => ({
         ...opt,
         id: String(opt.id),
-        // Converter para número e depois para string com 2 decimais
         price: parseFloat(String(opt.price).replace(',', '.')).toFixed(2)
       }));
 
-    console.log(`[Shipping] Após filtro: ${options.length} opções válidas`);
-
-    // Se a API não retornou nada válido, injetamos mocks de Correios
     if (options.length === 0) {
-      console.warn('[Shipping] Nenhuma opção válida do Melhor Envio. Usando fallback.');
-      options = [
-        { id: 'correios-pac-mock', name: 'PAC (Estimado)', company: { name: 'Correios' }, price: '12.90', delivery_time: 5, currency: 'R$' },
-        { id: 'correios-sedex-mock', name: 'SEDEX (Estimado)', company: { name: 'Correios' }, price: '15.90', delivery_time: 2, currency: 'R$' }
-      ];
+      console.warn('[Shipping] Melhor Envio sem opcoes validas. Usando fallback configurado.');
+      options = buildFallbackCarrierOptions(shippingSettings, isLocalDelivery, totalWeight, totalValue);
     }
 
-    // Injetar frete local (Retirada Grátis) se aplicável
     if (isLocalDelivery) {
       options = [pickupOption, ...options];
     }
 
-
     res.json(options);
   } catch (error) {
-    console.error('❌ Erro inesperado no shipping calculation:', error.message);
-    const fallbackOptions = [
-      { id: 'correios-pac-err', name: 'PAC (Estimado)', company: { name: 'Correios' }, price: '12.90', delivery_time: 8, currency: 'R$' },
-      { id: 'correios-sedex-err', name: 'SEDEX (Estimado)', company: { name: 'Correios' }, price: '15.90', delivery_time: 4, currency: 'R$' }
-    ];
-    if (isLocalDelivery) fallbackOptions.unshift(pickupOption);
-    res.json(fallbackOptions);
+    console.error('[Shipping] Erro inesperado:', error.message);
+    const carrierOptions = buildFallbackCarrierOptions(shippingSettings, isLocalDelivery, totalWeight, totalValue);
+    res.json(isLocalDelivery ? [pickupOption, ...carrierOptions] : carrierOptions);
   }
 });
 

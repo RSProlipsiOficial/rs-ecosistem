@@ -1,6 +1,8 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { BioSite, UserProfile, AgencyClient, ClientPayment, SystemLog, Agency, PlanDefinition } from '../types';
 import { PLANS } from '../constants';
+import { buildMiniSiteCheckoutUrl } from '../ecosystemUrls';
+import { supabase } from '../supabaseClient';
 import {
   LayoutDashboard, Users, Briefcase, DollarSign, Settings, LogOut,
   Search, Shield, Crown, Globe, ChevronRight, TrendingUp, AlertCircle, FileText, Clock, X, Trash2, Edit2, Plus, Save, User, MapPin, Phone, Calendar, FileType, ChevronDown, ChevronUp, Eye, ShoppingBag
@@ -45,6 +47,30 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [isEditingPlans, setIsEditingPlans] = useState(false);
   const [tempPlans, setTempPlans] = useState<Record<string, PlanDefinition>>(plans);
   const [tempSettings, setTempSettings] = useState(globalSettings);
+
+  const openWalletPay = async () => {
+    const baseUrl = `http://${window.location.hostname}:3004`;
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token || '';
+
+    if (!token) {
+      window.open(baseUrl, '_blank', 'noopener,noreferrer');
+      return;
+    }
+
+    const payload = {
+      autoLogin: true,
+      source: 'minisite',
+      token,
+      userId: user.id,
+      userName: user.name,
+      userEmail: user.email,
+    };
+
+    const encodedPayload = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+    const url = `${baseUrl}/#/sso?token=${encodeURIComponent(encodedPayload)}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
 
   // Sync temp state when props change
   useEffect(() => {
@@ -333,7 +359,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <h2 className="text-2xl font-serif font-bold dark:text-white">Redirecionando para WalletPay...</h2>
             <p className="text-gray-500 max-w-md">O portal financeiro consolidado está sendo aberto em uma nova aba para sua segurança e conveniência.</p>
             <button
-              onClick={() => window.open('http://localhost:3004/#/app/dashboard', '_blank')}
+              onClick={openWalletPay}
               className="bg-rs-goldDark dark:bg-rs-gold text-black px-6 py-3 rounded-lg font-bold hover:opacity-90 transition-all"
             >
               Abrir WalletPay Agora
@@ -831,7 +857,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         <Shield size={14} /> Checkout Master Ativo
                       </div>
                       <div className="flex items-center gap-2 text-xs text-blue-500 bg-blue-500/10 p-2 rounded">
-                        <Globe size={14} /> Link de Venda: {window.location.origin}/checkout/{kit.toLowerCase()}
+                        <Globe size={14} /> Link de Venda: {buildMiniSiteCheckoutUrl(kit)}
                       </div>
                     </div>
                   </div>
@@ -1232,7 +1258,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           <MenuButton active={activeTab === 'plans'} onClick={() => setActiveTab('plans')} icon={<Crown size={18} />} label="Planos" />
 
           <div className="pt-4 mt-4 border-t border-white/5">
-            <MenuButton active={activeTab === 'walletpay'} onClick={() => window.open('http://localhost:3004/#/app/dashboard', '_blank')} icon={<DollarSign size={18} />} label="WalletPay" />
+            <MenuButton active={activeTab === 'walletpay'} onClick={openWalletPay} icon={<DollarSign size={18} />} label="WalletPay" />
             <MenuButton active={activeTab === 'logs'} onClick={() => setActiveTab('logs')} icon={<FileText size={18} />} label="Logs" />
           </div>
         </nav>

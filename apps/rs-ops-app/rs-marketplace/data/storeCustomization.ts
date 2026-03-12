@@ -69,13 +69,50 @@ export const initialStoreCustomization: StoreCustomization = {
   },
   orderBump: {
     enabled: true,
-    productId: '3', // DivaLipsi
+    productId: '486f290d-500f-4c1c-8889-f8d2db87c2bc',
     offerPrice: 99.90,
-    title: '🔥 SIM, EU QUERO ESTA OFERTA ESPECIAL!',
-    description: 'Adicione o DivaLipsi ao seu pedido por um preço exclusivo! Beleza e vitalidade feminina com desconto único.',
+    title: 'SIM, QUERO LEVAR O INFLAMAXI COM DESCONTO',
+    description: 'Regras iniciais do order bump do marketplace RS Prolipsi.',
+    triggerProductIds: ['802529e1-ead9-4eef-bf20-4ce63e25ec92'],
+    offers: [
+      { productId: '486f290d-500f-4c1c-8889-f8d2db87c2bc', offerPrice: 99.90 },
+    ],
+    rules: [
+      {
+        id: 'seed-pro3-inflamaxi',
+        name: 'Pro 3+ -> Inflamaxi',
+        title: 'SIM, QUERO LEVAR O INFLAMAXI COM DESCONTO',
+        description: 'Ao comprar o Pro 3+, adicione Inflamaxi ao pedido com preco especial.',
+        triggerProductIds: ['802529e1-ead9-4eef-bf20-4ce63e25ec92'],
+        offers: [
+          { productId: '486f290d-500f-4c1c-8889-f8d2db87c2bc', offerPrice: 99.90 },
+        ],
+      },
+      {
+        id: 'seed-alpha-diva',
+        name: 'AlphaLipsi -> DivaLipsi',
+        title: 'COMBINE COM DIVALIPSI E PAGUE MENOS',
+        description: 'Quem leva AlphaLipsi pode incluir DivaLipsi no mesmo pedido com valor promocional.',
+        triggerProductIds: ['d8da03a4-d45a-4390-8698-9a35d43647c8'],
+        offers: [
+          { productId: 'b98c42b9-52c5-478e-b172-faee36c6ba2c', offerPrice: 99.90 },
+        ],
+      },
+      {
+        id: 'seed-diva-alpha',
+        name: 'DivaLipsi -> AlphaLipsi',
+        title: 'LEVE TAMBEM O ALPHALIPSI COM DESCONTO',
+        description: 'Ao comprar DivaLipsi, ofereca AlphaLipsi como complemento com preco especial.',
+        triggerProductIds: ['b98c42b9-52c5-478e-b172-faee36c6ba2c'],
+        offers: [
+          { productId: 'd8da03a4-d45a-4390-8698-9a35d43647c8', offerPrice: 99.90 },
+        ],
+      },
+    ],
   },
   upsell: {
     enabled: true,
+    triggerProductId: '',
     productId: '2', // GlicoLipsi
     offerPrice: 109.90,
     title: '✨ OFERTA ÚNICA PÓS-COMPRA! ✨',
@@ -83,6 +120,7 @@ export const initialStoreCustomization: StoreCustomization = {
     acceptButtonText: 'Sim, adicionar ao meu pedido com 1 clique!',
     declineButtonText: 'Não, obrigado. Perder esta oferta.',
   },
+  promotionRequests: [],
   homepageSections: [
     { id: 'hero', name: 'Banner Principal (Hero)', enabled: true, order: 1 },
     { id: 'carousel', name: 'Carrossel de Banners', enabled: true, order: 2 },
@@ -473,3 +511,4 @@ footer a:hover, footer button:hover {
 }
 `,
 };
+

@@ -150,13 +150,18 @@ exports.getStatement = async (req, res) => {
  */
 exports.requestWithdraw = async (req, res) => {
   try {
-    const { user_id, amount, method, pix_key, bank_data } = req.body;
+    const rawUserId = req.body.user_id || req.user?.id;
+    const amount = Number(req.body.amount || 0);
+    const method = req.body.method || 'pix';
+    const pix_key = req.body.pix_key || req.body.bank_account_id || req.body.pixKeyId || null;
+    const bank_data = req.body.bank_data || null;
+    const consultorId = await resolveConsultorId(rawUserId);
 
     // Validar saldo
     const { data: wallet } = await supabase
       .from('wallets')
       .select('saldo_disponivel')
-      .eq('consultor_id', user_id)
+      .eq('consultor_id', consultorId)
       .single();
 
     if (wallet.saldo_disponivel < amount) {
@@ -174,7 +179,7 @@ exports.requestWithdraw = async (req, res) => {
     const { data, error } = await supabase
       .from('wallet_withdrawals')
       .insert({
-        user_id,
+        user_id: rawUserId,
         amount,
         fee,
         net_amount,
@@ -190,7 +195,7 @@ exports.requestWithdraw = async (req, res) => {
 
     // Bloquear saldo
     await supabase.rpc('block_balance', {
-      p_user_id: user_id,
+      p_user_id: consultorId,
       p_amount: amount
     });
 
@@ -352,11 +357,16 @@ exports.rejectWithdraw = async (req, res) => {
  */
 exports.transfer = async (req, res) => {
   try {
-    const { from_user_id, to_user_id, amount, description } = req.body;
+    const fromUserId = req.body.from_user_id || req.user?.id;
+    const toUserId = req.body.to_user_id;
+    const amount = Number(req.body.amount || 0);
+    const description = req.body.description || req.body.note || '';
+    const fromConsultorId = await resolveConsultorId(fromUserId);
+    const toConsultorId = await resolveConsultorId(toUserId);
 
     const { data, error } = await supabase.rpc('transfer_between_wallets', {
-      p_from_user_id: from_user_id,
-      p_to_user_id: to_user_id,
+      p_from_user_id: fromConsultorId,
+      p_to_user_id: toConsultorId,
       p_amount: amount,
       p_description: description
     });
@@ -385,7 +395,9 @@ exports.transfer = async (req, res) => {
  */
 exports.createPixKey = async (req, res) => {
   try {
-    const { user_id, key_type, key_value } = req.body;
+    const user_id = req.body.user_id || req.user?.id;
+    const key_type = req.body.key_type || req.body.type;
+    const key_value = req.body.key_value || req.body.key;
 
     const { data, error } = await supabase
       .from('wallet_pix_keys')
@@ -475,7 +487,9 @@ exports.deletePixKey = async (req, res) => {
  */
 exports.createDeposit = async (req, res) => {
   try {
-    const { user_id, amount, method } = req.body;
+    const user_id = req.body.user_id || req.user?.id;
+    const amount = Number(req.body.amount || 0);
+    const method = req.body.method || 'pix';
 
     const { data, error } = await supabase.rpc('process_deposit', {
       p_user_id: user_id,

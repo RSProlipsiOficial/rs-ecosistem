@@ -5,7 +5,7 @@
 
 const express = require('express');
 const router = express.Router();
-const { authenticateToken, isOwnerOrAdmin } = require('../middleware/auth');
+const { supabaseAuth, isOwnerOrAdmin } = require('../middlewares/supabaseAuth');
 const walletController = require('../controllers/wallet.controller');
 
 // ================================================
@@ -16,19 +16,19 @@ const walletController = require('../controllers/wallet.controller');
  * GET /api/wallet/balance/:userId
  * Retorna saldo disponível, bloqueado e total
  */
-router.get('/balance/:userId', authenticateToken, isOwnerOrAdmin, walletController.getBalance);
+router.get('/balance/:userId', supabaseAuth, isOwnerOrAdmin(), walletController.getBalance);
 
 /**
  * GET /api/wallet/transactions/:userId
  * Histórico de transações
  */
-router.get('/transactions/:userId', authenticateToken, isOwnerOrAdmin, walletController.getTransactions);
+router.get('/transactions/:userId', supabaseAuth, isOwnerOrAdmin(), walletController.getTransactions);
 
 /**
  * GET /api/wallet/statement/:userId
  * Extrato detalhado
  */
-router.get('/statement/:userId', authenticateToken, isOwnerOrAdmin, walletController.getStatement);
+router.get('/statement/:userId', supabaseAuth, isOwnerOrAdmin(), walletController.getStatement);
 
 // ================================================
 // SAQUES
@@ -38,25 +38,25 @@ router.get('/statement/:userId', authenticateToken, isOwnerOrAdmin, walletContro
  * POST /api/wallet/withdraw
  * Solicitar saque
  */
-router.post('/withdraw', authenticateToken, walletController.requestWithdraw);
+router.post('/withdraw', supabaseAuth, walletController.requestWithdraw);
 
 /**
  * GET /api/wallet/withdrawals/:userId
  * Histórico de saques
  */
-router.get('/withdrawals/:userId', authenticateToken, isOwnerOrAdmin, walletController.getWithdrawals);
+router.get('/withdrawals/:userId', supabaseAuth, isOwnerOrAdmin(), walletController.getWithdrawals);
 
 /**
  * PUT /api/wallet/withdraw/:id/approve
  * Aprovar saque (admin)
  */
-router.put('/withdraw/:id/approve', authenticateToken, walletController.approveWithdraw);
+router.put('/withdraw/:id/approve', supabaseAuth, walletController.approveWithdraw);
 
 /**
  * PUT /api/wallet/withdraw/:id/reject
  * Rejeitar saque (admin)
  */
-router.put('/withdraw/:id/reject', authenticateToken, walletController.rejectWithdraw);
+router.put('/withdraw/:id/reject', supabaseAuth, walletController.rejectWithdraw);
 
 // ================================================
 // TRANSFERÊNCIAS
@@ -66,7 +66,7 @@ router.put('/withdraw/:id/reject', authenticateToken, walletController.rejectWit
  * POST /api/wallet/transfer
  * Transferir entre contas
  */
-router.post('/transfer', authenticateToken, walletController.transfer);
+router.post('/transfer', supabaseAuth, walletController.transfer);
 
 // ================================================
 // PIX
@@ -76,19 +76,19 @@ router.post('/transfer', authenticateToken, walletController.transfer);
  * POST /api/wallet/pix/create
  * Cadastrar chave PIX
  */
-router.post('/pix/create', authenticateToken, walletController.createPixKey);
+router.post('/pix/create', supabaseAuth, walletController.createPixKey);
 
 /**
  * GET /api/wallet/pix/list/:userId
  * Listar chaves PIX
  */
-router.get('/pix/list/:userId', authenticateToken, isOwnerOrAdmin, walletController.listPixKeys);
+router.get('/pix/list/:userId', supabaseAuth, isOwnerOrAdmin(), walletController.listPixKeys);
 
 /**
  * DELETE /api/wallet/pix/:id
  * Remover chave PIX
  */
-router.delete('/pix/:id', authenticateToken, walletController.deletePixKey);
+router.delete('/pix/:id', supabaseAuth, walletController.deletePixKey);
 
 // ================================================
 // DÉBITO (PAGAMENTO COM SALDO)
@@ -98,13 +98,13 @@ router.delete('/pix/:id', authenticateToken, walletController.deletePixKey);
  * POST /api/wallet/debit
  * Debitar da carteira para pagamento
  */
-router.post('/debit', authenticateToken, walletController.debitWallet);
+router.post('/debit', supabaseAuth, walletController.debitWallet);
 
 /**
  * POST /api/wallet/credit
  * Creditar na carteira (Sistema/Bônus)
  */
-router.post('/credit', authenticateToken, walletController.creditWallet);
+router.post('/credit', supabaseAuth, walletController.creditWallet);
 
 // ================================================
 // DEPÓSITOS
@@ -114,13 +114,13 @@ router.post('/credit', authenticateToken, walletController.creditWallet);
  * POST /api/wallet/deposit
  * Criar depósito
  */
-router.post('/deposit', authenticateToken, walletController.createDeposit);
+router.post('/deposit', supabaseAuth, walletController.createDeposit);
 
 /**
  * POST /api/wallet/deposit/confirm
  * Confirmar depósito
  */
-router.post('/deposit/confirm', authenticateToken, walletController.confirmDeposit);
+router.post('/deposit/confirm', supabaseAuth, walletController.confirmDeposit);
 
 // ================================================
 // WEBHOOKS

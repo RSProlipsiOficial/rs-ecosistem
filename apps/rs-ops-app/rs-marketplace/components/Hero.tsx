@@ -33,36 +33,42 @@ const Hero: React.FC<HeroProps> = ({ content }) => {
 
   // Detect if the videoUrl is a YouTube embed URL
   const isYouTube = content.videoUrl?.includes('youtube.com') || content.videoUrl?.includes('youtu.be');
+  const heroDesktopImage = content.desktopImage || content.mobileImage;
+  const heroMobileImage = content.mobileImage || content.desktopImage;
+  const videoPoster = content.videoPoster || heroDesktopImage || heroMobileImage;
+  const shouldRenderBackgroundImage = Boolean((!content.videoUrl || isYouTube || videoPoster) && (heroDesktopImage || heroMobileImage));
 
   return (
     <>
-      {/* Only inject CSS background if no video */}
-      {!content.videoUrl && (
-        <style>{`
-          .hero-section {
-            background-image: url('${content.mobileImage || ''}');
-          }
-          @media (min-width: 768px) {
-            .hero-section {
-              background-image: url('${content.desktopImage || ''}');
-            }
-          }
-        `}</style>
-      )}
       <section
-        className={`hero-section relative h-[60vh] md:h-[70vh] flex items-center justify-center text-center overflow-hidden ${!content.videoUrl ? 'bg-cover bg-center' : 'bg-[rgb(var(--color-brand-dark))]'}`}
+        className={`relative h-[60vh] md:h-[70vh] flex items-center justify-center text-center overflow-hidden bg-[rgb(var(--color-brand-dark))]`}
         style={{ backgroundColor: content.backgroundColor || 'transparent' }}
       >
+        {shouldRenderBackgroundImage && (
+          <picture className="absolute inset-0 block">
+            {heroDesktopImage ? <source media="(min-width: 768px)" srcSet={heroDesktopImage} /> : null}
+            <img
+              src={heroMobileImage || heroDesktopImage}
+              alt=""
+              loading="eager"
+              decoding="async"
+              className="absolute inset-0 w-full h-full object-cover"
+              aria-hidden="true"
+            />
+          </picture>
+        )}
+
         {/* Video Background */}
         {content.videoUrl && !isYouTube && (
           <video
             ref={videoRef}
             src={content.videoUrl}
-            poster={content.videoPoster || content.desktopImage || ''}
+            poster={videoPoster || undefined}
             autoPlay
             loop
             muted
             playsInline
+            preload="metadata"
             className="absolute inset-0 w-full h-full object-cover"
             aria-hidden="true"
           />
@@ -80,6 +86,7 @@ const Hero: React.FC<HeroProps> = ({ content }) => {
               className="absolute inset-0 w-full h-full pointer-events-none"
               style={{ transform: 'scale(1.5)', objectFit: 'cover', border: 'none' }}
               allow="autoplay; encrypted-media"
+              loading="eager"
               aria-hidden="true"
             />
           );

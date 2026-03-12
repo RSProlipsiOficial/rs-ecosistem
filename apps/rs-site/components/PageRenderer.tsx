@@ -53,16 +53,39 @@ const ProductBanner: React.FC<{ productId: string }> = ({ productId }) => {
 
 
 const PageRenderer: React.FC<PageRendererProps> = ({ page }) => {
-  const { isAdmin, isEditMode, setOpenAdminSection } = useAdmin();
+  const { isAdmin, isEditMode, isPreviewEditor, setOpenAdminSection } = useAdmin();
 
   const handleEditContainer = (containerId: string) => {
     setOpenAdminSection('pages', page.id, containerId);
   };
 
+  const getPreviewEditProps = (containerId: string) => {
+    if (!(isAdmin && isEditMode && isPreviewEditor)) {
+      return {};
+    }
+
+    return {
+      onClick: (event: React.MouseEvent<HTMLElement>) => {
+        event.preventDefault();
+        event.stopPropagation();
+        handleEditContainer(containerId);
+      },
+      className: 'cursor-pointer',
+    };
+  };
+
   const renderContainer = (container: ContentContainer) => {
     // The Hero section is a special case that manages its own full-height structure and shouldn't be wrapped
     if (container.type === 'hero') {
-      return <HeroSection key={container.id} container={container} onEdit={() => handleEditContainer(container.id)} pageId={page.id} />;
+      return (
+        <HeroSection
+          key={container.id}
+          container={container}
+          onEdit={() => handleEditContainer(container.id)}
+          pageId={page.id}
+          backgroundBanner={page.backgroundBanner}
+        />
+      );
     }
     
     const hasBackgroundImage = container.styles?.backgroundImage && container.styles.backgroundImage !== "url('')";
@@ -125,12 +148,12 @@ const PageRenderer: React.FC<PageRendererProps> = ({ page }) => {
         );
         if (isAdmin && isEditMode) {
              componentToRender = (
-                <div className="relative group editable-container-wrapper">
+                <div className={`relative group editable-container-wrapper ${isPreviewEditor ? 'cursor-pointer' : ''}`} {...getPreviewEditProps(container.id)}>
                     {genericContent}
-                    <div className="absolute inset-0 border-2 border-dashed border-transparent group-hover:border-blue-500 transition-all pointer-events-none rounded-lg"></div>
+                    <div className={`absolute inset-0 border-2 border-dashed pointer-events-none rounded-lg transition-all ${isPreviewEditor ? 'border-accent/50 group-hover:border-accent' : 'border-transparent group-hover:border-blue-500'}`}></div>
                     <button
                         onClick={() => handleEditContainer(container.id)}
-                        className="absolute top-2 right-2 w-7 h-7 bg-accent text-button-text rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-30"
+                        className={`absolute top-2 right-2 w-7 h-7 bg-accent text-button-text rounded-full flex items-center justify-center transition-opacity z-30 ${isPreviewEditor ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
                         aria-label="Edit Content Container"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
@@ -138,6 +161,11 @@ const PageRenderer: React.FC<PageRendererProps> = ({ page }) => {
                             <path fillRule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clipRule="evenodd" />
                         </svg>
                     </button>
+                    {isPreviewEditor && (
+                        <div className="pointer-events-none absolute bottom-2 right-2 rounded-full border border-accent/40 bg-background/85 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-accent">
+                            Editar bloco
+                        </div>
+                    )}
                 </div>
             );
         } else {
@@ -147,11 +175,21 @@ const PageRenderer: React.FC<PageRendererProps> = ({ page }) => {
     
     // Wrap all other components in a <section> for consistent styling and the overlay.
     return (
-      <section key={container.id} style={sectionStyle} className={sectionClassName}>
+      <section
+        key={container.id}
+        style={sectionStyle}
+        className={[sectionClassName, isAdmin && isEditMode && isPreviewEditor ? 'group/section-edit cursor-pointer' : ''].filter(Boolean).join(' ')}
+        {...getPreviewEditProps(container.id)}
+      >
         {hasBackgroundImage && <div className="absolute inset-0 bg-gradient-to-b from-background/70 via-background/80 to-background/95 z-0"></div>}
         <div className={hasBackgroundImage ? 'relative z-10' : ''}>
             {componentToRender}
         </div>
+        {isAdmin && isEditMode && isPreviewEditor && (
+          <div className="pointer-events-none absolute right-4 top-4 z-20 rounded-full border border-accent/40 bg-background/85 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-accent">
+            Clique para editar
+          </div>
+        )}
       </section>
     );
   };

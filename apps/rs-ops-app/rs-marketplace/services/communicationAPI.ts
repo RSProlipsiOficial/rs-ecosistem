@@ -1,30 +1,40 @@
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
 
+const DEFAULT_TENANT_ID = 'd107da4e-e266-41b0-947a-0c66b2f2b9ef';
+const PLACEHOLDER_TENANT_ID = '00000000-0000-0000-0000-000000000000';
+
+function isValidTenantId(value?: string | null): value is string {
+    return Boolean(value && value.trim() && value !== PLACEHOLDER_TENANT_ID);
+}
+
 function resolveTenantId(): string {
     const envTenant = import.meta.env.VITE_TENANT_ID;
 
     try {
         const qs = new URLSearchParams(window.location.search);
         const fromQuery = qs.get('tenantId');
-        if (fromQuery && fromQuery.length > 0) {
+        if (isValidTenantId(fromQuery)) {
             localStorage.setItem('rs-tenant-id', fromQuery);
             return fromQuery;
         }
         const hash = (window.location.hash || '').toLowerCase();
         const m = hash.match(/tenant=([0-9a-f\-]{36})/);
-        if (m && m[1]) {
+        if (isValidTenantId(m?.[1])) {
             localStorage.setItem('rs-tenant-id', m[1]);
             return m[1];
         }
 
         // Prioriza o .env sobre o Local Storage para evitar cache fantasma de tenant
-        if (envTenant) return envTenant;
+        if (isValidTenantId(envTenant)) {
+            localStorage.setItem('rs-tenant-id', envTenant);
+            return envTenant;
+        }
 
         const fromStorage = localStorage.getItem('rs-tenant-id');
-        if (fromStorage && fromStorage.length > 0) return fromStorage;
+        if (isValidTenantId(fromStorage)) return fromStorage;
     } catch { }
 
-    return envTenant || '00000000-0000-0000-0000-000000000000';
+    return isValidTenantId(envTenant) ? envTenant : DEFAULT_TENANT_ID;
 }
 
 let TENANT_ID = resolveTenantId();
@@ -38,6 +48,7 @@ const apiFetch = async (path: string, options: RequestInit = {}) => {
     if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`);
     return data;
 };
+
 
 // Interfaces que correspondem às tabelas do Supabase
 export interface Announcement {
@@ -126,7 +137,7 @@ const communicationAPI = {
     announcements: {
         getAll: async (): Promise<ApiResponse<Announcement[]>> => {
             try {
-                const r = await apiFetch(`/v1/communications/announcements?tenantId=${TENANT_ID}&audience=marketplace`);
+                const r = await apiFetch(`/v1/communications/announcements?tenantId=${TENANT_ID}`);
                 const data = r?.data || r;
                 return { success: true, data: Array.isArray(data) ? data : [] };
             } catch (error: any) {
@@ -161,6 +172,15 @@ const communicationAPI = {
         getAll: async (): Promise<ApiResponse<Training[]>> => {
             try {
                 const r = await apiFetch(`/v1/communications/trainings?tenantId=${TENANT_ID}`);
+                const data = r?.data || r;
+                return { success: true, data: Array.isArray(data) ? data : [] };
+            } catch (error: any) {
+                return { success: false, error: error.message };
+            }
+        },
+        getProgress: async (userId: string): Promise<ApiResponse<any[]>> => {
+            try {
+                const r = await apiFetch(`/consultor/communications/training-progress?tenantId=${TENANT_ID}&userId=${encodeURIComponent(userId)}`);
                 const data = r?.data || r;
                 return { success: true, data: Array.isArray(data) ? data : [] };
             } catch (error: any) {

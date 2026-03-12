@@ -5,7 +5,7 @@
 
 const express = require('express');
 const router = express.Router();
-const { authenticateToken } = require('../middleware/auth');
+const { supabaseAuth, isOwnerOrAdmin } = require('../middlewares/supabaseAuth');
 const marketplaceController = require('../controllers/marketplace.controller');
 
 // ================================================
@@ -14,48 +14,48 @@ const marketplaceController = require('../controllers/marketplace.controller');
 
 router.get('/products', marketplaceController.listProducts);
 router.get('/products/:id', marketplaceController.getProduct);
-router.post('/products', authenticateToken, marketplaceController.createProduct);
-router.put('/products/:id', authenticateToken, marketplaceController.updateProduct);
-router.delete('/products/:id', authenticateToken, marketplaceController.deleteProduct);
+router.post('/products', supabaseAuth, marketplaceController.createProduct);
+router.put('/products/:id', supabaseAuth, marketplaceController.updateProduct);
+router.delete('/products/:id', supabaseAuth, marketplaceController.deleteProduct);
 
 // ================================================
 // CATEGORIAS
 // ================================================
 
 router.get('/categories', marketplaceController.listCategories);
-router.post('/categories', authenticateToken, marketplaceController.createCategory);
+router.post('/categories', supabaseAuth, marketplaceController.createCategory);
 
 // ================================================
 // PEDIDOS
 // ================================================
 
-router.post('/orders', authenticateToken, marketplaceController.createOrder);
-router.get('/orders/:userId', authenticateToken, marketplaceController.getUserOrders);
-router.get('/orders/detail/:id', authenticateToken, marketplaceController.getOrderDetail);
-router.put('/orders/:id/status', authenticateToken, marketplaceController.updateOrderStatus);
+router.post('/orders', supabaseAuth, marketplaceController.createOrder);
+router.get('/orders/:userId', supabaseAuth, isOwnerOrAdmin(), marketplaceController.getUserOrders);
+router.get('/orders/detail/:id', supabaseAuth, marketplaceController.getOrderDetail);
+router.put('/orders/:id/status', supabaseAuth, marketplaceController.updateOrderStatus);
 
 // ================================================
 // CARRINHO
 // ================================================
 
-router.post('/cart/add', authenticateToken, marketplaceController.addToCart);
-router.get('/cart/:userId', authenticateToken, marketplaceController.getCart);
-router.delete('/cart/:id', authenticateToken, marketplaceController.removeFromCart);
+router.post('/cart/add', supabaseAuth, marketplaceController.addToCart);
+router.get('/cart/:userId', supabaseAuth, isOwnerOrAdmin(), marketplaceController.getCart);
+router.delete('/cart/:id', supabaseAuth, marketplaceController.removeFromCart);
 
 // ================================================
 // AFILIAÇÃO
 // ================================================
 
-router.post('/affiliate/link', authenticateToken, marketplaceController.generateAffiliateLink);
-router.get('/commission/:userId', authenticateToken, marketplaceController.getCommissions);
-router.get('/sales/:userId', authenticateToken, marketplaceController.getSales);
+router.post('/affiliate/link', supabaseAuth, marketplaceController.generateAffiliateLink);
+router.get('/commission/:userId', supabaseAuth, isOwnerOrAdmin(), marketplaceController.getCommissions);
+router.get('/sales/:userId', supabaseAuth, isOwnerOrAdmin(), marketplaceController.getSales);
 
 // ================================================
 // DROPSHIPPING
 // ================================================
 
-router.post('/dropship/order', authenticateToken, marketplaceController.createDropshipOrder);
-router.get('/dropship/suppliers', authenticateToken, marketplaceController.listSuppliers);
+router.post('/dropship/order', supabaseAuth, marketplaceController.createDropshipOrder);
+router.get('/dropship/suppliers', supabaseAuth, marketplaceController.listSuppliers);
 
 // ================================================
 // PIXELS E TRACKING
@@ -68,7 +68,7 @@ router.post('/track/event', marketplaceController.trackEvent);
 // AVALIAÇÕES
 // ================================================
 
-router.post('/review', authenticateToken, marketplaceController.createReview);
+router.post('/review', supabaseAuth, marketplaceController.createReview);
 router.get('/reviews/:productId', marketplaceController.getProductReviews);
 
 module.exports = router;

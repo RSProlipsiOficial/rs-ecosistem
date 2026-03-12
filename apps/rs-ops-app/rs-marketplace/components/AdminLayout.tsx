@@ -9,7 +9,6 @@ import { WalletIcon } from './icons/WalletIcon';
 import { ChatBubbleLeftRightIcon } from './icons/ChatBubbleLeftRightIcon';
 import { BellIcon } from './icons/BellIcon';
 import { UserIcon } from './icons/UserIcon';
-import { SparklesIcon } from './icons/SparklesIcon';
 import { CogIcon } from './icons/CogIcon';
 import { AdjustmentsHorizontalIcon } from './icons/AdjustmentsHorizontalIcon';
 import { ChevronDoubleLeftIcon } from './icons/ChevronDoubleLeftIcon';
@@ -20,11 +19,14 @@ import { ArrowTopRightOnSquareIcon } from './icons/ArrowTopRightOnSquareIcon';
 import { BuildingStorefrontIcon } from './icons/BuildingStorefrontIcon';
 import { LogoutIcon } from './icons/LogoutIcon';
 import { ShoppingBagIcon } from './icons/ShoppingBagIcon';
-const WALLETPAY_URL = (import.meta as any).env?.VITE_WALLETPAY_URL || 'http://localhost:3005';
+const WALLETPAY_URL = (import.meta as any).env?.VITE_WALLETPAY_URL || 'http://localhost:3004';
+const MINISITE_URL = (import.meta as any).env?.VITE_MINISITE_URL || 'http://localhost:3030';
+const CONSULTOR_URL = (import.meta as any).env?.VITE_CONSULTOR_URL || 'http://localhost:3002';
 const RS_CDS_URL = (import.meta as any).env?.VITE_RS_CDS_URL || 'http://localhost:3203';
-const RS_DROP_URL = (import.meta as any).env?.VITE_RS_DROP_URL || 'http://localhost:3103';
+const RS_DROP_URL = (import.meta as any).env?.VITE_RS_DROP_URL || 'http://localhost:2021';
 
-import { distributorsAPI } from '../services/marketplaceAPI';
+import { adminSettingsAPI, distributorsAPI } from '../services/marketplaceAPI';
+import { supabase } from '../services/supabase';
 
 
 interface AdminLayoutProps {
@@ -35,12 +37,79 @@ interface AdminLayoutProps {
     onLogout: () => void;
 }
 
+const DEFAULT_AVATAR_URL = 'https://raw.githubusercontent.com/RS-Prolipsi/assets/main/logo_rs_gold.png';
+
+const normalizeAvatarUrl = (value: unknown) => {
+    if (typeof value !== 'string') return '';
+    const trimmed = value.trim();
+    if (!trimmed || ['null', 'undefined', '[object Object]'].includes(trimmed)) return '';
+    return trimmed;
+};
+
+type NavLink = {
+    label: string;
+    view?: View;
+    href?: string;
+    external?: boolean;
+};
+
+type NavGroupItem = {
+    main: {
+        icon: React.ElementType;
+        label: string;
+        view?: View;
+        href?: string;
+        external?: boolean;
+    };
+    subLinks?: NavLink[];
+	locked?: boolean;
+};
+
+const buildWalletPayUrl = () => {
+    const token = localStorage.getItem('token') || '';
+    if (!token) {
+        return WALLETPAY_URL;
+    }
+
+    const payload = {
+        autoLogin: true,
+        source: 'marketplace',
+        token,
+        userId: localStorage.getItem('userId') || '',
+        userName: localStorage.getItem('userName') || '',
+        userEmail: localStorage.getItem('userEmail') || '',
+    };
+
+    const encodedPayload = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+    return `${WALLETPAY_URL}/#/sso?token=${encodeURIComponent(encodedPayload)}`;
+};
+
+const buildEcosystemUrl = (baseUrl: string) => {
+    const token = localStorage.getItem('token') || '';
+
+    if (!token) {
+        return baseUrl;
+    }
+
+    const payload = {
+        autoLogin: true,
+        source: 'marketplace',
+        token,
+        userId: localStorage.getItem('userId') || '',
+        userName: localStorage.getItem('userName') || '',
+        userEmail: localStorage.getItem('userEmail') || '',
+    };
+
+    const encodedPayload = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+    return `${baseUrl}/#/sso?token=${encodeURIComponent(encodedPayload)}`;
+};
+
 const navGroups = [
     {
         main: { icon: DashboardIcon, label: "Dashboard", view: "consultantStore" as View }
     },
     {
-        main: { icon: SparklesIcon, label: "RS Studio", view: "rsStudio" as View }
+        main: { icon: StorefrontIcon, label: "Loja Online", view: "home" as View }
     },
     {
         main: { icon: ChatBubbleLeftRightIcon, label: "Comunicação", view: "communication" as View }
@@ -55,9 +124,21 @@ const navGroups = [
             { label: 'Cupons', view: 'managePromotions' as View },
             { label: 'Order Bump', view: 'manageOrderBump' as View },
             { label: 'Upsell', view: 'manageUpsell' as View },
+            { label: 'Impulsionamento', view: 'managePromotionBoost' as View },
             { label: 'Carrinhos Abandonados', view: 'manageAbandonedCarts' as View },
             { label: 'Avaliações', view: 'manageReviews' as View },
             { label: 'Links de Indicação', view: 'manageAffiliates' as View },
+        ]
+    },
+    {
+        main: { icon: WalletIcon, label: "WalletPay", href: WALLETPAY_URL, external: true },
+        subLinks: [
+            { label: 'VisÃ£o Geral', view: 'walletOverview' as View },
+            { label: 'Extrato de Vendas', view: 'walletReports' as View },
+            { label: 'TransferÃªncias', view: 'walletTransfers' as View },
+            { label: 'CobranÃ§as', view: 'walletCharges' as View },
+            { label: 'ConfiguraÃ§Ãµes', view: 'walletSettings' as View },
+            { label: 'Abrir WalletPay', href: WALLETPAY_URL, external: true },
         ]
     },
 
@@ -78,19 +159,21 @@ const navGroups = [
     },
     { isSeparator: true, title: "ECOSSISTEMA" },
     {
-        main: { icon: BuildingStorefrontIcon, label: "Centros (RS-CD)", view: "rsCD" as View }
+        main: { icon: UserIcon, label: "Escritorio RS", href: CONSULTOR_URL, external: true }
     },
     {
-        main: { icon: ShoppingBagIcon, label: "Market / Drop", view: "rsControleDrop" as View }
+        main: { icon: DocumentTextIcon, label: "RS MiniSite", href: MINISITE_URL, external: true }
     },
     {
-        main: { icon: WalletIcon, label: "Finanças / WalletPay", view: "walletOverview" as View }
+        main: { icon: ShoppingBagIcon, label: 'RS DROP', view: 'rsControleDrop' as View }
     }
 ];
 
 
+
+
 const NavItem: React.FC<{
-    item: { main: { icon: React.ElementType; label: string; view: View; }, subLinks?: { label: string; view: View; }[] };
+    item: NavGroupItem;
     isCollapsed: boolean;
     currentView: View;
     onNavigate: (view: View) => void;
@@ -118,19 +201,51 @@ const NavItem: React.FC<{
     }, [isCollapsed]);
 
 
-    const handleMainClick = () => {
+		const handleMainClick = () => {
+			if (main.href) {
+				const targetHref =
+                    main.href === WALLETPAY_URL
+                        ? buildWalletPayUrl()
+                        : main.href === MINISITE_URL || main.href === CONSULTOR_URL
+                            ? buildEcosystemUrl(main.href)
+                            : main.href;
+				window.open(targetHref, main.external ? '_blank' : '_self', main.external ? 'noopener,noreferrer' : undefined);
+				setIsPopoverOpen(false);
+				setIsSubMenuOpen(false);
+			return;
+        }
+
         if (isCollapsed) {
             if (subLinks) {
                 setIsPopoverOpen(p => !p);
             } else {
-                onNavigate(main.view);
+                if (main.view) onNavigate(main.view);
             }
         } else {
             if (subLinks) {
                 setIsSubMenuOpen(p => !p);
             } else {
-                onNavigate(main.view);
+                if (main.view) onNavigate(main.view);
             }
+        }
+    };
+
+		const handleSubLinkClick = (sub: NavLink) => {
+			if (sub.href) {
+				const targetHref =
+                    sub.href === WALLETPAY_URL
+                        ? buildWalletPayUrl()
+                        : sub.href === MINISITE_URL || sub.href === CONSULTOR_URL
+                            ? buildEcosystemUrl(sub.href)
+                            : sub.href;
+				window.open(targetHref, sub.external ? '_blank' : '_self', sub.external ? 'noopener,noreferrer' : undefined);
+				setIsPopoverOpen(false);
+				return;
+        }
+
+        if (sub.view) {
+            onNavigate(sub.view);
+            setIsPopoverOpen(false);
         }
     };
 
@@ -145,7 +260,7 @@ const NavItem: React.FC<{
                     <main.icon className={`h-6 w-6 flex-shrink-0 transition-colors ${isActive ? 'text-[rgb(var(--color-brand-gold))]' : 'text-[rgb(var(--color-brand-text-dim))]'} group-hover:text-[rgb(var(--color-brand-gold))]`} />
                     {!isCollapsed && <span className="truncate">{main.label}</span>}
                 </div>
-                {!isCollapsed && subLinks && (
+                {!isCollapsed && subLinks && !main.external && (
                     <span className={`transform transition-transform text-xs ${isSubMenuOpen ? 'rotate-180' : ''}`}>▼</span>
                 )}
                 {isActive && <div className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-1 bg-[rgb(var(--color-brand-gold))] rounded-r-full"></div>}
@@ -157,10 +272,10 @@ const NavItem: React.FC<{
             </button>
 
             {/* Expanded Submenu */}
-            {!isCollapsed && isSubMenuOpen && subLinks && (
+            {!isCollapsed && isSubMenuOpen && subLinks && !main.external && (
                 <div className="pl-8 pt-2 space-y-1">
                     {subLinks.map(sub => (
-                        <button key={sub.view} onClick={() => onNavigate(sub.view)}
+                        <button key={sub.view || sub.label} onClick={() => handleSubLinkClick(sub)}
                             className={`w-full text-left pl-5 pr-2 py-2 rounded-md text-sm transition-colors relative ${currentView === sub.view ? 'text-white font-semibold' : 'text-[rgb(var(--color-brand-text-dim))] hover:bg-[rgb(var(--color-brand-gray-light))]'}`}>
                             {currentView === sub.view && <div className="absolute left-0 top-1/2 -translate-y-1/2 h-1.5 w-1.5 bg-[rgb(var(--color-brand-gold))] rounded-full"></div>}
                             {sub.label}
@@ -170,10 +285,10 @@ const NavItem: React.FC<{
             )}
 
             {/* Collapsed Popover Submenu */}
-            {isCollapsed && isPopoverOpen && subLinks && (
+            {isCollapsed && isPopoverOpen && subLinks && !main.external && (
                 <div className="absolute left-full top-0 ml-2 z-50 w-56 bg-[rgba(30,30,30,0.8)] backdrop-blur-md border border-[rgb(var(--color-brand-gold))]/20 rounded-lg shadow-2xl p-2 animate-fade-in-fast">
                     {subLinks.map(sub => (
-                        <button key={sub.view} onClick={() => onNavigate(sub.view)}
+                        <button key={sub.view || sub.label} onClick={() => handleSubLinkClick(sub)}
                             className={`w-full text-left px-3 py-2 text-sm rounded-md transition-colors ${currentView === sub.view ? 'text-[rgb(var(--color-brand-gold))] font-semibold bg-[rgb(var(--color-brand-gray))]' : 'text-white hover:bg-[rgb(var(--color-brand-gray))]'}`}>
                             {sub.label}
                         </button>
@@ -190,8 +305,56 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ title, children, curre
     const isSuperAdmin = (typeof window !== 'undefined' && (localStorage.getItem('rs-role') === 'super_admin' || (localStorage.getItem('rs-user-permissions') || '').includes('super_admin')));
 
     const [hasCDAccess, setHasCDAccess] = useState(false);
+    // hasStore: true se o consultor tem uma loja cadastrada e ativa
+    const [hasStore, setHasStore] = useState(() => {
+        // Verifica imediatamente pelo localStorage para evitar flash
+        const profile = localStorage.getItem('rs-consultant-full-profile') || localStorage.getItem('rs-consultant-profile');
+        if (profile) {
+            try { const p = JSON.parse(profile); return !!(p.storeId || p.store_id || p.hasStore || isSuperAdmin); } catch { }
+        }
+        return isSuperAdmin; // super_admin sempre tem acesso
+    });
+    const [panelBranding, setPanelBranding] = useState({
+        logo: '/logo-rs.png',
+        companyName: 'RS Prólipsi'
+    });
+
+    // Perfil do user inicializado de cara para evitar flicker (piscada)
+    const [headerImgError, setHeaderImgError] = useState(false);
+    const [sidebarImgError, setSidebarImgError] = useState(false);
+    const readLocalConsultantProfile = useCallback(() => {
+        if (typeof window === 'undefined') return null;
+        try {
+            const profileRaw = localStorage.getItem('rs-consultant-full-profile') || localStorage.getItem('rs-consultant-profile');
+            if (!profileRaw) return null;
+            const parsed = JSON.parse(profileRaw);
+            const resolvedAvatar = normalizeAvatarUrl(parsed?.avatarUrl || parsed?.avatar_url);
+            return {
+                ...parsed,
+                avatarUrl: resolvedAvatar || DEFAULT_AVATAR_URL,
+                name: parsed?.name || parsed?.full_name || parsed?.nome_completo || 'Consultor'
+            };
+        } catch {
+            return null;
+        }
+    }, []);
+    const [localProfile, setLocalProfile] = useState<any>(() => readLocalConsultantProfile());
 
     useEffect(() => {
+        // Escutar mudanças no localStorage (ex: usuário atualiza na aba de Configurações)
+        const syncProfileFromStorage = () => {
+            setLocalProfile(readLocalConsultantProfile());
+        };
+        const handleStorageChange = (e: StorageEvent) => {
+            if (e.key === 'rs-consultant-profile' || e.key === 'rs-consultant-full-profile') {
+                syncProfileFromStorage();
+            }
+        };
+        const handleProfileUpdated = () => syncProfileFromStorage();
+        window.addEventListener('storage', handleStorageChange);
+        window.addEventListener('rs-consultant-profile-updated', handleProfileUpdated as EventListener);
+        syncProfileFromStorage();
+
         // Forçar o sidebar aberto por padrão (ignorar valores antigos do localStorage)
         try {
             localStorage.removeItem('rs-mp-sidebar-open');
@@ -199,7 +362,44 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ title, children, curre
         setIsSidebarOpen(true);
 
         checkCDAccess();
+
+        return () => {
+            window.removeEventListener('storage', handleStorageChange);
+            window.removeEventListener('rs-consultant-profile-updated', handleProfileUpdated as EventListener);
+        };
+    }, [readLocalConsultantProfile]);
+
+    useEffect(() => {
+        const fetchPanelBranding = async () => {
+            const result = await adminSettingsAPI.getGeneralSettings();
+            const brandingData = result?.data?.data || result?.data;
+            if (brandingData) {
+                setPanelBranding({
+                    logo: brandingData.logo || '/logo-rs.png',
+                    companyName: brandingData.companyName || 'RS Prólipsi'
+                });
+            }
+        };
+
+        fetchPanelBranding();
+
+        const handleStorageChange = (e: StorageEvent) => {
+            if (e.key === 'rs-branding-update') {
+                fetchPanelBranding();
+            }
+        };
+
+        window.addEventListener('storage', handleStorageChange);
+        return () => window.removeEventListener('storage', handleStorageChange);
     }, []);
+
+    useEffect(() => {
+        setHeaderImgError(false);
+    }, [localProfile?.avatarUrl]);
+
+    useEffect(() => {
+        setSidebarImgError(false);
+    }, [panelBranding.logo]);
 
     const checkCDAccess = async () => {
         try {
@@ -214,6 +414,29 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ title, children, curre
             console.error("Error checking CD access", error);
         }
     };
+
+    // Todo consultor cadastrado tem acesso direto ao Minha Loja
+    useEffect(() => {
+        const checkStore = async () => {
+            if (isSuperAdmin) { setHasStore(true); return; }
+            try {
+                const { data: { session } } = await supabase.auth.getSession();
+                if (!session?.user) return;
+                // Qualquer consultor cadastrado na tabela consultores tem acesso
+                const { data } = await supabase
+                    .from('consultores')
+                    .select('id')
+                    .eq('user_id', session.user.id)
+                    .maybeSingle();
+                if (data?.id) { setHasStore(true); return; }
+            } catch { }
+            // Fallback: se tiver user-id salvo, assume que é consultor
+            const userId = localStorage.getItem('rs-user-id');
+            if (userId) setHasStore(true);
+        };
+        checkStore();
+    }, [isSuperAdmin]);
+
     useEffect(() => {
         localStorage.setItem('rs-mp-sidebar-open', isSidebarOpen ? '1' : '0');
     }, [isSidebarOpen]);
@@ -227,6 +450,13 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ title, children, curre
                 return sl.view === 'storeEditor';
             });
             return base;
+        }
+        // Minha Loja: oculta seção inteira se não tiver loja
+        if (g.main.label === 'Minha Loja' && !hasStore) {
+            return {
+                ...g,
+                locked: true, // flag para renderizar como bloqueado
+            } as any;
         }
         return g as any;
     });
@@ -255,17 +485,18 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ title, children, curre
                 `}
             >
                 <div className="flex items-center justify-between h-20 px-3 mb-6 flex-shrink-0 border-b border-[rgb(var(--color-brand-gold))]/10">
-                    <div className="flex items-center gap-3">
-                        <img
-                            src="https://raw.githubusercontent.com/RS-Prolipsi/assets/main/logo_rs_gold.png"
-                            alt="RS Prólipsi"
-                            className={`transition-all duration-300 ${isSidebarOpen ? 'w-10 h-10' : 'w-12 h-12'}`}
-                        />
-                        {isSidebarOpen && (
-                            <div className="flex flex-col">
-                                <span className="text-lg font-black text-white leading-none tracking-tighter">RS PRÓLIPSI</span>
-                                <span className="text-[10px] font-bold text-[rgb(var(--color-brand-gold))] uppercase tracking-[0.2em] opacity-80">Ecosystem</span>
-                            </div>
+                    <div className={`flex-1 flex items-center ${isSidebarOpen ? 'justify-center' : 'justify-start'}`}>
+                        {!sidebarImgError ? (
+                            <img
+                                src={panelBranding.logo}
+                                alt={panelBranding.companyName}
+                                className={`object-contain transition-all duration-300 ${isSidebarOpen ? 'h-8 max-w-[170px]' : 'h-10 w-10'}`}
+                                onError={() => setSidebarImgError(true)}
+                            />
+                        ) : (
+                            <span className={`font-black text-white truncate ${isSidebarOpen ? 'text-lg' : 'text-xs'}`}>
+                                {panelBranding.companyName}
+                            </span>
                         )}
                     </div>
                     <button
@@ -288,8 +519,6 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ title, children, curre
                 </button>
                 <nav className="flex-grow space-y-1 overflow-y-auto pr-1">
                     {[...filteredNavGroups].map((group: any, index: number) => {
-                        // FIX: Use `in` operator for type guarding. `isSeparator` is not present on all types in the union,
-                        // so checking for property existence is a more robust way to narrow the type.
                         if ('isSeparator' in group) {
                             return (
                                 <div key={index} className={`pt-4 pb-2 px-3 transition-opacity duration-300 ${isSidebarOpen ? 'opacity-100' : 'opacity-0 h-0 pointer-events-none'}`}>
@@ -297,9 +526,19 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ title, children, curre
                                 </div>
                             );
                         }
-                        else {
-                            return <NavItem key={index} item={group} isCollapsed={!isSidebarOpen} currentView={currentView} onNavigate={onNavigate} />;
+                        // Item bloqueado: sem loja cadastrada
+                        if (group.locked) {
+                            return (
+                                <div key={index} title="Você precisa ter uma loja cadastrada para acessar este recurso" className="cursor-not-allowed">
+                                    <div className="w-full flex items-center gap-4 px-3 rounded-md text-sm font-medium h-11 opacity-40 select-none">
+                                        <group.main.icon className="h-6 w-6 flex-shrink-0 text-[rgb(var(--color-brand-text-dim))]" />
+                                        {isSidebarOpen && <span className="truncate text-[rgb(var(--color-brand-text-dim))]">{group.main.label}</span>}
+                                        {isSidebarOpen && <span className="ml-auto text-xs">🔒</span>}
+                                    </div>
+                                </div>
+                            );
                         }
+                        return <NavItem key={index} item={group} isCollapsed={!isSidebarOpen} currentView={currentView} onNavigate={onNavigate} />;
                     })}
                     {/* Botões do ecossistema foram movidos para o navGroups principal */}
                 </nav>
@@ -338,7 +577,21 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ title, children, curre
                             <BellIcon className="w-6 h-6" />
                             <span className="absolute -top-1 -right-1 bg-red-500 text-white w-3 h-3 rounded-full text-xs"></span>
                         </button>
-                        <button onClick={() => onNavigate('consultantProfile')} title="Meu perfil" aria-label="Meu perfil"><UserIcon className="w-8 h-8 p-1 rounded-full bg-[rgb(var(--color-brand-gray))]" /></button>
+                        <button onClick={() => onNavigate('consultantProfile')} title="Meu perfil" aria-label="Meu perfil" className="flex items-center gap-3 bg-[rgb(var(--color-brand-gray))]/50 hover:bg-[rgb(var(--color-brand-gray))] py-1.5 px-3 rounded-full transition-colors border border-[rgb(var(--color-brand-gold))]/20">
+                            {localProfile?.avatarUrl && !headerImgError ? (
+                                <img
+                                    src={localProfile.avatarUrl}
+                                    alt="Avatar"
+                                    className="w-8 h-8 rounded-full object-cover border border-[rgb(var(--color-brand-gold))]/50"
+                                    onError={() => setHeaderImgError(true)}
+                                />
+                            ) : (
+                                <UserIcon className="w-8 h-8 p-1 rounded-full bg-[rgb(var(--color-brand-gray))]" />
+                            )}
+                            <span className="hidden sm:block text-sm font-semibold text-[rgb(var(--color-brand-text-light))] pr-2 max-w-[120px] truncate">
+                                {localProfile?.name || 'Consultor'}
+                            </span>
+                        </button>
                     </div>
                 </header>
                 <main className="flex-1 overflow-y-auto p-6">

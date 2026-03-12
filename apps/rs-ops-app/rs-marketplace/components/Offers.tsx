@@ -1,7 +1,6 @@
 import React from 'react';
 import ProductCard from './ProductCard';
 import { Product } from '../types';
-import { products as initialProducts } from '../data/products';
 
 interface OffersProps {
   onProductClick: (product: Product) => void;
@@ -26,10 +25,8 @@ const Offers: React.FC<OffersProps> = ({
   subtitleColor,
   backgroundColor
 }) => {
-  const sourceProducts = (products && products.length >= 1) ? products : initialProducts;
-
   // First try: products with explicit discount (compareAtPrice > price)
-  const discountedProducts = sourceProducts
+  const discountedProducts = products
     .filter(p => p.status === 'Ativo' && p.compareAtPrice && p.compareAtPrice > p.price)
     .sort((a, b) => {
       if (!a.compareAtPrice || !b.compareAtPrice) return 0;
@@ -42,7 +39,7 @@ const Offers: React.FC<OffersProps> = ({
   // Fallback: show first 4 active products when no discounts exist
   const offerProducts = discountedProducts.length > 0
     ? discountedProducts
-    : sourceProducts.filter(p => p.status === 'Ativo').slice(0, 4);
+    : products.filter(p => p.status === 'Ativo').slice(0, 4);
 
   const hasRealDiscounts = discountedProducts.length > 0;
 

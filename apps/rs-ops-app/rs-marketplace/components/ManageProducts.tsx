@@ -15,7 +15,7 @@ interface ManageProductsProps {
 const ManageProducts: React.FC<ManageProductsProps> = ({ products, onNavigate, onDelete }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
-    
+
     const filteredProducts = useMemo(() => {
         return products.filter(p =>
             p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -30,9 +30,9 @@ const ManageProducts: React.FC<ManageProductsProps> = ({ products, onNavigate, o
             setSelectedProducts([]);
         }
     };
-    
+
     const handleSelectOne = (id: string) => {
-        setSelectedProducts(prev => 
+        setSelectedProducts(prev =>
             prev.includes(id) ? prev.filter(pId => pId !== id) : [...prev, id]
         );
     };
@@ -48,13 +48,13 @@ const ManageProducts: React.FC<ManageProductsProps> = ({ products, onNavigate, o
                         onChange={e => setSearchTerm(e.target.value)}
                         className="w-full bg-[rgb(var(--color-brand-gray))] border-2 border-[rgb(var(--color-brand-gray-light))] rounded-md py-2 pl-10 pr-4 text-[rgb(var(--color-brand-text-light))]"
                     />
-                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <SearchIcon className="h-5 w-5 text-[rgb(var(--color-brand-text-dim))]" />
                     </div>
                 </div>
                 {/* Moved "Adicionar Produto" button here to be next to search on desktop */}
-                <button 
-                    onClick={() => onNavigate('addEditProduct')} 
+                <button
+                    onClick={() => onNavigate('addEditProduct')}
                     className="ml-4 text-sm font-bold bg-[rgb(var(--color-brand-gold))] text-[rgb(var(--color-brand-dark))] py-2 px-4 rounded-md hover:bg-[rgb(var(--color-brand-secondary))] transition-colors whitespace-nowrap"
                 >
                     + Adicionar Produto
@@ -63,7 +63,7 @@ const ManageProducts: React.FC<ManageProductsProps> = ({ products, onNavigate, o
             {selectedProducts.length > 0 && (
                 <div className="p-4 bg-[rgb(var(--color-brand-gray))]/[.50]">
                     <button onClick={() => onDelete(selectedProducts)} className="flex items-center gap-2 text-sm text-[rgb(var(--color-error))] hover:text-[rgb(var(--color-error))]/[.80]">
-                        <TrashIcon className="w-5 h-5"/>
+                        <TrashIcon className="w-5 h-5" />
                         Excluir {selectedProducts.length} produto(s)
                     </button>
                 </div>
@@ -86,7 +86,11 @@ const ManageProducts: React.FC<ManageProductsProps> = ({ products, onNavigate, o
                                 <td className="w-4 p-4"><input type="checkbox" checked={selectedProducts.includes(product.id)} onChange={() => handleSelectOne(product.id)} /></td>
                                 <td className="px-6 py-4">
                                     <div className="flex items-center gap-3">
-                                        <img src={product.images[0]} alt={product.name} className="w-10 h-10 object-cover rounded"/>
+                                        <img
+                                            src={product.featured_image || (product.images && product.images[0]) || 'https://via.placeholder.com/150?text=Sem+Imagem'}
+                                            alt={product.name}
+                                            className="w-10 h-10 object-cover rounded"
+                                        />
                                         <button onClick={() => onNavigate('addEditProduct', product)} className="font-medium text-[rgb(var(--color-brand-text-light))] hover:text-[rgb(var(--color-brand-gold))]">{product.name}</button>
                                     </div>
                                 </td>
@@ -95,7 +99,7 @@ const ManageProducts: React.FC<ManageProductsProps> = ({ products, onNavigate, o
                                 <td className="px-6 py-4">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: product.currency }).format(product.price)}</td>
                                 <td className="px-6 py-4">
                                     <button onClick={() => onNavigate('addEditProduct', product)} className="text-[rgb(var(--color-brand-text-dim))] hover:text-[rgb(var(--color-brand-gold))]">
-                                        <PencilIcon className="w-5 h-5"/>
+                                        <PencilIcon className="w-5 h-5" />
                                     </button>
                                 </td>
                             </tr>

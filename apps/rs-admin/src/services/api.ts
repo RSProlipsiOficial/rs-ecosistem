@@ -68,6 +68,21 @@ export const consultantsAPI = {
   lookup: (q: string): Promise<ApiResponse> =>
     apiServices.consultants.lookup(q),
 
+  search: (q: string): Promise<ApiResponse> =>
+    apiUtils.get(`/admin/consultor/search${q ? `?q=${encodeURIComponent(q)}` : ''}`),
+
+  getFull: (id: string): Promise<ApiResponse> =>
+    apiUtils.get(`/admin/consultor/${id}`),
+
+  updateFull: (id: string, data: any): Promise<ApiResponse> =>
+    apiUtils.put(`/admin/consultor/${id}`, data),
+
+  getEditPermissions: (id: string): Promise<ApiResponse> =>
+    apiUtils.get(`/admin/consultor/${id}/edit-permissions`),
+
+  updateEditPermissions: (id: string, data: any): Promise<ApiResponse> =>
+    apiUtils.put(`/admin/consultor/${id}/edit-permissions`, data),
+
   getSpreadsheetModel: (format: 'xlsx' | 'csv' = 'xlsx'): Promise<ApiResponse> =>
     apiServices.consultants.getSpreadsheetModel(format),
 };
@@ -341,7 +356,28 @@ export const marketplaceAPI = {
     apiUtils.get(apiUtils.buildUrl('/v1/admin/marketplace/orders', filters)),
 
   getProducts: (filters?: any): Promise<ApiResponse> =>
-    apiUtils.get(apiUtils.buildUrl('/v1/admin/marketplace/products', filters)),
+    apiUtils.get(apiUtils.buildUrl('/v1/marketplace/products', filters)),
+
+  getCollections: (filters?: any): Promise<ApiResponse> =>
+    apiUtils.get(apiUtils.buildUrl('/v1/marketplace/collections', filters)),
+
+  createProduct: (data: any): Promise<ApiResponse> =>
+    apiUtils.post('/v1/marketplace/products', data),
+
+  updateProduct: (id: string | number, data: any): Promise<ApiResponse> =>
+    apiUtils.put(`/v1/marketplace/products/${id}`, data),
+
+  deleteProduct: (id: string | number): Promise<ApiResponse> =>
+    apiUtils.delete(`/v1/marketplace/products/${id}`),
+
+  uploadAsset: (file: File, type: string = 'misc'): Promise<ApiResponse> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('type', type);
+    return apiUtils.post('/v1/marketplace/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+  },
 
   getInvoices: (filters?: any): Promise<ApiResponse> =>
     apiUtils.get(apiUtils.buildUrl('/v1/admin/marketplace/invoices', filters)),
@@ -357,7 +393,22 @@ export const marketplaceAPI = {
     apiUtils.get(apiUtils.buildUrl('/v1/admin/marketplace/orders', filters)),
 
   getAllProducts: (filters?: any): Promise<ApiResponse> =>
-    apiUtils.get(apiUtils.buildUrl('/v1/admin/marketplace/products', filters)),
+    apiUtils.get(apiUtils.buildUrl('/v1/marketplace/products', filters)),
+
+  getSponsoredSettings: (): Promise<ApiResponse> =>
+    apiUtils.get('/v1/admin/marketplace/sponsored-settings'),
+
+  updateSponsoredSettings: (data: any): Promise<ApiResponse> =>
+    apiUtils.put('/v1/admin/marketplace/sponsored-settings', data),
+
+  getSponsoredRequests: (): Promise<ApiResponse> =>
+    apiUtils.get('/v1/admin/marketplace/sponsored-requests'),
+
+  updateSponsoredRequest: (id: string, data: any): Promise<ApiResponse> =>
+    apiUtils.put(`/v1/admin/marketplace/sponsored-requests/${id}`, data),
+
+  syncSponsoredRequestPaymentStatus: (id: string, tenantId: string): Promise<ApiResponse> =>
+    apiUtils.get(`/v1/admin/marketplace/sponsored-requests/${id}/payment-status?tenantId=${encodeURIComponent(tenantId)}`),
 
   getAllInvoices: (filters?: any): Promise<ApiResponse> =>
     apiUtils.get(apiUtils.buildUrl('/v1/admin/marketplace/invoices', filters))

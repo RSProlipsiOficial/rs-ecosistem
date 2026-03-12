@@ -1,6 +1,6 @@
-
-import React, { createContext, useState, useContext, ReactNode, useEffect, useCallback } from 'react';
-import { Theme, TypographyStyle, MobileMenuStyle } from '../types';
+import React, { createContext, useState, useContext, ReactNode, useEffect, useCallback, useRef } from 'react';
+import { Theme } from '../types';
+import { siteBuilderApi } from '../services/siteBuilderApi';
 
 export const defaultTheme: Theme = {
   colors: {
@@ -24,7 +24,7 @@ export const defaultTheme: Theme = {
     h4: { fontFamily: 'Inter', fontWeight: '600', textTransform: 'none' },
   },
   navigation: {
-    mobileMenuStyle: 'sidepanel', // Changed from 'overlay' to 'sidepanel'
+    mobileMenuStyle: 'sidepanel',
   },
 };
 
@@ -41,68 +41,184 @@ interface ThemeContextType {
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
-
 const THEME_STORAGE_KEY = 'rsprolipsi_theme';
+
+const shouldNotifyEmbeddedPreviewUpdate = () => {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
+  return new URLSearchParams(window.location.search).get('embedAdmin') === '1';
+};
+
+const notifyEmbeddedPreviewUpdate = () => {
+  if (!shouldNotifyEmbeddedPreviewUpdate()) {
+    return;
+  }
+
+  try {
+    window.parent?.postMessage({ type: 'rs-site:content-updated', scope: 'theme' }, '*');
+  } catch (error) {
+    console.error('Failed to notify parent preview about theme changes', error);
+  }
+};
+
+const isPreviewEditorRuntime = () => {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
+  return new URLSearchParams(window.location.search).get('previewEditor') === '1';
+};
+
+const normalizeTheme = (rawTheme?: Partial<Theme> | null): Theme => {
+  const typography = { ...defaultTheme.typography };
+  if (rawTheme?.typography && typeof rawTheme.typography === 'object') {
+    for (const key in typography) {
+      const typedKey = key as keyof typeof typography;
+      if ((rawTheme.typography as any)[typedKey]) {
+        typography[typedKey] = { ...typography[typedKey], ...(rawTheme.typography as any)[typedKey] };
+      }
+    }
+  }
+
+  return {
+    colors: { ...defaultTheme.colors, ...(rawTheme?.colors || {}) },
+    typography,
+    navigation: { ...defaultTheme.navigation, ...(rawTheme?.navigation || {}) },
+  };
+};
 
 const getInitialTheme = (): Theme => {
   try {
     const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
-    if (savedTheme) {
-      const parsed = JSON.parse(savedTheme);
-      
-      // Deep merge typography to prevent breaking changes from old structures
-      const typography = { ...defaultTheme.typography };
-      if (parsed.typography && typeof parsed.typography === 'object') {
-        for (const key in typography) {
-            const typedKey = key as keyof typeof typography;
-            if (parsed.typography[typedKey]) {
-                typography[typedKey] = { ...typography[typedKey], ...parsed.typography[typedKey] };
-            }
-        }
-      }
-
-      return {
-          colors: { ...defaultTheme.colors, ...(parsed.colors || {}) },
-          typography,
-          navigation: { ...defaultTheme.navigation, ...(parsed.navigation || {}) },
-      }
-    }
+    return savedTheme ? normalizeTheme(JSON.parse(savedTheme)) : defaultTheme;
   } catch (error) {
-    console.error("Failed to parse theme from localStorage", error);
+    console.error('Failed to parse theme from localStorage', error);
+    return defaultTheme;
   }
-  return defaultTheme;
 };
 
 export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [theme, setTheme] = useState<Theme>(getInitialTheme);
+  const [bootstrapReady, setBootstrapReady] = useState(false);
+  const saveTimeoutRef = useRef<number | null>(null);
+  const lastSyncedThemeRef = useRef('');
+
+  useEffect(() => {
+    let isMounted = true;
+
+    siteBuilderApi.getBootstrap().then(result => {
+      if (!isMounted) {
+        return;
+      }
+
+      if (result.success && result.data?.theme) {
+        const nextTheme = normalizeTheme(result.data.theme);
+        setTheme(nextTheme);
+        lastSyncedThemeRef.current = JSON.stringify(nextTheme);
+        try {
+          localStorage.setItem(THEME_STORAGE_KEY, JSON.stringify(nextTheme));
+        } catch (error) {
+          console.error('Failed to mirror theme bootstrap into localStorage', error);
+        }
+      } else {
+        lastSyncedThemeRef.current = JSON.stringify(theme);
+      }
+
+      setBootstrapReady(true);
+    }).catch(error => {
+      console.error('Failed to load theme bootstrap', error);
+      if (isMounted) {
+        lastSyncedThemeRef.current = JSON.stringify(theme);
+        setBootstrapReady(true);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+      if (saveTimeoutRef.current) {
+        window.clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     try {
       localStorage.setItem(THEME_STORAGE_KEY, JSON.stringify(theme));
     } catch (error) {
-      console.error("Failed to save theme to localStorage", error);
+      console.error('Failed to save theme to localStorage', error);
     }
 
     const root = document.documentElement;
-    // Apply colors
     Object.entries(theme.colors).forEach(([key, value]) => {
       const cssVar = `--color-${key.replace(/([A-Z])/g, '-$1').toLowerCase()}`;
       root.style.setProperty(cssVar, String(value));
     });
 
-    // Apply typography styles
     for (const element of Object.keys(theme.typography) as Array<keyof typeof theme.typography>) {
       const styles = theme.typography[element];
       for (const prop of Object.keys(styles) as Array<keyof typeof styles>) {
-        const value = styles[prop];
         const cssVar = `--${String(prop).replace(/([A-Z])/g, '-$1').toLowerCase()}-${String(element)}`;
-        root.style.setProperty(cssVar, String(value));
+        root.style.setProperty(cssVar, String(styles[prop]));
       }
     }
-    // Special case for body font family for tailwind config
-    root.style.setProperty('--font-family-body', theme.typography.body.fontFamily);
 
+    root.style.setProperty('--font-family-body', theme.typography.body.fontFamily);
   }, [theme]);
+
+  useEffect(() => {
+    if (isPreviewEditorRuntime()) {
+      return;
+    }
+
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key !== THEME_STORAGE_KEY || !event.newValue) {
+        return;
+      }
+
+      try {
+        setTheme(normalizeTheme(JSON.parse(event.newValue)));
+      } catch (error) {
+        console.error('Failed to sync theme from storage', error);
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
+  useEffect(() => {
+    if (!bootstrapReady) {
+      return;
+    }
+
+    const serializedTheme = JSON.stringify(theme);
+    if (serializedTheme === lastSyncedThemeRef.current) {
+      return;
+    }
+
+    if (saveTimeoutRef.current) {
+      window.clearTimeout(saveTimeoutRef.current);
+    }
+
+    saveTimeoutRef.current = window.setTimeout(async () => {
+      const result = await siteBuilderApi.saveBootstrap({ theme });
+      if (result.success) {
+        lastSyncedThemeRef.current = serializedTheme;
+        notifyEmbeddedPreviewUpdate();
+        return;
+      }
+
+      console.error('Failed to save theme to API', result.error);
+    }, 500);
+
+    return () => {
+      if (saveTimeoutRef.current) {
+        window.clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, [theme, bootstrapReady]);
 
   const updateTheme: UpdateThemeFn = useCallback((updates: any, type: 'colors' | 'typography' | 'navigation') => {
     setTheme(prevTheme => ({
@@ -110,14 +226,13 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       [type]: {
         ...prevTheme[type],
         ...updates,
-      }
+      },
     }));
   }, []);
 
   const resetTheme = () => {
     setTheme(defaultTheme);
   };
-
 
   return (
     <ThemeContext.Provider value={{ theme, updateTheme, resetTheme }}>

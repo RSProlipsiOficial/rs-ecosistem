@@ -24,6 +24,8 @@ const Topbar: React.FC<TopbarProps> = ({ user, onMenuClick, onToggleCollapse }) 
   const notificationsRef = useRef<HTMLDivElement>(null);
 
   const unreadCount = messages.filter(m => !m.read).length;
+  const loginId = user.loginId || user.idConsultor || '---';
+  const accountId = user.code || (user.idNumerico ? String(user.idNumerico) : '---');
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -94,7 +96,7 @@ const Topbar: React.FC<TopbarProps> = ({ user, onMenuClick, onToggleCollapse }) 
           {/* RS Shop Link */}
           <a href={`http://${window.location.hostname}:3003`} target="_blank" rel="noopener noreferrer" className={`${menuButtonClasses} flex items-center gap-1`}>
             <IconStore size={22} />
-            <span className="hidden sm:inline">Shop</span>
+            <span className="hidden sm:inline">Loja</span>
           </a>
 
           {/* Notifications Dropdown */}
@@ -136,19 +138,19 @@ const Topbar: React.FC<TopbarProps> = ({ user, onMenuClick, onToggleCollapse }) 
                 <span className="font-semibold text-brand-text-light text-sm leading-tight">{user.name}</span>
                 <div className="flex items-center gap-1.5 mt-0.5">
                   <span className="text-[9px] font-black text-brand-gold uppercase tracking-widest bg-brand-gold/10 px-1.5 py-0.5 rounded border border-brand-gold/20">
-                    {user.idConsultor || '---'}
+                    LOGIN/MMN: {loginId}
                   </span>
                   <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest bg-gray-800 px-1.5 py-0.5 rounded border border-gray-700">
-                    #{user.id ? user.id.split('-')[0].toUpperCase() : '---'}
+                    ID CONTA: {accountId}
                   </span>
                 </div>
               </div>
               <img
-                src={user.avatarUrl || '/logo-rs.png'}
+                src={user.avatarUrl || branding.logo || 'https://raw.githubusercontent.com/RS-Prolipsi/assets/main/logo_rs_gold.png'}
                 alt={user.name}
                 className="h-9 w-9 rounded-full border-2 border-brand-gold/50 object-cover"
                 onError={(e) => {
-                  (e.target as HTMLImageElement).src = '/logo-rs.png';
+                  (e.target as HTMLImageElement).src = branding.logo || 'https://raw.githubusercontent.com/RS-Prolipsi/assets/main/logo_rs_gold.png';
                 }}
               />
             </button>

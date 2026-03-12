@@ -15,7 +15,7 @@ interface PromotionsCarouselProps {
 }
 
 const PromotionsCarousel: React.FC<PromotionsCarouselProps> = ({ container, onEdit, pageId }) => {
-  const { isAdmin, isEditMode } = useAdmin();
+  const { isAdmin, isEditMode, isPreviewEditor } = useAdmin();
   // Map IDs from container to real promotion data
   const promotions = (container.promotionIds || [])
     .map(id => initialPromotions.find(p => p.id === id))
@@ -36,13 +36,17 @@ const PromotionsCarousel: React.FC<PromotionsCarouselProps> = ({ container, onEd
   };
 
   useEffect(() => {
+    if (isPreviewEditor) {
+        return;
+    }
+
     if (promotions.length > 0) {
         const interval = setInterval(() => {
           nextSlide();
         }, 5000);
         return () => clearInterval(interval);
     }
-  }, [nextSlide, promotions.length]);
+  }, [isPreviewEditor, nextSlide, promotions.length]);
 
   if (!promotions.length) return null;
 

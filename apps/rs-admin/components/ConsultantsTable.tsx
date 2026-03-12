@@ -21,7 +21,7 @@ const ConsultantsTable: React.FC<ConsultantsTableProps> = ({ consultants, onEdit
           <thead className="text-xs text-[#FFD700] uppercase bg-[#121212]">
             <tr>
               <th scope="col" className="px-6 py-4">Origem</th>
-              <th scope="col" className="px-6 py-4">ID</th>
+              <th scope="col" className="px-6 py-4">ID Conta</th>
               <th scope="col" className="px-6 py-4">Nome</th>
               <th scope="col" className="px-6 py-4">PIN</th>
               <th scope="col" className="px-6 py-4">Indicador</th>
@@ -39,7 +39,12 @@ const ConsultantsTable: React.FC<ConsultantsTableProps> = ({ consultants, onEdit
               consultants.map((consultant) => (
                 <tr key={consultant.id} className="border-b border-[#2A2A2A] hover:bg-[#2A2A2A]/50 transition-colors duration-200">
                   <td className="px-6 py-4">{consultant.network || 'Escritório'}</td>
-                  <td className="px-6 py-4">{consultant.code || consultant.id}</td>
+                  <td className="px-6 py-4">
+                    <div className="space-y-1">
+                      <div>{consultant.code || consultant.id}</div>
+                      {consultant.username && <div className="text-[10px] uppercase text-[#FFD700]/80">LOGIN/MMN: {consultant.username}</div>}
+                    </div>
+                  </td>
                   <td className="px-6 py-4 font-medium text-[#E5E7EB] whitespace-nowrap">
                     <div className="flex items-center">
                       <img className="w-10 h-10 rounded-full mr-4 object-cover" src={consultant.avatar} alt={consultant.name} />

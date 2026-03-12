@@ -26,8 +26,6 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
     const [showRightArrow, setShowRightArrow] = useState(true);
     const [isPaused, setIsPaused] = useState(false);
 
-    if (!products || products.length === 0) return null;
-
     const handleScroll = () => {
         if (!scrollRef.current) return;
         const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
@@ -49,7 +47,7 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
     };
 
     useEffect(() => {
-        if (!autoPlay) return;
+        if (!autoPlay || products.length === 0) return;
         const interval = setInterval(() => {
             if (isPaused || !scrollRef.current) return;
             const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
@@ -62,7 +60,9 @@ const ProductCarousel: React.FC<ProductCarouselProps> = ({
             }
         }, 4000);
         return () => clearInterval(interval);
-    }, [isPaused, autoPlay]);
+    }, [isPaused, autoPlay, products.length]);
+
+    if (!products || products.length === 0) return null;
 
     return (
         <div

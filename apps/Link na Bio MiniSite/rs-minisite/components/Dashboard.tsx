@@ -1,33 +1,49 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { BioSite, UserProfile, UserPlan, PlanDefinition, AgencyClient, ClientPayment, PaymentStatus, PaymentMethod } from '../types';
-import { Plus, Edit3, ExternalLink, BarChart3, MoreVertical, Moon, Sun, Crown, CheckCircle2, CreditCard, Lock, X, Loader2, ShieldCheck, QrCode, Copy, Smartphone, Users, Briefcase, UserPlus, ArrowLeft, Filter, MousePointer2, TrendingUp, LayoutDashboard, MapPin, Mail, Phone, Calendar, FileText, ChevronRight, Search, ArrowUpDown, Share2, Ticket, DollarSign, Wallet, TrendingDown, ArrowUpRight, Target, ArrowRight, Shield, Percent, Save, MessageCircle, Download, UserCircle, Key, AlertTriangle, RefreshCw, Camera, UserCheck, Link } from 'lucide-react';
+import { BioSite, UserProfile, UserPlan, PlanDefinition, AgencyClient, ClientPayment, PaymentStatus, PaymentMethod, MiniSiteTemplate } from '../types';
+import { Plus, Edit3, ExternalLink, BarChart3, MoreVertical, Moon, Sun, Crown, CheckCircle2, CreditCard, Lock, X, Loader2, ShieldCheck, QrCode, Copy, Smartphone, Users, Briefcase, UserPlus, ArrowLeft, Filter, MousePointer2, TrendingUp, LayoutDashboard, MapPin, Mail, Phone, Calendar, FileText, ChevronRight, Search, ArrowUpDown, Share2, Ticket, DollarSign, Wallet, TrendingDown, ArrowUpRight, Target, ArrowRight, Shield, Percent, Save, MessageCircle, Download, UserCircle, Key, AlertTriangle, RefreshCw, Camera, UserCheck, Link, LogOut, Trash2, Eye } from 'lucide-react';
 import { PLANS } from '../constants';
 import { CheckoutForm } from './CheckoutForm';
+import { buildMiniSiteSignupUrl, MINISITE_API_ORIGIN } from '../ecosystemUrls';
 import { supabase } from '../supabaseClient';
+import { Renderer } from './Renderer';
 
 interface DashboardProps {
     user: UserProfile;
     sites: BioSite[];
+    templates?: MiniSiteTemplate[];
     clients?: AgencyClient[]; // New prop for agency clients
     payments?: ClientPayment[]; // New prop for financial data
     onCreateNew: (clientId?: string) => void;
+    onCreateFromTemplate?: (template: MiniSiteTemplate, clientId?: string) => Promise<boolean> | boolean;
+    onDeleteSite?: (siteId: string) => Promise<boolean> | boolean;
     onAddClient?: (clientData: Omit<AgencyClient, 'id' | 'agencyId' | 'createdAt' | 'updatedAt'>) => void;
     onUpdateClient?: (client: AgencyClient) => void;
     onAddPayment?: (payment: Omit<ClientPayment, 'id'>) => void;
+    onSaveSiteAsTemplate?: (siteId: string, templateData: {
+        name: string;
+        niche: string;
+        category: string;
+        description: string;
+        makePublic: boolean;
+    }) => Promise<boolean> | boolean;
     onEdit: (site: BioSite) => void;
     onView: (slug: string) => void;
     onUpdatePlan: (plan: UserPlan) => void;
+    plans?: Record<string, PlanDefinition>;
     isDarkMode: boolean;
     toggleTheme: () => void;
     onNavigateToAdmin?: () => void; // New prop for admin navigation
     onLog?: (action: string, target: string) => void; // New log prop
-    onUpdateUser?: (userData: Partial<UserProfile>) => void; // New prop for profile updates
+    onUpdateUser?: (userData: Partial<UserProfile>) => Promise<boolean> | boolean; // New prop for profile updates
     onSyncProfile?: () => Promise<Partial<UserProfile> | null>; // New prop for global sync
     platformSettings?: { platformName: string; mpPublicKey?: string; mpAccessToken?: string };
+    branding?: { logo?: string; companyName?: string };
+    onLogout?: () => void | Promise<void>;
 }
 
-export const Dashboard: React.FC<DashboardProps> = ({ user, sites, clients = [], payments = [], onCreateNew, onAddClient, onUpdateClient, onAddPayment, onEdit, onView, onUpdatePlan, isDarkMode, toggleTheme, onNavigateToAdmin, onLog, onUpdateUser, onSyncProfile, platformSettings }) => {
-    const currentPlan = PLANS[user.plan];
+export const Dashboard: React.FC<DashboardProps> = ({ user, sites, templates = [], clients = [], payments = [], onCreateNew, onCreateFromTemplate, onDeleteSite, onAddClient, onUpdateClient, onAddPayment, onSaveSiteAsTemplate, onEdit, onView, onUpdatePlan, plans = {}, isDarkMode, toggleTheme, onNavigateToAdmin, onLog, onUpdateUser, onSyncProfile, platformSettings, branding, onLogout }) => {
+    const availablePlans = useMemo(() => ({ ...PLANS, ...plans }), [plans]);
+    const currentPlan = availablePlans[user.plan] || PLANS[user.plan];
 
     // ROLE CHECKS
     const isAdmin = user.plan === 'admin_master';
@@ -56,8 +72,25 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, sites, clients = [],
     const [isClientModalOpen, setIsClientModalOpen] = useState(false);
     const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+    const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
+    const [isSaveTemplateModalOpen, setIsSaveTemplateModalOpen] = useState(false);
+    const [previewTemplate, setPreviewTemplate] = useState<MiniSiteTemplate | null>(null);
+    const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
     const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
     const [profileTab, setProfileTab] = useState<'identity' | 'avatar' | 'integration' | 'security'>('integration');
+    const [isSavingProfile, setIsSavingProfile] = useState(false);
+    const avatarFileInputRef = React.useRef<HTMLInputElement>(null);
+    const [templateSearch, setTemplateSearch] = useState('');
+    const [templateCategory, setTemplateCategory] = useState('all');
+    const [templateSiteId, setTemplateSiteId] = useState<string | null>(null);
+    const [isSavingTemplate, setIsSavingTemplate] = useState(false);
+    const [templateForm, setTemplateForm] = useState({
+        name: '',
+        niche: '',
+        category: 'Biblioteca RS',
+        description: '',
+        makePublic: true
+    });
 
     // Profile Form State
     const [profileForm, setProfileForm] = useState({
@@ -82,6 +115,29 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, sites, clients = [],
 
     const [isSyncing, setIsSyncing] = useState(false);
     const [isZipLoading, setIsZipLoading] = useState(false);
+    const dashboardLogo = branding?.logo || '/logo-rs.png';
+    const dashboardBrandName = branding?.companyName || 'RS Prólipsi';
+    const buildEcosystemUrl = (port: number, withSso = false) => {
+        const baseUrl = `http://${window.location.hostname}:${port}`;
+        const token = localStorage.getItem('rs-minisite-sso-token') || '';
+
+        if (!withSso || !token) {
+            return baseUrl;
+        }
+
+        const payload = {
+            autoLogin: true,
+            source: 'minisite',
+            token,
+        };
+
+        const encodedPayload = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+        return `${baseUrl}/#/sso?token=${encodeURIComponent(encodedPayload)}`;
+    };
+    const consultorOfficeUrl = buildEcosystemUrl(3002, true);
+    const marketplaceUrl = buildEcosystemUrl(3003, false);
+    const inviteSponsorRef = String(profileForm.consultantId || user.consultantId || user.referralCode || 'rsprolipsi').trim().toLowerCase();
+    const sharedReferralLink = buildMiniSiteSignupUrl(inviteSponsorRef || 'rsprolipsi');
 
     const handleZipCodeBlur = async () => {
         const zip = profileForm.address.zip.replace(/\D/g, '');
@@ -131,7 +187,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, sites, clients = [],
             consultantId: user.consultantId || '',
             idNumerico: user.idNumerico || 1
         });
-    }, [user]);
+    }, [user, platformSettings?.mpAccessToken, platformSettings?.mpPublicKey]);
 
     const handleSyncProlipsi = async () => {
         if (!onSyncProfile) return;
@@ -161,11 +217,47 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, sites, clients = [],
         }
     };
 
-    const handleSaveProfile = () => {
-        if (onUpdateUser) {
-            onUpdateUser(profileForm);
+    const handleAvatarFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = loadEvent => {
+            if (loadEvent.target?.result) {
+                setProfileForm(prev => ({
+                    ...prev,
+                    avatarUrl: loadEvent.target?.result as string
+                }));
+            }
+        };
+        reader.readAsDataURL(file);
+        event.target.value = '';
+    };
+
+    const handleSaveProfile = async () => {
+        if (!onUpdateUser) return;
+
+        setIsSavingProfile(true);
+        try {
+            const saved = await Promise.resolve(onUpdateUser(profileForm));
+            if (saved === false) {
+                alert("Não foi possível salvar o perfil.");
+                return;
+            }
             alert("Perfil atualizado com sucesso!");
+        } finally {
+            setIsSavingProfile(false);
         }
+    };
+
+    const handleLogoutClick = async () => {
+        setIsUserMenuOpen(false);
+        await onLogout?.();
+    };
+
+    const handleOpenExternal = (url: string) => {
+        setIsUserMenuOpen(false);
+        window.open(url, '_blank', 'noopener,noreferrer');
     };
 
     // Analytics State
@@ -303,6 +395,114 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, sites, clients = [],
         }
     };
 
+    const handleMiniSitePlanPayment = async (checkoutData?: any) => {
+        if (!upgradeTarget) return;
+
+        setIsProcessing(true);
+
+        try {
+            const selectedPlan = availablePlans[upgradeTarget] || PLANS[upgradeTarget];
+            const buyer = {
+                name: checkoutData?.name || user.name || '',
+                email: checkoutData?.email || user.email || '',
+                cpf: checkoutData?.cpf || user.cpf || '',
+                phone: checkoutData?.phone || user.phone || '',
+                birthDate: checkoutData?.birthDate || '',
+                zip: checkoutData?.zip || '',
+                street: checkoutData?.street || '',
+                number: checkoutData?.number || '',
+                neighborhood: checkoutData?.neighborhood || '',
+                city: checkoutData?.city || '',
+                state: checkoutData?.state || ''
+            };
+
+            const response = await fetch(`${MINISITE_API_ORIGIN}/api/payment/minisite-plan`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    planId: upgradeTarget,
+                    userId: user.id,
+                    publicOrigin: `http://${window.location.hostname}:3030`,
+                    buyer,
+                    planSnapshot: {
+                        id: selectedPlan?.id || upgradeTarget,
+                        name: selectedPlan?.name || upgradeTarget,
+                        price: selectedPlan?.price || ''
+                    }
+                })
+            });
+
+            const data = await response.json().catch(() => ({}));
+
+            if (!response.ok) {
+                throw new Error(data?.detail || data?.error || 'Nao foi possivel gerar o checkout do plano.');
+            }
+
+            if (!data?.init_point) {
+                throw new Error('Link de pagamento nao gerado pela API.');
+            }
+
+            window.location.href = data.init_point;
+        } catch (err: any) {
+            console.error('[Dashboard] Real payment initialization error:', err);
+            alert('Erro ao processar pagamento: ' + (err.message || 'Tente novamente mais tarde.'));
+        } finally {
+            setIsProcessing(false);
+        }
+    };
+
+    const handleOpenTemplateLibrary = () => {
+        setTemplateSearch('');
+        setTemplateCategory('all');
+        setIsTemplateModalOpen(true);
+    };
+
+    const handleUseTemplate = async (template: MiniSiteTemplate) => {
+        if (!onCreateFromTemplate) return;
+
+        const created = await Promise.resolve(onCreateFromTemplate(template, selectedClientId || undefined));
+        if (created === false) return;
+        setIsTemplateModalOpen(false);
+        setPreviewTemplate(null);
+    };
+
+    const handlePreviewTemplate = (template: MiniSiteTemplate) => {
+        setPreviewTemplate(template);
+    };
+
+    const handleOpenSaveTemplateModal = (site: BioSite) => {
+        setTemplateSiteId(site.id);
+        setTemplateForm({
+            name: `${site.name} - Modelo`,
+            niche: 'Template personalizado',
+            category: 'Biblioteca RS',
+            description: `Modelo criado a partir do MiniSite ${site.name}.`,
+            makePublic: true
+        });
+        setIsSaveTemplateModalOpen(true);
+    };
+
+    const handleSaveCurrentSiteAsTemplate = async (event: React.FormEvent) => {
+        event.preventDefault();
+        if (!onSaveSiteAsTemplate || !templateSiteId) return;
+
+        setIsSavingTemplate(true);
+        try {
+            const saved = await Promise.resolve(onSaveSiteAsTemplate(templateSiteId, templateForm));
+            if (saved === false) {
+                alert('Nao foi possivel salvar o template.');
+                return;
+            }
+
+            alert('Template salvo na biblioteca com sucesso!');
+            setIsSaveTemplateModalOpen(false);
+        } finally {
+            setIsSavingTemplate(false);
+        }
+    };
+
     const handleAddClientClick = () => {
         if (isClientLimitReached) {
             alert(`Limite de clientes atingido (${currentPlan.maxClients}). Por favor, entre em contato com o suporte para aumentar seu limite.`);
@@ -390,12 +590,21 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, sites, clients = [],
     };
 
     const handleCopyInviteLink = () => {
-        // Use platform custom domain if available, otherwise fallback to current origin
-        const baseUrl = window.location.origin.includes('localhost') ? 'https://bio.rsminisite.com.br' : window.location.origin;
-        const link = `${baseUrl}/signup?ref=${user.referralCode || user.id.substr(0, 8)}`;
-        navigator.clipboard.writeText(link);
+        navigator.clipboard.writeText(sharedReferralLink);
         setLinkCopied(true);
         setTimeout(() => setLinkCopied(false), 2000);
+    };
+
+    const handleDeleteSiteClick = async (site: BioSite) => {
+        if (!onDeleteSite) return;
+
+        const confirmed = window.confirm(`Excluir o MiniSite "${site.name}"? Isso remove apenas da galeria do consultor. O template da biblioteca continua salvo. Esta acao nao pode ser desfeita.`);
+        if (!confirmed) return;
+
+        const deleted = await Promise.resolve(onDeleteSite(site.id));
+        if (deleted === false) {
+            alert('Nao foi possivel excluir este MiniSite.');
+        }
     };
 
     // Filter sites based on view (My Sites vs Client Sites vs All)
@@ -467,6 +676,43 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, sites, clients = [],
 
         return result;
     }, [clients, clientSearch, clientFilterStatus, clientSort]);
+
+    const templateCategories = useMemo(() => {
+        const categories = Array.from(new Set(templates.map(template => template.category).filter(Boolean)));
+        return ['all', ...categories];
+    }, [templates]);
+
+    const filteredTemplates = useMemo(() => {
+        return templates.filter(template => {
+            const matchesCategory = templateCategory === 'all' || template.category === templateCategory;
+            const haystack = `${template.name} ${template.niche} ${template.category} ${template.description}`.toLowerCase();
+            const matchesSearch = haystack.includes(templateSearch.trim().toLowerCase());
+            return matchesCategory && matchesSearch;
+        });
+    }, [templates, templateCategory, templateSearch]);
+
+    const previewTemplateCollection = useMemo(() => {
+        if (!previewTemplate) return filteredTemplates;
+        if (filteredTemplates.some(template => template.id === previewTemplate.id)) {
+            return filteredTemplates;
+        }
+        return templates;
+    }, [filteredTemplates, previewTemplate, templates]);
+
+    const previewTemplateIndex = useMemo(() => {
+        if (!previewTemplate) return -1;
+        return previewTemplateCollection.findIndex(template => template.id === previewTemplate.id);
+    }, [previewTemplate, previewTemplateCollection]);
+
+    const handlePreviewPrevious = () => {
+        if (previewTemplateIndex <= 0) return;
+        setPreviewTemplate(previewTemplateCollection[previewTemplateIndex - 1]);
+    };
+
+    const handlePreviewNext = () => {
+        if (previewTemplateIndex < 0 || previewTemplateIndex >= previewTemplateCollection.length - 1) return;
+        setPreviewTemplate(previewTemplateCollection[previewTemplateIndex + 1]);
+    };
 
 
     // ADVANCED ANALYTICS DATA PREPARATION
@@ -599,17 +845,30 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, sites, clients = [],
 
                 {/* Header Section */}
                 <header className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-6">
-                    <div>
-                        <div className="flex items-center gap-2 mb-1">
-                            <h1 className="text-4xl font-serif font-bold text-rs-goldDark dark:text-rs-gold">RS MiniSite</h1>
-                            {isAgency && !isAdmin && (
-                                <span className="bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 px-2 py-0.5 rounded text-[10px] font-bold uppercase border border-purple-200 dark:border-purple-800">Painel Agente</span>
-                            )}
-                            {isAdmin && (
-                                <span className="bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300 px-2 py-0.5 rounded text-[10px] font-bold uppercase border border-red-200 dark:border-red-800">Admin Master</span>
-                            )}
+                    <div className="flex items-center gap-4">
+                        <div className="flex flex-col items-start shrink-0">
+                            <img
+                                src={dashboardLogo}
+                                alt={dashboardBrandName}
+                                className="h-12 w-auto max-w-[180px] object-contain"
+                                onError={event => {
+                                    event.currentTarget.src = '/logo-rs.png';
+                                }}
+                            />
+                            <span className="pl-1 text-[10px] font-bold uppercase tracking-[0.35em] text-rs-gold/80">MiniSite</span>
                         </div>
-                        <p className="text-gray-500 dark:text-gray-400 text-lg">Seu site profissional para bio em minutos.</p>
+                        <div>
+                            <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                <h1 className="text-lg md:text-xl font-serif font-bold text-rs-goldDark dark:text-rs-gold">Painel RS</h1>
+                                {isAgency && !isAdmin && (
+                                    <span className="bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 px-2 py-0.5 rounded text-[10px] font-bold uppercase border border-purple-200 dark:border-purple-800">Painel Agente</span>
+                                )}
+                                {isAdmin && (
+                                    <span className="bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300 px-2 py-0.5 rounded text-[10px] font-bold uppercase border border-red-200 dark:border-red-800">Admin Master</span>
+                                )}
+                            </div>
+                            <p className="text-sm md:text-base text-gray-500 dark:text-gray-400">Seu site profissional para bio em minutos.</p>
+                        </div>
                     </div>
 
                     <div className="flex items-center gap-4">
@@ -625,14 +884,66 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, sites, clients = [],
                             </button>
                         )}
 
-                        {/* PROFILE BUTTON - NEW */}
-                        <button
-                            onClick={() => setIsProfileModalOpen(true)}
-                            className="p-3 rounded-full bg-white dark:bg-rs-dark border border-gray-200 dark:border-rs-gray text-gray-600 dark:text-gray-300 hover:text-rs-goldDark dark:hover:text-rs-gold transition-colors shadow-sm"
-                            title="Meu Perfil / Integrações"
-                        >
-                            <UserCircle size={20} />
-                        </button>
+                        <div className="relative">
+                            <button
+                                onClick={() => setIsUserMenuOpen(prev => !prev)}
+                                className="flex items-center gap-3 rounded-full bg-white dark:bg-rs-dark border border-gray-200 dark:border-rs-gray px-2 py-2 text-gray-600 dark:text-gray-300 hover:text-rs-goldDark dark:hover:text-rs-gold transition-colors shadow-sm"
+                                title="Conta"
+                            >
+                                <div className="w-10 h-10 rounded-full overflow-hidden border border-rs-gold/30 bg-black/30 flex items-center justify-center">
+                                    <img
+                                        src={user.avatarUrl || dashboardLogo}
+                                        alt={user.name}
+                                        className="w-full h-full object-cover"
+                                        onError={event => {
+                                            event.currentTarget.src = dashboardLogo;
+                                        }}
+                                    />
+                                </div>
+                                <div className="hidden md:block text-left pr-2">
+                                    <div className="text-xs font-bold uppercase tracking-wide text-gray-900 dark:text-white">{user.name}</div>
+                                    <div className="text-[10px] font-mono text-gray-500">{user.consultantId || 'perfil'}</div>
+                                </div>
+                            </button>
+
+                            {isUserMenuOpen && (
+                                <div className="absolute right-0 mt-2 w-52 rounded-2xl border border-gray-200 dark:border-rs-gray bg-white dark:bg-rs-dark shadow-2xl overflow-hidden z-20">
+                                    <button
+                                        onClick={() => handleOpenExternal(consultorOfficeUrl)}
+                                        className="w-full px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-white/5 transition-colors flex items-center gap-3"
+                                    >
+                                        <Briefcase size={16} />
+                                        Escritorio RS
+                                    </button>
+                                    <button
+                                        onClick={() => handleOpenExternal(marketplaceUrl)}
+                                        className="w-full px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-white/5 transition-colors flex items-center gap-3"
+                                    >
+                                        <ExternalLink size={16} />
+                                        Marketplace
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            setIsProfileModalOpen(true);
+                                            setIsUserMenuOpen(false);
+                                        }}
+                                        className="w-full px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-white/5 transition-colors flex items-center gap-3"
+                                    >
+                                        <UserCircle size={16} />
+                                        Meu Perfil
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            void handleLogoutClick();
+                                        }}
+                                        className="w-full px-4 py-3 text-left text-sm font-semibold text-red-500 hover:bg-red-500/10 transition-colors flex items-center gap-3"
+                                    >
+                                        <LogOut size={16} />
+                                        Sair
+                                    </button>
+                                </div>
+                            )}
+                        </div>
 
                         <button
                             onClick={toggleTheme}
@@ -655,16 +966,25 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, sites, clients = [],
 
                         {/* Create Button: Show on Non-Agency OR Agency (Dashboard/Sites tabs only) */}
                         {(!isAgency || (isAgency && dashboardTab !== 'clients' && dashboardTab !== 'invites' && dashboardTab !== 'finance')) && (
-                            <button
-                                onClick={handleCreateClick}
-                                className={`flex items-center gap-2 px-6 py-3 rounded-lg font-bold transition-all shadow-lg ${isLimitReached
-                                    ? 'bg-gray-800 text-white border border-rs-gold hover:bg-black hover:shadow-rs-gold/40 animate-pulse'
-                                    : 'bg-rs-goldDark dark:bg-rs-gold hover:bg-yellow-600 dark:hover:bg-yellow-500 text-white dark:text-black hover:shadow-rs-gold/20'
-                                    }`}
-                            >
-                                {isLimitReached ? <Crown size={20} className="text-rs-gold" /> : <Plus size={20} />}
-                                {isLimitReached ? 'Upgrade para Criar' : 'Criar Novo MiniSite'}
-                            </button>
+                            <>
+                                <button
+                                    onClick={handleOpenTemplateLibrary}
+                                    className="flex items-center gap-2 px-6 py-3 rounded-lg font-bold transition-all shadow-lg border border-rs-gold/30 text-rs-gold hover:bg-rs-gold/10"
+                                >
+                                    <LayoutDashboard size={18} />
+                                    Biblioteca de Templates
+                                </button>
+                                <button
+                                    onClick={handleCreateClick}
+                                    className={`flex items-center gap-2 px-6 py-3 rounded-lg font-bold transition-all shadow-lg ${isLimitReached
+                                        ? 'bg-gray-800 text-white border border-rs-gold hover:bg-black hover:shadow-rs-gold/40 animate-pulse'
+                                        : 'bg-rs-goldDark dark:bg-rs-gold hover:bg-yellow-600 dark:hover:bg-yellow-500 text-white dark:text-black hover:shadow-rs-gold/20'
+                                        }`}
+                                >
+                                    {isLimitReached ? <Crown size={20} className="text-rs-gold" /> : <Plus size={20} />}
+                                    {isLimitReached ? 'Upgrade para Criar' : 'Criar Novo MiniSite'}
+                                </button>
+                            </>
                         )}
 
                         {/* Show "Add Client" button if in Client tab or Client List View */}
@@ -859,6 +1179,36 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, sites, clients = [],
                                 </div>
                             </button>
 
+                            <button
+                                onClick={handleOpenTemplateLibrary}
+                                className="group relative h-64 rounded-2xl border border-rs-gold/30 bg-gradient-to-br from-rs-gold/10 via-transparent to-transparent overflow-hidden flex flex-col items-start justify-between p-6 text-left transition-all hover:border-rs-gold hover:shadow-xl hover:shadow-rs-gold/10"
+                            >
+                                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity bg-gradient-to-br from-rs-gold/10 via-transparent to-rs-gold/5" />
+                                <div className="relative z-10">
+                                    <div className="w-14 h-14 rounded-2xl bg-rs-gold/15 border border-rs-gold/30 text-rs-gold flex items-center justify-center mb-4">
+                                        <LayoutDashboard size={28} />
+                                    </div>
+                                    <span className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.25em] text-rs-gold/80">
+                                        <FileText size={12} />
+                                        Templates prontos
+                                    </span>
+                                    <h3 className="mt-3 font-bold text-xl text-gray-900 dark:text-white">Usar Template RS</h3>
+                                    <p className="mt-2 text-sm text-gray-500 dark:text-gray-400 max-w-xs">
+                                        Escolha entre modelos prontos de varios nichos e comece com o site praticamente montado.
+                                    </p>
+                                </div>
+                                <div className="relative z-10 w-full flex items-end justify-between gap-4">
+                                    <div>
+                                        <p className="text-xs font-bold uppercase tracking-widest text-gray-500">Biblioteca ativa</p>
+                                        <p className="text-sm font-semibold text-gray-900 dark:text-white">{templates.length} modelos disponiveis</p>
+                                    </div>
+                                    <span className="inline-flex items-center gap-2 text-xs font-bold text-rs-gold">
+                                        Explorar
+                                        <ChevronRight size={16} />
+                                    </span>
+                                </div>
+                            </button>
+
                             {/* Existing Sites */}
                             {displayedSites.map((site) => (
                                 <div key={site.id} className="group bg-white dark:bg-rs-dark rounded-2xl border border-gray-200 dark:border-rs-gray overflow-hidden hover:shadow-xl hover:border-rs-gold/50 transition-all duration-300 relative">
@@ -908,6 +1258,20 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, sites, clients = [],
                                                     className="flex-1 bg-rs-goldDark dark:bg-rs-gold hover:bg-yellow-600 dark:hover:bg-yellow-500 text-white dark:text-black py-2 rounded-lg font-bold text-sm transition-colors flex items-center justify-center gap-2"
                                                 >
                                                     <Edit3 size={16} /> Editar
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDeleteSiteClick(site)}
+                                                    className="px-3 border border-red-500/30 hover:border-red-500 rounded-lg text-red-400 hover:bg-red-500/10 transition-colors"
+                                                    title="Excluir MiniSite"
+                                                >
+                                                    <Trash2 size={18} />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleOpenSaveTemplateModal(site)}
+                                                    className="px-3 border border-rs-gold/30 hover:border-rs-gold rounded-lg text-rs-gold hover:bg-rs-gold/10 transition-colors"
+                                                    title="Salvar como template"
+                                                >
+                                                    <Save size={18} />
                                                 </button>
                                                 <button
                                                     onClick={() => onView(site.slug)}
@@ -1021,7 +1385,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, sites, clients = [],
                                     <div className="flex-1 bg-white dark:bg-rs-dark border border-rs-gold/50 rounded-2xl p-4 flex items-center justify-between shadow-xl">
                                         <div className="flex items-center gap-3 overflow-hidden">
                                             <Link className="text-rs-gold shrink-0" size={20} />
-                                            <span className="text-sm font-mono text-gray-500 truncate">{`${window.location.origin}/signup?ref=${user.referralCode || 'RS-AGENTE'}`}</span>
+                                            <span className="text-sm font-mono text-gray-500 truncate">{sharedReferralLink}</span>
                                         </div>
                                         <button
                                             onClick={handleCopyInviteLink}
@@ -1041,27 +1405,20 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, sites, clients = [],
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <div className="bg-white dark:bg-rs-dark p-6 rounded-2xl border border-gray-200 dark:border-rs-gray shadow-sm">
-                                <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-500 mb-4">
-                                    <Users size={20} />
+                        <div className="bg-white dark:bg-rs-dark p-6 rounded-2xl border border-gray-200 dark:border-rs-gray shadow-sm">
+                            <div className="flex items-start gap-4">
+                                <div className="w-10 h-10 rounded-full bg-rs-gold/10 flex items-center justify-center text-rs-gold shrink-0">
+                                    <Users size={18} />
                                 </div>
-                                <h4 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Cliques no Link</h4>
-                                <p className="text-2xl font-bold text-gray-900 dark:text-white">124</p>
-                            </div>
-                            <div className="bg-white dark:bg-rs-dark p-6 rounded-2xl border border-gray-200 dark:border-rs-gray shadow-sm">
-                                <div className="w-10 h-10 rounded-full bg-green-500/10 flex items-center justify-center text-green-500 mb-4">
-                                    <UserCheck size={20} />
+                                <div>
+                                    <h4 className="text-sm font-bold text-gray-900 dark:text-white mb-1">Métricas de convites</h4>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                                        Esta aba agora exibe apenas o link real de indicação. Não estou mais mostrando números fictícios.
+                                    </p>
+                                    <p className="text-xs text-gray-400 mt-2">
+                                        Quando a coleta real de cliques, cadastros e conversões estiver ligada no backend, essas métricas entram aqui automaticamente.
+                                    </p>
                                 </div>
-                                <h4 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Novos Cadastros</h4>
-                                <p className="text-2xl font-bold text-gray-900 dark:text-white">12</p>
-                            </div>
-                            <div className="bg-white dark:bg-rs-dark p-6 rounded-2xl border border-gray-200 dark:border-rs-gray shadow-sm">
-                                <div className="w-10 h-10 rounded-full bg-rs-gold/10 flex items-center justify-center text-rs-gold mb-4">
-                                    <Crown size={20} />
-                                </div>
-                                <h4 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Experts Ativos</h4>
-                                <p className="text-2xl font-bold text-gray-900 dark:text-white">3</p>
                             </div>
                         </div>
                     </div>
@@ -1168,7 +1525,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, sites, clients = [],
 
                             <div className="overflow-y-auto p-6 custom-scrollbar">
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                    {Object.entries(PLANS).filter(([key]) => key !== 'admin_master').map(([key, plan]) => {
+                                    {Object.entries(availablePlans).filter(([key]) => key !== 'admin_master').map(([key, plan]) => {
                                         const isCurrent = user.plan === key;
                                         const isHighlighted = key === 'start' || key === 'pro';
                                         return (
@@ -1227,12 +1584,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, sites, clients = [],
                                     <CreditCard size={32} />
                                 </div>
                                 <h3 className="text-2xl font-serif font-bold text-gray-900 dark:text-white mb-2">Confirmar Upgrade</h3>
-                                <p className="text-gray-500 mb-6">Você está assinando o plano <span className="font-bold text-white">{PLANS[upgradeTarget].name}</span>.</p>
+                                <p className="text-gray-500 mb-6">Você está assinando o plano <span className="font-bold text-white">{(availablePlans[upgradeTarget] || PLANS[upgradeTarget]).name}</span>.</p>
 
                                 <div className="bg-gray-50 dark:bg-black/30 rounded-lg p-4 mb-6 border border-gray-200 dark:border-rs-gray">
                                     <div className="flex justify-between items-center mb-2">
                                         <span className="text-sm text-gray-500">Valor Mensal</span>
-                                        <span className="font-bold text-lg text-white">{PLANS[upgradeTarget].price}</span>
+                                        <span className="font-bold text-lg text-white">{(availablePlans[upgradeTarget] || PLANS[upgradeTarget]).price}</span>
                                     </div>
                                     <div className="w-full h-px bg-gray-200 dark:bg-gray-700 my-2" />
                                     <div className="flex items-center gap-2 text-xs text-green-500 justify-center">
@@ -1241,7 +1598,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, sites, clients = [],
                                 </div>
 
                                 <button
-                                    onClick={handleConfirmPayment}
+                                    onClick={() => handleMiniSitePlanPayment()}
                                     disabled={isProcessing}
                                     className="w-full py-3 bg-rs-gold hover:bg-rs-goldDark text-black font-bold rounded-lg shadow-lg flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
@@ -1572,6 +1929,348 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, sites, clients = [],
                         </div>
                     </div>
                 )}
+
+                {isTemplateModalOpen && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm p-4 animate-fade-in">
+                        <div className="w-full max-w-6xl bg-white dark:bg-rs-dark border border-gray-200 dark:border-rs-gold/30 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+                            <div className="p-6 md:p-8 border-b border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/20 flex flex-col gap-6">
+                                <div className="flex items-start justify-between gap-4">
+                                    <div>
+                                        <span className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.3em] text-rs-gold/80">
+                                            <LayoutDashboard size={12} />
+                                            Biblioteca de templates
+                                        </span>
+                                        <h3 className="mt-3 text-2xl md:text-3xl font-serif font-bold text-gray-900 dark:text-white">
+                                            Escolha um MiniSite pronto para editar
+                                        </h3>
+                                        <p className="mt-2 text-sm text-gray-500 dark:text-gray-400 max-w-2xl">
+                                            Sao modelos prontos da RS e da comunidade. Voce escolhe um nicho, cria o MiniSite com um clique e depois ajusta os detalhes.
+                                        </p>
+                                    </div>
+                                    <button
+                                        onClick={() => setIsTemplateModalOpen(false)}
+                                        className="text-gray-400 hover:text-red-500 transition-colors"
+                                    >
+                                        <X size={22} />
+                                    </button>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-[1fr_220px] gap-3">
+                                    <div className="relative">
+                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                                        <input
+                                            type="text"
+                                            value={templateSearch}
+                                            onChange={(e) => setTemplateSearch(e.target.value)}
+                                            placeholder="Buscar por nicho, categoria ou nome do template..."
+                                            className="w-full bg-white dark:bg-rs-black border border-gray-200 dark:border-rs-gray rounded-xl pl-10 pr-4 py-3 text-sm outline-none focus:border-rs-gold"
+                                        />
+                                    </div>
+                                    <select
+                                        value={templateCategory}
+                                        onChange={(e) => setTemplateCategory(e.target.value)}
+                                        className="bg-white dark:bg-rs-black border border-gray-200 dark:border-rs-gray rounded-xl px-4 py-3 text-sm outline-none focus:border-rs-gold"
+                                    >
+                                        {templateCategories.map(category => (
+                                            <option key={category} value={category}>
+                                                {category === 'all' ? 'Todas as categorias' : category}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div className="p-6 md:p-8 overflow-y-auto custom-scrollbar">
+                                {filteredTemplates.length === 0 ? (
+                                    <div className="min-h-[280px] rounded-2xl border-2 border-dashed border-gray-200 dark:border-rs-gray flex flex-col items-center justify-center text-center px-6">
+                                        <FileText size={40} className="text-gray-300 dark:text-rs-gray mb-4" />
+                                        <h4 className="text-lg font-bold text-gray-900 dark:text-white">Nenhum template encontrado</h4>
+                                        <p className="mt-2 text-sm text-gray-500 dark:text-gray-400 max-w-md">
+                                            Ajuste a busca ou a categoria. A biblioteca continua disponivel para voce salvar novos modelos personalizados.
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+                                        {filteredTemplates.map(template => (
+                                            <div
+                                                key={template.id}
+                                                className="rounded-2xl border border-gray-200 dark:border-rs-gray bg-white dark:bg-rs-black/40 overflow-hidden shadow-sm hover:shadow-xl hover:border-rs-gold/40 transition-all"
+                                            >
+                                                <div
+                                                    className="h-2"
+                                                    style={{ backgroundColor: template.previewAccent || template.theme.primaryColor || '#D4AF37' }}
+                                                />
+                                                <div className="p-5 space-y-4">
+                                                    <div className="flex items-start justify-between gap-3">
+                                                        <div>
+                                                            <span className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-rs-gold/80">
+                                                                {template.source === 'built_in' ? 'Biblioteca RS' : template.isCompanyLibrary ? 'Empresa' : 'Comunidade'}
+                                                            </span>
+                                                            <h4 className="mt-2 text-lg font-bold text-gray-900 dark:text-white">{template.name}</h4>
+                                                        </div>
+                                                        <span className="shrink-0 rounded-full border border-rs-gold/20 bg-rs-gold/10 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-rs-gold">
+                                                            {template.category}
+                                                        </span>
+                                                    </div>
+
+                                                    <p className="text-sm text-gray-500 dark:text-gray-400 min-h-[42px]">{template.description}</p>
+
+                                                    <div className="grid grid-cols-2 gap-3">
+                                                        <div className="rounded-xl border border-gray-200 dark:border-rs-gray bg-gray-50 dark:bg-black/30 p-3">
+                                                            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Nicho</p>
+                                                            <p className="mt-1 text-sm font-semibold text-gray-900 dark:text-white">{template.niche}</p>
+                                                        </div>
+                                                        <div className="rounded-xl border border-gray-200 dark:border-rs-gray bg-gray-50 dark:bg-black/30 p-3">
+                                                            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Estrutura</p>
+                                                            <p className="mt-1 text-sm font-semibold text-gray-900 dark:text-white">{template.previewText || `${template.sections.length} blocos`}</p>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="flex items-center justify-between gap-3 pt-1">
+                                                        <div className="text-xs text-gray-400">
+                                                            {template.isPublic || template.source === 'built_in'
+                                                                ? 'Disponivel para usar agora'
+                                                                : 'Template privado do autor'}
+                                                        </div>
+                                                        <div className="flex items-center gap-2">
+                                                            <button
+                                                                onClick={() => handlePreviewTemplate(template)}
+                                                                className="inline-flex items-center gap-2 rounded-xl border border-rs-gold/30 hover:border-rs-gold text-rs-gold px-4 py-2 font-bold text-sm transition-all hover:bg-rs-gold/10"
+                                                            >
+                                                                <Eye size={16} />
+                                                                Pre-visualizar
+                                                            </button>
+                                                            <button
+                                                                onClick={() => void handleUseTemplate(template)}
+                                                                className="inline-flex items-center gap-2 rounded-xl bg-rs-gold hover:bg-rs-goldDark text-black px-4 py-2 font-bold text-sm transition-all shadow-lg active:scale-95"
+                                                            >
+                                                                <CheckCircle2 size={16} />
+                                                                Usar template
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {previewTemplate && (
+                    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 backdrop-blur-md p-4 animate-fade-in">
+                        <div className="w-full max-w-7xl bg-white dark:bg-rs-dark border border-gray-200 dark:border-rs-gold/30 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+                            <div className="p-6 border-b border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/20 flex items-start justify-between gap-4">
+                                <div>
+                                    <span className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.3em] text-rs-gold/80">
+                                        <Eye size={12} />
+                                        Modo de visualizacao
+                                    </span>
+                                    <h3 className="mt-3 text-2xl font-serif font-bold text-gray-900 dark:text-white">
+                                        {previewTemplate.name}
+                                    </h3>
+                                    <p className="mt-2 text-sm text-gray-500 dark:text-gray-400 max-w-2xl">
+                                        {previewTemplate.description || 'Veja como o template fica pronto antes de aplicar no seu MiniSite.'}
+                                    </p>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={handlePreviewPrevious}
+                                        disabled={previewTemplateIndex <= 0}
+                                        className="inline-flex items-center gap-2 rounded-xl border border-gray-200 dark:border-rs-gray px-4 py-2 font-bold text-sm text-gray-700 dark:text-white transition-all hover:border-rs-gold hover:text-rs-gold disabled:opacity-40 disabled:cursor-not-allowed"
+                                    >
+                                        <ArrowLeft size={16} />
+                                        Anterior
+                                    </button>
+                                    <button
+                                        onClick={handlePreviewNext}
+                                        disabled={previewTemplateIndex < 0 || previewTemplateIndex >= previewTemplateCollection.length - 1}
+                                        className="inline-flex items-center gap-2 rounded-xl border border-gray-200 dark:border-rs-gray px-4 py-2 font-bold text-sm text-gray-700 dark:text-white transition-all hover:border-rs-gold hover:text-rs-gold disabled:opacity-40 disabled:cursor-not-allowed"
+                                    >
+                                        Proximo
+                                        <ArrowRight size={16} />
+                                    </button>
+                                    <button
+                                        onClick={() => void handleUseTemplate(previewTemplate)}
+                                        className="inline-flex items-center gap-2 rounded-xl bg-rs-gold hover:bg-rs-goldDark text-black px-4 py-2 font-bold text-sm transition-all shadow-lg active:scale-95"
+                                    >
+                                        <CheckCircle2 size={16} />
+                                        Usar template
+                                    </button>
+                                    <button
+                                        onClick={() => setPreviewTemplate(null)}
+                                        className="text-gray-400 hover:text-red-500 transition-colors p-2"
+                                    >
+                                        <X size={22} />
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 xl:grid-cols-[320px_1fr] gap-0 flex-1 min-h-0">
+                                <div className="border-r border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/20 p-6 overflow-y-auto custom-scrollbar">
+                                    <div className="space-y-4">
+                                        <div className="rounded-2xl border border-gray-200 dark:border-rs-gray bg-white dark:bg-rs-black/40 p-4">
+                                            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Navegacao</p>
+                                            <p className="mt-1 text-sm font-semibold text-gray-900 dark:text-white">
+                                                {previewTemplateIndex >= 0 ? `${previewTemplateIndex + 1} de ${previewTemplateCollection.length}` : `1 de ${previewTemplateCollection.length || 1}`}
+                                            </p>
+                                        </div>
+                                        <div className="rounded-2xl border border-gray-200 dark:border-rs-gray bg-white dark:bg-rs-black/40 p-4">
+                                            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Categoria</p>
+                                            <p className="mt-1 text-sm font-semibold text-gray-900 dark:text-white">{previewTemplate.category}</p>
+                                        </div>
+                                        <div className="rounded-2xl border border-gray-200 dark:border-rs-gray bg-white dark:bg-rs-black/40 p-4">
+                                            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Nicho</p>
+                                            <p className="mt-1 text-sm font-semibold text-gray-900 dark:text-white">{previewTemplate.niche}</p>
+                                        </div>
+                                        <div className="rounded-2xl border border-gray-200 dark:border-rs-gray bg-white dark:bg-rs-black/40 p-4">
+                                            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Estrutura</p>
+                                            <p className="mt-1 text-sm font-semibold text-gray-900 dark:text-white">{previewTemplate.previewText || `${previewTemplate.sections.length} blocos`}</p>
+                                        </div>
+                                        <div className="rounded-2xl border border-gray-200 dark:border-rs-gray bg-white dark:bg-rs-black/40 p-4">
+                                            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Origem</p>
+                                            <p className="mt-1 text-sm font-semibold text-gray-900 dark:text-white">
+                                                {previewTemplate.source === 'built_in' ? 'Biblioteca RS' : previewTemplate.isCompanyLibrary ? 'Empresa' : 'Comunidade'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="p-6 md:p-8 bg-[#050505] overflow-auto custom-scrollbar">
+                                    <div className="mx-auto w-full max-w-[430px] rounded-[32px] border border-rs-gold/20 bg-black shadow-[0_30px_80px_rgba(0,0,0,0.5)] overflow-hidden">
+                                        <div className="flex items-center justify-center gap-2 py-3 border-b border-rs-gold/10 bg-black/80">
+                                            <div className="h-2 w-2 rounded-full bg-rs-gold/50" />
+                                            <div className="h-2 w-2 rounded-full bg-rs-gold/30" />
+                                            <div className="h-2 w-2 rounded-full bg-rs-gold/20" />
+                                        </div>
+                                        <div className="h-[72vh] min-h-[540px]">
+                                            <Renderer
+                                                sections={previewTemplate.sections}
+                                                theme={previewTemplate.theme}
+                                                plan={(previewTemplate.plan as UserPlan) || 'free'}
+                                                isPreview
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {isSaveTemplateModalOpen && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm p-4 animate-fade-in">
+                        <div className="w-full max-w-2xl bg-white dark:bg-rs-dark border border-gray-200 dark:border-rs-gold/30 rounded-2xl shadow-2xl overflow-hidden">
+                            <div className="p-6 border-b border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-black/20 flex items-start justify-between gap-4">
+                                <div>
+                                    <span className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.3em] text-rs-gold/80">
+                                        <Save size={12} />
+                                        Novo template
+                                    </span>
+                                    <h3 className="mt-3 text-2xl font-serif font-bold text-gray-900 dark:text-white">
+                                        Salvar este MiniSite na biblioteca
+                                    </h3>
+                                    <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                                        Voce pode guardar um modelo privado ou liberar para uso da empresa em todo o ecossistema.
+                                    </p>
+                                </div>
+                                <button
+                                    onClick={() => setIsSaveTemplateModalOpen(false)}
+                                    className="text-gray-400 hover:text-red-500 transition-colors"
+                                >
+                                    <X size={22} />
+                                </button>
+                            </div>
+
+                            <form onSubmit={handleSaveCurrentSiteAsTemplate} className="p-6 space-y-5">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="md:col-span-2">
+                                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Nome do template</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            value={templateForm.name}
+                                            onChange={(e) => setTemplateForm(prev => ({ ...prev, name: e.target.value }))}
+                                            className="w-full bg-white dark:bg-rs-black border border-gray-200 dark:border-rs-gray rounded-xl p-3 text-sm outline-none focus:border-rs-gold"
+                                            placeholder="Ex.: Template premium para clinicas"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Nicho</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            value={templateForm.niche}
+                                            onChange={(e) => setTemplateForm(prev => ({ ...prev, niche: e.target.value }))}
+                                            className="w-full bg-white dark:bg-rs-black border border-gray-200 dark:border-rs-gray rounded-xl p-3 text-sm outline-none focus:border-rs-gold"
+                                            placeholder="Ex.: Barbearia, dentista, pet shop"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Categoria</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            value={templateForm.category}
+                                            onChange={(e) => setTemplateForm(prev => ({ ...prev, category: e.target.value }))}
+                                            className="w-full bg-white dark:bg-rs-black border border-gray-200 dark:border-rs-gray rounded-xl p-3 text-sm outline-none focus:border-rs-gold"
+                                            placeholder="Ex.: Biblioteca RS"
+                                        />
+                                    </div>
+                                    <div className="md:col-span-2">
+                                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Descricao</label>
+                                        <textarea
+                                            required
+                                            rows={4}
+                                            value={templateForm.description}
+                                            onChange={(e) => setTemplateForm(prev => ({ ...prev, description: e.target.value }))}
+                                            className="w-full bg-white dark:bg-rs-black border border-gray-200 dark:border-rs-gray rounded-xl p-3 text-sm outline-none focus:border-rs-gold"
+                                            placeholder="Explique em poucas linhas para que esse template serve e qual resultado ele entrega."
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="rounded-2xl border border-rs-gold/20 bg-rs-gold/5 p-4 flex items-start gap-4">
+                                    <input
+                                        id="make-template-public"
+                                        type="checkbox"
+                                        checked={templateForm.makePublic}
+                                        onChange={(e) => setTemplateForm(prev => ({ ...prev, makePublic: e.target.checked }))}
+                                        className="mt-1 h-4 w-4 rounded border-gray-300 text-rs-gold focus:ring-rs-gold"
+                                    />
+                                    <div>
+                                        <label htmlFor="make-template-public" className="text-sm font-bold text-gray-900 dark:text-white cursor-pointer">
+                                            Disponibilizar na biblioteca da empresa
+                                        </label>
+                                        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                            Se ativado, esse modelo pode ser usado por outros usuarios do MiniSite. Se desativado, ele fica salvo apenas na sua biblioteca.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="flex justify-end gap-3 pt-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsSaveTemplateModalOpen(false)}
+                                        className="px-5 py-3 rounded-xl text-sm font-bold text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors"
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={isSavingTemplate}
+                                        className="px-6 py-3 rounded-xl bg-rs-gold hover:bg-rs-goldDark text-black font-bold text-sm shadow-lg transition-all flex items-center gap-2 disabled:opacity-60"
+                                    >
+                                        <Save size={16} />
+                                        {isSavingTemplate ? 'Salvando template...' : 'Salvar template'}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )}
                 {/* --- PROFILE MODAL (FULL RS PROLIPSI INTEGRATION) --- */}
                 {isProfileModalOpen && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fade-in">
@@ -1589,13 +2288,24 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, sites, clients = [],
                                     <div className="flex items-center gap-4">
                                         <div className="relative group">
                                             <div className="w-20 h-20 rounded-full border-4 border-rs-gold bg-gray-800 flex items-center justify-center overflow-hidden shadow-2xl">
-                                                {profileForm.avatarUrl ? (
-                                                    <img src={profileForm.avatarUrl} alt="Profile" className="w-full h-full object-cover" />
+                                                {(profileForm.avatarUrl || dashboardLogo) ? (
+                                                    <img
+                                                        src={profileForm.avatarUrl || dashboardLogo}
+                                                        alt="Profile"
+                                                        className="w-full h-full object-cover"
+                                                        onError={event => {
+                                                            event.currentTarget.src = dashboardLogo;
+                                                        }}
+                                                    />
                                                 ) : (
                                                     <span className="text-rs-gold font-bold text-3xl">{profileForm.name.charAt(0)}</span>
                                                 )}
                                             </div>
-                                            <button className="absolute bottom-0 right-0 bg-rs-gold text-black p-1.5 rounded-full shadow-lg hover:scale-110 transition-transform">
+                                            <button
+                                                type="button"
+                                                onClick={() => avatarFileInputRef.current?.click()}
+                                                className="absolute bottom-0 right-0 bg-rs-gold text-black p-1.5 rounded-full shadow-lg hover:scale-110 transition-transform"
+                                            >
                                                 <Camera size={14} />
                                             </button>
                                         </div>
@@ -1765,13 +2475,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, sites, clients = [],
                                                 <input
                                                     type="text"
                                                     readOnly
-                                                    value={profileForm.referralLink || 'Clique em Sincronizar'}
+                                                    value={sharedReferralLink || 'Clique em Sincronizar'}
                                                     className="flex-1 md:w-64 bg-white dark:bg-rs-black border border-gray-200 dark:border-white/10 rounded-l-lg p-3 text-xs font-mono text-gray-500 outline-none"
                                                 />
                                                 <button
                                                     onClick={() => {
-                                                        if (profileForm.referralLink) {
-                                                            navigator.clipboard.writeText(profileForm.referralLink);
+                                                        if (sharedReferralLink) {
+                                                            navigator.clipboard.writeText(sharedReferralLink);
                                                             alert("Link copiado!");
                                                         }
                                                     }}
@@ -1799,7 +2509,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, sites, clients = [],
                                             </div>
                                             <label className="absolute bottom-4 right-4 bg-rs-gold text-black p-3 rounded-full shadow-xl cursor-pointer hover:scale-110 transition-transform">
                                                 <Camera size={24} />
-                                                <input type="file" className="hidden" />
+                                                <input
+                                                    ref={avatarFileInputRef}
+                                                    type="file"
+                                                    accept="image/*"
+                                                    className="hidden"
+                                                    onChange={handleAvatarFileChange}
+                                                />
                                             </label>
                                         </div>
                                         <div className="text-center max-w-sm">
@@ -1807,7 +2523,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, sites, clients = [],
                                             <p className="text-sm text-gray-500 mt-2">Personalize sua imagem exibida no MiniSite e no Dashboard global.</p>
                                         </div>
                                         <div className="flex gap-4">
-                                            <button className="px-6 py-2 border border-gray-300 dark:border-rs-gray rounded-lg text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5 transition-colors">
+                                            <button
+                                                type="button"
+                                                onClick={() => setProfileForm(prev => ({ ...prev, avatarUrl: '' }))}
+                                                className="px-6 py-2 border border-gray-300 dark:border-rs-gray rounded-lg text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5 transition-colors"
+                                            >
                                                 Remover Foto
                                             </button>
                                             <button
@@ -1926,10 +2646,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, sites, clients = [],
                                 </button>
                                 <button
                                     onClick={handleSaveProfile}
-                                    className="px-10 py-3 bg-rs-gold hover:bg-rs-goldDark text-black font-bold rounded-lg shadow-xl hover:shadow-rs-gold/20 transition-all flex items-center gap-2"
+                                    disabled={isSavingProfile}
+                                    className="px-10 py-3 bg-rs-gold hover:bg-rs-goldDark text-black font-bold rounded-lg shadow-xl hover:shadow-rs-gold/20 transition-all flex items-center gap-2 disabled:opacity-60"
                                 >
                                     <Save size={18} />
-                                    Salvar Alterações
+                                    {isSavingProfile ? 'Salvando...' : 'Salvar Alterações'}
                                 </button>
                             </div>
                         </div>
@@ -1941,20 +2662,17 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, sites, clients = [],
             {isCheckoutOpen && upgradeTarget && (
                 <CheckoutForm
                     user={user}
-                    plan={PLANS[upgradeTarget]}
+                    plan={availablePlans[upgradeTarget] || PLANS[upgradeTarget]}
                     platformSettings={platformSettings}
                     onClose={() => {
                         setIsCheckoutOpen(false);
                         setUpgradeTarget(null);
                     }}
-                    onSuccess={(checkoutData) => {
+                    onSuccess={async (checkoutData) => {
                         setIsCheckoutOpen(false);
-                        // Pass combined data to actual confirmation
-                        handleConfirmPayment();
 
-                        // We also trigger a profile update if address was filled
                         if (onUpdateUser) {
-                            onUpdateUser({
+                            await Promise.resolve(onUpdateUser({
                                 cpf: checkoutData.cpf,
                                 phone: checkoutData.phone,
                                 address: {
@@ -1965,8 +2683,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, sites, clients = [],
                                     state: checkoutData.state,
                                     zip: checkoutData.zip
                                 }
+                            })).catch(error => {
+                                console.warn('[Dashboard] Failed to persist checkout profile before payment:', error);
                             });
                         }
+
+                        await handleMiniSitePlanPayment(checkoutData);
                     }}
                 />
             )}

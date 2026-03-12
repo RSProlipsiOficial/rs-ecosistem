@@ -13,7 +13,7 @@ export const mockUser: User & { [key: string]: any } = {
   registrationDate: '',
   hasPurchased: false,
   address: { zipCode: '', street: '', number: '', neighborhood: '', city: '', state: '', complement: '' },
-  bankAccount: { bank: '', agency: '', accountNumber: '', accountType: 'checking', pixKey: '' },
+  bankAccount: { bank: '', agency: '', accountNumber: '', accountType: 'checking', pixKey: '', pixKeyType: 'random' },
   idConsultor: '',
   isNetworkActive: false,
   graduacao: 'Iniciante',
@@ -60,7 +60,7 @@ export const createEmptyNode = (id: string, level: number): NetworkNode => ({
   children: [],
   isEmpty: true,
   address: { zipCode: '', street: '', number: '', neighborhood: '', city: '', state: '' },
-  bankAccount: { bank: '', agency: '', accountNumber: '', accountType: 'checking', pixKey: '' }
+  bankAccount: { bank: '', agency: '', accountNumber: '', accountType: 'checking', pixKey: '', pixKeyType: 'random' }
 });
 
 export const mockNetworkMembers: User[] = [];

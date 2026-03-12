@@ -20,7 +20,6 @@ import FloatingChat from './components/FloatingChat';
 // Wallet features imports removed
 import LoginPage from './components/LoginPage';
 import PersonalData from './components/admin-consultor/PersonalDataSimple';
-import DashboardEditor from './components/admin-consultor/DashboardEditorFull';
 import AdminMarketplaceEditor from './components/admin-consultor/AdminMarketplaceEditor';
 import AdminConsultorPanelSettings from './components/admin-consultor/AdminConsultorPanelSettings';
 import { DashboardConfigProvider } from './components/admin-consultor/dashboardConfigContext';
@@ -28,7 +27,15 @@ import MpOverview from './components/marketplace-admin/Overview';
 import MpStores from './components/marketplace-admin/Stores';
 import MpSellers from './components/marketplace-admin/Sellers';
 import MpConfig from './components/marketplace-admin/Config';
+import MpPremium from './components/marketplace-admin/Premium';
 import MpPermissions from './components/marketplace-admin/Permissions';
+import MarketplaceDashboard from './components/marketplace-admin/MarketplaceDashboard';
+import MarketplaceOrders from './components/marketplace-admin/MarketplaceOrders';
+import MarketplaceProductsPage from './components/marketplace/MarketplaceProductsPage';
+import MarketplaceFinancial from './components/marketplace-admin/MarketplaceFinancial';
+import WalletPayAdmin from './components/wallet-admin/WalletPayAdmin';
+import MinisiteAdminWrapper from './components/minisite-admin/MinisiteAdminWrapper';
+import SiteAdminWrapper from './components/site-admin/SiteAdminWrapper';
 import CycleClosingTab from './components/CycleClosingTab';
 // SIGME views removidas: centralização em Configurações SIGMA
 
@@ -58,10 +65,10 @@ const App: React.FC = () => {
           setActiveView('Admin Configurações do Painel');
           break;
         case '/dashboard-editor':
-          setActiveView('Admin Configurações do Painel');
+          setActiveView('Admin Dashboard Editor');
           break;
         case '/marketplace-admin':
-          setActiveView('Admin Configurações do Painel');
+          setActiveView('Admin Marketplace Editor');
           break;
         default:
           break;
@@ -92,7 +99,7 @@ const App: React.FC = () => {
       case 'Admin Dados Pessoais':
         return <PersonalData />;
       case 'Admin Dashboard Editor':
-        return <DashboardEditor />;
+        return <AdminConsultorPanelSettings />;
       case 'Admin Marketplace Editor':
         return <AdminMarketplaceEditor />;
       case 'Admin Configurações do Painel': {
@@ -146,6 +153,25 @@ const App: React.FC = () => {
         return <MpConfig />;
       case 'Admin Marketplace Permissões':
         return <MpPermissions />;
+      // ── Marketplace Operacional ──────────────────────────────────────
+      case 'Marketplace Visão Geral':
+        return <MarketplaceDashboard />;
+      case 'Marketplace Pedidos':
+        return <MarketplaceOrders />;
+      case 'Marketplace Produtos':
+        return <MarketplaceProductsPage />;
+      case 'Marketplace Financeiro':
+        return <MarketplaceFinancial />;
+      case 'Marketplace Produto Premium':
+        return <MpPremium />;
+      // ── WalletPay Admin ──────────────────────────────────────
+      case 'Admin WalletPay':
+        return <WalletPayAdmin />;
+      // ── Minisite Admin ──────────────────────────────────────
+      case 'Admin MiniSite':
+        return <MinisiteAdminWrapper setActiveView={setActiveView} />;
+      case 'Admin Site':
+        return <SiteAdminWrapper />;
       default:
         return <Dashboard setActiveView={setActiveView} />;
     }

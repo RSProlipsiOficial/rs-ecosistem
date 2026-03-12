@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ProductCard from './ProductCard';
-import { Product, Order, View } from '../types';
-import { products as initialProducts } from '../data/products';
+import { Product, Order } from '../types';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface BestsellersProps {
@@ -45,7 +44,6 @@ const Bestsellers: React.FC<BestsellersProps> = ({
     return () => window.removeEventListener('resize', updateVisible);
   }, []);
 
-  const sourceProducts = (products && products.length >= 4) ? products : initialProducts;
   const salesCount = new Map<string, number>();
 
   orders.forEach(order => {
@@ -61,11 +59,11 @@ const Bestsellers: React.FC<BestsellersProps> = ({
     .map(entry => entry[0]);
 
   let bestsellers = sortedProductIds
-    .map(id => sourceProducts.find(p => p.id === id && p.status === 'Ativo'))
+    .map(id => products.find(p => p.id === id && p.status === 'Ativo'))
     .filter((p): p is Product => Boolean(p));
 
   if (bestsellers.length === 0) {
-    bestsellers = [...sourceProducts]
+    bestsellers = [...products]
       .filter(p => p.status === 'Ativo')
       .sort((a, b) => b.reviewCount - a.reviewCount);
   }
@@ -160,7 +158,7 @@ const Bestsellers: React.FC<BestsellersProps> = ({
               {bestsellers.map((product) => (
                 <div
                   key={product.id}
-                  className="flex-shrink-0 px-4"
+                  className="flex-shrink-0 px-4 flex justify-center"
                   style={{ width: `${100 / itemsVisible}%` }}
                 >
                   <ProductCard

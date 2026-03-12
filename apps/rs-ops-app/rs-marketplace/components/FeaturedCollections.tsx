@@ -38,10 +38,6 @@ const FeaturedCollections: React.FC<FeaturedCollectionsProps> = ({
     return () => window.removeEventListener('resize', updateVisible);
   }, []);
 
-  if (!collections || collections.length === 0) {
-    return null;
-  }
-
   const totalItems = collections.length;
   const maxIndex = Math.max(0, totalItems - Math.floor(itemsVisible));
 
@@ -62,6 +58,10 @@ const FeaturedCollections: React.FC<FeaturedCollectionsProps> = ({
       if (autoPlayRef.current) clearInterval(autoPlayRef.current);
     };
   }, [maxIndex, itemsVisible, totalItems]);
+
+  if (!collections || collections.length === 0) {
+    return null;
+  }
 
   const resetTimer = () => {
     if (autoPlayRef.current) clearInterval(autoPlayRef.current);

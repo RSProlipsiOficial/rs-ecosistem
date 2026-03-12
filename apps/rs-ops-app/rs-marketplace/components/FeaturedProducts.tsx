@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ProductCard from './ProductCard';
 import { Product } from '../types';
-import { products as initialProducts } from '../data/products';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { trackSponsoredClick, trackSponsoredImpressions } from '../utils/sponsoredTracking';
 
 interface FeaturedProductsProps {
   onProductClick: (product: Product) => void;
@@ -14,6 +14,7 @@ interface FeaturedProductsProps {
   titleColor?: string;
   subtitleColor?: string;
   backgroundColor?: string;
+  sponsoredPlacementId?: string;
 }
 
 const FeaturedProducts: React.FC<FeaturedProductsProps> = ({
@@ -25,14 +26,13 @@ const FeaturedProducts: React.FC<FeaturedProductsProps> = ({
   subtitle,
   titleColor,
   subtitleColor,
-  backgroundColor
+  backgroundColor,
+  sponsoredPlacementId
 }) => {
-  const sourceProducts = (products && products.length > 0) ? products : initialProducts;
-  const featured = sourceProducts
+  const featured = products
     .filter(p => String(p.status) === 'Ativo' || String(p.status) === 'Publicado');
 
   const [currentIndex, setCurrentIndex] = useState(0);
-  const carouselRef = useRef<HTMLDivElement>(null);
   const autoPlayRef = useRef<NodeJS.Timeout | null>(null);
 
   // Constants
@@ -75,6 +75,11 @@ const FeaturedProducts: React.FC<FeaturedProductsProps> = ({
     };
   }, [maxIndex, itemsVisible, totalItems]);
 
+  useEffect(() => {
+    if (!sponsoredPlacementId || featured.length === 0) return;
+    trackSponsoredImpressions(featured, sponsoredPlacementId);
+  }, [featured, sponsoredPlacementId]);
+
   // Reset timer on manual interaction
   const resetTimer = () => {
     if (autoPlayRef.current) clearInterval(autoPlayRef.current);
@@ -94,6 +99,8 @@ const FeaturedProducts: React.FC<FeaturedProductsProps> = ({
     prevSlide();
     resetTimer();
   };
+
+  if (featured.length === 0) return null;
 
   return (
     <section
@@ -145,12 +152,17 @@ const FeaturedProducts: React.FC<FeaturedProductsProps> = ({
               {featured.map((product) => (
                 <div
                   key={product.id}
-                  className="flex-shrink-0 px-4"
+                  className="flex-shrink-0 px-4 flex justify-center"
                   style={{ width: `${100 / itemsVisible}%` }}
                 >
                   <ProductCard
                     product={product}
-                    onClick={() => onProductClick(product)}
+                    onClick={() => {
+                      if (sponsoredPlacementId) {
+                        trackSponsoredClick(product, sponsoredPlacementId);
+                      }
+                      onProductClick(product);
+                    }}
                     wishlist={wishlist}
                     onToggleWishlist={onToggleWishlist}
                   />

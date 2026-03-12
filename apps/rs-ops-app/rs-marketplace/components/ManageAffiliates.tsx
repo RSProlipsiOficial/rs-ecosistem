@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { UserProfile } from '../types';
 
 interface ManageAffiliatesProps {
@@ -13,21 +13,16 @@ const ManageAffiliates: React.FC<ManageAffiliatesProps> = ({ userProfile }) => {
         register: ''
     });
 
-    // O ID amigável (idConsultor/username) é melhor para links - sempre em minúsculas para URLs
     const userId = (userProfile?.idConsultor || userProfile?.id || 'rsprolipsi').toLowerCase();
 
     useEffect(() => {
-        // Detecta o ambiente para gerar links corretos
         const currentOrigin = window.location.origin;
         const isLocalhost = currentOrigin.includes('localhost');
-
-        // Configura os domínios base
         const marketplaceDomain = isLocalhost ? 'http://localhost:3003' : 'https://marketplace.rsprolipsi.com.br';
-        const rotaFacilDomain = isLocalhost ? 'http://localhost:3002' : 'https://rotafacil.rsprolipsi.com.br';
 
         const storeUrl = marketplaceDomain;
         const referralUrl = `${storeUrl}/?ref=${userId}`;
-        const registerUrl = `${rotaFacilDomain}/indicacao/${userId}`;
+        const registerUrl = `${storeUrl}/indicacao/${encodeURIComponent(userId)}#/signup`;
 
         setUrls({
             store: storeUrl,
@@ -44,73 +39,70 @@ const ManageAffiliates: React.FC<ManageAffiliatesProps> = ({ userProfile }) => {
 
     return (
         <div className="space-y-6">
-            <div className="bg-black border border-dark-800 rounded-lg p-6">
-                <h3 className="text-xl font-bold text-white mb-2">Seus Links de Indicação</h3>
-                <p className="text-gray-400 text-sm mb-6">
-                    Copie seus links abaixo para compartilhar com clientes e novos lojistas. Seu ID atual é: <strong className="text-gold-400">{userId}</strong>
+            <div className="rounded-lg border border-dark-800 bg-black p-6">
+                <h3 className="mb-2 text-xl font-bold text-white">Seus Links de Indicacao</h3>
+                <p className="mb-6 text-sm text-gray-400">
+                    Copie seus links abaixo para compartilhar com clientes e novos parceiros. Seu ID atual e: <strong className="text-gold-400">{userId}</strong>
                 </p>
 
                 <div className="space-y-6">
-                    {/* Link da Loja Geral */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-400 mb-2">Link da Loja Geral (Marketplace)</label>
+                        <label className="mb-2 block text-sm font-medium text-gray-400">Link da Loja Geral (Marketplace)</label>
                         <div className="flex gap-2">
                             <input
                                 type="text"
                                 readOnly
                                 value={urls.store}
-                                className="flex-1 bg-dark-800 border border-dark-700 rounded-md py-2 px-3 text-white text-sm focus:outline-none"
+                                className="flex-1 rounded-md border border-dark-700 bg-dark-800 px-3 py-2 text-sm text-white focus:outline-none"
                             />
                             <button
                                 onClick={() => handleCopy(urls.store, 'store')}
-                                className="px-4 py-2 bg-dark-700 hover:bg-dark-600 text-white text-sm font-medium rounded-md transition-colors whitespace-nowrap min-w-[120px]"
+                                className="min-w-[120px] whitespace-nowrap rounded-md bg-dark-700 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-dark-600"
                             >
-                                {copiedLink === 'store' ? '✅ Copiado' : '📋 Copiar'}
+                                {copiedLink === 'store' ? 'Copiado' : 'Copiar'}
                             </button>
                         </div>
                     </div>
 
-                    {/* Link de Indicação (Afiliado/Consultor) */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-400 mb-2">Seu Link de Indicação (Para Clientes)</label>
+                        <label className="mb-2 block text-sm font-medium text-gray-400">Seu Link de Indicacao (Para Clientes)</label>
                         <div className="flex gap-2">
                             <input
                                 type="text"
                                 readOnly
                                 value={urls.referral}
-                                className="flex-1 bg-dark-800 border border-gold-900/50 rounded-md py-2 px-3 text-gold-400 text-sm focus:outline-none"
+                                className="flex-1 rounded-md border border-gold-900/50 bg-dark-800 px-3 py-2 text-sm text-gold-400 focus:outline-none"
                             />
                             <button
                                 onClick={() => handleCopy(urls.referral, 'referral')}
-                                className="px-4 py-2 bg-gold-500 hover:bg-gold-400 text-black text-sm font-bold rounded-md transition-colors whitespace-nowrap min-w-[120px]"
+                                className="min-w-[120px] whitespace-nowrap rounded-md bg-gold-500 px-4 py-2 text-sm font-bold text-black transition-colors hover:bg-gold-400"
                             >
-                                {copiedLink === 'referral' ? '✅ Copiado!' : '📋 Copiar Link'}
+                                {copiedLink === 'referral' ? 'Copiado!' : 'Copiar Link'}
                             </button>
                         </div>
-                        <p className="text-xs text-gray-500 mt-2">
-                            Envie este link para seus clientes. As compras realizadas através dele garantirão sua comissão.
+                        <p className="mt-2 text-xs text-gray-500">
+                            Envie este link para seus clientes. As compras realizadas atraves dele garantirao sua comissao.
                         </p>
                     </div>
 
-                    {/* Link de Cadastro de Novos Lojistas */}
-                    <div className="pt-4 border-t border-dark-800">
-                        <label className="block text-sm font-medium text-gray-400 mb-2">Link de Cadastro (Para Novos Consultores/Lojistas)</label>
+                    <div className="border-t border-dark-800 pt-4">
+                        <label className="mb-2 block text-sm font-medium text-gray-400">Link de Cadastro (Para Novos Consultores/Lojistas)</label>
                         <div className="flex gap-2">
                             <input
                                 type="text"
                                 readOnly
                                 value={urls.register}
-                                className="flex-1 bg-dark-800 border border-blue-900/50 rounded-md py-2 px-3 text-blue-400 text-sm focus:outline-none"
+                                className="flex-1 rounded-md border border-blue-900/50 bg-dark-800 px-3 py-2 text-sm text-blue-400 focus:outline-none"
                             />
                             <button
                                 onClick={() => handleCopy(urls.register, 'register')}
-                                className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold rounded-md transition-colors whitespace-nowrap min-w-[120px]"
+                                className="min-w-[120px] whitespace-nowrap rounded-md bg-blue-600 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-blue-500"
                             >
-                                {copiedLink === 'register' ? '✅ Copiado!' : '📋 Copiar Link'}
+                                {copiedLink === 'register' ? 'Copiado!' : 'Copiar Link'}
                             </button>
                         </div>
-                        <p className="text-xs text-gray-500 mt-2">
-                            Este link aponta para o sistema **Rota Fácil**, garantindo que o novo parceiro entre na sua rede MMN.
+                        <p className="mt-2 text-xs text-gray-500">
+                            Este link abre o cadastro completo do Marketplace ja vinculado ao seu ID.
                         </p>
                     </div>
                 </div>

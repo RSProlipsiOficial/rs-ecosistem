@@ -110,7 +110,8 @@ const NetworkExplorer: React.FC<NetworkExplorerProps> = ({ consultants, selected
                 <img src={consultant.avatar} alt={consultant.name} className="w-10 h-10 rounded-full object-cover" />
                 <div>
                     <p className="text-white">{consultant.name}</p>
-                    <p className="text-xs text-gray-500">ID: {consultant.code || consultant.id}</p>
+                    <p className="text-xs text-gray-500">ID Conta: {consultant.code || consultant.id}</p>
+                    {consultant.username && <p className="text-xs text-yellow-500/80 uppercase">Login/MMN: {consultant.username}</p>}
                 </div>
             </td>
             <td className="px-4 py-3">{consultant.sponsor?.name || '—'}</td>

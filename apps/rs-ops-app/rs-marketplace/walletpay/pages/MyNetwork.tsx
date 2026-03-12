@@ -14,23 +14,30 @@ const DetailRow: React.FC<{ label: string; value?: React.ReactNode }> = ({ label
 );
 
 const ConsultantCard: React.FC<{ consultant: Consultant, onDetailsClick: () => void; }> = ({ consultant, onDetailsClick }) => {
-  return (
-    <div className="bg-card p-5 rounded-2xl border border-border shadow-custom-lg transition-all duration-300 hover:border-gold hover:shadow-gold/10 flex flex-col text-center items-center">
-      <img src={consultant.avatarUrl} alt={consultant.name} className="w-20 h-20 rounded-full border-4 border-surface mb-4" />
-      <h3 className="font-bold text-text-title text-lg">{consultant.name}</h3>
-      <p className="text-sm text-text-soft mb-2">ID: {consultant.id}</p>
-      <div className="my-2 inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-gold/10 text-gold border border-gold/20">
-        {consultant.pin}
-      </div>
-      <div className="flex items-center text-sm mt-2">
-        <span className={`w-2.5 h-2.5 rounded-full mr-2 ${consultant.status === 'active' ? 'bg-success' : 'bg-text-soft/50'}`}></span>
-        {consultant.status === 'active' ? 'Ativo' : 'Inativo'}
-      </div>
-      <button onClick={onDetailsClick} className="mt-4 w-full px-4 py-2 text-sm font-semibold rounded-lg bg-surface text-text-body hover:bg-gold hover:text-base border border-border hover:border-gold transition-colors">
-        Ver Detalhes
-      </button>
-    </div>
-  );
+    return (
+        <div className="bg-card p-5 rounded-2xl border border-border shadow-custom-lg transition-all duration-300 hover:border-gold hover:shadow-gold/10 flex flex-col text-center items-center">
+            <img
+                src={consultant.avatarUrl || 'https://raw.githubusercontent.com/RS-Prolipsi/assets/main/logo_rs_gold.png'}
+                alt={consultant.name}
+                className="w-20 h-20 rounded-full border-4 border-surface mb-4"
+                onError={(e) => {
+                    (e.target as HTMLImageElement).src = 'https://raw.githubusercontent.com/RS-Prolipsi/assets/main/logo_rs_gold.png';
+                }}
+            />
+            <h3 className="font-bold text-text-title text-lg">{consultant.name}</h3>
+            <p className="text-sm text-text-soft mb-2">ID: {consultant.id}</p>
+            <div className="my-2 inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-gold/10 text-gold border border-gold/20">
+                {consultant.pin}
+            </div>
+            <div className="flex items-center text-sm mt-2">
+                <span className={`w-2.5 h-2.5 rounded-full mr-2 ${consultant.status === 'active' ? 'bg-success' : 'bg-text-soft/50'}`}></span>
+                {consultant.status === 'active' ? 'Ativo' : 'Inativo'}
+            </div>
+            <button onClick={onDetailsClick} className="mt-4 w-full px-4 py-2 text-sm font-semibold rounded-lg bg-surface text-text-body hover:bg-gold hover:text-base border border-border hover:border-gold transition-colors">
+                Ver Detalhes
+            </button>
+        </div>
+    );
 };
 
 
@@ -46,16 +53,16 @@ const MyNetwork: React.FC = () => {
             try {
                 setLoading(true);
                 const userId = localStorage.getItem('userId') || 'demo-user';
-                
+
                 const [networkRes, statsRes] = await Promise.all([
                     sigmaAPI.getDownlines(userId).catch(() => null),
                     sigmaAPI.getStats(userId).catch(() => null)
                 ]);
-                
+
                 if (networkRes?.data?.success) {
                     setNetworkData(networkRes.data.downlines);
                 }
-                
+
                 if (statsRes?.data?.success) {
                     setStats(statsRes.data.stats);
                 }
@@ -65,7 +72,7 @@ const MyNetwork: React.FC = () => {
                 setLoading(false);
             }
         };
-        
+
         loadNetwork();
     }, []);
 
@@ -87,7 +94,14 @@ const MyNetwork: React.FC = () => {
         return (
             <div className="space-y-2">
                 <div className="flex flex-col items-center pb-4 mb-2 border-b border-border/50">
-                    <img src={selectedConsultant.avatarUrl} alt={selectedConsultant.name} className="w-24 h-24 rounded-full border-4 border-surface mb-4" />
+                    <img
+                        src={selectedConsultant.avatarUrl || 'https://raw.githubusercontent.com/RS-Prolipsi/assets/main/logo_rs_gold.png'}
+                        alt={selectedConsultant.name}
+                        className="w-24 h-24 rounded-full border-4 border-surface mb-4"
+                        onError={(e) => {
+                            (e.target as HTMLImageElement).src = 'https://raw.githubusercontent.com/RS-Prolipsi/assets/main/logo_rs_gold.png';
+                        }}
+                    />
                     <h3 className="font-bold text-text-title text-xl">{selectedConsultant.name}</h3>
                     <p className="text-sm text-text-soft">ID: {selectedConsultant.id}</p>
                 </div>
@@ -131,7 +145,7 @@ const MyNetwork: React.FC = () => {
                 </div>
             ) : (
                 <div className="text-center py-12 text-text-body bg-card rounded-2xl border border-border">
-                  <p>Nenhum consultor encontrado.</p>
+                    <p>Nenhum consultor encontrado.</p>
                 </div>
             )}
 

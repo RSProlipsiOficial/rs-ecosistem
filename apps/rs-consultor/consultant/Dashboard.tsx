@@ -52,6 +52,9 @@ const UserInfoCard: FC = () => {
         pending: { value: 'Pendente', className: 'text-yellow-400' },
     };
 
+    const loginId = user.loginId || user.idConsultor || '---';
+    const accountId = user.code || (user.idNumerico ? String(user.idNumerico) : '---');
+
     return (
         <Card>
             <div className="flex items-center space-x-4 mb-6">
@@ -60,15 +63,21 @@ const UserInfoCard: FC = () => {
                     alt={user.name}
                     className="h-20 w-20 rounded-full border-4 border-brand-gray-light shadow-lg"
                     onError={(e) => {
-                        (e.target as HTMLImageElement).src = '/logo-rs.png';
+                        (e.target as HTMLImageElement).src = 'https://raw.githubusercontent.com/RS-Prolipsi/assets/main/logo_rs_gold.png';
                     }}
                 />
                 <div>
                     <h3 className="text-lg font-bold text-brand-text-light uppercase tracking-tight">{user.name}</h3>
                     <p className="text-sm text-brand-text-dim flex items-center gap-1.5 mt-0.5">
-                        <span className="opacity-50 text-[10px] font-bold">PROFISSIONAL ID:</span>
+                        <span className="opacity-50 text-[10px] font-bold">LOGIN/MMN ID:</span>
                         <span className="font-black text-brand-gold lowercase tracking-widest bg-brand-gold/10 px-2 py-0.5 rounded border border-brand-gold/20">
-                            {user.idConsultor?.toLowerCase() || '---'}
+                            {String(loginId).toLowerCase()}
+                        </span>
+                    </p>
+                    <p className="text-sm text-brand-text-dim flex items-center gap-1.5 mt-1">
+                        <span className="opacity-50 text-[10px] font-bold">ID CONTA:</span>
+                        <span className="font-black text-white tracking-widest bg-white/5 px-2 py-0.5 rounded border border-white/10">
+                            {accountId}
                         </span>
                     </p>
                 </div>
@@ -91,21 +100,47 @@ const UserInfoCard: FC = () => {
                 <div className="!mt-6 pt-6 border-t border-brand-gray-light space-y-4">
                     <div className="bg-brand-gold/5 border border-brand-gold/20 p-4 rounded-xl">
                         <p className="text-[10px] text-brand-gold font-bold uppercase tracking-[0.2em] mb-3">Acesso Rápido</p>
-                        <a
-                            href={user.linkCadastro || user.linkIndicacao}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center justify-center gap-2 w-full bg-brand-gold hover:bg-yellow-400 text-brand-dark font-black py-4 rounded-lg transition-all shadow-lg hover:shadow-brand-gold/20 uppercase text-xs tracking-widest"
-                        >
-                            <IconUserPlus size={18} />
-                            Cadastrar Novo Parceiro
-                        </a>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <a
+                                href={user.linkCadastro || user.linkIndicacao}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center justify-center gap-2 w-full bg-brand-gold hover:bg-yellow-400 text-brand-dark font-black py-4 rounded-lg transition-all shadow-lg hover:shadow-brand-gold/20 uppercase text-xs tracking-widest"
+                            >
+                                <IconUserPlus size={18} />
+                                Cadastrar Novo Parceiro
+                            </a>
+                            <a
+                                href={user.linkLoja || '#'}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center justify-center gap-2 w-full bg-white/5 hover:bg-white/10 text-brand-text-light font-black py-4 rounded-lg border border-white/10 transition-all uppercase text-xs tracking-widest"
+                            >
+                                <IconShop size={18} />
+                                Abrir Minha Loja
+                            </a>
+                        </div>
                         <p className="text-[10px] text-brand-text-dim mt-2 text-center opacity-70 italic">
                             Sistema Rota Fácil (Porta 3002)
                         </p>
                     </div>
 
-                    {config.links.map(link => (
+                    <CopyableLink
+                        label="Link de Indicacao"
+                        link={user.linkIndicacao || ''}
+                    />
+                    <CopyableLink
+                        label="Link da Loja (Marketplace)"
+                        link={user.linkLoja || ''}
+                    />
+                    <CopyableLink
+                        label="Link de Cadastro (MMN)"
+                        link={user.linkCadastro || ''}
+                    />
+
+                    {config.links
+                        .filter(link => !['linkIndicacao', 'linkLoja', 'linkCadastro'].includes(link.source))
+                        .map(link => (
                         <CopyableLink
                             key={link.id}
                             label={link.label}

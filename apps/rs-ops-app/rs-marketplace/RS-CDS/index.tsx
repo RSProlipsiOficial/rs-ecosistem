@@ -35,7 +35,15 @@ const Root: React.FC = () => {
     return <Login onLogin={(id) => setUserId(id)} />;
   }
 
-  return <App userId={userId} onLogout={() => supabase.auth.signOut()} />;
+  return (
+    <App
+      userId={userId}
+      onLogout={async () => {
+        setUserId(null);
+        await supabase.auth.signOut();
+      }}
+    />
+  );
 };
 
 const rootElement = document.getElementById('root');

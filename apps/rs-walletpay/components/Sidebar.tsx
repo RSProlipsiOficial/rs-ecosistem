@@ -1,10 +1,15 @@
 import React, { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import {
-  IconDashboard, IconTransactions, IconPayments, IconSparkles, IconCard,
-  IconReports, IconSettings, IconUsers, IconShoppingBag
+  IconCard,
+  IconDashboard,
+  IconPayments,
+  IconReports,
+  IconSettings,
+  IconTransactions
 } from '../constants';
-import ComingSoonModal from './ComingSoonModal';
+import { useBranding } from '../src/contexts/BrandingContext';
+import { clearWalletSession } from '../src/utils/walletSession';
 
 interface SidebarProps {
   isSidebarOpen: boolean;
@@ -16,7 +21,7 @@ const navSections = [
     title: 'GERAL',
     items: [
       { to: '/app/dashboard', icon: IconDashboard, label: 'Dashboard' },
-      { to: '/app/reports', icon: IconReports, label: 'Relatórios' },
+      { to: '/app/reports', icon: IconReports, label: 'Relatorios' },
     ]
   },
   {
@@ -24,12 +29,12 @@ const navSections = [
     items: [
       { to: '/app/transactions', icon: IconTransactions, label: 'Extrato' },
       { to: '/app/payments', icon: IconPayments, label: 'Pagamentos' },
-      { to: '/app/cards', icon: IconCard, label: 'Cartões' },
+      { to: '/app/cards', icon: IconCard, label: 'Cartoes' },
     ]
   },
 ];
 
-const NavItem: React.FC<{ to: string, icon: React.FC<{ className?: string }>, label: string, onClick: () => void }> = ({ to, icon: Icon, label, onClick }) => (
+const NavItem: React.FC<{ to: string; icon: React.FC<{ className?: string }>; label: string; onClick: () => void }> = ({ to, icon: Icon, label, onClick }) => (
   <NavLink
     to={to}
     onClick={onClick}
@@ -48,15 +53,15 @@ const NavItem: React.FC<{ to: string, icon: React.FC<{ className?: string }>, la
 const CollapsibleNavItem: React.FC<{
   icon: React.FC<{ className?: string }>;
   label: string;
-  subItems: { to: string, label: string }[];
+  subItems: { to: string; label: string }[];
   onClick: () => void;
 }> = ({ icon: Icon, label, subItems, onClick }) => {
   const { pathname } = useLocation();
-  const isParentActive = subItems.some(item => pathname.startsWith(item.to));
+  const isParentActive = subItems.some((item) => pathname.startsWith(item.to));
   const [isOpen, setIsOpen] = useState(isParentActive);
 
-  const handleToggle = (e: React.MouseEvent) => {
-    e.preventDefault();
+  const handleToggle = (event: React.MouseEvent) => {
+    event.preventDefault();
     setIsOpen(!isOpen);
   };
 
@@ -78,11 +83,11 @@ const CollapsibleNavItem: React.FC<{
       </a>
       {isOpen && (
         <ul className="pl-8 border-l border-border ml-5 py-1">
-          {subItems.map(item => (
+          {subItems.map((item) => (
             <li key={item.to}>
               <NavLink
                 to={item.to}
-                onClick={onClick} // This will close the mobile sidebar
+                onClick={onClick}
                 className={({ isActive }) =>
                   `flex items-center py-2 px-3 my-1 text-sm rounded-md transition-colors ${isActive
                     ? 'text-gold font-semibold'
@@ -101,27 +106,35 @@ const CollapsibleNavItem: React.FC<{
 };
 
 const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen, setSidebarOpen }) => {
-  const [showComingSoon, setShowComingSoon] = useState(false);
+  const { branding } = useBranding();
 
   return (
     <>
-      {/* Mobile Overlay */}
       <div
         className={`fixed inset-0 bg-black/60 z-30 lg:hidden ${isSidebarOpen ? 'block' : 'hidden'}`}
         onClick={() => setSidebarOpen(false)}
       ></div>
 
-      {/* Sidebar */}
       <aside
         className={`fixed top-0 left-0 h-full w-64 bg-card text-text-body flex flex-col z-40
                     transform transition-transform duration-300 ease-in-out
                     lg:static lg:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
       >
-        <div className="flex items-center justify-center h-20 border-b border-border">
-          <h1 className="text-2xl font-bold text-gold">RS WalletPay</h1>
+        <div className="flex h-20 items-center justify-center border-b border-border px-4">
+          <div className="flex flex-col items-center gap-1">
+            <img
+              src={branding.logo}
+              alt={branding.companyName}
+              className="max-h-10 w-auto max-w-[170px] object-contain"
+              onError={(event) => {
+                event.currentTarget.src = '/logo-rs.png';
+              }}
+            />
+            <span className="text-[10px] font-semibold uppercase tracking-[0.24em] text-gold/80">WalletPay</span>
+          </div>
         </div>
         <nav className="flex-1 px-4 py-4 overflow-y-auto">
-          {navSections.map(section => (
+          {navSections.map((section) => (
             <div key={section.title} className="mb-4">
               <h2 className="px-3 py-2 text-xs font-bold uppercase text-text-soft tracking-wider">{section.title}</h2>
               <ul>
@@ -142,15 +155,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen, setSidebarOpen }) => {
           <NavItem to="/app/settings" icon={IconSettings} label="Perfil" onClick={() => setSidebarOpen(false)} />
           <button
             onClick={() => {
-              // Limpar dados locais
-              localStorage.removeItem('token');
-              localStorage.removeItem('userId');
-              localStorage.removeItem('userName');
-              localStorage.removeItem('userEmail');
-              localStorage.removeItem('autoLogin');
-              localStorage.removeItem('loginSource');
-
-              // Redirecionar para login
+              clearWalletSession();
               window.location.href = '/#/login';
             }}
             className="w-full text-left flex items-center p-3 mt-1 rounded-lg hover:bg-surface hover:text-gold transition-colors text-text-body"

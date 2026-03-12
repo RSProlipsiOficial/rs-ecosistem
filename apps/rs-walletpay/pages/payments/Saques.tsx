@@ -1,10 +1,10 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { MOCK_LEDGER_ENTRIES, MOCK_PIX_KEYS } from '../../constants';
 import { LedgerEntry, LedgerEventType } from '../../types';
 import StatusBadge from '../../components/StatusBadge';
 import Modal from '../../components/Modal';
 import { walletAPI } from '../../src/services/api';
+import { getWalletUserId } from '../../src/utils/walletSession';
 
 const formatCurrency = (value: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value / 100);
 
@@ -15,9 +15,7 @@ const formatCurrencyForInput = (value: string) => {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(numberValue);
 };
 
-const parseCurrency = (value: string) => {
-  return value.replace(/\D/g, '');
-};
+const parseCurrency = (value: string) => value.replace(/\D/g, '');
 
 const Saques: React.FC = () => {
     const [amount, setAmount] = useState('');
@@ -32,33 +30,38 @@ const Saques: React.FC = () => {
     useEffect(() => {
         const loadData = async () => {
             try {
-                const userId = localStorage.getItem('userId') || 'demo-user';
-                
+                const userId = getWalletUserId();
+                if (!userId) {
+                    setPixKeys([]);
+                    setWithdrawals([]);
+                    return;
+                }
+
                 const [balanceRes, pixRes, withdrawalsRes] = await Promise.all([
                     walletAPI.getBalance(userId).catch(() => null),
                     walletAPI.listPixKeys(userId).catch(() => null),
                     walletAPI.getWithdrawals(userId).catch(() => null)
                 ]);
-                
+
                 if (balanceRes?.data?.success) {
                     setAvailableBalance(balanceRes.data.balance.available * 100);
                 }
-                
+
                 if (pixRes?.data?.success) {
                     setPixKeys(pixRes.data.pix_keys || []);
                 } else {
-                    setPixKeys(import.meta.env.DEV ? MOCK_PIX_KEYS : []);
+                    setPixKeys([]);
                 }
-                
+
                 if (withdrawalsRes?.data?.success) {
                     setWithdrawals(withdrawalsRes.data.withdrawals);
                 }
             } catch (error) {
                 console.error('Erro ao carregar dados:', error);
-                setPixKeys(import.meta.env.DEV ? MOCK_PIX_KEYS : []);
+                setPixKeys([]);
             }
         };
-        
+
         loadData();
     }, []);
 
@@ -67,7 +70,7 @@ const Saques: React.FC = () => {
           .filter(entry => entry.type === LedgerEventType.WITHDRAWAL || (entry.type === LedgerEventType.FEES && (entry.description || '').includes('Saque')))
           .sort((a, b) => new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime())
     , [withdrawals]);
-    
+
     useEffect(() => {
         if (!amount) {
             setAmountError(null);
@@ -87,30 +90,33 @@ const Saques: React.FC = () => {
 
         const numericAmount = parseInt(amount.replace(/\D/g, ''), 10);
         if (!numericAmount || numericAmount <= 0) {
-            alert("Valor inválido.");
+            alert('Valor invalido.');
             return;
         }
         if (numericAmount > availableBalance) {
-            alert("Saldo insuficiente.");
+            alert('Saldo insuficiente.');
             return;
         }
-        
+
         try {
             setLoading(true);
-            const userId = localStorage.getItem('userId');
-            
+            const userId = getWalletUserId();
+            if (!userId) {
+                alert('Sessao invalida. Entre novamente no WalletPay.');
+                return;
+            }
+
             const response = await walletAPI.requestWithdraw({
                 user_id: userId,
                 amount: numericAmount,
                 method: 'pix',
                 pix_key: selectedKey
             });
-            
+
             if (response?.data?.success) {
                 setModal({ isOpen: true, content: 'success' });
                 setAmount('');
                 setSelectedKey('');
-                // Recarregar lista de saques
                 const withdrawalsRes = await walletAPI.getWithdrawals(userId);
                 if (withdrawalsRes?.data?.success) {
                     setWithdrawals(withdrawalsRes.data.withdrawals);
@@ -130,13 +136,12 @@ const Saques: React.FC = () => {
     return (
         <div className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Withdrawal Form */}
                 <div className="lg:col-span-2 bg-card p-6 sm:p-8 rounded-2xl border border-border">
                     <h2 className="text-xl font-bold text-text-title">Solicitar Saque</h2>
-                    <p className="text-text-soft mt-1">O valor será enviado para a chave PIX selecionada.</p>
-                    
+                    <p className="text-text-soft mt-1">O valor sera enviado para a chave PIX selecionada.</p>
+
                     <div className="my-6 bg-surface p-4 rounded-lg border border-border">
-                        <p className="text-sm text-text-soft">Saldo disponível para saque</p>
+                        <p className="text-sm text-text-soft">Saldo disponivel para saque</p>
                         <p className="text-3xl font-bold text-gold">{formatCurrency(availableBalance)}</p>
                     </div>
 
@@ -144,12 +149,14 @@ const Saques: React.FC = () => {
                         <div>
                             <label htmlFor="amount" className="block text-sm font-medium text-text-body mb-2">Valor do saque</label>
                             <input
-                                type="text" id="amount" value={amount ? formatCurrencyForInput(amount) : ''}
+                                type="text"
+                                id="amount"
+                                value={amount ? formatCurrencyForInput(amount) : ''}
                                 onChange={e => setAmount(parseCurrency(e.target.value))}
                                 placeholder="R$ 0,00"
                                 className={`w-full px-4 py-3 rounded-lg bg-surface border focus:outline-none focus:ring-2 transition-colors ${
-                                    amountError 
-                                    ? 'border-danger text-danger focus:ring-danger/25' 
+                                    amountError
+                                    ? 'border-danger text-danger focus:ring-danger/25'
                                     : 'border-border focus:ring-gold/25'
                                 }`}
                             />
@@ -157,19 +164,25 @@ const Saques: React.FC = () => {
                         </div>
                         <div>
                             <label htmlFor="pixKey" className="block text-sm font-medium text-text-body mb-2">Chave PIX de destino</label>
-                            <select id="pixKey" value={selectedKey} onChange={e => setSelectedKey(e.target.value)}
+                            <select
+                                id="pixKey"
+                                value={selectedKey}
+                                onChange={e => setSelectedKey(e.target.value)}
                                 className="w-full px-4 py-3 rounded-lg bg-surface border border-border focus:outline-none focus:ring-2 focus:ring-gold/25"
                             >
-                                {pixKeys.map((key: any) => <option key={key.id} value={key.id}>{`${String(key.type).toUpperCase()}: ${key.key}`}{key.isPrimary ? ' (Principal)' : ''}</option>)}
+                                {pixKeys.map((key: any) => (
+                                    <option key={key.id} value={key.id}>
+                                        {`${String(key.type).toUpperCase()}: ${key.key}`}{key.isPrimary ? ' (Principal)' : ''}
+                                    </option>
+                                ))}
                             </select>
                         </div>
-                         <button type="submit" disabled={!!amountError} className="w-full text-center py-3 px-6 bg-gold text-base text-card hover:bg-gold-hover font-semibold rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
-                            Confirmar Saque
+                         <button type="submit" disabled={!!amountError || loading} className="w-full text-center py-3 px-6 bg-gold text-base text-card hover:bg-gold-hover font-semibold rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
+                            {loading ? 'Processando...' : 'Confirmar Saque'}
                         </button>
                     </form>
                 </div>
 
-                {/* Saved Keys */}
                 <div className="bg-card p-6 rounded-2xl border border-border">
                     <h3 className="text-lg font-bold text-text-title mb-4">Chaves PIX Salvas</h3>
                     <div className="space-y-3 mb-4">
@@ -186,15 +199,14 @@ const Saques: React.FC = () => {
                 </div>
             </div>
 
-            {/* History */}
             <div className="bg-card p-6 rounded-2xl border border-border">
-                <h3 className="text-lg font-bold text-text-title mb-4">Histórico de Saques</h3>
+                <h3 className="text-lg font-bold text-text-title mb-4">Historico de Saques</h3>
                 <div className="overflow-x-auto">
                     <table className="w-full text-left">
                         <thead className="text-xs text-text-soft uppercase">
                             <tr>
                                 <th className="py-2 px-3">Data</th>
-                                <th className="py-2 px-3">Descrição</th>
+                                <th className="py-2 px-3">Descricao</th>
                                 <th className="py-2 px-3 text-right">Valor</th>
                                 <th className="py-2 px-3 text-center">Status</th>
                             </tr>
@@ -217,11 +229,11 @@ const Saques: React.FC = () => {
                 </div>
             </div>
 
-            <Modal isOpen={modal.isOpen} onClose={() => setModal({isOpen: false, content: null})} title={modal.content === 'success' ? 'Sucesso!' : 'Adicionar Chave PIX'}>
+            <Modal isOpen={modal.isOpen} onClose={() => setModal({ isOpen: false, content: null })} title={modal.content === 'success' ? 'Sucesso!' : 'Adicionar Chave PIX'}>
                 {modal.content === 'success' && (
                     <div className="text-center">
-                        <p>Sua solicitação de saque foi enviada e está sendo processada.</p>
-                        <button onClick={() => setModal({isOpen: false, content: null})} className="mt-4 w-full text-center py-2 px-4 bg-gold text-card font-semibold rounded-lg">Ok</button>
+                        <p>Sua solicitacao de saque foi enviada e esta sendo processada.</p>
+                        <button onClick={() => setModal({ isOpen: false, content: null })} className="mt-4 w-full text-center py-2 px-4 bg-gold text-card font-semibold rounded-lg">Ok</button>
                     </div>
                 )}
                 {modal.content === 'addKey' && (
@@ -231,7 +243,11 @@ const Saques: React.FC = () => {
                         const type = (form.elements.namedItem('type') as HTMLInputElement).value;
                         const key = (form.elements.namedItem('key') as HTMLInputElement).value;
                         try {
-                            const userId = localStorage.getItem('userId') || 'demo-user';
+                            const userId = getWalletUserId();
+                            if (!userId) {
+                                alert('Sessao invalida. Entre novamente no WalletPay.');
+                                return;
+                            }
                             const res = await walletAPI.createPixKey({ user_id: userId, type, key });
                             if (res?.data?.success) {
                                 const list = await walletAPI.listPixKeys(userId);
@@ -250,7 +266,7 @@ const Saques: React.FC = () => {
                             <select name="type" className="w-full px-4 py-3 rounded-lg bg-surface border border-border">
                                 <option value="email">Email</option>
                                 <option value="phone">Telefone</option>
-                                <option value="random">Chave Aleatória</option>
+                                <option value="random">Chave Aleatoria</option>
                                 <option value="cpf">CPF</option>
                             </select>
                         </div>

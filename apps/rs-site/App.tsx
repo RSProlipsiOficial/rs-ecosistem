@@ -33,20 +33,38 @@ import { OrdersProvider } from './context/OrdersContext';
 import { brandingApi } from './services/brandingApi';
 
 const EditWrapper: React.FC<{ children: React.ReactNode; onEdit: () => void; areaLabel: string }> = ({ children, onEdit, areaLabel }) => {
-  const { isAdmin, isEditMode } = useAdmin();
+  const { isAdmin, isEditMode, isPreviewEditor } = useAdmin();
+
+  const handlePreviewEdit = (event: React.MouseEvent) => {
+    if (!isPreviewEditor) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    onEdit();
+  };
 
   if (isAdmin && isEditMode) {
     return (
-      <div className="relative group editable-section-wrapper">
+      <div
+        className={`relative group editable-section-wrapper ${isPreviewEditor ? 'cursor-pointer' : ''}`}
+        onClick={handlePreviewEdit}
+      >
         {children}
-        <div className="absolute inset-0 border-2 border-dashed border-transparent group-hover:border-accent transition-all pointer-events-none rounded-lg"></div>
+        <div className={`absolute inset-0 border-2 border-dashed transition-all pointer-events-none rounded-lg ${isPreviewEditor ? 'border-accent/50 group-hover:border-accent' : 'border-transparent group-hover:border-accent'}`}></div>
         <button
           onClick={onEdit}
-          className="absolute top-4 right-4 w-8 h-8 bg-accent text-button-text rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-[51]"
+          className={`absolute top-4 right-4 w-8 h-8 bg-accent text-button-text rounded-full flex items-center justify-center transition-opacity z-[51] ${isPreviewEditor ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
           aria-label={areaLabel}
         >
           <PencilSquareIcon className="w-5 h-5" />
         </button>
+        {isPreviewEditor && (
+          <div className="pointer-events-none absolute bottom-4 right-4 rounded-full border border-accent/40 bg-background/85 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-accent">
+            Clique para editar
+          </div>
+        )}
       </div>
     );
   }
@@ -73,19 +91,20 @@ const SiteLayout: React.FC = () => {
 };
 
 const AppContent: React.FC = () => {
-  const { isAdmin, isEditMode, setOpenAdminSection } = useAdmin();
+  const { isAdmin, isEditMode, isPreviewEditor, setOpenAdminSection } = useAdmin();
   const { page, viewingProductId, setViewingProductId } = useNavigation();
   const { backgroundClass } = useBackground();
   const { pages } = usePageBuilder();
   const { settings: bannerSettings } = useBanner();
   const { theme } = useTheme();
+  const isEmbeddedAdmin = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('embedAdmin') === '1';
 
   useEffect(() => {
     const fetchBranding = async () => {
       try {
         const res = await brandingApi.getBranding();
         if (res.success && res.data) {
-          const { favicon } = res.data;
+          const favicon = res.data.favicon || res.data.logo || res.data.avatar;
           if (favicon) {
             const link = document.querySelector("link[rel*='icon']") as HTMLLinkElement;
             if (link) link.href = favicon;
@@ -141,6 +160,18 @@ const AppContent: React.FC = () => {
   }, [backgroundClass, isBgBannerVisible, isBackgroundGradient]);
 
   useEffect(() => {
+    if (isPreviewEditor) {
+      document.body.setAttribute('data-preview-editor', '1');
+    } else {
+      document.body.removeAttribute('data-preview-editor');
+    }
+
+    return () => {
+      document.body.removeAttribute('data-preview-editor');
+    };
+  }, [isPreviewEditor]);
+
+  useEffect(() => {
     // Find a static page by route or a custom page by slug
     const currentPageData = pages.find(p => p.slug === page) || pages.find(p => p.route === page);
     const metaDescriptionTag = document.getElementById('meta-description');
@@ -162,6 +193,12 @@ const AppContent: React.FC = () => {
 
   return (
     <>
+      {isEmbeddedAdmin ? (
+        <div className="min-h-screen bg-background">
+          <AdminPanel />
+        </div>
+      ) : (
+        <>
       {isBgBannerVisible && (
         <>
           <div
@@ -191,10 +228,15 @@ const AppContent: React.FC = () => {
           </aside>
         )}
 
-        {isAdmin && isEditMode && <AdminPanel />}
+        {isAdmin && isEditMode && !isPreviewEditor && <AdminPanel />}
         <div
           className="relative"
         >
+          {isPreviewEditor && (
+            <div className="fixed right-6 top-6 z-[55] rounded-full border border-accent/40 bg-background/90 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-accent shadow-[0_12px_40px_rgba(0,0,0,0.35)]">
+              Modo clique para editar
+            </div>
+          )}
           <EditWrapper onEdit={() => setOpenAdminSection('pages', 'global_header')} areaLabel="Edit Header">
             <Header />
           </EditWrapper>
@@ -204,12 +246,14 @@ const AppContent: React.FC = () => {
           <EditWrapper onEdit={() => setOpenAdminSection('pages', 'global_footer')} areaLabel="Edit Footer">
             <Footer />
           </EditWrapper>
-          {!isEditMode && <Chatbot />}
+          {!isEditMode && !isPreviewEditor && <Chatbot />}
         </div>
       </div>
       {viewingProductId && <ProductDetailModal productId={viewingProductId} onClose={() => setViewingProductId(null)} />}
       <CartModal />
       <CheckoutModal />
+        </>
+      )}
     </>
   );
 };

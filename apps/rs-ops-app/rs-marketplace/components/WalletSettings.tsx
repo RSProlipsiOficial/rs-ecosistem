@@ -113,7 +113,7 @@ const WalletSettingsComponent: React.FC<WalletSettingsProps> = ({ settings, onSa
                         </div>
                         <div>
                             <label htmlFor="minimumAmount" className="block text-sm font-medium text-gray-400 mb-2">Valor Mínimo para Transferência</label>
-                            <input type="number" id="minimumAmount" name="automaticTransfers.minimumAmount" value={localSettings.automaticTransfers.minimumAmount} placeholder="R$ 100,00" className="w-full bg-dark-800 border-2 border-dark-700 rounded-md py-2 px-3 text-white"/>
+                            <input type="number" id="minimumAmount" name="automaticTransfers.minimumAmount" value={localSettings.automaticTransfers.minimumAmount} onChange={handleInputChange} placeholder="R$ 100,00" className="w-full bg-dark-800 border-2 border-dark-700 rounded-md py-2 px-3 text-white"/>
                         </div>
                     </div>
                 )}

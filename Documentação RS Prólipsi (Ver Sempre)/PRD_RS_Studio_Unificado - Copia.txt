@@ -1,0 +1,103 @@
+PRD – RS STUDIO (UNIFICADO COM ECOSSISTEMA RS PRÓLIPSI)
+Documento técnico-funcional do RS Studio integrado ao ecossistema RS Prólipsi. Este arquivo descreve as conexões, fluxos de comunicação e automações entre o RS Studio, Admin, Consultor, Marketplace, WalletPay, SIGMA e o motor RS.IA. O RS Studio atua como o hub de comunicação, aprendizado e automação digital do ecossistema.
+1. Visão Geral da Integração
+
+O RS Studio conecta todos os módulos do ecossistema RS Prólipsi através de comunicação inteligente, IA e automações.
+Ele recebe informações do Admin, SIGMA, WalletPay e Marketplace para gerar mensagens, campanhas, treinamentos e notificações.
+Serve como um hub central de conteúdo e aprendizado, refletindo mensagens e dados para os painéis Consultor e Logista.
+
+2. Estrutura de Integração Entre Módulos
+
+Módulo | Integração com RS Studio | Tipo de Operação
+--------|----------------------------|-----------------
+Admin | Criação e envio de conteúdos, campanhas e treinamentos | Publicação e controle
+Consultor | Consumo de conteúdo, acesso ao ChatBot RSA e relatórios | Interação e aprendizado
+Logista | Acesso a campanhas e treinamentos voltados a produtos | Engajamento e suporte
+Marketplace | Envio de notificações sobre pedidos, status e promoções | Comunicação transacional
+WalletPay | Mensagens financeiras e notificações automáticas | Alertas e confirmações
+SIGMA | Envio de mensagens sobre bônus e matrizes | Comunicação de rede
+RS.IA | Motor de inteligência que treina e alimenta o ChatBot | IA contextual e automação
+
+3. Painéis de Acesso Unificados
+
+O RS Studio pode ser acessado de forma integrada pelos painéis existentes:
+
+1. **Admin Studio:** controla todo o fluxo de mensagens, treinamentos e IA.
+2. **Painel do Consultor:** acessa o Chat RSA, treinamentos e campanhas.
+3. **Painel do Logista:** visualiza campanhas, treinamentos e alertas de produtos.
+4. **Painel do Admin Principal:** monitora engajamento e desempenho do RS Studio.
+
+4. APIs e Conexões
+
+Integrações REST autenticadas com chaves HMAC e JWT:
+
+- POST /messages ? cria nova mensagem ou campanha.
+- POST /trainings ? publica novo treinamento com mídia e anexos.
+- GET /notifications ? retorna mensagens ativas por usuário.
+- POST /chat ? envia mensagens e prompts para o Chat RSA.
+- GET /library ? retorna resultados da Biblioteca RSA.
+- POST /webhook ? registra integrações externas (Wallet, Marketplace, SIGMA).
+
+Eventos suportados:
+- new_campaign (Admin ? Studio)
+- new_training (Admin ? Studio)
+- chat_request (Consultor ? RSA)
+- bonus_event (SIGMA ? Studio)
+- payout_event (WalletPay ? Studio)
+
+5. Fluxo de Comunicação Entre Módulos
+
+1. **Admin cria uma campanha** ? RS Studio publica ? Consultores e Logistas recebem via painel.
+2. **Consultor interage com Chat RSA** ? IA responde com base em dados de SIGMA, Wallet e Admin.
+3. **SIGMA envia evento de bônus** ? RS Studio dispara notificação automática.
+4. **WalletPay confirma saque** ? RS Studio envia alerta “Saque aprovado” ao Consultor.
+5. **Marketplace confirma pedido** ? RS Studio comunica status ao comprador e consultor.
+6. **Admin monitora relatórios de engajamento** ? RS Studio retorna métricas (visualizações, cliques, conclusões).
+
+6. Relatórios e Auditoria
+
+- Relatórios por módulo: campanhas, treinamentos, mensagens automáticas e engajamento.
+- Métricas: aberturas, cliques, interações de ChatBot e conclusão de cursos.
+- Exportação CSV/PDF e dashboards gráficos (Recharts).
+- Logs automáticos de todas as ações com data, origem e destino.
+- Painel de auditoria no Admin Studio com permissões diferenciadas.
+
+7. Segurança e Acesso
+
+- Autenticação JWT com tokens individuais por módulo.
+- 2FA para painel Admin Studio.
+- Permissões baseadas em perfil (Admin, Consultor, Logista, Instrutor).
+- Criptografia AES para dados sensíveis.
+- Webhooks com assinatura HMAC e reenvio automático.
+- Monitoramento de tentativas de login e logs de IA.
+
+8. Design e UX Unificado
+
+- Tema visual padrão RS (Dark + Gold).
+- Sidebar modular com ícones animados.
+- Dashboard principal com KPIs (Mensagens Enviadas, Treinamentos Ativos, Engajamento Geral).
+- ChatBot com interface intuitiva e histórico lateral.
+- Cards dinâmicos de campanhas, treinamentos e novidades.
+- Design responsivo mobile-first.
+
+9. Checklists de Integração
+
+? Integração Admin ? Studio (criação e publicação)
+? Integração Consultor ? Studio (consumo e interação)
+? Integração Logista ? Studio (acesso a campanhas e treinamentos)
+? Integração Marketplace ? Studio (mensagens de pedido e promoções)
+? Integração WalletPay ? Studio (alertas financeiros)
+? Integração SIGMA ? Studio (mensagens de rede e bônus)
+? Integração RS.IA ? Studio (motor de IA e aprendizado contínuo)
+? Auditoria e relatórios ativos
+? Painel Admin Studio operacional
+
+10. Roadmap de Expansão
+
+Fase | Entrega | Descrição
+------|----------|-----------
+Fase 1 | Integração com Admin, Consultor e Logista | Comunicação, ChatBot e Treinamentos ativos
+Fase 2 | Integração completa com SIGMA e WalletPay | Automação de notificações e eventos
+Fase 3 | Conexão com Marketplace e campanhas dinâmicas | Mensagens e promoções automáticas
+Fase 4 | Expansão de IA e RS.IA Marketing | Geração de conteúdo automático e anúncios inteligentes
+Fase 5 | Studio API Pública | Ferramentas de terceiros e desenvolvedores externos

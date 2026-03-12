@@ -111,6 +111,41 @@ const NavGroup: React.FC<{
 
 const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, closeSidebar }) => {
   const { logo, companyName } = useBranding();
+  const walletPayUrl = (() => {
+    const baseUrl = `http://${window.location.hostname}:3004`;
+    const token = localStorage.getItem('consultorToken') || '';
+
+    if (!token) {
+      return baseUrl;
+    }
+
+    const payload = {
+      autoLogin: true,
+      source: 'consultor',
+      token,
+    };
+
+    const encodedPayload = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+    return `${baseUrl}/#/sso?token=${encodeURIComponent(encodedPayload)}`;
+  })();
+
+  const miniSiteUrl = (() => {
+    const baseUrl = `http://${window.location.hostname}:3030`;
+    const token = localStorage.getItem('consultorToken') || '';
+
+    if (!token) {
+      return baseUrl;
+    }
+
+    const payload = {
+      autoLogin: true,
+      source: 'consultor',
+      token,
+    };
+
+    const encodedPayload = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+    return `${baseUrl}/#/sso?token=${encodeURIComponent(encodedPayload)}`;
+  })();
 
   const handleNavLinkClick = () => {
     if (window.innerWidth < 1024 && closeSidebar) {
@@ -174,7 +209,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, closeSidebar }) => {
         />
 
         <a
-          href={`http://${window.location.hostname}:3004`}
+          href={walletPayUrl}
           target="_blank"
           rel="noopener noreferrer"
           onClick={handleNavLinkClick}
@@ -182,6 +217,17 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, closeSidebar }) => {
         >
           <IconWallet className="h-5 w-5 flex-shrink-0" />
           {!isCollapsed && <span>RS Wallet Pay</span>}
+        </a>
+
+        <a
+          href={miniSiteUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={handleNavLinkClick}
+          className={navLinkClasses(false)}
+        >
+          <IconLink className="h-5 w-5 flex-shrink-0" />
+          {!isCollapsed && <span>RS MiniSite</span>}
         </a>
 
         <NavLink

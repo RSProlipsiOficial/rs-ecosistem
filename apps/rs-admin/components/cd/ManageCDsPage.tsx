@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from "../../src/services/supabase";
 import { TruckIcon, UserPlusIcon, SpinnerIcon } from '../icons';
 import AddCDModal from './AddCDModal';
+import { headquartersService } from '../../src/services/headquartersService';
 
 interface DistributionCenter {
     id: string;
@@ -56,32 +57,26 @@ const ManageCDsPage: React.FC<{ navigateToCdStore: (id: number) => void }> = ({ 
     const loadCDs = async () => {
         setLoading(true);
         try {
-            const { data, error } = await supabase
-                .from('minisite_profiles')
-                .select('*')
-                .or('type.ilike.cd,type.ilike.franquia,type.ilike.proprio,type.ilike.hibrido,type.ilike.%sede%')
-                .order('created_at', { ascending: false });
+            const registry = await headquartersService.getCDRegistry();
 
-            if (error) throw error;
-
-            const mapped: DistributionCenter[] = (data || []).map((p: any) => ({
+            const mapped: DistributionCenter[] = (registry || []).map((p: any) => ({
                 id: p.id,
-                consultantId: p.id,
-                responsible: p.name || 'Sem nome',
-                cpf: p.cpf || '',
+                consultantId: p.managerId || p.id,
+                responsible: p.name || p.managerName || 'Sem nome',
+                cpf: p.document || '',
                 whatsapp: p.phone || '',
                 address: {
-                    cep: p.address_zip || '',
-                    street: p.address_street || '',
-                    number: p.address_number || '',
-                    district: p.address_neighborhood || '',
-                    city: p.address_city || '',
-                    state: p.address_state || ''
+                    cep: p.addressZip || '',
+                    street: p.addressStreet || '',
+                    number: p.addressNumber || '',
+                    district: p.addressNeighborhood || '',
+                    city: p.city || '',
+                    state: p.state || ''
                 },
-                balance: parseFloat(p.wallet_balance || '0'),
-                status: 'Ativo' as const,
+                balance: 0,
+                status: p.status === 'BLOQUEADO' ? 'Inativo' as const : 'Ativo' as const,
                 pixKeyType: '',
-                pixKey: p.pix_key || '',
+                pixKey: '',
                 shippingMethod: '',
                 shippingNotes: ''
             }));

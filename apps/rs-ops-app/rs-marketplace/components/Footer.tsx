@@ -33,6 +33,13 @@ const socialIconMap: { [key: string]: React.FC<React.SVGProps<SVGSVGElement>> } 
 
 
 const Footer: React.FC<FooterProps> = ({ logoUrl, content, onConsultantClick, onNavigate, currentCustomer, onBecomeSellerClick }) => {
+  const socialLinks = Array.isArray(content?.socialLinks)
+    ? content.socialLinks.filter((link): link is typeof content.socialLinks[number] => (
+      Boolean(link) &&
+      typeof link.platform === 'string' &&
+      typeof link.url === 'string'
+    ))
+    : [];
 
   const handleScrollToProducts = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
@@ -124,7 +131,7 @@ const Footer: React.FC<FooterProps> = ({ logoUrl, content, onConsultantClick, on
             <div className="col-span-2 md:col-span-1">
               <h4 className="font-bold text-[rgb(var(--color-brand-text-light))] tracking-wider">Siga-nos</h4>
               <div className="flex mt-4 space-x-4">
-                {(content.socialLinks || []).map(link => {
+                {socialLinks.map(link => {
                   const Icon = socialIconMap[link.platform.toLowerCase()];
                   return Icon ? (
                     <a key={link.platform} href={link.url} className="hover:text-[rgb(var(--color-brand-gold))]" target="_blank" rel="noopener noreferrer" aria-label={link.platform}>

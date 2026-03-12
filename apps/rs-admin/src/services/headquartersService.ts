@@ -11,38 +11,38 @@ const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
 export const headquartersService = {
     // --- CD Registry (Rede de CDs) ---
     async getCDRegistry(): Promise<CDRegistry[]> {
-        const { data, error } = await supabase
-            .from('minisite_profiles')
-            .select('*')
-            // Assuming 'type' column distinguishes CDs. usage: 'CD', 'FRANQUIA', etc.
-            // Adjust filter based on actual data structure. 
-            // For now, I'll fetch all and let the component or specific query filter if needed, 
-            // but ideally we should filter by valid CD types.
-            .or('type.ilike.cd,type.ilike.franquia,type.ilike.proprio,type.ilike.hibrido,type.ilike.%sede%');
+        try {
+            const res = await fetch(`${apiBaseUrl}/v1/cds`);
+            const json = await res.json();
 
-        if (error) {
+            if (!json?.success) {
+                console.error('Error fetching CD registry:', json?.error);
+                return [];
+            }
+
+            return (json.data || []).map((profile: any) => ({
+                id: profile.id,
+                name: profile.name,
+                managerName: profile.owner_name || profile.name,
+                managerId: profile.manager_id || profile.id,
+                email: profile.email || '',
+                phone: profile.phone || '',
+                document: profile.cnpj_cpf || '',
+                addressStreet: profile.address_street || '',
+                addressNumber: profile.address_number || '',
+                addressNeighborhood: profile.address_neighborhood || '',
+                addressZip: profile.address_zip || '',
+                city: profile.address_city || profile.stores?.[0]?.city || 'N/A',
+                state: profile.address_state || profile.stores?.[0]?.state || 'N/A',
+                type: (profile.type || 'FRANQUIA') as any,
+                status: profile.is_active ? 'ATIVO' : 'BLOQUEADO',
+                joinDate: profile.created_at || new Date().toISOString(),
+                source: profile.source
+            })) as any;
+        } catch (error) {
             console.error('Error fetching CD registry:', error);
             return [];
         }
-
-        return (data || []).map((profile: any) => ({
-            id: profile.id,
-            name: profile.name,
-            managerName: profile.manager_name || profile.name,
-            managerId: profile.consultant_id || profile.id,
-            email: profile.email,
-            phone: profile.phone,
-            document: profile.cpf,
-            addressStreet: profile.address_street,
-            addressNumber: profile.address_number,
-            addressNeighborhood: profile.address_neighborhood,
-            addressZip: profile.address_zip,
-            city: profile.address_city || 'N/A',
-            state: profile.address_state || 'N/A',
-            type: profile.type as any,
-            status: (profile.status === 'blocked' || profile.status === 'inactive') ? 'BLOQUEADO' : 'ATIVO',
-            joinDate: profile.created_at,
-        }));
     },
 
     // --- External Consultants (Search) ---

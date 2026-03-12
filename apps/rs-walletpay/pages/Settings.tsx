@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MOCK_USER_PROFILE } from '../constants';
 import { supabase } from '../src/lib/supabaseClient';
 import { syncService } from '../src/services/syncService';
+import { getWalletUserId, readWalletSession } from '../src/utils/walletSession';
 import {
     User,
     Shield,
@@ -69,31 +69,56 @@ const TabButton: React.FC<{ active: boolean; onClick: () => void; icon: React.El
     </button>
 );
 
+const createEmptyProfile = (session: ReturnType<typeof readWalletSession>) => ({
+    id: session.userId || '',
+    name: session.userName || '',
+    email: session.userEmail || '',
+    phone: '',
+    smartCertificate: '',
+    currentPin: '',
+    currentCycles: 0,
+    nextPin: '',
+    nextPinCycles: 0,
+    address: {
+        street: '',
+        number: '',
+        complement: '',
+        neighborhood: '',
+        city: '',
+        state: '',
+        cep: '',
+    },
+    bankAccount: {
+        bank: '',
+        accountType: 'checking',
+        agency: '',
+        accountNumber: '',
+        pixKey: ''
+    },
+    upline: {
+        name: '',
+        idConsultor: '',
+        whatsapp: ''
+    },
+    cpf: '',
+    avatarUrl: ''
+});
+
 // --- MAIN COMPONENT ---
 
 const Settings: React.FC = () => {
+    const walletSession = readWalletSession();
     const [activeTab, setActiveTab] = useState<'profile' | 'address' | 'bank' | 'security' | 'integration'>('profile');
-    const [profile, setProfile] = useState({
-        ...MOCK_USER_PROFILE,
-        bankAccount: {
-            bank: '',
-            accountType: 'checking',
-            agency: '',
-            accountNumber: '',
-            pixKey: ''
-        },
-        upline: {
-            name: '',
-            idConsultor: '',
-            whatsapp: ''
-        },
-        cpf: ''
-    });
+    const [profile, setProfile] = useState(() => createEmptyProfile(walletSession));
 
     const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const [saveStatus, setSaveStatus] = useState<string | null>(null);
     const [syncing, setSyncing] = useState(false);
+    const [currentPassword, setCurrentPassword] = useState('');
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [securitySaving, setSecuritySaving] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Load Profile Data
@@ -101,7 +126,7 @@ const Settings: React.FC = () => {
         const fetchProfile = async () => {
             try {
                 setLoading(true);
-                const userId = localStorage.getItem('userId');
+                const userId = getWalletUserId();
                 if (!userId) {
                     setLoading(false);
                     return;
@@ -109,7 +134,7 @@ const Settings: React.FC = () => {
 
                 const [profileRes, consultorRes] = await Promise.all([
                     supabase.from('user_profiles').select('*').eq('user_id', userId).maybeSingle(),
-                    supabase.from('consultores').select('*').eq('id', userId).maybeSingle()
+                    supabase.from('consultores').select('*').or(`user_id.eq."${userId}",id.eq."${userId}"`).maybeSingle()
                 ]);
 
                 if (profileRes.data || consultorRes.data) {
@@ -118,9 +143,9 @@ const Settings: React.FC = () => {
 
                     // AUTO-POPULATION LOGIC
                     // If profile is missing key data but consultor has it, use it.
-                    const finalId = p.mmn_id || c.username || c.id || '';
-                    const finalName = p.nome_completo || c.nome || '';
-                    const finalEmail = c.email || '';
+                    const finalId = p.mmn_id || c.username || c.id || walletSession.userId || '';
+                    const finalName = p.nome_completo || c.nome || walletSession.userName || '';
+                    const finalEmail = c.email || walletSession.userEmail || '';
                     const finalPhone = p.telefone || c.whatsapp || '';
                     const finalCpf = p.cpf || c.cpf || '';
 
@@ -179,7 +204,7 @@ const Settings: React.FC = () => {
     };
 
     const handleSync = async () => {
-        const userId = localStorage.getItem('userId');
+        const userId = getWalletUserId();
         if (!userId) return;
 
         setSyncing(true);
@@ -204,7 +229,7 @@ const Settings: React.FC = () => {
     const handleSave = async (section: string) => {
         setSaveStatus(section);
         try {
-            const userId = localStorage.getItem('userId');
+            const userId = getWalletUserId();
             if (!userId) throw new Error('Usuário não identificado');
 
             let updatePayload = {};
@@ -218,7 +243,7 @@ const Settings: React.FC = () => {
                 };
 
                 // Also update consultores table for email and username if they were changed
-                const userId = localStorage.getItem('userId');
+                const userId = getWalletUserId();
                 if (userId) {
                     await syncService.updateConsultor(userId, {
                         email: profile.email,
@@ -265,7 +290,7 @@ const Settings: React.FC = () => {
         if (file) {
             try {
                 setSaveStatus('avatar');
-                const userId = localStorage.getItem('userId');
+                const userId = getWalletUserId();
                 if (!userId) throw new Error('Não autenticado');
 
                 const fileName = `avatars/${userId}-${Date.now()}.jpg`;
@@ -291,6 +316,35 @@ const Settings: React.FC = () => {
             } finally {
                 setSaveStatus(null);
             }
+        }
+    };
+
+    const handlePasswordChange = async () => {
+        try {
+            setSecuritySaving(true);
+
+            if (!currentPassword.trim()) {
+                throw new Error('Informe sua senha atual para confirmar a alteracao.');
+            }
+            if (!newPassword.trim() || newPassword.length < 6) {
+                throw new Error('A nova senha deve ter pelo menos 6 caracteres.');
+            }
+            if (newPassword !== confirmPassword) {
+                throw new Error('A confirmacao da nova senha nao confere.');
+            }
+
+            const { error } = await supabase.auth.updateUser({ password: newPassword });
+            if (error) throw error;
+
+            setCurrentPassword('');
+            setNewPassword('');
+            setConfirmPassword('');
+            alert('Senha alterada com sucesso!');
+        } catch (error: any) {
+            console.error('Erro ao alterar senha:', error);
+            alert('Erro ao alterar senha: ' + error.message);
+        } finally {
+            setSecuritySaving(false);
         }
     };
 
@@ -361,7 +415,7 @@ const Settings: React.FC = () => {
                         <h4 className="text-xs font-bold text-gray-500 uppercase mb-4 tracking-widest">Seu Patrocinador</h4>
                         <div className="flex items-center gap-4">
                             <div className="w-10 h-10 rounded-full bg-gold/10 flex items-center justify-center text-gold font-black border border-gold/20">
-                                {profile.upline.name.charAt(0)}
+                                {(profile.upline.name || '?').charAt(0)}
                             </div>
                             <div>
                                 <p className="font-bold text-white text-sm">{profile.upline.name}</p>
@@ -380,7 +434,7 @@ const Settings: React.FC = () => {
                                     <div className="relative group overflow-hidden">
                                         <div className="w-24 h-24 rounded-full border-2 border-gold/50 p-1 flex items-center justify-center bg-black/40">
                                             <img
-                                                src={avatarPreview || profile.avatarUrl || "https://picsum.photos/200"}
+                                                src={avatarPreview || profile.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.name || 'RS')}&background=D4AF37&color=000`}
                                                 alt="Avatar"
                                                 className="w-full h-full rounded-full object-cover transition-transform group-hover:scale-110"
                                             />
@@ -487,39 +541,82 @@ const Settings: React.FC = () => {
                                 <div className="flex items-center gap-3 p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl">
                                     <AlertCircle className="text-blue-400" size={20} />
                                     <div className="text-sm">
-                                        <p className="text-white font-bold">Configuração de Gateway (Checkout)</p>
-                                        <p className="text-gray-400">Estas credenciais são usadas para processar recebimentos via PIX e Cartão diretamente para sua conta.</p>
+                                        <p className="text-white font-bold">Integração financeira centralizada</p>
+                                        <p className="text-gray-400">O WalletPay já usa a configuração central do ecossistema RS. Esta aba ficou em modo consulta para não fingir um salvamento que não existe.</p>
                                     </div>
                                 </div>
 
                                 <div className="space-y-6">
-                                    <InputField name="mp_public_key" label="Mercado Pago - Public Key" value="" onChange={() => { }} placeholder="APP_USR-..." icon={Lock} />
-                                    <InputField name="mp_access_token" label="Mercado Pago - Access Token" value="" onChange={() => { }} type="password" placeholder="TEST-..." icon={Lock} />
+                                    <div className="rounded-xl border border-white/10 bg-black/20 p-4 md:col-span-2">
+                                        <div className="flex items-center gap-2 text-gold font-semibold">
+                                            <CheckCircle size={18} />
+                                            Checkout da plataforma
+                                        </div>
+                                        <p className="mt-2 text-sm text-gray-300">
+                                            Recebimentos, conciliacao e repasse seguem a configuracao oficial da RS.
+                                        </p>
+                                    </div>
+                                    <div className="rounded-xl border border-white/10 bg-black/20 p-4 md:col-span-2">
+                                        <div className="flex items-center gap-2 text-gold font-semibold">
+                                            <Building size={18} />
+                                            Conta consultor vinculada
+                                        </div>
+                                        <p className="mt-2 text-sm text-gray-300">
+                                            Consultor: <span className="font-semibold text-white">{profile.name || 'Nao identificado'}</span>
+                                        </p>
+                                        <p className="mt-1 text-sm text-gray-400">
+                                            Email: {profile.email || walletSession.userEmail || 'Nao informado'}
+                                        </p>
+                                    </div>
                                 </div>
 
-                                <div className="pt-4 flex justify-end">
-                                    <button
-                                        className="bg-gold/20 text-gold font-bold px-8 py-3 rounded-xl flex items-center gap-2 border border-gold/40 cursor-not-allowed opacity-50"
-                                    >
-                                        <Save size={18} />
-                                        Salvar Integrações (EM BREVE)
-                                    </button>
+                                <div className="rounded-2xl border border-white/10 bg-card/40 p-5 space-y-3">
+                                    <div className="flex items-center gap-2 text-white font-semibold">
+                                        <Lock size={18} className="text-gold" />
+                                        Dados usados atualmente pelo wallet
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                                        <div className="rounded-xl bg-black/20 border border-white/5 p-4">
+                                            <p className="text-gray-500 uppercase text-[11px] tracking-wider">Chave PIX principal</p>
+                                            <p className="text-white font-medium mt-1">{profile.bankAccount.pixKey || 'Nao cadastrada'}</p>
+                                        </div>
+                                        <div className="rounded-xl bg-black/20 border border-white/5 p-4">
+                                            <p className="text-gray-500 uppercase text-[11px] tracking-wider">Banco</p>
+                                            <p className="text-white font-medium mt-1">{profile.bankAccount.bank || 'Nao cadastrado'}</p>
+                                        </div>
+                                        <div className="rounded-xl bg-black/20 border border-white/5 p-4">
+                                            <p className="text-gray-500 uppercase text-[11px] tracking-wider">Agencia</p>
+                                            <p className="text-white font-medium mt-1">{profile.bankAccount.agency || 'Nao cadastrada'}</p>
+                                        </div>
+                                        <div className="rounded-xl bg-black/20 border border-white/5 p-4">
+                                            <p className="text-gray-500 uppercase text-[11px] tracking-wider">Conta</p>
+                                            <p className="text-white font-medium mt-1">{profile.bankAccount.accountNumber || 'Nao cadastrada'}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="rounded-xl border border-gold/20 bg-gold/5 p-4 text-sm text-gray-300">
+                                    <p className="font-semibold text-gold">Onde ajustar isso</p>
+                                    <p className="mt-2">
+                                        Para alterar recebimento, chave PIX e dados bancarios, use a aba <span className="text-white font-semibold">Dados Bancarios</span> e sincronize com a plataforma quando necessario.
+                                    </p>
                                 </div>
                             </div>
                         )}
 
                         {activeTab === 'security' && (
                             <div className="space-y-8 max-w-sm">
-                                <InputField name="currentPassword" label="Senha Atual" type="password" value="" onChange={() => { }} />
-                                <InputField name="newPassword" label="Nova Senha" type="password" value="" onChange={() => { }} />
-                                <InputField name="confirmPassword" label="Confirmar Senha" type="password" value="" onChange={() => { }} />
+                                <InputField name="currentPassword" label="Senha Atual" type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
+                                <InputField name="newPassword" label="Nova Senha" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+                                <InputField name="confirmPassword" label="Confirmar Senha" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
 
                                 <div className="pt-4 flex justify-start">
                                     <button
+                                        onClick={handlePasswordChange}
+                                        disabled={securitySaving}
                                         className="bg-white/10 hover:bg-white/20 text-white font-bold px-8 py-3 rounded-xl flex items-center gap-2 transition-all"
                                     >
                                         <Lock size={18} />
-                                        Alterar Senha
+                                        {securitySaving ? 'Salvando...' : 'Alterar Senha'}
                                     </button>
                                 </div>
                             </div>

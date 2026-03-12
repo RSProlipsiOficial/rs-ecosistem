@@ -1,9 +1,11 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import Modal from '../components/Modal';
 import { supabase } from '../src/lib/supabaseClient';
+import { authAPI } from '../src/services/api';
 import { syncService } from '../src/services/syncService';
+import { useBranding } from '../src/contexts/BrandingContext';
 
 
 interface FormData {
@@ -35,8 +37,8 @@ const PlaceholderAvatar = () => (
 
 
 const Register: React.FC = () => {
+    const { branding } = useBranding();
     const [searchParams] = useSearchParams();
-    const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState<FormData>({
         sponsorId: '', sponsorName: 'Carregando...', fullName: '', email: '', whatsapp: '',
@@ -49,11 +51,52 @@ const Register: React.FC = () => {
     const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+    const resolveSponsor = async (rawSponsorId: string) => {
+        const normalizedSponsorId = rawSponsorId.trim();
+
+        if (!normalizedSponsorId) {
+            setFormData((prev) => ({ ...prev, sponsorId: '', sponsorName: 'Nenhum patrocinador informado' }));
+            return;
+        }
+
+        try {
+            setFormData((prev) => ({ ...prev, sponsorName: 'Validando patrocinador...' }));
+
+            const byUsername = await supabase
+                .from('consultores')
+                .select('id, nome, username')
+                .eq('username', normalizedSponsorId)
+                .maybeSingle();
+
+            const sponsorRecord = byUsername.data || (
+                await supabase
+                    .from('consultores')
+                    .select('id, nome, username')
+                    .eq('id', normalizedSponsorId)
+                    .maybeSingle()
+            ).data;
+
+            if (sponsorRecord) {
+                setFormData((prev) => ({
+                    ...prev,
+                    sponsorId: sponsorRecord.username || normalizedSponsorId,
+                    sponsorName: sponsorRecord.nome || sponsorRecord.username || 'Patrocinador confirmado'
+                }));
+                return;
+            }
+
+            setFormData((prev) => ({ ...prev, sponsorName: 'Patrocinador nao encontrado' }));
+        } catch (error) {
+            console.error('Erro ao validar patrocinador:', error);
+            setFormData((prev) => ({ ...prev, sponsorName: 'Nao foi possivel validar o patrocinador' }));
+        }
+    };
+
     useEffect(() => {
-        const sponsorId = searchParams.get('sponsor');
+        const sponsorId = searchParams.get('sponsor')?.trim();
         if (sponsorId) {
-            // Mock sponsor lookup - in a real app, this would be an API call
-            setFormData(prev => ({ ...prev, sponsorId, sponsorName: 'Patrocinador não encontrado' }));
+            setFormData(prev => ({ ...prev, sponsorId }));
+            void resolveSponsor(sponsorId);
         } else {
             setFormData(prev => ({ ...prev, sponsorName: 'Nenhum patrocinador informado' }));
         }
@@ -145,74 +188,30 @@ const Register: React.FC = () => {
 
         setLoading(true);
         try {
-            // 1. Criar conta no Supabase Auth
-            const { data: authData, error: signUpError } = await supabase.auth.signUp({
-                email: formData.email,
+            const response = await authAPI.register({
+                email: formData.email.trim(),
                 password: formData.password,
-                options: {
-                    data: {
-                        name: formData.fullName,
-                        full_name: formData.fullName,
-                        whatsapp: formData.whatsapp,
-                    },
-                },
+                nome: formData.fullName.trim(),
+                cpf: formData.cpf.replace(/\D/g, ''),
+                telefone: formData.whatsapp.trim(),
+                sponsorId: formData.sponsorId.trim() || undefined,
+                birthDate: formData.birthDate || undefined,
+                cep: formData.cep.trim() || undefined,
+                street: formData.street.trim() || undefined,
+                number: formData.number.trim() || undefined,
+                complement: formData.complement.trim() || undefined,
+                neighborhood: formData.neighborhood.trim() || undefined,
+                city: formData.city.trim() || undefined,
+                state: formData.state.trim() || undefined,
+                avatarDataUrl: avatarPreview || undefined,
             });
 
-            if (signUpError) throw signUpError;
-            if (!authData.user) throw new Error("Erro ao criar conta");
+            if (!response?.data?.success) {
+                throw new Error(response?.data?.error || response?.data?.message || 'Nao foi possivel concluir o cadastro.');
+            }
 
-            const userId = authData.user.id;
-
-            // 2. Criar perfil e registro de consultor (Sincronizado com RS RotaFácil)
-            const fallbackUsername = formData.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '') + Math.floor(Math.random() * 1000);
-
-            // Buscar sponsor_id real
-            const { data: sponsorData } = await supabase
-                .from('consultores')
-                .select('id')
-                .eq('username', formData.sponsorId || 'rsprolipsi')
-                .maybeSingle();
-
-            const sponsorUidValue = sponsorData?.id || null;
-
-            const [profileRes, consultorRes, walletRes] = await Promise.all([
-                supabase.from('user_profiles').upsert({
-                    user_id: userId,
-                    nome_completo: formData.fullName,
-                    cpf: formData.cpf.replace(/\D/g, ''),
-                    perfil_completo: true,
-                    sponsor_id: sponsorUid
-                }),
-                supabase.from('consultores').insert({
-                    uid: userId,
-                    nome: formData.fullName,
-                    email: formData.email,
-                    whatsapp: formData.whatsapp,
-                    cpf: formData.cpf.replace(/\D/g, ''),
-                    username: fallbackUsername,
-                    status: 'ativo',
-                    patrocinador_uid: sponsorUid
-                }),
-                supabase.from('wallet_accounts').insert({
-                    id_usuario: userId,
-                    tipo: 'consultor',
-                    status: 'active',
-                    KYC_status: 'pending'
-                })
-            ]);
-
-            if (profileRes.error) console.error("Erro perfil:", profileRes.error);
-            if (consultorRes.error) console.error("Erro consultor:", consultorRes.error);
-            if (walletRes.error) console.error("Erro wallet:", walletRes.error);
-
-            // 3. Criar saldo inicial
-            await supabase.from('wallet_balances').insert({
-                account_id: userId,
-                current_balance: 0,
-                last_seq: 0
-            });
-
-            setNewUser({ id: fallbackUsername, link: `${window.location.origin}/#/register?sponsor=${fallbackUsername}` });
+            const createdLogin = response.data.user?.login || response.data.user?.id || formData.email.split('@')[0];
+            setNewUser({ id: createdLogin, link: `${window.location.origin}/#/register?sponsor=${createdLogin}` });
             setIsRegistered(true);
         } catch (error: any) {
             console.error("Erro no cadastro:", error);
@@ -222,8 +221,8 @@ const Register: React.FC = () => {
         }
     };
 
-    const InputField: React.FC<{ name: keyof FormData, label: string, type?: string, placeholder?: string, required?: boolean, disabled?: boolean }> =
-        ({ name, label, type = 'text', placeholder, required = false, disabled = false }) => (
+    const InputField: React.FC<{ name: keyof FormData, label: string, type?: string, placeholder?: string, required?: boolean, disabled?: boolean, onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void }> =
+        ({ name, label, type = 'text', placeholder, required = false, disabled = false, onBlur }) => (
             <div>
                 <label htmlFor={name} className="block text-sm font-medium text-text-body mb-2">{label}</label>
                 <input
@@ -232,7 +231,7 @@ const Register: React.FC = () => {
                     name={name}
                     value={formData[name]}
                     onChange={handleChange}
-                    onBlur={name === 'cep' ? handleCepBlur : undefined}
+                    onBlur={onBlur || (name === 'cep' ? handleCepBlur : undefined)}
                     placeholder={placeholder}
                     required={required}
                     disabled={disabled}
@@ -245,7 +244,17 @@ const Register: React.FC = () => {
         <div className="bg-base min-h-screen flex items-center justify-center p-4 sm:p-6 lg:p-8">
             <div className="w-full max-w-4xl mx-auto">
                 <div className="text-center mb-8">
-                    <h1 className="text-4xl font-bold text-gold">RS WalletPay</h1>
+                    <div className="mx-auto mb-5 flex justify-center">
+                        <img
+                            src={branding.logo}
+                            alt={branding.companyName}
+                            className="max-h-20 w-auto max-w-[260px] object-contain"
+                            onError={(event) => {
+                                event.currentTarget.src = '/logo-rs.png';
+                            }}
+                        />
+                    </div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.35em] text-gold/80">WalletPay</p>
                     <p className="text-text-body mt-2">Crie sua conta de consultor</p>
                 </div>
 
@@ -254,7 +263,7 @@ const Register: React.FC = () => {
                     <div className="bg-card p-6 rounded-2xl border border-border shadow-custom-lg">
                         <h2 className="text-xl font-semibold text-text-title mb-4">Dados do Patrocinador</h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <InputField name="sponsorId" label="ID do Patrocinador" placeholder="Opcional" />
+                            <InputField name="sponsorId" label="ID do Patrocinador" placeholder="Opcional" onBlur={(event) => { void resolveSponsor(event.target.value); }} />
                             <div>
                                 <label className="block text-sm font-medium text-text-body mb-2">Nome do Patrocinador</label>
                                 <div className="w-full px-4 py-3 rounded-lg bg-surface border border-border text-text-soft">

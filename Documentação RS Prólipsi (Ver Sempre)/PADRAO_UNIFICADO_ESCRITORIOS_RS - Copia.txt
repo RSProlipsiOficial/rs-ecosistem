@@ -1,0 +1,91 @@
+Padrão Unificado de Escritórios RS Prólipsi
+Versão 1.0 • 05/11/2025 12:15
+Este documento é o padrão oficial de Design + UX + Componentes para TODOS os escritórios (Admin, Consultor e futuros módulos), tomando o Painel do Consultor como referência visual e mantendo as regras de negócio do Administrativo (marketing/comunicação, finanças, SIGMA, carreira, etc.).
+1. Princípios de Design e Produto
+1.1 Consistência acima de tudo: o Painel do Consultor define o visual-base (cores, espaçamento, tipografia, cards, menus).
+1.2 Prioridade ao dark theme com destaques em dourado (acessibilidade AA).
+1.3 Modularidade: todos os componentes são reusáveis entre Admin e Consultor.
+1.4 Performance e legibilidade: layouts de poucas camadas, sombras suaves e estados de foco claros.
+1.5 Auditabilidade: qualquer dado apresentado deve ter origem e logs rastreáveis.
+2. Paleta de Cores (Base no Painel do Consultor)
+• Primário (Gold): #C8A74E
+• Primário – hover: #B8943F
+• Primário – muted: #E6D7A5
+• Fundo base (Graphite 900): #0F1115
+• Superfície (Graphite 800): #161A21
+• Card (Graphite 750): #1B2029
+• Bordas (Graphite 650): #2A303B
+• Texto título (Zircon 50): #F2F4F8
+• Texto corpo (Zircon 200): #B7C0CD
+• Texto suave (Zircon 350): #93A0B1
+• Info: #3BAFDA
+• Success: #38C793
+• Warning: #E6A23C
+• Danger: #EF5A5A
+Gradiente hero: linear-gradient(135deg, #0F1115 0%, #161A21 40%, #1B2029 100%).
+3. Tokens, Tipografia e Espaçamentos
+• Raio padrão: 16px (cantos 2xl).
+• Sombra: 0 10px 30px rgba(0,0,0,0.45).
+• Ring de foco: 0 0 0 2px rgba(200,167,78,.25) (dourado).
+• Tipografia: títulos sem serifa de alta legibilidade; corpo em 14–16px; labels em 12–13px.
+• Espaçamento: grid de 4px (4,8,12,16,24,32) com preferência por 8/16/24 nas áreas principais.
+4. Layout e Navegação (Modelo do Consultor)
+• Sidebar à esquerda (colapsável), ícones lineares e tooltip no colapso.
+• Topbar com breadcrumb, busca compacta e avatar/ações rápidas.
+• Páginas com padding lateral 24px–32px; conteúdo em cards.
+• Responsividade: breakpoints sm (=640), md (=768), lg (=1024), xl (=1280).
+• Animações: 200–250ms com easing cubic-bezier(.2,.8,.2,1).
+5. Componentes Padronizados
+5.1 Cards: fundo #1B2029, borda #2A303B, título em #F2F4F8, ações à direita, radius 16px.
+5.2 KPI Cards: altura 88–112px, número grande, label pequena, ícone sutil em contêiner #161A21.
+5.3 Tabelas: header sticky, zebra leve (rgba(255,255,255,0.02)), hover suave, ações por linha.
+5.4 Formularios: inputs em #161A21, borda #2A303B, foco com ring dourado; validações inline.
+5.5 Gráficos: linhas/colunas simples; evitar poluição visual; legenda minimalista.
+5.6 Botões: primário dourado, texto preto; secundário superfície, texto claro; perigosos em #EF5A5A.
+5.7 Badges/Status: success #38C793, warning #E6A23C, danger #EF5A5A, info #3BAFDA.
+5.8 Avatares/Ícones: traço regular, contraste alto sobre superfícies escuras.
+6. SIGMA — Matriz e Ciclo (Estética)
+• Nós da matriz com borda dourada quando ativos; preenchimento neutro quando neutros; anel externo por status.
+• Status de nós: completed (verde), in_progress (amarelo), locked (cinza/borda).
+• Linhas de conexão discretas, sem poluição; labels apenas quando necessário.
+• Cards auxiliares: metas por nível (6,36,216,1.296,7.776,46.656), progresso e elegibilidade.
+7. Marketing & Comunicação (Regras do Admin preservadas)
+• Manter módulos de Marketing, Pixels e Comunicação do Admin, apenas herdando o visual do Consultor.
+• Pixels: Google/Meta/TikTok/Taboola/LinkedIn por consultor/loja; consent mode; logs de firing por domínio.
+• Comunicação: Treinamentos, Catálogo e Downloads com versionamento e controle de acesso.
+• Métricas: funil (view?cart?purchase), CTR/ROAS e engajamento de conteúdo.
+8. Acessibilidade (AA)
+• Contraste mínimo AA em todos os estados (normal e hover).
+• Foco visível com ring dourado em todos os elementos interativos.
+• Tamanho mínimo de alvo 40×40px para botões e ícones.
+• Navegação por teclado e leitura por tecnologias assistivas (labels/aria).
+9. Estrutura de Menus — Padrão
+Admin: Dashboard; SIGMA; Carreira (PIN); Wallet; Marketplace; Afiliação & Drop; Marketing & Pixels; Treinamentos; Usuários; Configurações.
+Consultor: Dashboard; SIGMA (Matriz/Ciclo); Bônus; Carreira; Wallet; RS Shopping; Afiliação; Comunicação; Studio/RS.IA; Suporte.
+10. Estados, Feedback e Mensageria
+• Sucesso: banners discretos em verde com ícone de check; tempo de vida curto.
+• Erros: mensagem clara com ação sugerida; log interno obrigatório.
+• Loading: skeletons em cards e tabelas; evitar spinners persistentes.
+• Vazios (empty states): instruções curtas e call-to-action direta.
+11. Conteúdo e Texto
+• Títulos curtos e descritivos; subtítulos para contexto.
+• Unidades e moeda padrão (R$, %, pontos); números legíveis (separador de milhar).
+• Linguagem direta, técnica quando necessário; evitar jargões desnecessários.
+12. CRM — Sequência de Entrega (Visão Geral)
+CRM-01 Cadastros & KYC (entregue) — base de pessoas, documentos, consentimento.
+CRM-02 Qualificação & Ativações (entregue) — ativações mensais, diretos, reentradas, auditoria.
+CRM-03 SIGMA (Matriz & Ciclo) — árvore de rede, ciclos, metas, elegibilidade.
+CRM-04 Bônus (Profundidade, Fidelidade, Top) — cálculo, auditoria e relatórios.
+CRM-05 Carreira (PIN) — apuração trimestral, VMEc, linhas mínimas, bônus por PIN.
+CRM-06 Wallet — extrato, saques, links/POS, taxas, conciliação.
+CRM-07 Marketplace — pedidos, pagamentos, fretes, devoluções.
+CRM-08 Afiliação & Dropshipping — comissão, pontos por R$, parceiros (premiação de carreira do Drop = TBD).
+CRM-09 Pixels & Marketing — disparos por consultor/loja, UTMs, consent.
+CRM-10 Comunicação & Treinamentos — biblioteca, notificações, engajamento.
+CRM-11 Auditoria & Compliance — logs imutáveis, trilhas de aprovação.
+CRM-12 BI & KPIs — dashboards por módulo, snapshots, exportações.
+13. Governança e Publicação
+• Cada alteração de padrão visual deve manter paleta e tokens; mudanças passam por aprovação do Admin.
+• Publicação segue o pipeline da VPS (build, PM2, Nginx); ambientes de teste e produção separados.
+• Logs de configuração (percentuais, pools, spillover, reentrada) e financeiros obrigatórios.
+Observação: Qualquer módulo novo deve respeitar integralmente este padrão visual e de experiência, herdando componentes e tokens para evitar divergência entre painéis.
