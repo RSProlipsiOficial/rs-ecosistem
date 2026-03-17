@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { createChart, IChartApi, ISeriesApi, LineStyle, CandlestickData, LineData, PriceLineOptions, IPriceLine, SeriesMarker, Time } from 'lightweight-charts';
-import { ChevronUpIcon, ChevronDownIcon, MaximizeIcon } from './icons/UIIcons';
+import { ChevronUpIcon, ChevronDownIcon, MaximizeIcon, CandleIcon, KagiIcon, HeikinIcon } from './icons/UIIcons';
 import { fetchOhlcv, fetchKagi } from '../lib/api';
 import type { Alert, AccountState, AIAnalysis } from '../App';
 
@@ -40,6 +40,30 @@ const Chart: React.FC<ChartProps> = (props) => {
     const [isLoading, setIsLoading] = useState(false);
     const [chartError, setChartError] = useState<string | null>(null);
     const [lastCandle, setLastCandle] = useState<CandlestickData | null>(null);
+    const [chartType, setChartType] = useState<'candle' | 'kagi' | 'heikin'>('candle');
+
+    const calculateHeikinAshi = (candles: CandlestickData[]) => {
+        const ha: CandlestickData[] = [];
+        candles.forEach((c, i) => {
+            if (i === 0) {
+                ha.push(c);
+            } else {
+                const prev = ha[i - 1];
+                const haOpen = (Number(prev.open) + Number(prev.close)) / 2;
+                const haClose = (Number(c.open) + Number(c.high) + Number(c.low) + Number(c.close)) / 4;
+                const haHigh = Math.max(Number(c.high), haOpen, haClose);
+                const haLow = Math.min(Number(c.low), haOpen, haClose);
+                ha.push({
+                    time: c.time,
+                    open: haOpen,
+                    high: haHigh,
+                    low: haLow,
+                    close: haClose
+                });
+            }
+        });
+        return ha;
+    };
 
     useEffect(() => {
         if (!ref.current) return;
@@ -138,31 +162,50 @@ const Chart: React.FC<ChartProps> = (props) => {
 
         setIsLoading(true);
         setLastCandle(null);
-        try {
-            setChartError(null);
-            const [oc, kg] = await Promise.all([
-                fetchOhlcv(focusSymbol, timeframe),
-                fetchKagi(focusSymbol, timeframe)
-            ]);
+        let retries = 3;
+        while (retries > 0) {
+            try {
+                setChartError(null);
+                const [oc, kg] = await Promise.all([
+                    fetchOhlcv(focusSymbol, timeframe),
+                    fetchKagi(focusSymbol, timeframe)
+                ]);
 
-            if (!chartRef.current || !priceSeries.current) return;
+                if (!chartRef.current || !priceSeries.current) return;
 
             console.log(`[Chart Debug] Dados OHLCV para ${focusSymbol}:`, oc);
 
             if (priceSeries.current && oc.candles) {
-                const data: CandlestickData[] = oc.candles.map((c: any[]) => ({ 
+                let data: CandlestickData[] = oc.candles.map((c: any[]) => ({ 
                     time: (c[0] / 1000 - 10800) as Time, // Ajuste para fuso BRT (-3h)
                     open: c[1], 
                     high: c[2], 
                     low: c[3], 
                     close: c[4] 
                 }));
+
+                if (chartType === 'heikin') {
+                    data = calculateHeikinAshi(data);
+                }
+
                 priceSeries.current.setData(data);
                 if (data.length > 0) {
                     setLastCandle(data[data.length - 1]);
                 }
             }
-            if (yangSeries.current && yinSeries.current && kg.kagi) {
+
+            // Gerenciar visibilidade
+            if (chartType === 'kagi') {
+                priceSeries.current?.applyOptions({ visible: false });
+                yangSeries.current?.applyOptions({ visible: true });
+                yinSeries.current?.applyOptions({ visible: true });
+            } else {
+                priceSeries.current?.applyOptions({ visible: true });
+                yangSeries.current?.applyOptions({ visible: false });
+                yinSeries.current?.applyOptions({ visible: false });
+            }
+
+            if (yangSeries.current && yinSeries.current && kg.kagi && chartType === 'kagi') {
                 const yangData: LineData[] = [];
                 const yinData: LineData[] = [];
                 
@@ -202,15 +245,21 @@ const Chart: React.FC<ChartProps> = (props) => {
             }
 
         } catch (e) {
-            if (chartRef.current) {
-                setChartError(`Falha ao carregar dados do gráfico para ${focusSymbol}.`);
+            retries--;
+            if (retries === 0) {
+                if (chartRef.current) {
+                    setChartError(`Falha ao carregar dados do gráfico para ${focusSymbol}.`);
+                }
+            } else {
+                await new Promise(resolve => setTimeout(resolve, 1000));
             }
         } finally {
-            if (chartRef.current) {
+            if (retries === 0 || !chartRef.current) {
                 setIsLoading(false);
             }
         }
-    }, [focusSymbol, wsStatus, timeframe]);
+    }
+}, [focusSymbol, wsStatus, timeframe, chartType]);
 
     useEffect(() => {
         if (!focusSymbol || wsStatus !== 'connected') return;
@@ -248,23 +297,39 @@ const Chart: React.FC<ChartProps> = (props) => {
                     updated.close = latestPrice.price;
                     updated.high = Math.max(updated.high, latestPrice.price);
                     updated.low = Math.min(updated.low, latestPrice.price);
-                    priceSeries.current.update(updated);
+
+                    if (chartType === 'heikin') {
+                        // Heikin Ashi simplificado para tick: assume que lastCandle é HA
+                        // HA_Close = (O + H + L + C) / 4
+                        const haClose = (Number(updated.open) + Number(updated.high) + Number(updated.low) + Number(updated.close)) / 4;
+                        updated.close = haClose;
+                        priceSeries.current.update(updated);
+                    } else {
+                        priceSeries.current.update(updated);
+                    }
                 } else {
                     // Abre nova vela
-                    const newCandle = {
+                    let newCandle = {
                         time: candleTime as Time,
                         open: latestPrice.price,
                         high: latestPrice.price,
                         low: latestPrice.price,
                         close: latestPrice.price
                     };
+
+                    if (chartType === 'heikin') {
+                        const haOpen = (Number(lastCandle.open) + Number(lastCandle.close)) / 2;
+                        newCandle.open = haOpen;
+                        newCandle.high = Math.max(newCandle.high, haOpen);
+                        newCandle.low = Math.min(newCandle.low, haOpen);
+                    }
+
                     priceSeries.current.update(newCandle);
-                    // Opcional: atualizar lastCandle para que o próximo tick atualize a nova
                     setLastCandle(newCandle);
                 }
             }
         }
-    }, [latestPrice, lastCandle, timeframe]);
+    }, [latestPrice, lastCandle, timeframe, chartType]);
 
     useEffect(() => {
         if (!aiAnalyses || !priceSeries.current) return;
@@ -294,6 +359,32 @@ const Chart: React.FC<ChartProps> = (props) => {
             <div className="flex items-center justify-between px-2 py-1 flex-shrink-0">
                 <div className="flex items-center gap-2">
                     <div className={`text-amber-300 font-bold ${isMainChart ? 'text-base' : 'text-sm'}`}>{focusSymbol}</div>
+                    
+                    {/* Seletor de Tipo de Gráfico */}
+                    <div className="flex bg-zinc-800/50 rounded p-0.5 ml-2 border border-zinc-700">
+                        <button 
+                            onClick={(e) => { e.stopPropagation(); setChartType('candle'); }}
+                            className={`p-1 rounded transition-colors ${chartType === 'candle' ? 'bg-amber-500 text-black' : 'text-zinc-400 hover:text-zinc-200'}`}
+                            title="Velas Japonesas"
+                        >
+                            <CandleIcon className="h-4 w-4" />
+                        </button>
+                        <button 
+                            onClick={(e) => { e.stopPropagation(); setChartType('heikin'); }}
+                            className={`p-1 rounded transition-colors ${chartType === 'heikin' ? 'bg-amber-500 text-black' : 'text-zinc-400 hover:text-zinc-200'}`}
+                            title="Heikin Ashi"
+                        >
+                            <HeikinIcon className="h-4 w-4" />
+                        </button>
+                        <button 
+                            onClick={(e) => { e.stopPropagation(); setChartType('kagi'); }}
+                            className={`p-1 rounded transition-colors ${chartType === 'kagi' ? 'bg-amber-500 text-black' : 'text-zinc-400 hover:text-zinc-200'}`}
+                            title="Gráfico Kagi"
+                        >
+                            <KagiIcon className="h-4 w-4" />
+                        </button>
+                    </div>
+
                     {onClose && (
                         <button 
                             onClick={(e) => {
