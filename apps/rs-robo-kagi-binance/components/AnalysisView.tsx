@@ -165,53 +165,28 @@ const AnalysisView: React.FC<AnalysisViewProps> = (props) => {
                         </div>
 
                         {visibleComponents.charts && (
-                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 flex-grow min-h-0">
-                                {chartStates[0].visible && (
-                                    <div className="lg:col-span-2 h-[50vh] lg:h-full">
+                            <div className="flex flex-col flex-grow min-h-0 min-w-0">
+                                {chartStates[activeChartIndex]?.visible && (
+                                    <div className="flex-grow h-full w-full">
                                         <Chart
-                                            key={chartStates[0].symbol + '-main'}
-                                            focusSymbol={chartStates[0].symbol}
-                                            timeframe={chartStates[0].timeframe}
-                                            onTimeframeChange={(tf) => handleUpdateChartState(0, { timeframe: tf })}
+                                            key={chartStates[activeChartIndex].symbol + '-active'}
+                                            focusSymbol={chartStates[activeChartIndex].symbol}
+                                            timeframe={chartStates[activeChartIndex].timeframe}
+                                            onTimeframeChange={(tf) => handleUpdateChartState(activeChartIndex, { timeframe: tf })}
                                             wsStatus={wsStatus}
                                             alerts={alerts}
                                             accountState={accountState}
                                             fibTarget={analysisParams?.fib_target}
-                                            aiAnalyses={aiAnalyses.filter(a => a.symbol === chartStates[0].symbol)}
-                                            isActive={0 === activeChartIndex}
-                                            onClick={() => setActiveChartIndex(0)}
-                                            onClose={() => handleToggleChartVisibility(0)}
-                                            onMaximize={() => setFullscreenIndex(0)}
+                                            aiAnalyses={aiAnalyses.filter(a => a.symbol === chartStates[activeChartIndex].symbol)}
+                                            isActive={true}
+                                            onClick={() => {}}
+                                            onClose={() => handleToggleChartVisibility(activeChartIndex)}
+                                            onMaximize={() => setFullscreenIndex(activeChartIndex)}
                                             isMainChart={true}
-                                            latestPrice={latestPrices[chartStates[0].symbol] || null}
+                                            latestPrice={latestPrices[chartStates[activeChartIndex].symbol] || null}
                                         />
                                     </div>
                                 )}
-                                <div className="lg:col-span-1 grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-1 gap-2 overflow-y-auto">
-                                    {chartStates.slice(1).map((state, index) => {
-                                        const actualIndex = index + 1;
-                                        if (!state.visible) return null;
-                                        return (
-                                            <div key={state.symbol + actualIndex} className="h-[30vh] sm:h-[250px] lg:h-[200px]">
-                                                <Chart
-                                                    focusSymbol={state.symbol}
-                                                    timeframe={state.timeframe}
-                                                    onTimeframeChange={(tf) => handleUpdateChartState(actualIndex, { timeframe: tf })}
-                                                    wsStatus={wsStatus}
-                                                    alerts={alerts}
-                                                    accountState={accountState}
-                                                    fibTarget={analysisParams?.fib_target}
-                                                    aiAnalyses={aiAnalyses.filter(a => a.symbol === state.symbol)}
-                                                    isActive={actualIndex === activeChartIndex}
-                                                    onClick={() => setActiveChartIndex(actualIndex)}
-                                                    onClose={() => handleToggleChartVisibility(actualIndex)}
-                                                    onMaximize={() => setFullscreenIndex(actualIndex)}
-                                                    latestPrice={latestPrices[state.symbol] || null}
-                                                />
-                                            </div>
-                                        );
-                                    })}
-                                </div>
                             </div>
                         )}
                     </main>

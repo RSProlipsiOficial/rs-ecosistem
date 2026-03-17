@@ -257,9 +257,6 @@ export default function App() {
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [chartStates, setChartStates] = useState<ChartState[]>([
         { symbol: 'BTC/USDT', timeframe: '1h', visible: true },
-        { symbol: 'ETH/USDT', timeframe: '4h', visible: true },
-        { symbol: 'SOL/USDT', timeframe: '1h', visible: true },
-        { symbol: 'BNB/USDT', timeframe: '1D', visible: true },
     ]);
     const [activeChartIndex, setActiveChartIndex] = useState<number>(0);
     const [visibleComponents, setVisibleComponents] = useState<VisibleComponents>(loadVisibleComponents());

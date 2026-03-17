@@ -136,7 +136,7 @@ const Chart: React.FC<ChartProps> = (props) => {
 
             if (priceSeries.current && oc.candles) {
                 const data: CandlestickData[] = oc.candles.map((c: any[]) => ({ 
-                    time: c[0] / 1000, 
+                    time: (c[0] / 1000 - 10800) as Time, // Ajuste para fuso BRT (-3h)
                     open: c[1], 
                     high: c[2], 
                     low: c[3], 
@@ -149,7 +149,7 @@ const Chart: React.FC<ChartProps> = (props) => {
             }
             if (kagiSeries.current && kg.kagi) {
                 const data: LineData[] = kg.kagi.map((p: any[]) => ({ 
-                    time: p[0] / 1000, 
+                    time: (p[0] / 1000 - 10800) as Time, // Ajuste para fuso BRT (-3h)
                     value: p[1] 
                 }));
                 kagiSeries.current.setData(data);

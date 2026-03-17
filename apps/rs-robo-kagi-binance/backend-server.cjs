@@ -331,17 +331,29 @@ wss.on('connection', (ws) => {
         data: robotStates
     }));
 
-    // Simulação removida para usar dados reais da Binance via fetch/ohlcv
-    // const priceInterval = setInterval(() => { ... }, 1000);
-
-    // Keep-alive (Ping-Pong)
-    ws.isAlive = true;
-    ws.on('pong', () => {
-        ws.isAlive = true;
+    // Broadcast de preços reais da Binance
+    const binanceWs = new WebSocket('wss://fstream.binance.com/ws/!ticker@arr');
+    binanceWs.on('message', (data) => {
+        const tickers = JSON.parse(data);
+        tickers.forEach(t => {
+            const symbol = t.s.replace('USDT', '/USDT');
+            if (robotStates.ai_monitored_symbols.includes(symbol) || symbol === robotStates.focus) {
+                const priceUpdate = {
+                    type: 'price_update',
+                    data: {
+                        symbol: symbol,
+                        price: parseFloat(t.c),
+                        time: Date.now()
+                    }
+                };
+                ws.send(JSON.stringify(priceUpdate));
+            }
+        });
     });
 
     ws.on('close', () => {
         console.log('❌ Cliente WebSocket desconectado');
+        binanceWs.close();
     });
 
     ws.on('error', (err) => {
