@@ -172,27 +172,130 @@ app.get('/ohlcv', async (req, res) => {
     }
 });
 
-// Kagi Chart (simulado)
+// Função para calcular ATR (Average True Range)
+function calculateATR(candles, period = 14) {
+    if (!candles || candles.length < period) return 0;
+    
+    let trs = [];
+    for (let i = 1; i < candles.length; i++) {
+        const h = candles[i][2];
+        const l = candles[i][3];
+        const pc = candles[i-1][4];
+        trs.push(Math.max(h - l, Math.abs(h - pc), Math.abs(l - pc)));
+    }
+    
+    let sum = trs.slice(0, period).reduce((a, b) => a + b, 0);
+    let atr = sum / period;
+    
+    for (let i = period; i < trs.length; i++) {
+        atr = (atr * (period - 1) + trs[i]) / period;
+    }
+    
+    return atr;
+}
+
+// Algoritmo Kagi Real
+function calculateKagi(candles, reversalAmount) {
+    if (!candles || candles.length === 0) return [];
+    
+    // Usamos os fechamentos das velas para o Kagi
+    const prices = candles.map(c => ({ time: c[0], price: c[4] }));
+    let kagiPoints = [];
+    
+    let direction = 0; // 1: Alta, -1: Baixa
+    let currentHigh = prices[0].price;
+    let currentLow = prices[0].price;
+    let isYang = false; // Yang (Verde) ou Yin (Vermelho)
+    let lastShoulder = prices[0].price;
+    let lastWaist = prices[0].price;
+
+    // Primeiro ponto
+    kagiPoints.push({ time: prices[0].time, value: prices[0].price, color: 'yin' });
+
+    for (let i = 1; i < prices.length; i++) {
+        const p = prices[i].price;
+        const t = prices[i].time;
+
+        if (direction === 0) {
+            if (p >= currentLow + reversalAmount) {
+                direction = 1;
+                currentHigh = p;
+                if (p > lastShoulder) isYang = true;
+                kagiPoints.push({ time: t, value: p, color: isYang ? 'yang' : 'yin' });
+            } else if (p <= currentHigh - reversalAmount) {
+                direction = -1;
+                currentLow = p;
+                if (p < lastWaist) isYang = false;
+                kagiPoints.push({ time: t, value: p, color: isYang ? 'yang' : 'yin' });
+            }
+        } else if (direction === 1) {
+            if (p > currentHigh) {
+                currentHigh = p;
+                if (!isYang && p > lastShoulder) isYang = true;
+                kagiPoints.push({ time: t, value: p, color: isYang ? 'yang' : 'yin' });
+            } else if (p <= currentHigh - reversalAmount) {
+                // Reversão para Baixa
+                lastShoulder = currentHigh;
+                direction = -1;
+                currentLow = p;
+                if (isYang && p < lastWaist) isYang = false;
+                // Ponto de virada (Shoulder)
+                kagiPoints.push({ time: t, value: lastShoulder, color: isYang ? 'yang' : 'yin' });
+                kagiPoints.push({ time: t, value: p, color: isYang ? 'yang' : 'yin' });
+            }
+        } else if (direction === -1) {
+            if (p < currentLow) {
+                currentLow = p;
+                if (isYang && p < lastWaist) isYang = false;
+                kagiPoints.push({ time: t, value: p, color: isYang ? 'yang' : 'yin' });
+            } else if (p >= currentLow + reversalAmount) {
+                // Reversão para Alta
+                lastWaist = currentLow;
+                direction = 1;
+                currentHigh = p;
+                if (!isYang && p > lastShoulder) isYang = true;
+                // Ponto de virada (Waist)
+                kagiPoints.push({ time: t, value: lastWaist, color: isYang ? 'yang' : 'yin' });
+                kagiPoints.push({ time: t, value: p, color: isYang ? 'yang' : 'yin' });
+            }
+        }
+    }
+    
+    return kagiPoints;
+}
+
+// Kagi Chart (Real)
 app.get('/kagi', async (req, res) => {
     try {
         const { symbol, timeframe } = req.query;
-        // Buscar OHLCV e converter para Kagi (simplificado)
         const intervalMap = { '5m': '5m', '15m': '15m', '30m': '30m', '1h': '1h', '4h': '4h', '1D': '1d' };
 
         const response = await axios.get('https://fapi.binance.com/fapi/v1/klines', {
             params: {
                 symbol: symbol.replace('/', ''),
                 interval: intervalMap[timeframe] || '1h',
-                limit: 50
+                limit: 250 // Aumentado para dar estabilidade histórica ao Kagi
             }
         });
 
-        const kagiData = response.data.map(k => [
+        const candles = response.data.map(k => [
             k[0], // time (ms)
-            parseFloat(k[4]) // close price used as value
+            parseFloat(k[1]), // open
+            parseFloat(k[2]), // high
+            parseFloat(k[3]), // low
+            parseFloat(k[4]), // close
+            parseFloat(k[5])  // volume
         ]);
 
-        res.json({ kagi: kagiData });
+        const atr = calculateATR(candles, 14);
+        const kagiData = calculateKagi(candles, atr || 50);
+
+        res.json({ 
+            kagi: kagiData,
+            atr: atr,
+            symbol: symbol,
+            timeframe: timeframe
+        });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

@@ -448,7 +448,99 @@ exports.transfer = async (req, res) => {
 };
 
 // ================================================
-// PIX E DEPÓSITOS
+// PIX
+// ================================================
+
+/**
+ * Cadastrar chave PIX
+ */
+exports.createPixKey = async (req, res) => {
+  try {
+    const user_id = req.body.user_id || req.user?.id;
+    const key_type = req.body.key_type || req.body.type;
+    const key_value = req.body.key_value || req.body.key;
+
+    const { data, error } = await supabase
+      .from('wallet_pix_keys')
+      .insert({
+        user_id,
+        key_type,
+        key_value,
+        status: 'active'
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    res.json({
+      success: true,
+      pixKey: data,
+      message: 'Chave PIX cadastrada!'
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Listar chaves PIX
+ */
+exports.listPixKeys = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const { data, error } = await supabase
+      .from('wallet_pix_keys')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('status', 'active');
+
+    if (error) throw error;
+
+    res.json({
+      success: true,
+      pixKeys: data
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Remover chave PIX
+ */
+exports.deletePixKey = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const { error } = await supabase
+      .from('wallet_pix_keys')
+      .update({ status: 'inactive', deleted_at: new Date() })
+      .eq('id', id);
+
+    if (error) throw error;
+
+    res.json({
+      success: true,
+      message: 'Chave PIX removida!'
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+};
+
+// ================================================
+// DEPÓSITOS
 // ================================================
 
 /**
@@ -501,6 +593,73 @@ exports.confirmDeposit = async (req, res) => {
       message: 'Depósito confirmado!'
     });
   } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+};
+
+// ================================================
+// WEBHOOKS
+// ================================================
+
+/**
+ * Webhook Asaas
+ */
+exports.webhookAsaas = async (req, res) => {
+  try {
+    const { event, payment } = req.body;
+
+    if (event === 'PAYMENT_CONFIRMED') {
+      // Confirmar depósito
+      await supabase.rpc('confirm_deposit', {
+        p_deposit_id: payment.externalReference,
+        p_transaction_id: payment.id
+      });
+    }
+
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Webhook MercadoPago
+ */
+exports.webhookMercadoPago = async (req, res) => {
+  try {
+    const { type, data } = req.body;
+
+    if (type === 'payment') {
+      // Processar pagamento
+      const paymentId = data.id;
+
+      // Buscar detalhes do pagamento
+      const mpResponse = await axios.get(
+        `https://api.mercadopago.com/v1/payments/${paymentId}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${process.env.MERCADOPAGO_ACCESS_TOKEN}`
+          }
+        }
+      );
+
+      if (mpResponse.data.status === 'approved') {
+        await supabase.rpc('confirm_deposit', {
+          p_deposit_id: mpResponse.data.external_reference,
+          p_transaction_id: paymentId
+        });
+      }
+    }
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('❌ Erro Webhook MP (Wallet):', error);
     res.status(500).json({
       success: false,
       error: error.message

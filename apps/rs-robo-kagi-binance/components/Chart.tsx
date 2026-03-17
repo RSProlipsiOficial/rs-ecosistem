@@ -32,7 +32,8 @@ const Chart: React.FC<ChartProps> = (props) => {
     const ref = useRef<HTMLDivElement>(null);
     const chartRef = useRef<IChartApi | null>(null);
     const priceSeries = useRef<ISeriesApi<'Candlestick'> | null>(null);
-    const kagiSeries = useRef<ISeriesApi<'Line'> | null>(null);
+    const yangSeries = useRef<ISeriesApi<'Line'> | null>(null);
+    const yinSeries = useRef<ISeriesApi<'Line'> | null>(null);
     const priceLinesRef = useRef<Set<IPriceLine>>(new Set());
     const drawnObjectsRef = useRef<Map<string, IPriceLine[]>>(new Map());
 
@@ -74,7 +75,19 @@ const Chart: React.FC<ChartProps> = (props) => {
             wickDownColor: '#ef4444',
             wickUpColor: '#22c55e',
         });
-        kagiSeries.current = chart.addLineSeries({ color: '#f59e0b', lineWidth: 2 });
+        yangSeries.current = chart.addLineSeries({ 
+            color: '#22c55e', 
+            lineWidth: 3,
+            priceLineVisible: false,
+            lastValueVisible: false
+        });
+        
+        yinSeries.current = chart.addLineSeries({ 
+            color: '#ef4444', 
+            lineWidth: 3,
+            priceLineVisible: false,
+            lastValueVisible: false
+        });
 
         chartRef.current = chart;
 
@@ -102,7 +115,8 @@ const Chart: React.FC<ChartProps> = (props) => {
                 }
                 
                 priceSeries.current = null;
-                kagiSeries.current = null;
+                yangSeries.current = null;
+                yinSeries.current = null;
                 priceLinesRef.current.clear();
                 drawnObjectsRef.current.clear();
             } catch (e) {
@@ -115,7 +129,8 @@ const Chart: React.FC<ChartProps> = (props) => {
         if (wsStatus !== 'connected' || !priceSeries.current || !focusSymbol || !chartRef.current) {
             if (wsStatus === 'disconnected') {
                 priceSeries.current?.setData([]);
-                kagiSeries.current?.setData([]);
+                yangSeries.current?.setData([]);
+                yinSeries.current?.setData([]);
                 setChartError(`Backend desconectado. Aguardando reconexão...`);
             }
             return;
@@ -147,12 +162,39 @@ const Chart: React.FC<ChartProps> = (props) => {
                     setLastCandle(data[data.length - 1]);
                 }
             }
-            if (kagiSeries.current && kg.kagi) {
-                const data: LineData[] = kg.kagi.map((p: any[]) => ({ 
-                    time: (p[0] / 1000 - 10800) as Time, // Ajuste para fuso BRT (-3h)
-                    value: p[1] 
-                }));
-                kagiSeries.current.setData(data);
+            if (yangSeries.current && yinSeries.current && kg.kagi) {
+                const yangData: LineData[] = [];
+                const yinData: LineData[] = [];
+                
+                kg.kagi.forEach((p: any, idx: number) => {
+                    const point = { 
+                        time: (p.time / 1000 - 10800) as Time, 
+                        value: p.value 
+                    };
+                    
+                    if (p.color === 'yang') {
+                        yangData.push(point);
+                    } else {
+                        yinData.push(point);
+                    }
+
+                    // Para manter a linha conectada quando a cor muda, 
+                    // o ponto de transição deve existir em ambas as séries.
+                    if (idx > 0 && kg.kagi[idx-1].color !== p.color) {
+                        const prevPoint = { 
+                            time: (kg.kagi[idx-1].time / 1000 - 10800) as Time, 
+                            value: kg.kagi[idx-1].value 
+                        };
+                        if (p.color === 'yang') {
+                            yangData.splice(yangData.length - 1, 0, prevPoint);
+                        } else {
+                            yinData.splice(yinData.length - 1, 0, prevPoint);
+                        }
+                    }
+                });
+                
+                yangSeries.current.setData(yangData);
+                yinSeries.current.setData(yinData);
             }
             
             if (oc.candles && oc.candles.length > 0 && chartRef.current) {
