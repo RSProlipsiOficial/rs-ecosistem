@@ -12,7 +12,10 @@ const MarketHeatmap: React.FC = () => {
             setError(null);
             try {
                 const data = await fetchMarketOverview();
-                setMarketData(data.overview);
+                // Ajuste de contrato: O backend retorna { top_gainers, top_losers }
+                // Vamos usar top_gainers como visão geral se overview não existir
+                const overview = data.overview || data.top_gainers || [];
+                setMarketData(overview);
             } catch (e) {
                 setError("Falha ao buscar dados do mercado.");
                 console.error("Failed to fetch market overview", e);
@@ -47,12 +50,16 @@ const MarketHeatmap: React.FC = () => {
             )}
             {marketData.length > 0 && (
                 <div className="grid grid-cols-4 md:grid-cols-5 lg:grid-cols-8 gap-2">
-                    {marketData.map(({ symbol, change }) => (
-                        <div key={symbol} className={`p-2 rounded-md text-center transition-colors ${getTileColor(change)}`}>
-                            <div className="font-bold text-xs truncate">{symbol.replace('/USDT', '')}</div>
-                            <div className="text-sm font-mono">{change.toFixed(2)}%</div>
-                        </div>
-                    ))}
+                    {marketData.map((item: any) => {
+                        const symbol = item.symbol || 'N/A';
+                        const change = item.change ?? item.change_24h ?? 0;
+                        return (
+                            <div key={symbol} className={`p-2 rounded-md text-center transition-colors ${getTileColor(change)}`}>
+                                <div className="font-bold text-xs truncate">{symbol.replace('/USDT', '')}</div>
+                                <div className="text-sm font-mono">{change.toFixed(2)}%</div>
+                            </div>
+                        );
+                    })}
                 </div>
             )}
         </div>

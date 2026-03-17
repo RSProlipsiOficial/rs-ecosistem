@@ -2,7 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { Order, ViewState } from '../types';
-import { Search, ShoppingBag, Truck, MapPin, Clock, ArrowRight, Package, Copy, Check, Plus, X, DollarSign, User, FileText, Award } from 'lucide-react';
+import { Search, ShoppingBag, Truck, MapPin, Clock, ArrowRight, Package, Copy, Check, Plus, X, DollarSign, User, FileText, Award, Printer } from 'lucide-react';
+import { dataService } from '../services/dataService';
+import { getDisplayOrderCode, getDisplayOrderHeading } from '../utils/orderDisplay';
 
 interface OrdersProps {
   orders: Order[];
@@ -36,47 +38,56 @@ const Orders: React.FC<OrdersProps> = ({ orders: initialOrders, onNavigate, cdId
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
-  // Tracking Code Edit State
-  const [editingId, setEditingId] = useState<string | null>(null);
   const [tempCode, setTempCode] = useState('');
 
   // Modals State
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [paymentOrder, setPaymentOrder] = useState<Order | null>(null);
 
+  const escapeHtml = (value: string | number | null | undefined) =>
+    String(value ?? '-')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+
   useEffect(() => {
     setLocalOrders(initialOrders);
   }, [initialOrders]);
 
-  // Tracking Handlers
-  const handleStartEdit = (e: React.MouseEvent, order: Order) => {
-    e.stopPropagation();
-    setEditingId(order.id);
-    setTempCode(order.trackingCode || '');
-  };
-
-  const handleSaveTracking = (e: React.MouseEvent, orderId: string) => {
-    e.stopPropagation();
-    const updatedOrders = localOrders.map(order =>
-      order.id === orderId
-        ? { ...order, trackingCode: tempCode, status: tempCode ? 'EM_TRANSPORTE' : order.status }
-        : order
-    ) as Order[];
-
-    setLocalOrders(updatedOrders);
-    setEditingId(null);
+  const refreshOrdersFromApi = async () => {
+    if (!cdId) return localOrders;
+    const refreshedOrders = await dataService.getOrders(cdId);
+    if (Array.isArray(refreshedOrders) && refreshedOrders.length >= 0) {
+      setLocalOrders(refreshedOrders);
+      return refreshedOrders;
+    }
+    return localOrders;
   };
 
   const handleTrackingClick = (e: React.MouseEvent, code: string) => {
     e.stopPropagation();
-    window.open(`https://rastreamento.correios.com.br/app/index.php?objeto=${code}`, '_blank');
+    const value = String(code || '').trim();
+    if (!value) return;
+
+    if (/^https?:\/\//i.test(value)) {
+      window.open(value, '_blank', 'noopener,noreferrer');
+      return;
+    }
+
+    window.open(`https://rastreamento.correios.com.br/app/index.php?objeto=${encodeURIComponent(value)}`, '_blank', 'noopener,noreferrer');
   };
 
   // Payment Handlers
-  const handleStatusClick = (e: React.MouseEvent, order: Order) => {
+  const handleStatusClick = async (e: React.MouseEvent, order: Order) => {
     e.stopPropagation();
     if (order.status === 'PENDENTE') {
       setPaymentOrder(order);
+      return;
+    }
+    if (order.status === 'SEPARACAO' || order.status === 'AGUARDANDO_RETIRADA' || order.status === 'EM_TRANSPORTE' || order.status === 'ENTREGUE') {
+      await handleOpenOrderDetails(order);
     }
   };
 
@@ -84,7 +95,13 @@ const Orders: React.FC<OrdersProps> = ({ orders: initialOrders, onNavigate, cdId
     if (paymentOrder) {
       // Usar fallback de CD caso ausente
       const targetCdId = cdId || paymentOrder.id; // Se não tiver, falhará no service gracefulmente
-      const success = await dataService.confirmSalePayment(targetCdId, paymentOrder.id, paymentOrder.total);
+      const success = await dataService.confirmSalePayment(
+        targetCdId,
+        paymentOrder.id,
+        paymentOrder.total,
+        paymentOrder.marketplaceOrderId || undefined,
+        paymentOrder.paymentMethod || undefined
+      );
 
       if (success) {
         const updatedOrders = localOrders.map(o =>
@@ -94,8 +111,177 @@ const Orders: React.FC<OrdersProps> = ({ orders: initialOrders, onNavigate, cdId
         setPaymentOrder(null);
         // Dispatch custom event to trigger refresh in App.tsx se necessário
         window.dispatchEvent(new Event('refresh-cd-data'));
+        await refreshOrdersFromApi();
       }
     }
+  };
+
+  const handleOpenOrderDetails = async (order: Order) => {
+    const latestOrders = await refreshOrdersFromApi();
+    const freshestOrder = latestOrders.find((item) => item.id === order.id) || order;
+    setSelectedOrder(freshestOrder);
+    setTempCode(freshestOrder.trackingCode || '');
+  };
+
+  const handleDispatchOrder = async () => {
+    if (!selectedOrder) return;
+    if (!tempCode.trim()) {
+      alert('Informe o código de rastreio.');
+      return;
+    }
+
+    const success = await dataService.updateOrderStatus(selectedOrder.id, 'EM_TRANSPORTE', tempCode.trim());
+    if (!success) {
+      alert('Não foi possível atualizar o rastreio do pedido.');
+      return;
+    }
+
+    const updatedOrder = {
+      ...selectedOrder,
+      status: 'EM_TRANSPORTE' as Order['status'],
+      trackingCode: tempCode.trim()
+    };
+
+    setLocalOrders((orders) =>
+      orders.map((order) => (order.id === selectedOrder.id ? updatedOrder : order))
+    );
+    setSelectedOrder(updatedOrder);
+    window.dispatchEvent(new Event('refresh-cd-data'));
+    await refreshOrdersFromApi();
+    alert('Código de rastreio salvo e pedido enviado para transporte.');
+  };
+
+  const handleMarkReadyForPickup = async () => {
+    if (!selectedOrder) return;
+
+    const success = await dataService.updateOrderStatus(selectedOrder.id, 'AGUARDANDO_RETIRADA');
+    if (!success) {
+      alert('Não foi possível atualizar o pedido para aguardando retirada.');
+      return;
+    }
+
+    const updatedOrder = {
+      ...selectedOrder,
+      status: 'AGUARDANDO_RETIRADA' as Order['status']
+    };
+
+    setLocalOrders((orders) =>
+      orders.map((order) => (order.id === selectedOrder.id ? updatedOrder : order))
+    );
+    setSelectedOrder(updatedOrder);
+    window.dispatchEvent(new Event('refresh-cd-data'));
+    await refreshOrdersFromApi();
+    alert('Pedido marcado como aguardando retirada.');
+  };
+
+  const handleMarkDelivered = async () => {
+    if (!selectedOrder) return;
+
+    const success = await dataService.updateOrderStatus(selectedOrder.id, 'ENTREGUE');
+    if (!success) {
+      alert('Não foi possível marcar o pedido como entregue.');
+      return;
+    }
+
+    const updatedOrder = {
+      ...selectedOrder,
+      status: 'ENTREGUE' as Order['status']
+    };
+
+    setLocalOrders((orders) =>
+      orders.map((order) => (order.id === selectedOrder.id ? updatedOrder : order))
+    );
+    setSelectedOrder(updatedOrder);
+    window.dispatchEvent(new Event('refresh-cd-data'));
+    await refreshOrdersFromApi();
+    alert('Pedido marcado como entregue.');
+  };
+
+  const handlePrintOrder = (order: Order) => {
+    const printWindow = window.open('', '_blank', 'width=900,height=700');
+    if (!printWindow) return;
+
+    const orderCode = getDisplayOrderCode(order);
+    const heading = getDisplayOrderHeading(order);
+    const rows = (order.productsDetail || [])
+      .map((item) => `
+        <tr>
+          <td>${escapeHtml(item.productName)}</td>
+          <td style="text-align:center;">${escapeHtml(item.quantity)}</td>
+          <td style="text-align:right;">R$ ${Number(item.unitPrice).toFixed(2)}</td>
+          <td style="text-align:right;">R$ ${(Number(item.quantity) * Number(item.unitPrice)).toFixed(2)}</td>
+        </tr>
+      `)
+      .join('');
+
+    printWindow.document.write(`
+      <!doctype html>
+      <html lang="pt-BR">
+        <head>
+          <meta charset="utf-8" />
+          <title>${escapeHtml(heading)}</title>
+          <style>
+            body { font-family: Arial, sans-serif; color: #111827; margin: 24px; }
+            h1, h2, h3 { margin: 0 0 10px; }
+            .muted { color: #6b7280; font-size: 12px; }
+            .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 20px 0; }
+            .card { border: 1px solid #d1d5db; border-radius: 12px; padding: 16px; }
+            .label { font-size: 11px; color: #6b7280; text-transform: uppercase; margin-bottom: 4px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+            th, td { padding: 10px 12px; border-bottom: 1px solid #e5e7eb; font-size: 13px; }
+            th { text-align: left; color: #6b7280; text-transform: uppercase; font-size: 11px; }
+            .total { margin-top: 16px; text-align: right; font-size: 24px; font-weight: 700; }
+            .footer { margin-top: 20px; font-size: 12px; color: #6b7280; }
+          </style>
+        </head>
+        <body>
+          <h2>RS Prólipsi</h2>
+          <h1>${escapeHtml(heading)}</h1>
+          <p class="muted">Realizado em ${escapeHtml(order.date)}</p>
+
+          <div class="grid">
+            <div class="card">
+              <div class="label">Cliente</div>
+              <div>${escapeHtml(order.consultantName)}</div>
+              <div class="label" style="margin-top:12px;">CPF</div>
+              <div>${escapeHtml(order.buyerCpf || '-')}</div>
+              <div class="label" style="margin-top:12px;">E-mail</div>
+              <div>${escapeHtml(order.buyerEmail || '-')}</div>
+              <div class="label" style="margin-top:12px;">Telefone</div>
+              <div>${escapeHtml(order.buyerPhone || '-')}</div>
+            </div>
+            <div class="card">
+              <div class="label">Entrega</div>
+              <div>${escapeHtml(order.type)}</div>
+              <div class="label" style="margin-top:12px;">Endereço</div>
+              <div>${escapeHtml(order.shippingAddress || 'Retirada no Local')}</div>
+              <div class="label" style="margin-top:12px;">Rastreio</div>
+              <div>${escapeHtml(order.trackingCode || '-')}</div>
+            </div>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Produto</th>
+                <th style="text-align:center;">Qtd</th>
+                <th style="text-align:right;">Unit.</th>
+                <th style="text-align:right;">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows}
+            </tbody>
+          </table>
+
+          <div class="total">Total: R$ ${Number(order.total).toFixed(2)}</div>
+          <div class="footer">Código do pedido: ${escapeHtml(orderCode)}</div>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => printWindow.print(), 250);
   };
 
   const filteredOrders = localOrders.filter(order => {
@@ -197,7 +383,7 @@ const Orders: React.FC<OrdersProps> = ({ orders: initialOrders, onNavigate, cdId
           filteredOrders.map(order => (
             <div
               key={order.id}
-              onClick={() => setSelectedOrder(order)}
+              onClick={() => handleOpenOrderDetails(order)}
               className="bg-dark-900 p-3 rounded-xl border border-dark-800 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 hover:border-gold-500/30 hover:bg-dark-800/50 transition-all cursor-pointer group animate-fade-in"
             >
               {/* Main row layout */}
@@ -211,7 +397,7 @@ const Orders: React.FC<OrdersProps> = ({ orders: initialOrders, onNavigate, cdId
                   {/* Primary Info: Consultant & ID */}
                   <div className="flex items-center gap-3">
                     <span className="text-white font-bold text-sm lg:text-base whitespace-nowrap">{order.consultantName}</span>
-                    <span className="text-gray-500 text-xs font-mono">AC-{order.id.split('-')[0].toUpperCase()}</span>
+                    <span className="text-gray-500 text-xs font-mono">{getDisplayOrderCode(order)}</span>
 
                     <button
                       onClick={(e) => handleStatusClick(e, order)}
@@ -226,9 +412,12 @@ const Orders: React.FC<OrdersProps> = ({ orders: initialOrders, onNavigate, cdId
                     <span className="flex items-center gap-1"><Clock size={12} /> {order.date}</span>
                     <span className="flex items-center gap-1"><ShoppingBag size={12} /> {order.items === 1 ? '1 item' : `${order.items} itens`}</span>
                     {order.type === 'ENTREGA' && order.trackingCode && (
-                      <span className="flex items-center gap-1 text-orange-500 font-mono">
+                      <button
+                        onClick={(e) => handleTrackingClick(e, order.trackingCode!)}
+                        className="flex items-center gap-1 text-orange-500 hover:text-orange-400 font-mono"
+                      >
                         <Package size={12} /> {order.trackingCode}
-                      </span>
+                      </button>
                     )}
                   </div>
                 </div>
@@ -271,7 +460,7 @@ const Orders: React.FC<OrdersProps> = ({ orders: initialOrders, onNavigate, cdId
               </div>
               <h3 className="text-xl font-bold text-white">Confirmar Pagamento?</h3>
               <p className="text-gray-400 mt-2">
-                Deseja confirmar o recebimento e marcar o pedido <span className="text-white font-bold">#{paymentOrder.id}</span> como pago?
+                Deseja confirmar o recebimento e marcar o pedido <span className="text-white font-bold">{getDisplayOrderCode(paymentOrder)}</span> como pago?
               </p>
             </div>
 
@@ -309,7 +498,7 @@ const Orders: React.FC<OrdersProps> = ({ orders: initialOrders, onNavigate, cdId
                 <FileText size={24} />
               </div>
               <div>
-                <h3 className="text-xl font-bold text-white">Detalhes do Pedido #{selectedOrder.id}</h3>
+                <h3 className="text-xl font-bold text-white">{getDisplayOrderHeading(selectedOrder)}</h3>
                 <p className="text-gray-400 text-sm">Realizado em {selectedOrder.date}</p>
               </div>
             </div>
@@ -335,7 +524,15 @@ const Orders: React.FC<OrdersProps> = ({ orders: initialOrders, onNavigate, cdId
                   <p><span className="text-gray-600 block text-xs uppercase">Tipo</span> {selectedOrder.type}</p>
                   <p><span className="text-gray-600 block text-xs uppercase">Endereço</span> {selectedOrder.shippingAddress || 'Retirada no Local'}</p>
                   {selectedOrder.trackingCode && (
-                    <p><span className="text-gray-600 block text-xs uppercase">Rastreio</span> {selectedOrder.trackingCode}</p>
+                    <p>
+                      <span className="text-gray-600 block text-xs uppercase">Rastreio</span>
+                      <button
+                        onClick={(e) => handleTrackingClick(e as any, selectedOrder.trackingCode!)}
+                        className="text-orange-400 hover:text-orange-300 font-mono"
+                      >
+                        {selectedOrder.trackingCode}
+                      </button>
+                    </p>
                   )}
                 </div>
               </div>
@@ -378,7 +575,55 @@ const Orders: React.FC<OrdersProps> = ({ orders: initialOrders, onNavigate, cdId
               </div>
             </div>
 
-            <div className="flex justify-end mt-4">
+            <div className="flex flex-wrap justify-end gap-3 mt-4">
+              {selectedOrder.status === 'SEPARACAO' && selectedOrder.type === 'ENTREGA' && (
+                <div className="flex items-center gap-2 w-full md:w-auto md:mr-auto">
+                  <input
+                    type="text"
+                    placeholder="Inserir código de rastreio"
+                    value={tempCode}
+                    onChange={(e) => setTempCode(e.target.value)}
+                    className="min-w-[260px] bg-dark-950 border border-dark-700 rounded-lg px-4 py-2 text-white outline-none focus:border-gold-400"
+                  />
+                  <button
+                    onClick={handleDispatchOrder}
+                    className="bg-gold-500 hover:bg-gold-400 text-black px-5 py-2 rounded-lg transition-colors font-semibold"
+                  >
+                    Enviar
+                  </button>
+                </div>
+              )}
+              {selectedOrder.status === 'SEPARACAO' && selectedOrder.type === 'RETIRADA' && (
+                <button
+                  onClick={handleMarkReadyForPickup}
+                  className="bg-purple-600 hover:bg-purple-500 text-white px-5 py-2 rounded-lg transition-colors font-semibold md:mr-auto"
+                >
+                  Pronto para retirada
+                </button>
+              )}
+              {selectedOrder.status === 'AGUARDANDO_RETIRADA' && (
+                <button
+                  onClick={handleMarkDelivered}
+                  className="bg-green-600 hover:bg-green-500 text-white px-5 py-2 rounded-lg transition-colors font-semibold md:mr-auto"
+                >
+                  Confirmar retirada
+                </button>
+              )}
+              {selectedOrder.status === 'EM_TRANSPORTE' && (
+                <button
+                  onClick={handleMarkDelivered}
+                  className="bg-green-600 hover:bg-green-500 text-white px-5 py-2 rounded-lg transition-colors font-semibold md:mr-auto"
+                >
+                  Marcar como entregue
+                </button>
+              )}
+              <button
+                onClick={() => handlePrintOrder(selectedOrder)}
+                className="bg-gold-500 hover:bg-gold-400 text-black px-6 py-2 rounded-lg transition-colors font-semibold flex items-center gap-2"
+              >
+                <Printer size={16} />
+                Imprimir
+              </button>
               <button
                 onClick={() => setSelectedOrder(null)}
                 className="bg-dark-800 hover:bg-dark-700 text-white px-6 py-2 rounded-lg transition-colors"

@@ -316,8 +316,8 @@ export const headquartersService = {
 
                 return {
                     id: shortId,
-                    customerName: order.customer_name || 'Cliente',
-                    customerEmail: order.customer_email || '',
+                    customerName: order.buyer_name || order.customer_name || 'Cliente',
+                    customerEmail: order.buyer_email || order.customer_email || '',
                     cdId: order.distributor_id || '',
                     cdName: cdName,
                     items: [],

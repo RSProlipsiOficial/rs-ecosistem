@@ -30,6 +30,7 @@ interface DataTableProps<T> {
   startIndex: number;
   endIndex: number;
   searchPlaceholder?: string;
+  toolbarContent?: React.ReactNode;
 }
 
 export const DataTable = <T extends { id: string }>({
@@ -47,12 +48,13 @@ export const DataTable = <T extends { id: string }>({
   onItemsPerPageChange,
   startIndex,
   endIndex,
-  searchPlaceholder = "Buscar na tabela..."
+  searchPlaceholder = "Buscar na tabela...",
+  toolbarContent
 }: DataTableProps<T>) => {
   return (
     <div className="bg-rs-card rounded-xl border border-rs-goldDim/20 overflow-hidden">
-      <div className="p-4 flex justify-between items-center border-b border-white/5">
-        <div className="relative">
+      <div className="p-4 flex flex-col gap-3 border-b border-white/5 lg:flex-row lg:items-center lg:justify-between">
+        <div className="relative w-full lg:max-w-md">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
           <input
             type="text"
@@ -62,6 +64,11 @@ export const DataTable = <T extends { id: string }>({
             className="w-full bg-black/40 border border-white/10 rounded-lg py-2 pl-9 pr-4 text-sm text-slate-200 focus:border-rs-gold outline-none"
           />
         </div>
+        {toolbarContent ? (
+          <div className="flex flex-wrap items-center gap-2 lg:justify-end">
+            {toolbarContent}
+          </div>
+        ) : null}
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-sm text-left">

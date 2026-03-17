@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabaseClient';
+const { createOrder, registerSale } = require('./salesService');
 
 const TARGET_AMOUNT = 60.00; // R$ 60 para ativar matriz
 const MATRIX_SIZE = 6; // Matriz 6x6
@@ -141,6 +142,58 @@ export async function adicionarNaMatriz(consultorId: string) {
 
   console.log(`📍 Posição encontrada: Upline ${posicaoLivre.uplineId}, Linha ${posicaoLivre.linha}`);
 
+  // ---> CORREÇÃO: ABRE O CICLO PARA QUEM COMPROU, SE ESSE FOR O PRIMEIRO ACESSO OU SE NÃO TEM ABERTO <---
+  let { data: myCycle } = await supabase
+    .from('matriz_cycles')
+    .select('id')
+    .eq('consultor_id', consultorId)
+    .eq('status', 'open')
+    .maybeSingle();
+
+  if (!myCycle) {
+    // Busca e incrementa
+    const { data: myLastCycle } = await supabase
+      .from('matriz_cycles')
+      .select('cycle_number')
+      .eq('consultor_id', consultorId)
+      .order('cycle_number', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const nextCycUser = myLastCycle ? myLastCycle.cycle_number + 1 : 1;
+    console.log(`🆕 Ativando ciclo nº ${nextCycUser} para o comprador ${consultorId}`);
+    
+    const { data: openedMyCycle, error: myCycErr } = await supabase
+      .from('matriz_cycles')
+      .insert({ consultor_id: consultorId, cycle_number: nextCycUser, status: 'open' })
+      .select()
+      .single();
+
+    if (!myCycErr && openedMyCycle) {
+      await supabase.from('cycle_events').insert({
+        cycle_id: openedMyCycle.id,
+        consultor_id: consultorId,
+        event_type: 'cycle_opened',
+        event_data: { cycle_number: nextCycUser }
+      });
+    }
+  }
+
+  // --- ATIVAÇÃO DE STATUS DO CONSULTOR ---
+  if (consultor.status !== 'ativo') {
+    console.log(`🚀 Ativando consultor ${consultorId} na tabela de consultores...`);
+    await supabase
+      .from('consultores')
+      .update({
+        status: 'ativo',
+        data_ativacao: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', consultorId);
+  } else {
+    console.log(`ℹ️  Consultor ${consultorId} já possui status ativo.`);
+  }
+
   // 3. Buscar ou criar ciclo aberto para o upline
   let { data: cicloAberto } = await supabase
     .from('matriz_cycles')
@@ -256,6 +309,11 @@ export async function adicionarNaMatriz(consultorId: string) {
     // TODO: Implementar rota de config para salvar essa preferência real
 
     console.log(`🔔 Evento 'cycle_completed' registrado para ${posicaoLivre.uplineId}`);
+
+    // --- TRIGGER ATIVAÇÃO AUTOMÁTICA ---
+    void triggerAutoActivation(posicaoLivre.uplineId).catch(err => {
+      console.error(`❌ Erro no trigger de auto-ativação para ${posicaoLivre.uplineId}:`, err.message);
+    });
   }
 
   return {
@@ -354,4 +412,108 @@ export async function buscarUplines(consultorId: string, maxNivel = 6) {
 
   console.log(`✅ ${uplines.length} uplines ativos encontrados`);
   return uplines;
+}
+
+/**
+ * Trigger para ativação automática (Reinvestimento)
+ * Verifica config, debita wallet e cria novo pedido/matriz
+ */
+async function triggerAutoActivation(consultorId: string) {
+  console.log(`🔄 [AutoActivation] Iniciando trigger para ${consultorId}...`);
+
+  // 1. Buscar Consultor e Config
+  const { data: consultor } = await supabase
+    .from('consultores')
+    .select('*, user_id')
+    .eq('id', consultorId)
+    .single();
+
+  if (!consultor || !consultor.mes_referencia || !consultor.mes_referencia.startsWith('SIGME_AUTO|')) {
+    console.log(`  ℹ️  Consultor ${consultorId} não possui auto-reinvestimento ativo.`);
+    return;
+  }
+
+  const [, productId, cdId, shippingMethod = 'pickup'] = consultor.mes_referencia.split('|');
+
+  // 2. Buscar Produto para saber o preço
+  const { data: product } = await supabase
+    .from('products')
+    .select('*')
+    .eq('id', productId)
+    .single();
+
+  if (!product) {
+    console.error(`  ❌ Produto ${productId} não encontrado para auto-reinvestimento.`);
+    return;
+  }
+
+  // Preço consultor (50%)
+  const priceFinal = product.price_consultor || (product.price_base || product.price || 0) * 0.5;
+  const shippingCost = 0; // Por simplificação na auto-ativação assume-est CD ou pickup
+  const totalNeeded = priceFinal + shippingCost;
+
+  // 3. Verificar Saldo na Wallet
+  const { data: wallet } = await supabase
+    .from('wallets')
+    .select('*')
+    .eq('consultor_id', consultorId)
+    .single();
+
+  if (!wallet || parseFloat(wallet.saldo_disponivel) < totalNeeded) {
+    console.warn(`  ⚠️  Saldo insuficiente para auto-reinvestimento (${consultorId}): R$ ${wallet?.saldo_disponivel} < R$ ${totalNeeded}`);
+    
+    // Registrar falha por saldo
+    await supabase.from('audit_logs').insert({
+      user_id: consultor.user_id,
+      action: 'sigme_auto_activation_failed',
+      details: { reason: 'insufficient_funds', required: totalNeeded, balance: wallet?.saldo_disponivel }
+    });
+    return;
+  }
+
+  console.log(`  💰 Saldo OK (R$ ${wallet.saldo_disponivel}). Processando pedido...`);
+
+  // 4. Criar Pedido (SalesService)
+  const order = await createOrder({
+    buyerId: consultorId,
+    buyerEmail: consultor.email,
+    buyerName: consultor.nome,
+    buyerPhone: (consultor as any).whatsapp,
+    buyerType: 'consultor',
+    referredBy: consultor.patrocinador_id, // Mantém o patrocinador original
+    items: [{ product_id: productId, quantity: 1 }],
+    shippingMethod,
+    shippingCost,
+    customerNotes: 'Ativação Automática SIGME (Reinvestimento)'
+  });
+
+  // 5. Debitar Wallet e Confirmar Venda
+  const newBalance = parseFloat(wallet.saldo_disponivel) - totalNeeded;
+  
+  await supabase.from('wallets').update({
+    saldo_disponivel: newBalance,
+    saldo_total: parseFloat(wallet.saldo_total) - totalNeeded,
+    updated_at: new Date().toISOString()
+  }).eq('id', wallet.id);
+
+  // Registrar Transação de Débito
+  await supabase.from('wallet_transactions').insert({
+    user_id: consultor.user_id,
+    type: 'debit',
+    amount: totalNeeded,
+    description: `Auto-Ativação SIGME - Pedido #${order.id}`,
+    order_id: order.id,
+    balance_after: newBalance
+  });
+
+  // 6. Registrar a Venda (Isso já chama processarCompra -> adicionarNaMatriz recursivamente)
+  await registerSale({
+    orderId: order.id,
+    mpPaymentId: `AUTO-${Date.now()}`,
+    amount: totalNeeded,
+    method: 'wallet',
+    receivedAt: new Date().toISOString()
+  });
+
+  console.log(`  ✅ [AutoActivation] Sucesso para ${consultorId}! Novo pedido: ${order.id}`);
 }

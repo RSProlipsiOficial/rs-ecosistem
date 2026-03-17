@@ -1,7 +1,7 @@
 export const brandingApi = {
     getBranding: async () => {
         try {
-            const baseUrl = (import.meta as any).env?.VITE_API_URL || 'http://localhost:4000/v1';
+            const baseUrl = (import.meta as any).env?.VITE_API_URL || 'http://localhost:3016/v1';
             const response = await fetch(`${baseUrl}/admin/settings/general`);
             const data = await response.json();
             return {

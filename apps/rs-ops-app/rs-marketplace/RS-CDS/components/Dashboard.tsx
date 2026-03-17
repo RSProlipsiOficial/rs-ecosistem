@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { CDProfile, Order, ViewState, Customer } from '../types';
+import { CDProfile, Order, ViewState, Customer, Transaction } from '../types';
 import { Users, DollarSign, Package, TrendingUp, AlertTriangle, ArrowRight, MessageCircle, X, Search } from 'lucide-react';
 // Clientes serão processados a partir dos pedidos
 
@@ -9,6 +9,7 @@ import { Users, DollarSign, Package, TrendingUp, AlertTriangle, ArrowRight, Mess
 interface DashboardProps {
   profile: CDProfile;
   orders: Order[];
+  transactions: Transaction[];
   onNavigate: (view: ViewState) => void;
 }
 
@@ -40,10 +41,22 @@ const KPICard: React.FC<{
   </div>
 );
 
-const Dashboard: React.FC<DashboardProps> = ({ profile, orders, onNavigate }) => {
+const Dashboard: React.FC<DashboardProps> = ({ profile, orders, transactions, onNavigate }) => {
   const [showCustomerModal, setShowCustomerModal] = useState(false);
   const pendingOrders = orders.filter(o => o.status === 'PENDENTE' || o.status === 'SEPARACAO').length;
   const readyOrders = orders.filter(o => o.status === 'AGUARDANDO_RETIRADA').length;
+  const walletBalance = Math.max(0, (transactions || []).reduce((acc, transaction) => {
+    const status = String(transaction.status || '').trim().toUpperCase();
+    if (status === 'CANCELADO' || status === 'REJEITADO') return acc;
+
+    const amount = Number(transaction.amount || 0);
+    const type = String(transaction.type || '').trim().toUpperCase();
+    const category = String(transaction.category || '').trim().toUpperCase();
+
+    if (type === 'IN') return acc + amount;
+    if (category.includes('SAQUE')) return acc - amount;
+    return acc;
+  }, 0));
 
   // Gráfico real: agrupa pedidos por mês (últimos 6 meses)
   const chartData = (() => {
@@ -120,7 +133,7 @@ const Dashboard: React.FC<DashboardProps> = ({ profile, orders, onNavigate }) =>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <KPICard
           title="Saldo Wallet"
-          value={`R$ ${profile.walletBalance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+          value={`R$ ${walletBalance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
           icon={<DollarSign size={24} />}
           subtext="Disponível para saque"
           onClick={() => onNavigate('FINANCEIRO')}

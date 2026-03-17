@@ -294,6 +294,38 @@ export const sigmaApi = {
      */
     getCDs: async () => {
         try {
+            const apiResult = await apiClient.get<any[]>('/v1/cds');
+            if (apiResult.success && Array.isArray(apiResult.data) && apiResult.data.length > 0) {
+                const formattedFromApi = apiResult.data.map((cd: any) => ({
+                    id: cd.id,
+                    name: cd.name || cd.nome || 'CD Sem Nome',
+                    city: cd.city || cd.address_city || cd.addressCity || 'Cidade N/A',
+                    state: cd.state || cd.address_state || cd.addressState || 'UF',
+                    zip: cd.zip || cd.address_zip || cd.addressZip || '',
+                    whatsapp: cd.whatsapp || cd.phone || cd.telefone || '',
+                    isFederalSede: Boolean(
+                        cd.isFederalSede ||
+                        cd.is_headquarters ||
+                        cd.isHeadquarters ||
+                        String(cd.type || '').toUpperCase() === 'PROPRIO' ||
+                        String(cd.name || cd.nome || '').toLowerCase().includes('prólipsi') ||
+                        String(cd.name || cd.nome || '').toLowerCase().includes('prolipsi')
+                    )
+                }));
+
+                const sortedFromApi = formattedFromApi.sort((a, b) => {
+                    if (a.isFederalSede) return -1;
+                    if (b.isFederalSede) return 1;
+                    return a.name.localeCompare(b.name);
+                });
+
+                return { success: true, data: sortedFromApi };
+            }
+        } catch (error) {
+            console.warn('API /v1/cds falhou no SIGME, tentando fallback local:', error);
+        }
+
+        try {
             const { supabase } = await import('../services/supabaseClient');
 
             // Unification: CD management in Admin uses 'minisite_profiles'
@@ -325,6 +357,16 @@ export const sigmaApi = {
         } catch (error) {
             console.error("Falha ao buscar CDs da minisite_profiles:", error);
             return { success: false, data: [] };
+        }
+    },
+
+    /**
+     * Busca o histórico de bônus do consultor logado
+     */
+    getBonuses: async () => {
+        try {
+            return await apiClient.get('/v1/sigma/bonuses');
+        } catch (error) {
         }
     },
 
@@ -371,12 +413,12 @@ export const sigmaApi = {
         try {
             const query = type ? `?depth=${depth}&type=${type}` : `?depth=${depth}`;
             return await apiClient.get<any[]>(`/v1/sigma/downlines${query}`);
-        } catch (error) {
-            console.warn('Simulando Downlines via Mock...');
-            const { mockDirects } = await import('../data');
+        } catch (error: any) {
+            console.error('Erro na API Downlines:', error);
             return {
-                success: true,
-                data: mockDirects
+                success: false,
+                data: [],
+                error: error.message || 'Erro ao carregar downlines.'
             };
         }
     },
@@ -436,16 +478,16 @@ export const sigmaApi = {
         try {
             const query = type ? `?type=${type}` : '';
             return await apiClient.get<any>(`/v1/sigma/tree${query}`);
-        } catch (error) {
-            console.warn('Gerando Árvore Dinâmica via Mock...');
-            const { mockUser, mockDirects, mockMatrixMembers, generateMatrixNetwork } = await import('../data');
-            const tree = generateMatrixNetwork(6, 3, mockUser, mockDirects, mockMatrixMembers);
+        } catch (error: any) {
+            console.error('Erro ao buscar Árvore de Matriz:', error);
             return {
-                success: true,
-                data: { tree }
+                success: false,
+                data: null,
+                error: error.message || 'Falha ao buscar estrutura do banco de dados.'
             };
         }
     },
+
     /**
      * Busca os produtos disponíveis (Reais do Marketplace)
      */

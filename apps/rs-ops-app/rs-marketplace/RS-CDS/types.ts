@@ -142,12 +142,14 @@ export interface Order {
   time?: string;        // Horário do pedido/retirada
   total: number;
   totalPoints: number;  // Total de VP do pedido
-  status: 'PENDENTE' | 'SEPARACAO' | 'AGUARDANDO_RETIRADA' | 'EM_TRANSPORTE' | 'CONCLUIDO';
+  status: 'PENDENTE' | 'SEPARACAO' | 'AGUARDANDO_RETIRADA' | 'EM_TRANSPORTE' | 'ENTREGUE' | 'CONCLUIDO';
   type: 'RETIRADA' | 'ENTREGA';
   items: number;
   trackingCode?: string;
   vehiclePlate?: string; // Placa do veículo de retirada/entrega
   productsDetail?: OrderDetail[]; // Lista detalhada de itens
+  paymentMethod?: string | null;
+  marketplaceOrderId?: string | null;
 }
 
 export interface Customer {
@@ -171,6 +173,7 @@ export interface Transaction {
   category: 'VENDA' | 'COMPRA_ESTOQUE' | 'COMISSAO' | 'SAQUE' | 'TAXA';
   amount: number;
   status: 'CONCLUIDO' | 'PENDENTE' | 'CANCELADO';
+  referenceId?: string;
 }
 
 // Novos Tipos para o Painel Administrador (Corporativo)

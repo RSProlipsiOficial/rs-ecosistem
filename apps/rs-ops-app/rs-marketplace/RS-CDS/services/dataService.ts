@@ -3,6 +3,66 @@ import { CDProfile, Order, Product, Transaction, Customer } from '../types';
 
 const apiBaseUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
 
+const normalizeTransactionType = (value: any): 'IN' | 'OUT' => {
+    const normalized = String(value || '').trim().toUpperCase();
+    return normalized === 'OUT' ? 'OUT' : 'IN';
+};
+
+const normalizeTransactionStatus = (value: any): 'CONCLUIDO' | 'PENDENTE' | 'CANCELADO' => {
+    const normalized = String(value || '').trim().toUpperCase();
+    if (normalized === 'PENDENTE') return 'PENDENTE';
+    if (normalized === 'CANCELADO' || normalized === 'REJEITADO') return 'CANCELADO';
+    return 'CONCLUIDO';
+};
+
+const normalizeTransactionCategory = (value: any): Transaction['category'] => {
+    const normalized = String(value || '').trim().toUpperCase();
+    if (normalized.includes('ESTOQUE')) return 'COMPRA_ESTOQUE';
+    if (normalized.includes('COMIS')) return 'COMISSAO';
+    if (normalized.includes('SAQUE')) return 'SAQUE';
+    if (normalized.includes('TAXA')) return 'TAXA';
+    return 'VENDA';
+};
+
+const extractTransactionReference = (transaction: any): string => {
+    const explicit = String(transaction.reference_id || transaction.referenceId || '').trim();
+    if (explicit) return explicit;
+
+    const description = String(transaction.description || '').trim();
+    const orderMatch = description.match(/#([A-Z0-9-]+)/i);
+    return orderMatch ? orderMatch[1].toUpperCase() : '';
+};
+
+const normalizeAndDedupeTransactions = (transactions: any[]): Transaction[] => {
+    const map = new Map<string, Transaction>();
+
+    (transactions || []).forEach((transaction: any) => {
+        const normalized: Transaction = {
+            id: String(transaction.id || transaction.reference_id || transaction.referenceId || crypto.randomUUID()),
+            date: String(transaction.created_at || transaction.date || new Date().toISOString()),
+            description: String(transaction.description || 'Transação'),
+            type: normalizeTransactionType(transaction.type),
+            category: normalizeTransactionCategory(transaction.category),
+            amount: Number(transaction.amount || 0),
+            status: normalizeTransactionStatus(transaction.status),
+            referenceId: extractTransactionReference(transaction) || undefined,
+        };
+
+        const dedupeKey = String(normalized.referenceId || '').trim()
+            || `${normalized.type}|${normalized.category}|${normalized.description}|${normalized.amount.toFixed(2)}`;
+
+        if (!map.has(dedupeKey)) {
+            map.set(dedupeKey, normalized);
+        }
+    });
+
+    return Array.from(map.values()).sort((a, b) => {
+        const aDate = new Date(a.date || 0).getTime();
+        const bDate = new Date(b.date || 0).getTime();
+        return bDate - aDate;
+    });
+};
+
 export const dataService = {
     // --- Perfil e Configurações (API ou Local) ---
     async getCDProfile(userId: string): Promise<CDProfile | null> {
@@ -70,6 +130,16 @@ export const dataService = {
             return json.data;
         } catch (error) {
             console.warn('[CDS] Erro ao buscar CD primário via API, tentando fallback Supabase:', error);
+            const { data: sedeData } = await supabase
+                .from('minisite_profiles')
+                .select('*')
+                .or('consultant_id.eq.rsprolipsi,slug.eq.rsprolipsi')
+                .maybeSingle();
+
+            if (sedeData) {
+                return sedeData;
+            }
+
             // Fallback: buscar o primeiro perfil de CD no Supabase
             const { data, error: sbError } = await supabase
                 .from('minisite_profiles')
@@ -228,30 +298,50 @@ export const dataService = {
 
             if (sbError || !data) return [];
 
-            return data.map((order: any) => ({
-                id: order.id,
-                consultantName: order.consultant_name,
-                consultantPin: order.consultant_pin,
-                total: Number(order.total),
-                status: order.status,
-                date: order.order_date,
-                items: order.items_count,
-                productsDetail: (order.items || []).map((item: any) => ({
-                    productId: item.product_id,
-                    productName: item.product_name,
-                    quantity: item.quantity,
-                    unitPrice: Number(item.unit_price)
-                }))
-            }));
+            return data.map((order: any) => {
+                const rawType = String(order.type || '').trim().toUpperCase();
+                const combinedAddress = `${String(order.shipping_method || '')} ${String(order.shipping_address || '')}`.toLowerCase();
+                const resolvedType: Order['type'] =
+                    rawType === 'RETIRADA' || combinedAddress.includes('retirada') || combinedAddress.includes('pickup')
+                        ? 'RETIRADA'
+                        : 'ENTREGA';
+
+                return {
+                    id: order.id,
+                    consultantName: order.customer_name || order.consultant_name || 'Cliente',
+                    consultantPin: order.consultant_pin,
+                    buyerCpf: order.customer_document || order.buyer_cpf || undefined,
+                    buyerEmail: order.customer_email || order.buyer_email || undefined,
+                    buyerPhone: order.customer_phone || order.buyer_phone || undefined,
+                    shippingAddress: [order.shipping_method, order.shipping_address].filter(Boolean).join(' - ') || undefined,
+                    total: Number(order.total),
+                    status: order.status,
+                    type: resolvedType,
+                    trackingCode: order.tracking_code || undefined,
+                    marketplaceOrderId: order.marketplace_order_id || null,
+                    date: order.order_date,
+                    time: order.order_time || undefined,
+                    items: order.items_count,
+                    productsDetail: (order.items || []).map((item: any) => ({
+                        productId: item.product_id,
+                        productName: item.product_name,
+                        quantity: item.quantity,
+                        unitPrice: Number(item.unit_price)
+                    }))
+                };
+            });
         }
     },
 
-    async updateOrderStatus(orderId: string, status: string): Promise<boolean> {
+    async updateOrderStatus(orderId: string, status: string, trackingCode?: string): Promise<boolean> {
         try {
             const res = await fetch(`${apiBaseUrl}/v1/cds/orders/${orderId}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ status })
+                body: JSON.stringify({
+                    status,
+                    ...(trackingCode ? { tracking_code: trackingCode } : {})
+                })
             });
             const json = await res.json();
             return json.success;
@@ -260,12 +350,16 @@ export const dataService = {
         }
     },
 
-    async confirmSalePayment(cdId: string, orderId: string, total: number): Promise<boolean> {
+    async confirmSalePayment(cdId: string, orderId: string, total: number, marketplaceOrderId?: string, paymentMethod?: string): Promise<boolean> {
         try {
             // 1. Atualizar status do pedido
             const { error: orderError } = await supabase
                 .from('cd_orders')
-                .update({ status: 'SEPARACAO', updated_at: new Date().toISOString() })
+                .update({
+                    status: 'SEPARACAO',
+                    payment_method: paymentMethod || 'CASH',
+                    updated_at: new Date().toISOString()
+                })
                 .eq('id', orderId);
 
             if (orderError) throw orderError;
@@ -300,32 +394,50 @@ export const dataService = {
                     .eq('id', cdId);
             }
 
-            // 4. Baixa de Estoque (cd_products)
-            const { data: items } = await supabase
-                .from('cd_order_items')
-                .select('product_id, quantity')
-                .eq('cd_order_id', orderId);
+            // 4. Se o pedido nasceu no marketplace, sincroniza o pagamento no pedido principal.
+            // A baixa de estoque do CD fica centralizada no processamento do marketplace para nao duplicar.
+            if (marketplaceOrderId) {
+                const response = await fetch(`${apiBaseUrl}/v1/marketplace/orders/${marketplaceOrderId}/status`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        status: 'paid',
+                        paymentStatus: 'Pago'
+                    })
+                });
 
-            if (items) {
-                for (const item of items) {
-                    const { data: product } = await supabase
-                        .from('cd_products')
-                        .select('stock_level')
-                        .eq('cd_id', cdId)
-                        .eq('id', item.product_id)
-                        .maybeSingle();
+                const json = await response.json().catch(() => ({}));
+                if (!response.ok || json.success === false) {
+                    throw new Error(json.error || 'Falha ao sincronizar pagamento do marketplace');
+                }
+            } else {
+                // 4. Baixa de Estoque (cd_products) para pedidos locais do proprio CD
+                const { data: items } = await supabase
+                    .from('cd_order_items')
+                    .select('product_id, quantity')
+                    .eq('cd_order_id', orderId);
 
-                    if (product) {
-                        const newStock = Math.max(0, Number(product.stock_level) - Number(item.quantity));
-                        await supabase
+                if (items) {
+                    for (const item of items) {
+                        const { data: product } = await supabase
                             .from('cd_products')
-                            .update({
-                                stock_level: newStock,
-                                updated_at: new Date().toISOString(),
-                                status: newStock <= 0 ? 'CRITICO' : (newStock <= 5 ? 'BAIXO' : 'OK')
-                            })
+                            .select('stock_level')
                             .eq('cd_id', cdId)
-                            .eq('id', item.product_id);
+                            .eq('id', item.product_id)
+                            .maybeSingle();
+
+                        if (product) {
+                            const newStock = Math.max(0, Number(product.stock_level) - Number(item.quantity));
+                            await supabase
+                                .from('cd_products')
+                                .update({
+                                    stock_level: newStock,
+                                    updated_at: new Date().toISOString(),
+                                    status: newStock <= 0 ? 'CRITICO' : (newStock <= 5 ? 'BAIXO' : 'OK')
+                                })
+                                .eq('cd_id', cdId)
+                                .eq('id', item.product_id);
+                        }
                     }
                 }
             }
@@ -394,12 +506,15 @@ export const dataService = {
     },
 
     // --- Financeiro ---
-    async getFinancialData(cdId: string): Promise<{ withdraws: any[], transactions: any[] } | null> {
+    async getFinancialData(cdId: string): Promise<{ withdraws: any[], transactions: any[], availableBalance?: number, storedBalance?: number, balanceFromTransactions?: number, withdrawableBalance?: number } | null> {
         try {
             const res = await fetch(`${apiBaseUrl}/v1/cds/${cdId}/financial`);
             if (!res.ok) throw new Error('API offline');
             const json = await res.json();
-            return json.success ? json.data : null;
+            return json.success ? {
+                ...json.data,
+                transactions: normalizeAndDedupeTransactions(json.data?.transactions || []),
+            } : null;
         } catch (error) {
             console.warn('[CDS] Erro ao buscar dados financeiros via API, tentando fallback Supabase:', error);
 
@@ -420,7 +535,11 @@ export const dataService = {
 
             return {
                 withdraws: withdraws || [],
-                transactions: transactions || []
+                transactions: normalizeAndDedupeTransactions(transactions || []),
+                availableBalance: undefined,
+                storedBalance: undefined,
+                balanceFromTransactions: undefined,
+                withdrawableBalance: undefined
             };
         }
     },
@@ -431,7 +550,7 @@ export const dataService = {
             if (!res.ok) throw new Error('API offline');
             const json = await res.json();
             if (!json.success) throw new Error(json.error);
-            return json.data.transactions;
+            return normalizeAndDedupeTransactions(json.data?.transactions || []);
         } catch (error) {
             console.error('[CDS] Erro ao buscar transações via API, ativando fallback:', error);
             const { data } = await supabase
@@ -440,7 +559,7 @@ export const dataService = {
                 .eq('cd_id', cdId)
                 .order('created_at', { ascending: false })
                 .limit(50);
-            return (data as unknown as Transaction[]) || [];
+            return normalizeAndDedupeTransactions((data as unknown as Transaction[]) || []);
         }
     },
 

@@ -21,6 +21,7 @@ const navSections = [
     title: 'GERAL',
     items: [
       { to: '/app/dashboard', icon: IconDashboard, label: 'Dashboard' },
+      { to: '/app/purchases', icon: IconReports, label: 'Minhas Compras' },
       { to: '/app/reports', icon: IconReports, label: 'Relatorios' },
     ]
   },

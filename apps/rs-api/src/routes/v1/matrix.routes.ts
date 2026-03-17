@@ -175,10 +175,9 @@ router.get('/tree/:id', supabaseAuth, async (req: any, res) => {
         // A exclusão de uplines é feita pela função isInUplineChain() abaixo
         let consultQuery = supabase
             .from('consultores')
-            .select('id, user_id, nome, username, pin_atual, status, created_at, patrocinador_id, whatsapp, email');
+            .select('id, user_id, nome, username, pin_atual, status, created_at, patrocinador_id, whatsapp, email, cpf');
 
         // [FIX] Só excluir o patrocinador do root se ele existir (raiz da rede não tem patrocinador)
-        // Antes: .neq('id', root.patrocinador_id || 'NONE') causava erro UUID no Postgres quando null
         if (root.patrocinador_id) {
             consultQuery = consultQuery.neq('id', root.patrocinador_id);
         }
@@ -189,6 +188,61 @@ router.get('/tree/:id', supabaseAuth, async (req: any, res) => {
 
         console.log(`[Matrix] Root patrocinador_id: ${root.patrocinador_id}`);
         console.log(`[Matrix] Total consultants loaded: ${allConsultants?.length || 0}`);
+
+        // --- NOVO: BUSCAR PEDIDOS DO MÊS ATUAL PARA DEFINIR STATUS REAL MMN (UNIFICADO) ---
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        
+        // A. Pedidos Sede
+        const { data: monthlyOrders } = await supabase
+            .from('orders')
+            .select('buyer_id, matrix_accumulated, total, payment_date, created_at')
+            .in('payment_status', ['approved', 'paid', 'Pago'])
+            .in('status', ['paid', 'processing', 'delivered', 'in_transit', 'shipped']);
+
+        const activeInMonth = new Set<string>();
+        const monthlyAccMap = new Map<string, number>();
+
+        monthlyOrders?.forEach(o => {
+            const orderDate = new Date(o.payment_date || o.created_at);
+            if (orderDate >= startOfMonth) {
+                const current = monthlyAccMap.get(o.buyer_id) || 0;
+                const value = Number(o.matrix_accumulated || 0) > 0 
+                    ? Number(o.matrix_accumulated) 
+                    : Number(o.total || 0);
+                const newVal = current + value;
+                monthlyAccMap.set(o.buyer_id, newVal);
+                if (newVal >= 60) activeInMonth.add(o.buyer_id);
+            }
+        });
+
+        // B. Pedidos Multi-CD
+        const emailToId = new Map<string, string>();
+        const cpfToId = new Map<string, string>();
+        allConsultants?.forEach(c => {
+            if (c.email) emailToId.set(c.email.toLowerCase().trim(), c.id);
+            if (c.cpf) cpfToId.set(c.cpf.replace(/\D/g, ''), c.id);
+        });
+
+        const { data: cdOrders } = await supabase
+            .from('cd_orders')
+            .select('total, created_at, buyer_email, buyer_cpf, order_date')
+            .in('status', ['ENTREGUE', 'EM_TRANSPORTE', 'PAGO', 'paid', 'delivered', 'in_transit', 'shipped'])
+            .is('marketplace_order_id', null);
+
+        cdOrders?.forEach(o => {
+            const orderDate = new Date(o.order_date || o.created_at);
+            if (orderDate >= startOfMonth) {
+                const bId = (o.buyer_email ? emailToId.get(o.buyer_email.toLowerCase().trim()) : null) || 
+                            (o.buyer_cpf ? cpfToId.get(o.buyer_cpf.replace(/\D/g, '')) : null);
+                if (bId) {
+                    const current = monthlyAccMap.get(bId) || 0;
+                    const newVal = current + Number(o.total || 0);
+                    monthlyAccMap.set(bId, newVal);
+                    if (newVal >= 60) activeInMonth.add(bId);
+                }
+            }
+        });
 
         // [RS-SPILLOVER-FIX] Construção de Matriz com Derramamento Real (BFS Iterativo)
         // Lógica: Preenche slots vazios sequencialmente (Esquerda -> Direita)
@@ -240,6 +294,8 @@ router.get('/tree/:id', supabaseAuth, async (req: any, res) => {
                 profile: rootProfile,
                 identifiers: rootIdentifiers,
             }).catch(() => undefined);
+            
+            const isMonthlyActiveRoot = (monthlyAccMap.get(rootNodeData.id) || 0) >= 60;
             const rootNode = {
                 id: rootNodeData.id,
                 displayId: rootIdentifiers.displayId,
@@ -247,7 +303,8 @@ router.get('/tree/:id', supabaseAuth, async (req: any, res) => {
                 idConsultor: rootIdentifiers.loginId,
                 name: rootNodeData.nome,
                 pin: rootNodeData.pin_atual || 'Iniciante',
-                status: rootNodeData.status === 'ativo' ? 'active' : 'inactive',
+                status: isMonthlyActiveRoot ? 'active' : 'inactive',
+                hasPurchased: (monthlyAccMap.get(rootNodeData.id) || 0) > 0,
                 level: 0,
                 avatarUrl: resolveAvatar(rootNodeData),
                 joinedDate: rootNodeData.created_at,
@@ -344,6 +401,8 @@ router.get('/tree/:id', supabaseAuth, async (req: any, res) => {
                                 profile: personProfile,
                                 identifiers: personIdentifiers,
                             }).catch(() => undefined);
+                            
+                            const isMonthlyActivePerson = (monthlyAccMap.get(person.id) || 0) >= 60;
                             const newNode = {
                                 id: person.id,
                                 displayId: personIdentifiers.displayId,
@@ -351,7 +410,8 @@ router.get('/tree/:id', supabaseAuth, async (req: any, res) => {
                                 idConsultor: personIdentifiers.loginId,
                                 name: person.nome,
                                 pin: person.pin_atual || 'Iniciante',
-                                status: person.status === 'ativo' ? 'active' : 'inactive',
+                                status: isMonthlyActivePerson ? 'active' : 'inactive',
+                                hasPurchased: (monthlyAccMap.get(person.id) || 0) > 0,
                                 level: bestParent.level + 1,
                                 position: bestParent.children.length + 1,
                                 avatarUrl: resolveAvatar(person),

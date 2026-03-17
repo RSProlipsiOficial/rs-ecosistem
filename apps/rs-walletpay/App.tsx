@@ -3,6 +3,7 @@ import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { BrandingProvider } from './src/contexts/BrandingContext';
 import ProtectedLayout from './components/ProtectedLayout';
 import Dashboard from './pages/Dashboard';
+import Purchases from './pages/Purchases';
 import Transactions from './pages/Transactions';
 import PaymentsLayout from './pages/payments/PaymentsLayout';
 import Charges from './pages/payments/Charges';
@@ -37,6 +38,7 @@ const App: React.FC = () => {
           <Route path="/app" element={<ProtectedLayout />}>
             <Route index element={<Navigate to="dashboard" replace />} />
             <Route path="dashboard" element={<Dashboard />} />
+            <Route path="purchases" element={<Purchases />} />
             <Route path="transactions" element={<Transactions />} />
 
             <Route path="payments" element={<PaymentsLayout />}>

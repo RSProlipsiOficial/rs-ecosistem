@@ -117,8 +117,19 @@ const ProductDetail: React.FC<ProductDetailProps> = ({
     const productCollection = product.collectionId
         ? collections.find(collection => collection.id === product.collectionId)
         : null;
-    const isOutOfStock = selectedVariant ? selectedVariant.inventory <= 0 : product.inventory <= 0;
+    const productKind = String(product.productType || product.type || '').trim().toLowerCase();
+    const respectsInventory = product.trackQuantity !== false || product.inventorySource === 'cd';
+    const isStockControlledProduct = productKind !== 'digital' && respectsInventory;
+    const isInventoryChecking = Boolean(product.inventoryLoading);
+    const isOutOfStock = !isInventoryChecking && isStockControlledProduct && (selectedVariant ? selectedVariant.inventory <= 0 : product.inventory <= 0);
     const inventoryMessage = String(product.inventoryStatusMessage || '').trim();
+    const resolvedInventoryMessage = inventoryMessage || (
+        isOutOfStock
+            ? (product.inventorySource === 'cd'
+                ? 'Indisponivel no CD selecionado.'
+                : 'Produto sem estoque.')
+            : ''
+    );
     const productQuestions = questions.filter(question => question.productId === product.id);
     const isInWishlist = wishlist.includes(product.id);
     const approvedReviews = reviews.filter(review => review.productId === product.id && review.status === 'Aprovada');
@@ -511,15 +522,15 @@ const ProductDetail: React.FC<ProductDetailProps> = ({
 
                                         <button
                                             onClick={handleAddToCartClick}
-                                            disabled={isOutOfStock}
+                                            disabled={isOutOfStock || isInventoryChecking}
                                             className="h-14 flex-grow rounded-xl bg-[rgb(var(--color-brand-gold))] text-xs font-black uppercase tracking-widest text-black transition-all hover:bg-white hover:scale-[1.02] active:scale-95 disabled:cursor-not-allowed disabled:bg-neutral-800 disabled:text-neutral-500 disabled:transform-none"
                                         >
-                                            {isOutOfStock ? 'Indisponivel' : 'Adicionar ao carrinho'}
+                                            {isInventoryChecking ? 'Verificando estoque' : isOutOfStock ? 'Indisponivel' : 'Adicionar ao carrinho'}
                                         </button>
                                     </div>
-                                    {isOutOfStock && inventoryMessage && (
-                                        <p className="mt-3 text-sm font-semibold text-red-400">
-                                            {inventoryMessage}
+                                    {(isOutOfStock || isInventoryChecking) && resolvedInventoryMessage && (
+                                        <p className={`mt-3 text-sm font-semibold ${isOutOfStock ? 'text-red-400' : 'text-yellow-400'}`}>
+                                            {resolvedInventoryMessage}
                                         </p>
                                     )}
                                 </div>

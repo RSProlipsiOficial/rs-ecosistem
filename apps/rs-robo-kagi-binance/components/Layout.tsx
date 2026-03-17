@@ -41,7 +41,7 @@ const Layout: React.FC<LayoutProps> = (props) => {
         <div className="flex h-screen overflow-hidden">
             <VerticalSidebar
                 user={props.user}
-                notifications={props.notifications}
+                notifications={props.notifications || []}
                 setNotifications={props.setNotifications}
                 onOpenConfigModal={() => setIsConfigModalOpen(true)}
                 onOpenLayoutSettings={() => setIsSettingsPanelOpen(true)}

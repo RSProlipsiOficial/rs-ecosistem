@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { createChart, IChartApi, ISeriesApi, LineStyle, CandlestickData, LineData, PriceLineOptions, IPriceLine, SeriesMarker, Time } from 'lightweight-charts';
+import { ChevronUpIcon, ChevronDownIcon, MaximizeIcon } from './icons/UIIcons';
 import { fetchOhlcv, fetchKagi } from '../lib/api';
 import type { Alert, AccountState, AIAnalysis } from '../App';
 
@@ -16,70 +17,37 @@ interface ChartProps {
     onClick: () => void;
     isMainChart?: boolean;
     latestPrice: { price: number; time: number } | null;
+    onClose?: () => void;
+    onMaximize?: () => void;
 }
 
-interface RemovableChartObject {
-    remove: () => void;
-}
+const TIMEFRAMES = ['1m', '5m', '15m', '30m', '1h', '4h'];
 
-const createPriceLine = (price: number, color: string, title: string, style: LineStyle = LineStyle.Dashed, lineWidth: 1 | 2 | 3 | 4 = 1): PriceLineOptions => ({
-    price,
-    color,
-    lineWidth,
-    lineStyle: style,
-    axisLabelVisible: true,
-    title,
-});
+const Chart: React.FC<ChartProps> = (props) => {
+    const { 
+        focusSymbol, timeframe, onTimeframeChange, wsStatus, alerts, accountState, 
+        fibTarget, aiAnalyses, isActive, onClick, isMainChart, latestPrice, onClose, onMaximize 
+    } = props;
 
-const FIB_LEVELS = [-0.5];
-const TIMEFRAMES = ['5m', '15m', '30m', '1h', '4h', '1D'];
-
-const Chart: React.FC<ChartProps> = ({
-    focusSymbol,
-    timeframe,
-    onTimeframeChange,
-    wsStatus,
-    alerts,
-    accountState,
-    fibTarget = 1.618,
-    aiAnalyses = [],
-    isActive,
-    onClick,
-    isMainChart = false,
-    latestPrice
-}) => {
     const ref = useRef<HTMLDivElement>(null);
     const chartRef = useRef<IChartApi | null>(null);
     const priceSeries = useRef<ISeriesApi<'Candlestick'> | null>(null);
     const kagiSeries = useRef<ISeriesApi<'Line'> | null>(null);
-    const priceLinesRef = useRef<Map<string, IPriceLine>>(new Map());
-    const drawnObjectsRef = useRef<Map<number, RemovableChartObject[]>>(new Map());
+    const priceLinesRef = useRef<Set<IPriceLine>>(new Set());
+    const drawnObjectsRef = useRef<Map<string, IPriceLine[]>>(new Map());
 
-    const [chartError, setChartError] = useState<string | null>(null);
-    const [currentSetup, setCurrentSetup] = useState<Alert | null>(null);
     const [isLoading, setIsLoading] = useState(false);
-    const [activePosition, setActivePosition] = useState(accountState?.positions.find(p => p.symbol === focusSymbol) || null);
+    const [chartError, setChartError] = useState<string | null>(null);
     const [lastCandle, setLastCandle] = useState<CandlestickData | null>(null);
 
     useEffect(() => {
-        const setup = alerts.find(a => a.symbol === focusSymbol) || null;
-        setCurrentSetup(setup);
-    }, [alerts, focusSymbol]);
-
-    useEffect(() => {
-        const position = accountState?.positions.find(p => p.symbol === focusSymbol) || null;
-        setActivePosition(position);
-    }, [accountState, focusSymbol]);
-
-    useEffect(() => {
         if (!ref.current) return;
+
         const chart = createChart(ref.current, {
-            width: ref.current.clientWidth,
-            height: ref.current.clientHeight,
             layout: {
-                background: { color: '#18181b' },
-                textColor: '#e4e4e7',
-                fontSize: 12,
+                background: { color: '#09090b' },
+                textColor: '#a1a1aa',
+                fontSize: 10,
             },
             grid: {
                 vertLines: { color: '#27272a' },
@@ -112,10 +80,12 @@ const Chart: React.FC<ChartProps> = ({
 
         const resizeObserver = new ResizeObserver(entries => {
             const entry = entries[0];
-            if (entry) {
+            if (entry && chartRef.current) {
                 const { width, height } = entry.contentRect;
                 requestAnimationFrame(() => {
-                    chart.resize(width, height);
+                    if (chartRef.current) {
+                        chartRef.current.resize(width, height);
+                    }
                 });
             }
         });
@@ -124,46 +94,25 @@ const Chart: React.FC<ChartProps> = ({
 
         return () => {
             try {
-                // Limpar price lines primeiro
-                priceLinesRef.current.forEach(line => {
-                    try {
-                        if (priceSeries.current) {
-                            priceSeries.current.removePriceLine(line);
-                        }
-                    } catch (e) {
-                        // Ignorar erros de remoção de price lines
-                    }
-                });
-                priceLinesRef.current.clear();
-
-                // Limpar objetos desenhados
-                drawnObjectsRef.current.forEach(objects => {
-                    objects.forEach(obj => {
-                        try {
-                            obj.remove();
-                        } catch (e) {
-                            // Ignorar erros de remoção de objetos
-                        }
-                    });
-                });
-                drawnObjectsRef.current.clear();
-
-                // Desconectar observer
                 resizeObserver.disconnect();
-
-                // Remover chart por último
-                if (chart && typeof chart.remove === 'function') {
-                    chart.remove();
+                
+                if (chartRef.current) {
+                    chartRef.current.remove();
+                    chartRef.current = null;
                 }
-            } catch (error) {
-                console.warn('Erro ao limpar chart (não crítico):', error);
-                // Não propagar o erro para não quebrar o app
+                
+                priceSeries.current = null;
+                kagiSeries.current = null;
+                priceLinesRef.current.clear();
+                drawnObjectsRef.current.clear();
+            } catch (e) {
+                console.warn('[Chart] Erro no cleanup:', e);
             }
         };
     }, []);
 
     const updateChartData = useCallback(async () => {
-        if (wsStatus !== 'connected' || !priceSeries.current || !focusSymbol) {
+        if (wsStatus !== 'connected' || !priceSeries.current || !focusSymbol || !chartRef.current) {
             if (wsStatus === 'disconnected') {
                 priceSeries.current?.setData([]);
                 kagiSeries.current?.setData([]);
@@ -173,7 +122,7 @@ const Chart: React.FC<ChartProps> = ({
         }
 
         setIsLoading(true);
-        setLastCandle(null); // Reset last candle on full refresh
+        setLastCandle(null);
         try {
             setChartError(null);
             const [oc, kg] = await Promise.all([
@@ -181,25 +130,43 @@ const Chart: React.FC<ChartProps> = ({
                 fetchKagi(focusSymbol, timeframe)
             ]);
 
+            if (!chartRef.current || !priceSeries.current) return;
+
+            console.log(`[Chart Debug] Dados OHLCV para ${focusSymbol}:`, oc);
+
             if (priceSeries.current && oc.candles) {
-                const data: CandlestickData[] = oc.candles.map((c: any[]) => ({ time: c[0] / 1000, open: c[1], high: c[2], low: c[3], close: c[4] }));
+                const data: CandlestickData[] = oc.candles.map((c: any[]) => ({ 
+                    time: c[0] / 1000, 
+                    open: c[1], 
+                    high: c[2], 
+                    low: c[3], 
+                    close: c[4] 
+                }));
                 priceSeries.current.setData(data);
                 if (data.length > 0) {
                     setLastCandle(data[data.length - 1]);
                 }
             }
             if (kagiSeries.current && kg.kagi) {
-                const data: LineData[] = kg.kagi.map((p: any[]) => ({ time: p[0] / 1000, value: p[1] }));
+                const data: LineData[] = kg.kagi.map((p: any[]) => ({ 
+                    time: p[0] / 1000, 
+                    value: p[1] 
+                }));
                 kagiSeries.current.setData(data);
             }
-            if (oc.candles.length > 0) {
-                chartRef.current?.timeScale().fitContent();
+            
+            if (oc.candles && oc.candles.length > 0 && chartRef.current) {
+                chartRef.current.timeScale().fitContent();
             }
 
         } catch (e) {
-            setChartError(`Falha ao carregar dados do gráfico para ${focusSymbol}.`);
+            if (chartRef.current) {
+                setChartError(`Falha ao carregar dados do gráfico para ${focusSymbol}.`);
+            }
         } finally {
-            setIsLoading(false);
+            if (chartRef.current) {
+                setIsLoading(false);
+            }
         }
     }, [focusSymbol, wsStatus, timeframe]);
 
@@ -208,7 +175,6 @@ const Chart: React.FC<ChartProps> = ({
         updateChartData();
     }, [updateChartData, focusSymbol, wsStatus]);
 
-    // Real-time price update effect
     useEffect(() => {
         if (latestPrice && priceSeries.current && lastCandle) {
             if (latestPrice.time >= (lastCandle.time as number)) {
@@ -221,166 +187,62 @@ const Chart: React.FC<ChartProps> = ({
         }
     }, [latestPrice, lastCandle]);
 
-    const drawPriceLine = useCallback((series: ISeriesApi<'Candlestick'>, id: string, options: PriceLineOptions) => {
-        if (priceLinesRef.current.has(id)) {
-            const existingLine = priceLinesRef.current.get(id);
-            if (existingLine) {
-                existingLine.applyOptions(options);
-                return;
-            }
-        }
-        const newLine = series.createPriceLine(options);
-        priceLinesRef.current.set(id, newLine);
-    }, []);
-
-    const removePriceLine = useCallback((series: ISeriesApi<'Candlestick'>, id: string) => {
-        if (priceLinesRef.current.has(id)) {
-            const line = priceLinesRef.current.get(id);
-            if (line) series.removePriceLine(line);
-            priceLinesRef.current.delete(id);
-        }
-    }, []);
-
     useEffect(() => {
-        if (!priceSeries.current) return;
-        const series = priceSeries.current;
-
-        const allLineIds = new Set<string>();
-
-        if (activePosition) {
-            const id = 'position-entry';
-            allLineIds.add(id);
-            drawPriceLine(series, id, createPriceLine(activePosition.entryPrice, '#a78bfa', 'Preço Entrada', LineStyle.Solid, 2));
-        }
-
-        if (currentSetup) {
-            const { signal, entry, stop } = currentSetup;
-
-            const entryId = 'setup-entry';
-            const stopId = 'setup-stop';
-            allLineIds.add(entryId);
-            allLineIds.add(stopId);
-
-            drawPriceLine(series, entryId, createPriceLine(entry, '#facc15', 'Gatilho (0%)', LineStyle.Dashed, 2));
-            drawPriceLine(series, stopId, createPriceLine(stop, '#ef4444', 'Stop Loss (100%)', LineStyle.Dashed, 2));
-
-            const range = Math.abs(entry - stop);
-            const fibColor = '#60a5fa'; // Light blue
-
-            FIB_LEVELS.forEach(level => {
-                const id = `fib-${level}`;
-                allLineIds.add(id);
-                const price = signal === 'buy' ? entry - (range * level) : entry + (range * level);
-                drawPriceLine(series, id, createPriceLine(price, fibColor, `Alvo (${level})`, LineStyle.Dotted));
-            });
-            if (fibTarget) {
-                const targetId = 'fib-target';
-                allLineIds.add(targetId);
-                const targetPrice = signal === 'buy' ? entry + (range * fibTarget) : entry - (range * fibTarget);
-                drawPriceLine(series, targetId, createPriceLine(targetPrice, '#3b82f6', `Alvo (${fibTarget})`, LineStyle.Dashed, 2));
-            }
-        }
-
-        if (aiAnalyses) {
-            aiAnalyses.forEach((analysis) => {
-                const id = `ai-analysis-${analysis.time}`;
-                allLineIds.add(id);
-                drawPriceLine(series, id, createPriceLine(analysis.entry, '#0ea5e9', `IA: ${analysis.reason}`, LineStyle.Solid, 1));
-            });
-        }
-
-        priceLinesRef.current.forEach((_, id) => {
-            if (!allLineIds.has(id)) {
-                removePriceLine(series, id);
-            }
-        });
-
-    }, [currentSetup, activePosition, fibTarget, aiAnalyses, drawPriceLine, removePriceLine]);
-
-    useEffect(() => {
-        const chart = chartRef.current;
-        const priceSeriesApi = priceSeries.current;
-        if (!chart || !priceSeriesApi) return;
-
-        const activeAnalysisTimes = new Set(aiAnalyses.map(a => a.time));
-
-        drawnObjectsRef.current.forEach((objects, time) => {
-            if (!activeAnalysisTimes.has(time)) {
-                objects.forEach(obj => obj.remove());
-                drawnObjectsRef.current.delete(time);
-            }
-        });
-
-        aiAnalyses.forEach(analysis => {
-            if (!analysis.drawings || drawnObjectsRef.current.has(analysis.time)) {
-                return;
-            }
-
-            const newObjects: RemovableChartObject[] = [];
-            analysis.drawings.forEach(d => {
-                switch (d.type) {
-                    case 'RECTANGLE_ZONE': {
-                        if (d.startPrice && d.endPrice) {
-                            const zoneColor = d.color || '#2563eb'; // Blue
-                            const topPrice = Math.max(d.startPrice, d.endPrice);
-                            const bottomPrice = Math.min(d.startPrice, d.endPrice);
-                            const topLine = priceSeriesApi.createPriceLine(createPriceLine(topPrice, zoneColor, d.label || '', LineStyle.Dotted));
-                            const bottomLine = priceSeriesApi.createPriceLine(createPriceLine(bottomPrice, zoneColor, '', LineStyle.Dotted));
-                            newObjects.push({ remove: () => priceSeriesApi.removePriceLine(topLine) });
-                            newObjects.push({ remove: () => priceSeriesApi.removePriceLine(bottomLine) });
-                        }
-                        break;
-                    }
-                    case 'HORIZONTAL_LINE': {
-                        if (d.price) {
-                            const lineColor = d.color || '#f59e0b'; // Amber
-                            const line = priceSeriesApi.createPriceLine(createPriceLine(d.price, lineColor, d.label || '', LineStyle.Solid, 1));
-                            newObjects.push({ remove: () => priceSeriesApi.removePriceLine(line) });
-                        }
-                        break;
-                    }
-                    case 'TREND_LINE': {
-                        if (d.points && d.points.length >= 2) {
-                            const lineSeries = chart.addLineSeries({
-                                color: d.color || '#60a5fa', lineWidth: 1, lineStyle: LineStyle.Dashed,
-                                priceScaleId: 'right', lastValueVisible: false, priceLineVisible: false,
-                            });
-                            const lineData: LineData<Time>[] = d.points.map(p => ({ time: p.time / 1000, value: p.price }));
-                            lineSeries.setData(lineData);
-                            newObjects.push({ remove: () => chart.removeSeries(lineSeries) });
-                        }
-                        break;
-                    }
-                }
-            });
-            if (newObjects.length > 0) {
-                drawnObjectsRef.current.set(analysis.time, newObjects);
-            }
-        });
-
+        if (!aiAnalyses || !priceSeries.current) return;
+        
         const allMarkers: SeriesMarker<Time>[] = [];
         aiAnalyses.forEach(analysis => {
-            analysis.drawings?.forEach(d => {
-                if (d.type === 'PIVOT_MARKER' && d.time) {
+            analysis.data.forEach(d => {
+                if (d.label) {
                     allMarkers.push({
-                        time: (d.time / 1000) as Time, position: d.position || 'aboveBar',
-                        color: d.color || '#facc15', shape: 'circle', text: d.label,
+                        time: (d.time / 1000) as Time, 
+                        position: d.position || 'aboveBar',
+                        color: d.color || '#facc15', 
+                        shape: 'circle', 
+                        text: d.label,
                     });
                 }
             });
         });
-        priceSeriesApi.setMarkers(allMarkers);
-
+        priceSeries.current.setMarkers(allMarkers);
     }, [aiAnalyses]);
 
     return (
-        <div
-            className={`bg-zinc-900 rounded-lg p-2 relative flex flex-col min-h-0 border-2 transition-colors ${isActive ? 'border-amber-500/50' : 'border-transparent'}`}
+        <div 
+            className={`flex flex-col bg-zinc-950 border rounded-lg transition-all duration-200 overflow-hidden h-full ${isActive ? 'border-amber-500 shadow-lg shadow-amber-500/10' : 'border-zinc-800'}`}
             onClick={onClick}
         >
             <div className="flex items-center justify-between px-2 py-1 flex-shrink-0">
-                <div className={`text-amber-300 font-bold ${isMainChart ? 'text-base' : 'text-sm'}`}>{focusSymbol}</div>
+                <div className="flex items-center gap-2">
+                    <div className={`text-amber-300 font-bold ${isMainChart ? 'text-base' : 'text-sm'}`}>{focusSymbol}</div>
+                    {onClose && (
+                        <button 
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onClose();
+                            }}
+                            className="text-zinc-500 hover:text-red-400 p-1"
+                            title="Fechar gráfico"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    )}
+                </div>
                 <div className="flex items-center gap-1">
+                    {onMaximize && (
+                        <button 
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onMaximize();
+                            }}
+                            className="text-zinc-500 hover:text-amber-400 p-1"
+                            title="Maximizar gráfico"
+                        >
+                            <MaximizeIcon />
+                        </button>
+                    )}
                     {TIMEFRAMES.map(tf => (
                         <button
                             key={tf}
@@ -395,7 +257,7 @@ const Chart: React.FC<ChartProps> = ({
                     ))}
                 </div>
             </div>
-            <div ref={ref} className="w-full relative flex-grow">
+            <div ref={ref} className="w-full relative flex-grow min-h-0 min-w-0">
                 {isLoading && (
                     <div className="absolute inset-0 bg-zinc-900 bg-opacity-80 flex flex-col items-center justify-center z-10">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-400"></div>

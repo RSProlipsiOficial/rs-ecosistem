@@ -4,7 +4,6 @@ import { supabase, supabaseAdmin } from '../lib/supabaseClient';
 import axios from 'axios';
 
 const { calculateCommission } = require('../services/productService');
-const { creditWallet } = require('../services/salesService');
 
 const upload = multer({ storage: multer.memoryStorage() });
 
@@ -22,6 +21,7 @@ const cleanUndefined = <T extends Record<string, any>>(data: T): T => {
 
 const PAID_PAYMENT_STATUSES = new Set(['paid', 'pago', 'completed', 'approved']);
 const MARKETPLACE_PROCESS_MARKER = '__marketplace_paid_processed__';
+const ORDER_ITEMS_SNAPSHOT_MARKER = '__order_items__';
 
 const asNumber = (value: any, fallback = 0) => {
   const parsed = Number(value);
@@ -29,6 +29,397 @@ const asNumber = (value: any, fallback = 0) => {
 };
 
 const normalizeOrderNotes = (notes: any) => typeof notes === 'string' ? notes : '';
+
+const toMoney = (value: any) => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
+const toCents = (value: any) => Math.round(toMoney(value) * 100);
+
+const serializeOrderItemsSnapshot = (items: any) => {
+  if (!Array.isArray(items) || items.length === 0) return '';
+  try {
+    return `${ORDER_ITEMS_SNAPSHOT_MARKER}:${encodeURIComponent(JSON.stringify(items))}`;
+  } catch {
+    return '';
+  }
+};
+
+const extractOrderItems = (order: any) => {
+  if (Array.isArray(order?.items)) return order.items;
+  const notes = normalizeOrderNotes(order?.internal_notes);
+  const line = notes
+    .split('\n')
+    .map((entry) => entry.trim())
+    .find((entry) => entry.startsWith(`${ORDER_ITEMS_SNAPSHOT_MARKER}:`));
+
+  if (!line) return [];
+
+  try {
+    const encoded = line.slice(`${ORDER_ITEMS_SNAPSHOT_MARKER}:`.length);
+    const parsed = JSON.parse(decodeURIComponent(encoded));
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+};
+
+const normalizeTrackingShippingAddress = (value: any, fallback?: any) => {
+  const source = value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+  const backup = fallback && typeof fallback === 'object' && !Array.isArray(fallback) ? fallback : {};
+
+  return {
+    street: String(source.street || source.logradouro || backup.street || backup.logradouro || ''),
+    number: String(source.number || source.numero || backup.number || backup.numero || ''),
+    complement: String(source.complement || source.complemento || backup.complement || backup.complemento || ''),
+    neighborhood: String(source.neighborhood || source.bairro || backup.neighborhood || backup.bairro || ''),
+    city: String(source.city || source.cidade || backup.city || backup.cidade || ''),
+    state: String(source.state || source.uf || backup.state || backup.uf || ''),
+    zipCode: String(source.zipCode || source.cep || backup.zipCode || backup.cep || '')
+  };
+};
+
+const parseTrackingShippingAddressText = (value: any) => {
+  const text = String(value || '').trim();
+  if (!text) return normalizeTrackingShippingAddress(null);
+
+  const parts = text.split(',').map((part) => part.trim()).filter(Boolean);
+  const [street = '', number = '', complement = '', neighborhood = '', city = '', state = '', zipCode = ''] = parts;
+
+  return { street, number, complement, neighborhood, city, state, zipCode };
+};
+
+const resolveMarketplaceWalletRecipient = async (referenceId: string) => {
+  const ref = String(referenceId || '').trim();
+  if (!ref) return null;
+
+  const resolvedUserId = await resolveConsultantReferrerId(ref);
+  const candidateIds = Array.from(new Set([ref, resolvedUserId].map((value) => String(value || '').trim()).filter(Boolean)));
+
+  for (const candidate of candidateIds) {
+    const byConsultorId = await supabaseAdmin
+      .from('consultores')
+      .select('id, user_id, nome, mmn_id, username, slug')
+      .eq('id', candidate)
+      .maybeSingle();
+
+    if (byConsultorId.data) {
+      return {
+        consultorId: String(byConsultorId.data.id),
+        userId: String(byConsultorId.data.user_id || resolvedUserId || candidate),
+        name: String(
+          byConsultorId.data.nome ||
+          byConsultorId.data.mmn_id ||
+          byConsultorId.data.username ||
+          byConsultorId.data.slug ||
+          ''
+        ),
+      };
+    }
+
+    const byUserId = await supabaseAdmin
+      .from('consultores')
+      .select('id, user_id, nome, mmn_id, username, slug')
+      .eq('user_id', candidate)
+      .maybeSingle();
+
+    if (byUserId.data) {
+      return {
+        consultorId: String(byUserId.data.id),
+        userId: String(byUserId.data.user_id || resolvedUserId || candidate),
+        name: String(
+          byUserId.data.nome ||
+          byUserId.data.mmn_id ||
+          byUserId.data.username ||
+          byUserId.data.slug ||
+          ''
+        ),
+      };
+    }
+  }
+
+  const fallbackUserId = String(resolvedUserId || ref).trim();
+  if (!fallbackUserId) return null;
+
+  return {
+    consultorId: fallbackUserId,
+    userId: fallbackUserId,
+    name: '',
+  };
+};
+
+const syncWalletVariants = async (walletId: string, values: Record<string, any>) => {
+  const variants = [
+    {
+      saldo_disponivel: values.saldo_disponivel,
+      saldo_bloqueado: values.saldo_bloqueado,
+      saldo_total: values.saldo_total,
+      updated_at: values.updated_at,
+    },
+    {
+      available_balance: values.available_balance,
+      blocked_balance: values.blocked_balance,
+      currency: values.currency,
+      updated_at: values.updated_at,
+    },
+    {
+      balance: values.balance,
+      balance_blocked: values.balance_blocked,
+      total_received: values.total_received,
+      updated_at: values.updated_at,
+    },
+  ];
+
+  for (const payload of variants) {
+    const { error } = await supabaseAdmin
+      .from('wallets')
+      .update(payload)
+      .eq('id', walletId);
+
+    if (error && error.code !== '42703') {
+      throw error;
+    }
+  }
+};
+
+const creditMarketplaceWallet = async ({
+  consultantReference,
+  amount,
+  description,
+  referenceId,
+  type,
+  details,
+}: {
+  consultantReference: string;
+  amount: number;
+  description: string;
+  referenceId: string;
+  type: string;
+  details?: Record<string, any>;
+}) => {
+  const totalAmount = toMoney(amount);
+  if (totalAmount <= 0) return { credited: false, reason: 'invalid-amount' };
+
+  const recipient = await resolveMarketplaceWalletRecipient(consultantReference);
+  if (!recipient?.userId) {
+    return { credited: false, reason: 'missing-recipient' };
+  }
+
+  const existingTransaction = await supabaseAdmin
+    .from('wallet_transactions')
+    .select('id')
+    .eq('user_id', recipient.userId)
+    .eq('reference_id', referenceId)
+    .maybeSingle();
+
+  if (existingTransaction.data?.id) {
+    return { credited: false, reason: 'already-credited' };
+  }
+
+  let walletId = '';
+  let available = 0;
+  let total = 0;
+  let totalReceived = 0;
+
+  const walletByConsultor = await supabaseAdmin
+    .from('wallets')
+    .select('id, user_id, consultor_id, saldo_disponivel, saldo_total, total_received, balance, available_balance')
+    .eq('consultor_id', recipient.consultorId)
+    .maybeSingle();
+
+  const walletByUser = !walletByConsultor.data
+    ? await supabaseAdmin
+        .from('wallets')
+        .select('id, user_id, consultor_id, saldo_disponivel, saldo_total, total_received, balance, available_balance')
+        .eq('user_id', recipient.userId)
+        .maybeSingle()
+    : { data: null, error: null };
+
+  const walletRow: any = walletByConsultor.data || walletByUser.data;
+
+  if (!walletRow) {
+    const inserted = await supabaseAdmin
+      .from('wallets')
+      .insert({
+        user_id: recipient.userId,
+        consultor_id: recipient.consultorId,
+        status: 'ativa',
+        balance: totalAmount,
+      })
+      .select('id')
+      .single();
+
+    if (inserted.error) throw inserted.error;
+
+    walletId = String(inserted.data.id);
+    available = totalAmount;
+    total = totalAmount;
+    totalReceived = totalAmount;
+  } else {
+    walletId = String(walletRow.id);
+    available = toMoney(walletRow.saldo_disponivel ?? walletRow.available_balance ?? walletRow.balance);
+    total = toMoney(walletRow.saldo_total ?? walletRow.balance);
+    totalReceived = toMoney(walletRow.total_received);
+    available += totalAmount;
+    total += totalAmount;
+    totalReceived += totalAmount;
+  }
+
+  await syncWalletVariants(walletId, {
+    saldo_disponivel: available,
+    saldo_bloqueado: 0,
+    saldo_total: total,
+    available_balance: available,
+    blocked_balance: 0,
+    balance: available,
+    balance_blocked: 0,
+    total_received: totalReceived,
+    currency: 'BRL',
+    updated_at: new Date().toISOString(),
+  });
+
+  const centsAmount = toCents(totalAmount);
+  const centsBalanceAfter = toCents(available);
+
+  const transactionInsert = await supabaseAdmin
+    .from('wallet_transactions')
+    .insert({
+      user_id: recipient.userId,
+      type,
+      amount: centsAmount,
+      fee: 0,
+      description,
+      reference_id: referenceId,
+      balance_after: centsBalanceAfter,
+      status: 'completed',
+      origin: 'marketplace',
+      details: details || {},
+      created_at: new Date().toISOString(),
+    })
+    .select('id')
+    .single();
+
+  if (transactionInsert.error) {
+    throw transactionInsert.error;
+  }
+
+  return {
+    credited: true,
+    userId: recipient.userId,
+    consultorId: recipient.consultorId,
+    transactionId: transactionInsert.data.id,
+    balanceAfter: available,
+  };
+};
+
+const normalizeTrackingItems = (items: any[] | null | undefined) =>
+  (items || []).map((item: any) => ({
+    productId: String(item?.product_id || item?.productId || item?.id || ''),
+    variantId: String(item?.variant_id || item?.variantId || item?.product_id || item?.productId || item?.id || ''),
+    productName: String(item?.product_name || item?.productName || item?.name || 'Produto'),
+    quantity: Number(item?.quantity || 0) || 0,
+    price: Number(item?.unit_price ?? item?.price ?? 0) || 0,
+    variantText: item?.variant_text || item?.variantText || undefined,
+    sku: item?.sku || undefined
+  }));
+
+const normalizeTrackingPaymentStatus = (value: any) => {
+  const status = String(value || '').trim().toLowerCase();
+  if (['paid', 'pago', 'approved', 'aprovado', 'concluido', 'concluído'].includes(status)) return 'Pago';
+  if (['partial', 'partial_paid', 'partially_paid', 'parcial', 'parcialmente_pago'].includes(status)) return 'Parcialmente Pago';
+  if (['cancelled', 'canceled', 'cancelado', 'failed', 'falhou'].includes(status)) return 'Cancelado';
+  if (['refunded', 'reembolsado'].includes(status)) return 'Reembolsado';
+  return 'Pendente';
+};
+
+const normalizeTrackingFulfillmentStatus = (value: any) => {
+  const status = String(value || '').trim().toLowerCase();
+  if (['entregue', 'delivered', 'realizado', 'completed', 'complete', 'concluido', 'concluído'].includes(status)) return 'Realizado';
+  if (['partial', 'parcial'].includes(status)) return 'Parcial';
+  return 'Não Realizado';
+};
+
+const buildPublicMarketplaceOrder = (row: any) => {
+  const items = normalizeTrackingItems(row?.order_items);
+  const address = normalizeTrackingShippingAddress(row?.shipping_address);
+  const visibleId = String(row?.order_code || row?.id || '');
+
+  return {
+    id: visibleId.startsWith('#') ? visibleId : `#${visibleId}`,
+    backendId: String(row?.id || ''),
+    customerId: row?.buyer_id ? String(row.buyer_id) : undefined,
+    date: String(row?.created_at || row?.date || '').slice(0, 10),
+    customerName: String(row?.buyer_name || row?.customer_name || ''),
+    customerEmail: String(row?.buyer_email || row?.customer_email || ''),
+    customerCpf: String(row?.buyer_cpf || row?.customer_cpf || ''),
+    customerPhone: String(row?.buyer_phone || row?.customer_phone || ''),
+    shippingAddress: address,
+    items,
+    subtotal: Number(row?.subtotal || 0),
+    shippingCost: Number(row?.shipping_cost || 0),
+    discount: Number(row?.discount || 0),
+    total: Number(row?.total || 0),
+    currency: 'BRL',
+    paymentStatus: normalizeTrackingPaymentStatus(row?.payment_status),
+    fulfillmentStatus: normalizeTrackingFulfillmentStatus(row?.status),
+    trackingCode: row?.tracking_code || undefined,
+    shippingMethod: row?.shipping_method || undefined,
+    notes: row?.customer_notes || row?.internal_notes || undefined,
+    paymentMethod: row?.payment_method || undefined,
+    buyerType: row?.buyer_type || undefined,
+    referrerId: row?.referrer_id || undefined,
+    distributorId: row?.distributor_id || undefined
+  };
+};
+
+const buildPublicCdOrder = (row: any) => {
+  const items = normalizeTrackingItems(row?.items);
+  const structuredAddress = normalizeTrackingShippingAddress({
+    street: row?.shipping_street,
+    number: row?.shipping_number,
+    complement: row?.shipping_complement,
+    neighborhood: row?.shipping_neighborhood,
+    city: row?.shipping_city,
+    state: row?.shipping_state,
+    zipCode: row?.shipping_zip_code
+  });
+  const hasStructuredAddress = Boolean(
+    structuredAddress.street ||
+    structuredAddress.number ||
+    structuredAddress.neighborhood ||
+    structuredAddress.city ||
+    structuredAddress.state ||
+    structuredAddress.zipCode
+  );
+  const shippingAddress = hasStructuredAddress ? structuredAddress : parseTrackingShippingAddressText(row?.shipping_address);
+  const publicCode = `#AC-${String(row?.id || '').split('-')[0].toUpperCase()}`;
+
+  return {
+    id: publicCode,
+    backendId: String(row?.marketplace_order_id || row?.id || ''),
+    customerId: row?.customer_id ? String(row.customer_id) : undefined,
+    date: String(row?.order_date || row?.created_at || '').slice(0, 10),
+    customerName: String(row?.customer_name || row?.consultant_name || ''),
+    customerEmail: String(row?.customer_email || row?.buyer_email || ''),
+    customerCpf: String(row?.customer_document || row?.buyer_cpf || ''),
+    customerPhone: String(row?.customer_phone || row?.buyer_phone || ''),
+    shippingAddress,
+    items,
+    subtotal: Number(row?.items_total || items.reduce((sum: number, item: any) => sum + item.price * item.quantity, 0)),
+    shippingCost: Number(row?.shipping_cost || row?.shipping_charged || 0),
+    discount: Number(row?.discount_total || 0),
+    total: Number(row?.total || 0),
+    currency: 'BRL',
+    paymentStatus: normalizeTrackingPaymentStatus(row?.payment_status || row?.status),
+    fulfillmentStatus: normalizeTrackingFulfillmentStatus(row?.status),
+    trackingCode: row?.tracking_code || undefined,
+    shippingMethod: row?.shipping_method || undefined,
+    notes: row?.notes || undefined,
+    paymentMethod: row?.payment_method || undefined,
+    distributorId: row?.cd_id || undefined
+  };
+};
 
 const appendProcessingMarker = (notes: string, summary: string) => {
   const trimmed = notes.trim();
@@ -112,6 +503,430 @@ const resolveMarketplaceOperator = async (req: Request): Promise<MarketplaceOper
     role,
     loginRefs,
     isMarketplaceOperator,
+  };
+};
+
+const isUuidLike = (value: any) => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value || '').trim());
+
+const resolveConsultantReferrerId = async (candidate: any): Promise<string | null> => {
+  const normalized = String(candidate || '').trim();
+  if (!normalized) return null;
+  if (isUuidLike(normalized)) return normalized;
+
+  const lower = normalized.toLowerCase();
+  const emailLike = lower.includes('@');
+
+  const orFilters = [
+    `username.eq.${normalized}`,
+    `slug.eq.${normalized}`,
+    `id_consultor.eq.${normalized}`,
+    `codigo_consultor.eq.${normalized}`,
+  ];
+
+  if (emailLike) {
+    orFilters.push(`email.eq.${lower}`);
+  }
+
+  const { data: consultor } = await supabaseAdmin
+    .from('consultores')
+    .select('user_id, email, username, slug, codigo_consultor, id_consultor')
+    .or(orFilters.join(','))
+    .maybeSingle();
+
+  if (consultor?.user_id) return String(consultor.user_id);
+
+  if (emailLike) {
+    const { data: profile } = await supabaseAdmin
+      .from('user_profiles')
+      .select('id, email')
+      .eq('email', lower)
+      .maybeSingle();
+    if (profile?.id) return String(profile.id);
+  }
+
+  return null;
+};
+
+const resolveMarketplaceDistributorId = async (body: any): Promise<string | null> => {
+  const explicitDistributorId = String(body?.distributorId || '').trim();
+  if (
+    explicitDistributorId &&
+    explicitDistributorId !== 'cd-oficial-matriz' &&
+    explicitDistributorId !== 'cd-oficial-matriz-fallback'
+  ) {
+    return explicitDistributorId;
+  }
+
+  const pushCandidate = (bucket: string[], value: any) => {
+    const normalized = String(value || '').trim();
+    if (!normalized) return;
+    bucket.push(normalized);
+    if (normalized.includes('@')) {
+      const local = localPart(normalized);
+      if (local) bucket.push(local);
+    }
+  };
+
+  const candidates: string[] = [];
+  pushCandidate(candidates, body?.recognizedConsultantId);
+  pushCandidate(candidates, body?.buyerId);
+  pushCandidate(candidates, body?.customerId);
+  pushCandidate(candidates, body?.recognizedConsultantLoginId);
+  pushCandidate(candidates, body?.referrerLoginId);
+  pushCandidate(candidates, body?.buyerName);
+  pushCandidate(candidates, body?.customerName);
+  pushCandidate(candidates, body?.buyerEmail);
+  pushCandidate(candidates, body?.customerEmail);
+
+  const uniqueCandidates = Array.from(new Set(candidates.map((item) => String(item || '').trim()).filter(Boolean)));
+
+  const findMinisiteProfile = async (candidate: string): Promise<string | null> => {
+    const normalized = String(candidate || '').trim();
+    if (!normalized) return null;
+
+    if (isUuidLike(normalized)) {
+      const { data: profileByUuid } = await supabaseAdmin
+        .from('minisite_profiles')
+        .select('id, consultant_id')
+        .or(`id.eq.${normalized},consultant_id.eq.${normalized}`)
+        .maybeSingle();
+
+      if (profileByUuid?.id) {
+        return String(profileByUuid.id);
+      }
+    } else if (normalized.includes('@')) {
+      const normalizedEmail = normalizeText(normalized);
+      const { data: profileByEmail } = await supabaseAdmin
+        .from('minisite_profiles')
+        .select('id, email')
+        .eq('email', normalizedEmail)
+        .maybeSingle();
+
+      if (profileByEmail?.id) {
+        return String(profileByEmail.id);
+      }
+
+      const emailLocal = localPart(normalizedEmail);
+      if (emailLocal) {
+        const { data: profileByEmailLocal } = await supabaseAdmin
+          .from('minisite_profiles')
+          .select('id, consultant_id')
+          .eq('consultant_id', emailLocal)
+          .maybeSingle();
+
+        if (profileByEmailLocal?.id) {
+          return String(profileByEmailLocal.id);
+        }
+      }
+    } else {
+      const { data: profileByKey } = await supabaseAdmin
+        .from('minisite_profiles')
+        .select('id, consultant_id')
+        .eq('consultant_id', normalized)
+        .maybeSingle();
+
+      if (profileByKey?.id) {
+        return String(profileByKey.id);
+      }
+    }
+
+    if (!isUuidLike(normalized) && !normalized.includes('@') && normalized.length >= 3) {
+      const { data: profileByName } = await supabaseAdmin
+        .from('minisite_profiles')
+        .select('id, name, manager_name')
+        .or(`name.ilike.%${normalized}%,manager_name.ilike.%${normalized}%`)
+        .maybeSingle();
+
+      if (profileByName?.id) {
+        return String(profileByName.id);
+      }
+    }
+
+    const trySecondarySource = async (tableName: 'distribution_centers' | 'cd_profiles') => {
+      try {
+        let query = supabaseAdmin
+          .from(tableName)
+          .select('id, consultant_id, email, name, manager_name');
+
+        if (isUuidLike(normalized)) {
+          query = query.or(`id.eq.${normalized},consultant_id.eq.${normalized}`);
+        } else if (normalized.includes('@')) {
+          query = query.eq('email', normalizeText(normalized));
+        } else {
+          query = query.or(`consultant_id.eq.${normalized},name.ilike.%${normalized}%,manager_name.ilike.%${normalized}%`);
+        }
+
+        const { data: sourceRow } = await query.maybeSingle();
+        if (!sourceRow?.id) return null;
+
+        const sourceRefs = [
+          sourceRow.id,
+          sourceRow.consultant_id,
+          sourceRow.email,
+          sourceRow.name,
+          sourceRow.manager_name,
+        ].map((item) => String(item || '').trim()).filter(Boolean);
+
+        for (const ref of sourceRefs) {
+          const { data: profileFromSource } = await supabaseAdmin
+            .from('minisite_profiles')
+            .select('id')
+            .or(
+              isUuidLike(ref)
+                ? `id.eq.${ref},consultant_id.eq.${ref}`
+                : ref.includes('@')
+                  ? `email.eq.${normalizeText(ref)}`
+                  : `consultant_id.eq.${ref},name.ilike.%${ref}%,manager_name.ilike.%${ref}%`
+            )
+            .maybeSingle();
+
+          if (profileFromSource?.id) {
+            return String(profileFromSource.id);
+          }
+        }
+
+        return String(sourceRow.id);
+      } catch {
+        return null;
+      }
+    };
+
+    const distributionCenterId = await trySecondarySource('distribution_centers');
+    if (distributionCenterId) return distributionCenterId;
+
+    const cdProfileId = await trySecondarySource('cd_profiles');
+    if (cdProfileId) return cdProfileId;
+
+    try {
+      const normalizedCandidate = normalizeText(normalized);
+      const { data: minisiteRows } = await supabaseAdmin
+        .from('minisite_profiles')
+        .select('id, consultant_id, email, name, manager_name')
+        .limit(500);
+
+      const scannedProfile = (minisiteRows || []).find((row: any) => {
+        const refs = [
+          row?.id,
+          row?.consultant_id,
+          row?.email,
+          row?.name,
+          row?.manager_name,
+        ].map((item) => normalizeText(item));
+
+        return refs.some((ref) => ref && ref === normalizedCandidate);
+      });
+
+      if (scannedProfile?.id) {
+        return String(scannedProfile.id);
+      }
+    } catch {
+      // fallback silencioso
+    }
+
+    return null;
+  };
+
+  for (const candidate of uniqueCandidates) {
+    const directProfileId = await findMinisiteProfile(candidate);
+    if (directProfileId) return directProfileId;
+
+    const lower = normalizeText(candidate);
+    const consultorFilters = [
+      `user_id.eq.${candidate}`,
+      `username.eq.${candidate}`,
+      `slug.eq.${candidate}`,
+      `id_consultor.eq.${candidate}`,
+      `codigo_consultor.eq.${candidate}`,
+    ];
+    if (candidate.includes('@')) {
+      consultorFilters.push(`email.eq.${lower}`);
+    }
+    if (!candidate.includes('@') && !isUuidLike(candidate) && candidate.length >= 3) {
+      consultorFilters.push(`nome.ilike.%${candidate}%`);
+    }
+
+    const { data: consultor } = await supabaseAdmin
+      .from('consultores')
+      .select('user_id, username, slug, email, id_consultor, codigo_consultor')
+      .or(consultorFilters.join(','))
+      .maybeSingle();
+
+    const consultorRefs = [
+      consultor?.user_id,
+      consultor?.username,
+      consultor?.slug,
+      consultor?.email,
+      consultor?.id_consultor,
+      consultor?.codigo_consultor,
+    ].map((item) => String(item || '').trim()).filter(Boolean);
+
+    for (const ref of consultorRefs) {
+      const profileId = await findMinisiteProfile(ref);
+      if (profileId) return profileId;
+    }
+  }
+
+  return null;
+};
+
+const buildMarketplaceShippingAddressLabel = (shippingAddress: any) => {
+  if (!shippingAddress) return null;
+  if (typeof shippingAddress === 'string') {
+    const normalized = String(shippingAddress).trim();
+    return normalized || null;
+  }
+  if (typeof shippingAddress !== 'object') return null;
+
+  const parts = [
+    shippingAddress.street,
+    shippingAddress.number,
+    shippingAddress.complement,
+    shippingAddress.neighborhood,
+    shippingAddress.city,
+    shippingAddress.state,
+    shippingAddress.zipCode,
+  ].filter(Boolean);
+
+  return parts.length > 0 ? parts.join(', ') : null;
+};
+
+const buildCdOrderStatusFromMarketplaceOrder = (order: any) => {
+  const paymentStatus = normalizeText(order?.payment_status);
+  const orderStatus = normalizeText(order?.status);
+  const shippingMethod = String(order?.shipping_method || '').trim();
+  const isPickupOrder = /retirad|pickup/i.test(shippingMethod);
+
+  if (['entregue', 'delivered'].includes(orderStatus)) return 'ENTREGUE';
+  if (['em_transporte', 'em transporte', 'shipped', 'enviado'].includes(orderStatus)) return 'EM_TRANSPORTE';
+  if (['aguardando_retirada', 'aguardando retirada'].includes(orderStatus)) return 'AGUARDANDO_RETIRADA';
+  if (PAID_PAYMENT_STATUSES.has(paymentStatus)) {
+    return isPickupOrder ? 'AGUARDANDO_RETIRADA' : 'SEPARACAO';
+  }
+  return 'PENDENTE';
+};
+
+const syncMarketplaceOrderToCd = async (order: any, overrideDistributorId?: string | null) => {
+  if (!order?.id) {
+    return { synced: false, reason: 'missing-order-id' };
+  }
+
+  const existingDistributorId = String(overrideDistributorId || order?.distributor_id || '').trim();
+  let distributorId = (
+    existingDistributorId &&
+    existingDistributorId !== 'cd-oficial-matriz' &&
+    existingDistributorId !== 'cd-oficial-matriz-fallback'
+  )
+    ? existingDistributorId
+    : await resolveMarketplaceDistributorId({
+        distributorId: order?.distributor_id,
+        buyerType: order?.buyer_type,
+        routingMode: order?.routing_mode,
+        buyerId: order?.buyer_id,
+        customerId: order?.buyer_id,
+        recognizedConsultantId: order?.buyer_id,
+        recognizedConsultantLoginId: order?.referred_by,
+        buyerName: order?.buyer_name,
+        customerName: order?.buyer_name,
+        buyerEmail: order?.buyer_email,
+        customerEmail: order?.buyer_email,
+        referrerLoginId: order?.referred_by,
+      });
+  if (!distributorId || distributorId === 'cd-oficial-matriz' || distributorId === 'cd-oficial-matriz-fallback') {
+    // [RS-REPAIR] - Fallback robústico para Sede (rsprolipsi)
+    const { data: sedeMs } = await supabaseAdmin
+      .from('minisite_profiles')
+      .select('id')
+      .or('consultant_id.eq.rsprolipsi,slug.eq.rsprolipsi')
+      .maybeSingle();
+    
+    if (sedeMs?.id) {
+      distributorId = sedeMs.id;
+    } else {
+      const { data: sedeDc } = await supabaseAdmin.from('distribution_centers').select('id').eq('code', 'CD-SEDE').maybeSingle();
+      distributorId = sedeDc?.id || null;
+    }
+  }
+
+  if (!distributorId) {
+    return { synced: false, reason: 'missing-distributor' };
+  }
+
+  const { data: existingCdOrder } = await supabaseAdmin
+    .from('cd_orders')
+    .select('id')
+    .eq('marketplace_order_id', order.id)
+    .maybeSingle();
+
+  if (existingCdOrder?.id) {
+    if (String(order?.distributor_id || '').trim() !== distributorId) {
+      await supabaseAdmin.from('orders').update({ distributor_id: distributorId }).eq('id', order.id);
+    }
+    return { synced: false, reason: 'already-synced', cdOrderId: String(existingCdOrder.id), distributorId };
+  }
+
+  const items = extractOrderItems(order);
+  const shippingMethodLabel = String(order?.shipping_method || '').trim();
+  const isPickupOrder = /retirad|pickup/i.test(shippingMethodLabel);
+  const createdAt = order?.created_at ? new Date(order.created_at) : new Date();
+
+  const cdOrderData = {
+    cd_id: distributorId,
+    consultant_name: order?.buyer_name || 'Cliente Direto',
+    consultant_pin: !isUuidLike(order?.referred_by) ? String(order?.referred_by || '').trim() || null : null,
+    sponsor_name: null,
+    sponsor_id: null,
+    buyer_cpf: order?.buyer_cpf || null,
+    buyer_email: order?.buyer_email || null,
+    buyer_phone: order?.buyer_phone || null,
+    shipping_address: buildMarketplaceShippingAddressLabel(order?.shipping_address),
+    order_date: createdAt.toISOString().split('T')[0],
+    order_time: createdAt.toTimeString().split(' ')[0],
+    total: asNumber(order?.total, 0),
+    total_points: 0,
+    status: buildCdOrderStatusFromMarketplaceOrder(order),
+    payment_method: order?.payment_method || null,
+    type: isPickupOrder ? 'RETIRADA' : 'ENTREGA',
+    items_count: items.length,
+    tracking_code: null,
+    vehicle_plate: null,
+    marketplace_order_id: order.id,
+  };
+
+  const { data: cdOrder, error: cdOrderError } = await supabaseAdmin
+    .from('cd_orders')
+    .insert([cdOrderData])
+    .select('id')
+    .single();
+
+  if (cdOrderError) {
+    throw cdOrderError;
+  }
+
+  if (items.length > 0) {
+    const cdItems = items.map((item: any) => ({
+      cd_order_id: cdOrder.id,
+      product_id: item.productId || item.id || 'unknown',
+      product_name: item.productName || item.name || 'Produto',
+      quantity: asNumber(item.quantity, 1),
+      unit_price: asNumber(item.price, 0),
+      points: 0,
+    }));
+
+    const { error: itemsError } = await supabaseAdmin
+      .from('cd_order_items')
+      .insert(cdItems);
+
+    if (itemsError) {
+      throw itemsError;
+    }
+  }
+
+  await supabaseAdmin.from('orders').update({ distributor_id: distributorId }).eq('id', order.id);
+
+  return {
+    synced: true,
+    distributorId,
+    cdOrderId: String(cdOrder.id),
   };
 };
 
@@ -258,6 +1073,91 @@ const getMarketplaceBeneficiaryId = (order: any) => {
   return null;
 };
 
+const buildMarketplaceSellerCredits = ({
+  order,
+  orderItems,
+  productMap,
+}: {
+  order: any;
+  orderItems: any[];
+  productMap: Map<string, any>;
+}) => {
+  const groupedCredits = new Map<string, { itemSubtotal: number; originType: string }>();
+  let totalItemsAmount = 0;
+
+  for (const item of orderItems) {
+    const product = productMap.get(String(item?.productId || ''));
+    const specs = getSpecifications(product);
+    const quantity = Math.max(asNumber(item?.quantity, 1), 1);
+    const unitPrice = asNumber(item?.price, asNumber(product?.price, 0));
+    const lineAmount = unitPrice * quantity;
+
+    if (lineAmount <= 0) continue;
+
+    const fulfillmentOriginType = normalizeFulfillmentOriginType(
+      item?.fulfillmentOriginType ||
+      specs.fulfillmentOriginType ||
+      order?.fulfillment_origin_type ||
+      order?.fulfillmentOriginType ||
+      'central'
+    );
+
+    const ownerUserId = String(item?.ownerUserId || specs.ownerUserId || '').trim();
+    const ownerLoginId = normalizeText(item?.ownerLoginId || specs.ownerLoginId);
+    const recipientReference = (
+      fulfillmentOriginType === 'seller_store'
+        ? (ownerUserId || ownerLoginId || DEFAULT_MARKETPLACE_SPONSOR_REF)
+        : DEFAULT_MARKETPLACE_SPONSOR_REF
+    );
+
+    const previous = groupedCredits.get(recipientReference) || { itemSubtotal: 0, originType: fulfillmentOriginType };
+    previous.itemSubtotal += lineAmount;
+    previous.originType = fulfillmentOriginType;
+    groupedCredits.set(recipientReference, previous);
+    totalItemsAmount += lineAmount;
+  }
+
+  if (!groupedCredits.size || totalItemsAmount <= 0) {
+    return [];
+  }
+
+  const effectiveOrderTotal = toMoney(order?.total ?? order?.subtotal ?? totalItemsAmount);
+  const creditEntries = Array.from(groupedCredits.entries());
+
+  if (creditEntries.length === 1) {
+    const [recipientReference, entry] = creditEntries[0];
+    return [{
+      recipientReference,
+      amount: effectiveOrderTotal > 0 ? effectiveOrderTotal : entry.itemSubtotal,
+      originType: entry.originType,
+    }];
+  }
+
+  let remaining = effectiveOrderTotal > 0 ? effectiveOrderTotal : totalItemsAmount;
+  return creditEntries
+    .map(([recipientReference, entry], index) => {
+      if (index === creditEntries.length - 1) {
+        return {
+          recipientReference,
+          amount: toMoney(remaining),
+          originType: entry.originType,
+        };
+      }
+
+      const proportional = totalItemsAmount > 0
+        ? toMoney((entry.itemSubtotal / totalItemsAmount) * (effectiveOrderTotal > 0 ? effectiveOrderTotal : totalItemsAmount))
+        : entry.itemSubtotal;
+
+      remaining = toMoney(remaining - proportional);
+      return {
+        recipientReference,
+        amount: proportional,
+        originType: entry.originType,
+      };
+    })
+    .filter((entry) => entry.amount > 0);
+};
+
 const normalizeCdLookupKey = (value: any) => String(value || '').trim().toLowerCase();
 const CENTRAL_DISTRIBUTOR_IDS = new Set(['cd-oficial-matriz', 'cd-oficial-matriz-fallback']);
 
@@ -301,19 +1201,22 @@ const syncMarketplaceCdFulfillment = async (order: any, orderItems: any[], produ
 
   const { data: inventoryRows, error: inventoryError } = await supabaseAdmin
     .from('cd_products')
-    .select('id, sku, name, stock_level, min_stock')
+    .select('id, product_id, sku, name, stock_level, min_stock')
     .eq('cd_id', cdId);
 
   if (inventoryError) {
     throw new Error(inventoryError.message);
   }
 
+  const byProductId = new Map<string, any>();
   const bySku = new Map<string, any>();
   const byName = new Map<string, any>();
 
   (inventoryRows || []).forEach((row: any) => {
+    const productIdKey = String(row?.product_id || '').trim();
     const skuKey = normalizeCdLookupKey(row?.sku);
     const nameKey = normalizeCdLookupKey(row?.name);
+    if (productIdKey) byProductId.set(productIdKey, row);
     if (skuKey) bySku.set(skuKey, row);
     if (nameKey) byName.set(nameKey, row);
   });
@@ -323,9 +1226,11 @@ const syncMarketplaceCdFulfillment = async (order: any, orderItems: any[], produ
 
   for (const item of orderItems) {
     const product = productMap.get(String(item?.productId || ''));
+    const productIdKey = String(item?.productId || product?.id || '').trim();
     const skuKey = normalizeCdLookupKey(item?.sku || product?.sku);
     const nameKey = normalizeCdLookupKey(item?.productName || item?.name || product?.name);
     const matchedRow =
+      (productIdKey ? byProductId.get(productIdKey) : null) ||
       (skuKey ? bySku.get(skuKey) : null) ||
       (nameKey ? byName.get(nameKey) : null) ||
       null;
@@ -382,51 +1287,105 @@ const syncMarketplaceCdFulfillment = async (order: any, orderItems: any[], produ
   return { debitedItems, missingItems };
 };
 
-const processMarketplacePaidOrder = async (order: any) => {
-  const existingNotes = normalizeOrderNotes(order?.notes);
-  if (existingNotes.includes(MARKETPLACE_PROCESS_MARKER)) {
-    return;
+const decrementMarketplaceProductInventory = async (orderItems: any[], productMap: Map<string, any>) => {
+  let debitedItems = 0;
+
+  for (const item of orderItems) {
+    const productId = String(item?.productId || '').trim();
+    if (!productId) continue;
+
+    const product = productMap.get(productId);
+    if (!product) continue;
+
+    const specs = getSpecifications(product);
+    const productType = String(item?.productType || specs.type || '').trim().toLowerCase();
+    const trackQuantity = Boolean(item?.trackQuantity ?? specs.trackQuantity ?? true);
+    const fulfillmentOriginType = normalizeFulfillmentOriginType(
+      item?.fulfillmentOriginType || specs.fulfillmentOriginType || 'central'
+    );
+
+    if (productType === 'digital' || !trackQuantity) continue;
+
+    // Estoque de CD e gerido em cd_products; seller_store/central continuam no catalogo mestre.
+    if (fulfillmentOriginType === 'cd') continue;
+
+    const quantity = Math.max(asNumber(item?.quantity, 1), 1);
+    const currentStock = Math.max(0, asNumber(product?.stock_quantity, 0));
+    const nextStock = Math.max(0, currentStock - quantity);
+
+    const { error: updateError } = await supabaseAdmin
+      .from('products')
+      .update({
+        stock_quantity: nextStock,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', productId);
+
+    if (updateError) {
+      throw new Error(updateError.message);
+    }
+
+    product.stock_quantity = nextStock;
+    debitedItems += 1;
   }
 
-  const orderItems = Array.isArray(order?.items) ? order.items : [];
+  return { debitedItems };
+};
+
+const processMarketplacePaidOrder = async (order: any) => {
+  const existingNotes = normalizeOrderNotes(order?.internal_notes);
+  const alreadyProcessed = existingNotes.includes(MARKETPLACE_PROCESS_MARKER);
+
+  const orderItems = extractOrderItems(order);
   if (orderItems.length === 0) {
-    await supabase
-      .from('orders')
-      .update({ notes: appendProcessingMarker(existingNotes, 'empty'), updated_at: new Date().toISOString() })
-      .eq('id', order.id);
+    if (!alreadyProcessed) {
+      await supabase
+        .from('orders')
+        .update({ internal_notes: appendProcessingMarker(existingNotes, 'empty'), updated_at: new Date().toISOString() })
+        .eq('id', order.id);
+    }
     return;
   }
 
   const beneficiaryId = getMarketplaceBeneficiaryId(order);
   if (!beneficiaryId) {
-    await supabase
-      .from('orders')
-      .update({ notes: appendProcessingMarker(existingNotes, 'no-beneficiary'), updated_at: new Date().toISOString() })
-      .eq('id', order.id);
-    return;
+    if (!alreadyProcessed) {
+      await supabase
+        .from('orders')
+        .update({ internal_notes: appendProcessingMarker(existingNotes, 'no-beneficiary'), updated_at: new Date().toISOString() })
+        .eq('id', order.id);
+    }
   }
 
   const productIds = Array.from(new Set(orderItems.map((item: any) => String(item?.productId || '')).filter(Boolean)));
   const { data: products } = await supabase
     .from('products')
-    .select('id, name, price, member_price, specifications')
+    .select('id, name, price, member_price, stock_quantity, specifications')
     .in('id', productIds);
 
   const productMap = new Map((products || []).map((product: any) => [String(product.id), product]));
   const compensationSettings = await getMarketplaceCompensationSettings();
 
   let sellerLevel = 'RS One Star';
-  const { data: currentPerformance } = await supabase
-    .from('consultant_performance')
-    .select('points, current_rank, current_rank_digital')
-    .eq('consultant_id', beneficiaryId)
-    .maybeSingle();
+  let currentPerformance: any = null;
+  if (beneficiaryId) {
+    const performanceResponse = await supabase
+      .from('consultant_performance')
+      .select('points, current_rank, current_rank_digital')
+      .eq('consultant_id', beneficiaryId)
+      .maybeSingle();
 
-  sellerLevel = String(currentPerformance?.current_rank_digital || currentPerformance?.current_rank || sellerLevel);
+    currentPerformance = performanceResponse.data || null;
+    sellerLevel = String(currentPerformance?.current_rank_digital || currentPerformance?.current_rank || sellerLevel);
+  }
 
   let digitalPointsAccrued = 0;
   let commissionCredited = 0;
   let cdStockSummary = 'cd=skip';
+  let commissionOriginSummary = 'rs_physical';
+  let walletTransactionType = 'commission_shop';
+  let bonusType = 'direct_sale';
+  const sellerCredits = buildMarketplaceSellerCredits({ order, orderItems, productMap });
 
   for (const item of orderItems) {
     const product = productMap.get(String(item?.productId || ''));
@@ -451,7 +1410,7 @@ const processMarketplacePaidOrder = async (order: any) => {
       digitalPointsAccrued += lineAmount * factor;
     }
 
-    if (order?.referrer_id && (isAffiliateOrigin || isDigitalOrigin || usesDropshipTier)) {
+    if (order?.referrer_id) {
       try {
         const commission = await calculateCommission({
           commission_origin: commissionOrigin,
@@ -461,27 +1420,19 @@ const processMarketplacePaidOrder = async (order: any) => {
 
         const totalCommission = asNumber(commission?.value, 0) * quantity;
         if (totalCommission > 0) {
-          await supabase.from('bonuses').insert({
-            consultor_id: String(order.referrer_id),
-            bonus_type: isAffiliateOrigin ? 'affiliate_referral' : (usesDropshipTier ? 'bonus_dropship' : 'direct_sale'),
-            amount: totalCommission,
-            description: `Comissao marketplace #${order.id} - ${item?.productName || product?.name || 'Produto'}`,
-            status: 'available',
-            processed_at: new Date().toISOString(),
-          });
-
-          try {
-            await creditWallet(
-              String(order.referrer_id),
-              totalCommission,
-              usesDropshipTier ? 'dropship_bonus' : (isAffiliateOrigin ? 'affiliate' : 'sale'),
-              `Comissao marketplace #${order.id}`
-            );
-          } catch (walletError: any) {
-            console.warn('[MARKETPLACE] Falha ao creditar wallet (nao-critico):', walletError?.message || walletError);
-          }
-
           commissionCredited += totalCommission;
+          commissionOriginSummary = commissionOrigin;
+
+          if (isAffiliateOrigin) {
+            walletTransactionType = 'commission_referral';
+            bonusType = 'affiliate_referral';
+          } else if (usesDropshipTier || isDigitalOrigin) {
+            walletTransactionType = 'commission_shop';
+            bonusType = usesDropshipTier ? 'bonus_dropship' : 'direct_sale';
+          } else {
+            walletTransactionType = 'commission_shop';
+            bonusType = 'direct_sale';
+          }
         }
       } catch (commissionError: any) {
         console.warn('[MARKETPLACE] Falha ao calcular comissao (nao-critico):', commissionError?.message || commissionError);
@@ -489,15 +1440,94 @@ const processMarketplacePaidOrder = async (order: any) => {
     }
   }
 
-  try {
-    const cdSyncResult = await syncMarketplaceCdFulfillment(order, orderItems, productMap);
-    cdStockSummary = `cd=debited:${cdSyncResult.debitedItems};missing:${cdSyncResult.missingItems}`;
-  } catch (cdSyncError: any) {
-    console.warn('[MARKETPLACE] Falha ao sincronizar estoque do CD (nao-critico):', cdSyncError?.message || cdSyncError);
-    cdStockSummary = 'cd=error';
+  if (order?.referrer_id && commissionCredited > 0) {
+    const walletReferenceId = `marketplace:${order.id}:commission`;
+    const walletDescription = `Comissao marketplace #${order.order_code || order.id}`;
+
+    const existingBonus = await supabaseAdmin
+      .from('bonuses')
+      .select('id')
+      .eq('consultor_id', String(order.referrer_id))
+      .ilike('description', `${walletDescription}%`)
+      .maybeSingle();
+
+    if (!existingBonus.data?.id) {
+      const { error: bonusError } = await supabaseAdmin
+        .from('bonuses')
+        .insert({
+          consultor_id: String(order.referrer_id),
+          bonus_type: bonusType,
+          amount: commissionCredited,
+          description: `${walletDescription} - ${orderItems.length} item(ns)`,
+          status: 'available',
+          processed_at: new Date().toISOString(),
+        });
+
+      if (bonusError) {
+        console.warn('[MARKETPLACE] Falha ao registrar bonus marketplace (nao-critico):', bonusError.message);
+      }
+    }
+
+    try {
+      await creditMarketplaceWallet({
+        consultantReference: String(order.referrer_id),
+        amount: commissionCredited,
+        description: walletDescription,
+        referenceId: walletReferenceId,
+        type: walletTransactionType,
+        details: {
+          order_id: String(order.id || ''),
+          order_code: String(order.order_code || ''),
+          sale_origin: commissionOriginSummary,
+          customer_name: String(order.buyer_name || ''),
+        },
+      });
+    } catch (walletError: any) {
+      console.warn('[MARKETPLACE] Falha ao creditar wallet do marketplace (nao-critico):', walletError?.message || walletError);
+    }
   }
 
-  if (digitalPointsAccrued > 0) {
+  for (const sellerCredit of sellerCredits) {
+    try {
+      await creditMarketplaceWallet({
+        consultantReference: sellerCredit.recipientReference,
+        amount: sellerCredit.amount,
+        description: `Venda marketplace #${order.order_code || order.id}`,
+        referenceId: `marketplace:${order.id}:seller:${sellerCredit.recipientReference}`,
+        type: 'commission_shop',
+        details: {
+          order_id: String(order.id || ''),
+          order_code: String(order.order_code || ''),
+          customer_name: String(order.buyer_name || ''),
+          sale_origin: sellerCredit.originType || 'central',
+          wallet_role: 'seller',
+        },
+      });
+    } catch (sellerWalletError: any) {
+      console.warn('[MARKETPLACE] Falha ao creditar wallet do vendedor (nao-critico):', sellerWalletError?.message || sellerWalletError);
+    }
+  }
+
+  let productStockSummary = 'catalog=skip';
+  if (!alreadyProcessed) {
+    try {
+      const cdSyncResult = await syncMarketplaceCdFulfillment(order, orderItems, productMap);
+      cdStockSummary = `cd=debited:${cdSyncResult.debitedItems};missing:${cdSyncResult.missingItems}`;
+    } catch (cdSyncError: any) {
+      console.warn('[MARKETPLACE] Falha ao sincronizar estoque do CD (nao-critico):', cdSyncError?.message || cdSyncError);
+      cdStockSummary = 'cd=error';
+    }
+
+    try {
+      const productSyncResult = await decrementMarketplaceProductInventory(orderItems, productMap);
+      productStockSummary = `catalog=debited:${productSyncResult.debitedItems}`;
+    } catch (productSyncError: any) {
+      console.warn('[MARKETPLACE] Falha ao debitar estoque do catalogo (nao-critico):', productSyncError?.message || productSyncError);
+      productStockSummary = 'catalog=error';
+    }
+  }
+
+  if (!alreadyProcessed && beneficiaryId && digitalPointsAccrued > 0) {
     const nextPoints = asNumber(currentPerformance?.points, 0) + digitalPointsAccrued;
     const { data: levels } = await supabase
       .from('career_levels_digital')
@@ -532,11 +1562,13 @@ const processMarketplacePaidOrder = async (order: any) => {
     }
   }
 
-  const summary = `points=${digitalPointsAccrued.toFixed(2)};commission=${commissionCredited.toFixed(2)};${cdStockSummary}`;
-  await supabase
-    .from('orders')
-    .update({ notes: appendProcessingMarker(existingNotes, summary), updated_at: new Date().toISOString() })
-    .eq('id', order.id);
+  if (!alreadyProcessed) {
+    const summary = `points=${digitalPointsAccrued.toFixed(2)};commission=${commissionCredited.toFixed(2)};${cdStockSummary};${productStockSummary}`;
+    await supabase
+      .from('orders')
+      .update({ internal_notes: appendProcessingMarker(existingNotes, summary), updated_at: new Date().toISOString() })
+      .eq('id', order.id);
+  }
 };
 
 // =====================================================
@@ -1072,6 +2104,72 @@ router.get('/v1/dashboard/marketplace', async (_req: Request, res: Response) => 
 // PEDIDOS - CRUD COMPLETO
 // =====================================================
 
+router.get('/v1/marketplace/orders/track', async (req: Request, res: Response) => {
+  try {
+    const normalizedCode = String(req.query.code || '').trim().replace(/^#/, '');
+
+    if (!normalizedCode) {
+      return res.status(400).json({ success: false, error: 'Codigo do pedido invalido.' });
+    }
+
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(normalizedCode);
+
+    let marketplaceQuery = supabaseAdmin
+      .from('orders')
+      .select('*, order_items(*)')
+      .eq('order_code', normalizedCode)
+      .maybeSingle();
+
+    if (isUuid) {
+      marketplaceQuery = supabaseAdmin
+        .from('orders')
+        .select('*, order_items(*)')
+        .eq('id', normalizedCode)
+        .maybeSingle();
+    }
+
+    const marketplaceResult = await marketplaceQuery;
+
+    if (!marketplaceResult.error && marketplaceResult.data) {
+      return res.json({ success: true, data: buildPublicMarketplaceOrder(marketplaceResult.data) });
+    }
+
+    if (/^AC\-/i.test(normalizedCode)) {
+      const prefix = normalizedCode.replace(/^AC\-/i, '').trim().toLowerCase();
+      const cdCodeCandidates = await supabaseAdmin
+        .from('cd_orders')
+        .select('*, items:cd_order_items(*)')
+        .order('created_at', { ascending: false })
+        .limit(200);
+
+      const cdCodeRow = (cdCodeCandidates.data || []).find((row: any) =>
+        String(row?.id || '').trim().toLowerCase().startsWith(prefix)
+      );
+
+      if (!cdCodeCandidates.error && cdCodeRow) {
+        return res.json({ success: true, data: buildPublicCdOrder(cdCodeRow) });
+      }
+    }
+
+    const trackingResult = await supabaseAdmin
+      .from('cd_orders')
+      .select('*, items:cd_order_items(*)')
+      .eq('tracking_code', normalizedCode)
+      .maybeSingle();
+
+    if (!trackingResult.error && trackingResult.data) {
+      return res.json({ success: true, data: buildPublicCdOrder(trackingResult.data) });
+    }
+
+    return res.status(404).json({
+      success: false,
+      error: trackingResult.error?.message || marketplaceResult.error?.message || 'Pedido nao encontrado.'
+    });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // Listar pedidos
 router.get('/v1/marketplace/orders', async (req: Request, res: Response) => {
   try {
@@ -1094,7 +2192,7 @@ router.get('/v1/marketplace/orders', async (req: Request, res: Response) => {
     if (error) return res.status(500).json({ success: false, error: error.message });
 
     const filteredData = (data || []).filter((order: any) => {
-      const items = Array.isArray(order?.items) ? order.items : [];
+      const items = extractOrderItems(order);
       const orderOriginType = normalizeFulfillmentOriginType(order?.fulfillment_origin_type || order?.fulfillmentOriginType);
       const orderOwnerUserId = String(order?.owner_user_id || order?.ownerUserId || '').trim();
       const orderOwnerLoginId = normalizeText(order?.owner_login_id || order?.ownerLoginId);
@@ -1130,9 +2228,15 @@ router.post('/v1/marketplace/orders', async (req: Request, res: Response) => {
     const body = req.body;
     if (!body.tenantId) return res.status(400).json({ success: false, error: 'tenantId requerido' });
 
+    const resolvedReferrerId =
+      await resolveConsultantReferrerId(body.referrerId || body.referredBy || body.referrerLoginId);
+    const resolvedDistributorId = await resolveMarketplaceDistributorId(body);
+
     // =====================================================
     // 1) INSERT NA TABELA PRINCIPAL (orders)
     // =====================================================
+    const existingNotes = normalizeOrderNotes(body.notes || body.internalNotes);
+    const itemsSnapshot = serializeOrderItemsSnapshot(body.items);
     const orderData: any = {
       tenant_id: body.tenantId,
       buyer_id: body.buyerId || body.customerId || null,
@@ -1140,10 +2244,8 @@ router.post('/v1/marketplace/orders', async (req: Request, res: Response) => {
       buyer_email: body.buyerEmail || body.customerEmail || null,
       buyer_phone: body.buyerPhone || body.customerPhone || null,
       buyer_type: body.buyerType || 'cliente',
-      items: body.items,
       subtotal: body.subtotal,
-      shipping: body.shipping,
-      shipping_cost: body.shippingCost ?? body.shipping ?? 0,
+            shipping_cost: body.shippingCost ?? body.shipping ?? 0,
       discount: body.discount || 0,
       total: body.total,
       status: body.status || 'pending',
@@ -1151,10 +2253,10 @@ router.post('/v1/marketplace/orders', async (req: Request, res: Response) => {
       payment_status: body.paymentStatus || 'pending',
       shipping_address: body.shippingAddress,
       shipping_method: body.shippingMethod || null,
-      notes: body.notes,
-      distributor_id: body.distributorId || null,
-      referrer_id: body.referrerId || body.referredBy || null,
-      referred_by: body.referrerId || body.referredBy || null
+      internal_notes: [existingNotes, itemsSnapshot].filter(Boolean).join('\\n') || null,
+      distributor_id: resolvedDistributorId,
+      referrer_id: resolvedReferrerId,
+      referred_by: resolvedReferrerId
     };
 
     const { data: order, error: orderError } = await supabase
@@ -1168,11 +2270,37 @@ router.post('/v1/marketplace/orders', async (req: Request, res: Response) => {
       return res.status(500).json({ success: false, error: orderError.message });
     }
 
+    try {
+      const syncResult = await syncMarketplaceOrderToCd(
+        {
+          ...order,
+          buyer_cpf: body.customerCpf || null,
+          items: Array.isArray(body.items) ? body.items : [],
+          shipping_address: body.shippingAddress,
+          shipping_method: body.shippingMethod || null,
+          payment_method: body.paymentMethod || null,
+          referred_by: resolvedReferrerId || body.referrerLoginId || body.referrerId || null,
+        },
+        resolvedDistributorId,
+      );
+
+      if (syncResult?.synced) {
+        console.log(`[MARKETPLACE->CDS] Pedido ${order.id} sincronizado com CD ${syncResult.distributorId} (${syncResult.cdOrderId})`);
+      }
+    } catch (syncErr: any) {
+      console.warn('[MARKETPLACE->CDS] Falha inicial na sincronizacao (nao-critico):', syncErr.message);
+    }
+
     // =====================================================
     // 2) DUAL INSERT — SINCRONIZAR COM RS-CDS (cd_orders)
     // =====================================================
-    const distributorId = body.distributorId;
-    if (distributorId && distributorId !== 'cd-oficial-matriz' && distributorId !== 'cd-oficial-matriz-fallback') {
+    let cdOrdersDistributorId = resolvedDistributorId;
+    if (!cdOrdersDistributorId || cdOrdersDistributorId === 'cd-oficial-matriz' || cdOrdersDistributorId === 'cd-oficial-matriz-fallback') {
+      const { data: sede } = await supabase.from('minisite_profiles').select('id').eq('consultant_id', 'rsprolipsi').maybeSingle();
+      cdOrdersDistributorId = sede?.id || null;
+    }
+
+    if (cdOrdersDistributorId) {
       try {
         // Extrair dados do cliente para cd_orders
         const shippingAddr = body.shippingAddress || {};
@@ -1186,10 +2314,13 @@ router.post('/v1/marketplace/orders', async (req: Request, res: Response) => {
           shippingAddr.zipCode
         ].filter(Boolean).join(', ');
 
+        const shippingMethodLabel = String(body.shippingMethod || '').trim();
+        const isPickupOrder = /retirad|pickup/i.test(shippingMethodLabel);
+
         const cdOrderData = {
-          cd_id: distributorId,
+          cd_id: cdOrdersDistributorId,
           consultant_name: body.customerName || body.referrerName || 'Cliente Direto',
-          consultant_pin: body.referrerId || null,
+          consultant_pin: body.referrerLoginId || body.referrerId || null,
           sponsor_name: null,
           sponsor_id: null,
           buyer_cpf: body.customerCpf || null,
@@ -1201,7 +2332,8 @@ router.post('/v1/marketplace/orders', async (req: Request, res: Response) => {
           total: body.total || 0,
           total_points: 0,
           status: 'PENDENTE',
-          type: 'MARKETPLACE',
+          payment_method: body.paymentMethod || null,
+          type: isPickupOrder ? 'RETIRADA' : 'ENTREGA',
           items_count: Array.isArray(body.items) ? body.items.length : 0,
           tracking_code: null,
           vehicle_plate: null,
@@ -1234,7 +2366,7 @@ router.post('/v1/marketplace/orders', async (req: Request, res: Response) => {
           if (itemsError) {
             console.warn('[MARKETPLACE→CDS] Erro ao inserir cd_order_items (não-crítico):', itemsError.message);
           } else {
-            console.log(`[MARKETPLACE→CDS] ✅ Pedido sincronizado com CD ${distributorId} (cd_order_id: ${cdOrder.id})`);
+            console.log(`[MARKETPLACE→CDS] ✅ Pedido sincronizado com CD ${cdOrdersDistributorId} (cd_order_id: ${cdOrder.id})`);
           }
         }
       } catch (syncErr: any) {
@@ -1243,15 +2375,17 @@ router.post('/v1/marketplace/orders', async (req: Request, res: Response) => {
       }
     }
 
+    const orderForProcessing = { ...order, items: Array.isArray(body.items) ? body.items : extractOrderItems(order) };
+
     if (PAID_PAYMENT_STATUSES.has(String(order.payment_status || '').toLowerCase())) {
       try {
-        await processMarketplacePaidOrder(order);
+        await processMarketplacePaidOrder(orderForProcessing);
       } catch (processingError: any) {
         console.warn('[MARKETPLACE] Falha ao processar pedido pago (nao-critico):', processingError?.message || processingError);
       }
     }
 
-    res.json({ success: true, data: order });
+    res.json({ success: true, data: orderForProcessing });
   } catch (err: any) {
     console.error('[MARKETPLACE] Erro crítico ao criar pedido:', err.message);
     res.status(500).json({ success: false, error: err.message });
@@ -1380,6 +2514,141 @@ router.patch('/v1/marketplace/orders/:id/status', async (req: Request, res: Resp
     }
 
     res.json({ success: true, data });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.post('/v1/marketplace/orders/resync-cd', async (req: Request, res: Response) => {
+  try {
+    const limit = Math.max(Math.min(asNumber(req.body?.limit, 50), 200), 1);
+    const tenantId = String(req.body?.tenantId || '').trim();
+    const orderCode = String(req.body?.orderCode || req.body?.orderId || '').trim();
+
+    let query = supabase
+      .from('orders')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (tenantId) {
+      query = query.eq('tenant_id', tenantId);
+    }
+
+    if (orderCode && isUuidLike(orderCode)) {
+      query = query.eq('id', orderCode);
+    }
+
+    const { data, error } = await query;
+    if (error) {
+      return res.status(500).json({ success: false, error: error.message });
+    }
+
+    const normalizedCode = orderCode.replace(/^#?RS\-/i, '').replace(/^AC\-/i, '').trim().toLowerCase();
+    const orders = (data || []).filter((order: any) => {
+      if (!normalizedCode) return true;
+      const orderId = String(order?.id || '').trim().toLowerCase();
+      return orderId === normalizedCode || orderId.startsWith(normalizedCode);
+    });
+
+    const processed: Array<{ orderId: string; distributorId: string; cdOrderId: string }> = [];
+    const skipped: Array<{ orderId: string; reason: string }> = [];
+    const failed: Array<{ orderId: string; error: string }> = [];
+
+    for (const order of orders) {
+      try {
+        const result: any = await syncMarketplaceOrderToCd(order);
+        if (result?.synced) {
+          processed.push({
+            orderId: String(order.id),
+            distributorId: String(result.distributorId || ''),
+            cdOrderId: String(result.cdOrderId || ''),
+          });
+        } else {
+          skipped.push({
+            orderId: String(order.id),
+            reason: String(result?.reason || 'not-synced'),
+            debug: {
+              buyerId: order?.buyer_id || null,
+              buyerName: order?.buyer_name || null,
+              buyerEmail: order?.buyer_email || null,
+              buyerType: order?.buyer_type || null,
+              referredBy: order?.referred_by || null,
+              distributorId: order?.distributor_id || null,
+            },
+          });
+        }
+      } catch (syncError: any) {
+        failed.push({
+          orderId: String(order?.id || ''),
+          error: String(syncError?.message || syncError || 'unknown-error'),
+        });
+      }
+    }
+
+    return res.json({ success: true, processed, skipped, failed });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.post('/v1/marketplace/orders/resync-wallet', async (req: Request, res: Response) => {
+  try {
+    const limit = Math.max(Math.min(asNumber(req.body?.limit, 100), 500), 1);
+    const tenantId = String(req.body?.tenantId || '').trim();
+
+    let query = supabase
+      .from('orders')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (tenantId) {
+      query = query.eq('tenant_id', tenantId);
+    }
+
+    const { data, error } = await query;
+    if (error) {
+      return res.status(500).json({ success: false, error: error.message });
+    }
+
+    const processed: string[] = [];
+    const failed: Array<{ orderId: string; error: string }> = [];
+
+    const paidOrders = (data || []).filter((order: any) => {
+      const paymentStatus = String(order?.payment_status || '').toLowerCase();
+      const status = String(order?.status || '').toLowerCase();
+      return (
+        PAID_PAYMENT_STATUSES.has(paymentStatus) ||
+        PAID_PAYMENT_STATUSES.has(status) ||
+        status === 'shipped' ||
+        status === 'entregue' ||
+        status === 'delivered'
+      );
+    });
+
+    for (const order of paidOrders) {
+      try {
+        await processMarketplacePaidOrder({
+          ...order,
+          items: extractOrderItems(order),
+        });
+        processed.push(String(order.id));
+      } catch (processingError: any) {
+        failed.push({
+          orderId: String(order.id || ''),
+          error: String(processingError?.message || processingError || 'unknown-error'),
+        });
+      }
+    }
+
+    res.json({
+      success: true,
+      processed,
+      failed,
+      total: processed.length,
+      scanned: paidOrders.length,
+    });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
   }
@@ -1594,3 +2863,5 @@ router.get('/v1/marketplace/pix/:id', async (req: Request, res: Response) => {
 
 export default router;
 // trigger restart
+
+

@@ -2,8 +2,9 @@
  * Service layer para integração completa com backend
  */
 import { supabase } from './supabase';
+import type { Order, OrderItem, ShippingAddress } from '../types';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+const API_URL = import.meta.env.VITE_API_URL || '';
 const DEFAULT_TENANT_ID = 'd107da4e-e266-41b0-947a-0c66b2f2b9ef';
 const PLACEHOLDER_TENANT_ID = '00000000-0000-0000-0000-000000000000';
 
@@ -216,14 +217,184 @@ export const ordersAPI = {
     },
 
     trackByCode: async (code: string) => {
-        const { data, error } = await supabase
+        const normalizedCode = String(code || '').trim().replace(/^#/, '');
+
+        if (!normalizedCode) {
+            return { success: false, error: 'Codigo do pedido invalido.' };
+        }
+
+        return apiFetch(`/v1/marketplace/orders/track?code=${encodeURIComponent(normalizedCode)}`);
+
+        const normalizeShippingAddress = (value: any, fallback?: any): ShippingAddress => {
+            const source = value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+            const backup = fallback && typeof fallback === 'object' && !Array.isArray(fallback) ? fallback : {};
+
+            return {
+                street: String(source.street || source.logradouro || backup.street || backup.logradouro || ''),
+                number: String(source.number || source.numero || backup.number || backup.numero || ''),
+                complement: String(source.complement || source.complemento || backup.complement || backup.complemento || ''),
+                neighborhood: String(source.neighborhood || source.bairro || backup.neighborhood || backup.bairro || ''),
+                city: String(source.city || source.cidade || backup.city || backup.cidade || ''),
+                state: String(source.state || source.uf || backup.state || backup.uf || ''),
+                zipCode: String(source.zipCode || source.cep || backup.zipCode || backup.cep || '')
+            };
+        };
+
+        const parseShippingAddressText = (value: any): ShippingAddress => {
+            const text = String(value || '').trim();
+            if (!text) return normalizeShippingAddress(null);
+
+            const parts = text.split(',').map((part) => part.trim()).filter(Boolean);
+            const [street = '', number = '', complement = '', neighborhood = '', city = '', state = '', zipCode = ''] = parts;
+
+            return { street, number, complement, neighborhood, city, state, zipCode };
+        };
+
+        const normalizeOrderItems = (items: any[] | null | undefined): OrderItem[] =>
+            (items || []).map((item: any) => ({
+                productId: String(item?.product_id || item?.productId || item?.id || ''),
+                variantId: String(item?.variant_id || item?.variantId || item?.product_id || item?.productId || item?.id || ''),
+                productName: String(item?.product_name || item?.productName || item?.name || 'Produto'),
+                quantity: Number(item?.quantity || 0) || 0,
+                price: Number(item?.unit_price ?? item?.price ?? 0) || 0,
+                variantText: item?.variant_text || item?.variantText || undefined,
+                sku: item?.sku || undefined
+            }));
+
+        const normalizePaymentStatus = (value: any): Order['paymentStatus'] => {
+            const status = String(value || '').trim().toLowerCase();
+            if (['paid', 'pago', 'approved', 'aprovado', 'concluido', 'concluído'].includes(status)) return 'Pago';
+            if (['partial', 'partial_paid', 'partially_paid', 'parcial', 'parcialmente_pago'].includes(status)) return 'Parcialmente Pago';
+            if (['cancelled', 'canceled', 'cancelado', 'failed', 'falhou'].includes(status)) return 'Cancelado';
+            if (['refunded', 'reembolsado'].includes(status)) return 'Reembolsado';
+            return 'Pendente';
+        };
+
+        const normalizeFulfillmentStatus = (value: any): Order['fulfillmentStatus'] => {
+            const status = String(value || '').trim().toLowerCase();
+            if (['entregue', 'delivered', 'realizado', 'completed', 'complete', 'concluido', 'concluído'].includes(status)) return 'Realizado';
+            if (['partial', 'parcial'].includes(status)) return 'Parcial';
+            return 'NÃ£o Realizado';
+        };
+
+        const buildMarketplaceOrder = (row: any): Order => {
+            const items = normalizeOrderItems(row?.order_items);
+            const address = normalizeShippingAddress(row?.shipping_address);
+            const visibleId = String(row?.order_code || row?.id || '');
+
+            return {
+                id: visibleId.startsWith('#') ? visibleId : `#${visibleId}`,
+                backendId: String(row?.id || ''),
+                customerId: row?.buyer_id ? String(row.buyer_id) : undefined,
+                date: String(row?.created_at || row?.date || '').slice(0, 10),
+                customerName: String(row?.buyer_name || row?.customer_name || ''),
+                customerEmail: String(row?.buyer_email || row?.customer_email || ''),
+                customerCpf: String(row?.buyer_cpf || row?.customer_cpf || ''),
+                customerPhone: String(row?.buyer_phone || row?.customer_phone || ''),
+                shippingAddress: address,
+                items,
+                subtotal: Number(row?.subtotal || 0),
+                shippingCost: Number(row?.shipping_cost || 0),
+                discount: Number(row?.discount || 0),
+                total: Number(row?.total || 0),
+                currency: 'BRL',
+                paymentStatus: normalizePaymentStatus(row?.payment_status),
+                fulfillmentStatus: normalizeFulfillmentStatus(row?.status),
+                trackingCode: row?.tracking_code || undefined,
+                shippingMethod: row?.shipping_method || undefined,
+                notes: row?.customer_notes || row?.internal_notes || undefined,
+                paymentMethod: row?.payment_method || undefined,
+                buyerType: row?.buyer_type || undefined,
+                referrerId: row?.referrer_id || undefined,
+                distributorId: row?.distributor_id || undefined
+            };
+        };
+
+        const buildCdOrder = (row: any): Order => {
+            const items = normalizeOrderItems(row?.items);
+            const structuredAddress = normalizeShippingAddress({
+                street: row?.shipping_street,
+                number: row?.shipping_number,
+                complement: row?.shipping_complement,
+                neighborhood: row?.shipping_neighborhood,
+                city: row?.shipping_city,
+                state: row?.shipping_state,
+                zipCode: row?.shipping_zip_code
+            });
+            const hasStructuredAddress = Boolean(
+                structuredAddress.street ||
+                structuredAddress.number ||
+                structuredAddress.neighborhood ||
+                structuredAddress.city ||
+                structuredAddress.state ||
+                structuredAddress.zipCode
+            );
+            const shippingAddress = hasStructuredAddress ? structuredAddress : parseShippingAddressText(row?.shipping_address);
+            const publicCode = `#AC-${String(row?.id || '').split('-')[0].toUpperCase()}`;
+
+            return {
+                id: publicCode,
+                backendId: String(row?.marketplace_order_id || row?.id || ''),
+                customerId: row?.customer_id ? String(row.customer_id) : undefined,
+                date: String(row?.order_date || row?.created_at || '').slice(0, 10),
+                customerName: String(row?.customer_name || row?.consultant_name || ''),
+                customerEmail: String(row?.customer_email || row?.buyer_email || ''),
+                customerCpf: String(row?.customer_document || row?.buyer_cpf || ''),
+                customerPhone: String(row?.customer_phone || row?.buyer_phone || ''),
+                shippingAddress,
+                items,
+                subtotal: Number(row?.items_total || items.reduce((sum, item) => sum + item.price * item.quantity, 0)),
+                shippingCost: Number(row?.shipping_cost || row?.shipping_charged || 0),
+                discount: Number(row?.discount_total || 0),
+                total: Number(row?.total || 0),
+                currency: 'BRL',
+                paymentStatus: normalizePaymentStatus(row?.payment_status || row?.status),
+                fulfillmentStatus: normalizeFulfillmentStatus(row?.status),
+                trackingCode: row?.tracking_code || undefined,
+                shippingMethod: row?.shipping_method || undefined,
+                notes: row?.notes || undefined,
+                paymentMethod: row?.payment_method || undefined,
+                distributorId: row?.cd_id || undefined
+            };
+        };
+
+        const marketplaceResult = await supabase
             .from('orders')
             .select('*, order_items(*)')
-            .eq('order_code', code)
-            .single();
+            .eq('order_code', normalizedCode)
+            .maybeSingle();
 
-        if (error) return { success: false, error: error.message };
-        return { success: true, data };
+        if (!marketplaceResult.error && marketplaceResult.data) {
+            return { success: true, data: buildMarketplaceOrder(marketplaceResult.data) };
+        }
+
+        if (/^AC\-/i.test(normalizedCode)) {
+            const prefix = normalizedCode.replace(/^AC\-/i, '').trim().toLowerCase();
+            const cdCodeResult = await supabase
+                .from('cd_orders')
+                .select('*, items:cd_order_items(*)')
+                .ilike('id', `${prefix}-%`)
+                .maybeSingle();
+
+            if (!cdCodeResult.error && cdCodeResult.data) {
+                return { success: true, data: buildCdOrder(cdCodeResult.data) };
+            }
+        }
+
+        const trackingResult = await supabase
+            .from('cd_orders')
+            .select('*, items:cd_order_items(*)')
+            .eq('tracking_code', normalizedCode)
+            .maybeSingle();
+
+        if (!trackingResult.error && trackingResult.data) {
+            return { success: true, data: buildCdOrder(trackingResult.data) };
+        }
+
+        return {
+            success: false,
+            error: trackingResult.error?.message || marketplaceResult.error?.message || 'Pedido nao encontrado.'
+        };
     }
 };
 
@@ -442,6 +613,22 @@ export const dashboardLayoutAPI = {
     getMarketplaceLayoutConfig: async () => {
         return apiFetch('/v1/admin/dashboard/layout/marketplace', {
             headers: await getAuthHeaders()
+        });
+    },
+
+    updateMarketplaceLayoutConfig: async (config: any) => {
+        return apiFetch('/v1/admin/dashboard/layout/marketplace', {
+            method: 'PUT',
+            headers: await getAuthHeaders(),
+            body: JSON.stringify(config)
+        });
+    },
+
+    updateConsultantLayoutConfig: async (config: any) => {
+        return apiFetch('/v1/admin/dashboard/layout/consultant', {
+            method: 'PUT',
+            headers: await getAuthHeaders(),
+            body: JSON.stringify(config)
         });
     }
 };

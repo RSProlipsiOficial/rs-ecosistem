@@ -60,6 +60,7 @@ export interface Product {
   inventorySource?: 'global' | 'cd';
   inventoryStatusLabel?: string;
   inventoryStatusMessage?: string;
+  inventoryLoading?: boolean;
 }
 
 export interface ProductMerchandising {
@@ -814,11 +815,13 @@ export interface StoreLocation {
 
 export interface Distributor {
   id: string;
+  managerId?: string;
   name: string;
   ownerName: string;
   cpfCnpj: string;
   email: string;
   phone: string;
+  zipCode?: string;
   stores: StoreLocation[];
 }
 

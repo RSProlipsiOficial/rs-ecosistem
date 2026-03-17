@@ -10,7 +10,20 @@ import { callOpenRouter } from './openrouter';
 // requests will be made with relative paths (e.g., '/config'), ensuring they
 // are correctly routed to the backend via the proxy, regardless of the
 // development or production environment's domain.
-const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000';
+const getApiBaseUrl = () => {
+  const currentHostname = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
+  const isLocal = currentHostname === 'localhost' ||
+    currentHostname.startsWith('192.168.') ||
+    currentHostname.startsWith('10.') ||
+    currentHostname.startsWith('127.0.');
+
+  if (isLocal) {
+    return `http://${currentHostname}:3016`;
+  }
+  return import.meta.env.VITE_BACKEND_URL || 'http://localhost:3016';
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 
 

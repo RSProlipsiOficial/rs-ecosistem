@@ -6,15 +6,33 @@ const axios = require('axios');
 const crypto = require('crypto');
 
 const app = express();
-const PORT = 4000;
+const PORT = 3016;
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 
-// Supabase
+// Logger & Compatibility
+app.use((req, res, next) => {
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+    
+    // Suporte para rotas de branding que o frontend pode pedir com ou sem v1
+    if (req.url.includes('/admin/settings/general')) {
+        return res.json({
+            ok: true,
+            data: {
+                site_name: 'Robô Kagi Binance',
+                site_logo: '/logo-rs.png',
+                primary_color: '#f59e0b'
+            }
+        });
+    }
+    next();
+});
+
+// Supabase (Usando Service Role para ignorar RLS no backend)
 const supabaseUrl = 'https://rptkhrboejbwexseikuo.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJwdGtocmJvZWpid2V4c2Vpa3VvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcwMTQ4OTEsImV4cCI6MjA3MjU5MDg5MX0.lZdg0Esgxx81g9gO0IDKZ46a_zbyapToRqKSAg5oQ4Y';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJwdGtocmJvZWpid2V4c2Vpa3VvIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NzAxNDg5MSwiZXhwIjoyMDcyNTkwODkxfQ.Ka6uusggq9DXkiZ-luAi8hAkwV5LX6GPtnEgSpq7uYo';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 // OpenRouter API
@@ -58,7 +76,10 @@ class BinanceAPI {
             });
             return response.data;
         } catch (error) {
-            console.error('Binance API Error:', error.response?.data || error.message);
+            console.error(`Binance API Error [${endpoint}]:`, error.response?.data || error.message);
+            if (error.response?.data) {
+                console.error('Detalhes do Erro Binance:', JSON.stringify(error.response.data));
+            }
             throw error;
         }
     }
@@ -79,6 +100,24 @@ class BinanceAPI {
 }
 
 // ==================== ENDPOINTS ====================
+
+// Branding & Settings Resilience
+const sendBranding = (res) => {
+    res.json({
+        ok: true,
+        data: {
+            site_name: 'Robô Kagi Binance',
+            site_logo: '/logo-rs.png',
+            primary_color: '#f59e0b',
+            favicon: '/logo-rs.png'
+        }
+    });
+};
+
+app.get('/v1/admin/settings/general', (req, res) => sendBranding(res));
+app.get('/admin/settings/general', (req, res) => sendBranding(res));
+app.get('/v1/branding', (req, res) => sendBranding(res));
+app.get('/branding', (req, res) => sendBranding(res));
 
 // Config
 app.get('/config', (req, res) => {
@@ -118,14 +157,14 @@ app.get('/ohlcv', async (req, res) => {
             }
         });
 
-        const candles = response.data.map(k => ({
-            time: k[0] / 1000,
-            open: parseFloat(k[1]),
-            high: parseFloat(k[2]),
-            low: parseFloat(k[3]),
-            close: parseFloat(k[4]),
-            volume: parseFloat(k[5])
-        }));
+        const candles = response.data.map(k => [
+            k[0], // time (ms)
+            parseFloat(k[1]), // open
+            parseFloat(k[2]), // high
+            parseFloat(k[3]), // low
+            parseFloat(k[4]), // close
+            parseFloat(k[5])  // volume
+        ]);
 
         res.json({ candles });
     } catch (error) {
@@ -148,10 +187,10 @@ app.get('/kagi', async (req, res) => {
             }
         });
 
-        const kagiData = response.data.map(k => ({
-            time: k[0] / 1000,
-            value: parseFloat(k[4]) // close price
-        }));
+        const kagiData = response.data.map(k => [
+            k[0], // time (ms)
+            parseFloat(k[4]) // close price used as value
+        ]);
 
         res.json({ kagi: kagiData });
     } catch (error) {
@@ -184,34 +223,66 @@ app.get('/market_overview', async (req, res) => {
 app.get('/account', async (req, res) => {
     try {
         // Buscar credenciais do Supabase
-        const { data: keys } = await supabase
+        const { data: keys, error: sbError } = await supabase
             .from('user_api_keys')
             .select('*')
             .limit(1)
             .single();
 
-        if (!keys || !keys.binance_api_key) {
-            return res.json({ balance: 0, positions: [], orders: [] });
+        if (sbError) {
+            console.error('Supabase Error in /account:', sbError.message);
+            return res.json({ balance: 0, positions: [], orders: [], error: 'Erro no banco de dados' });
         }
+
+        if (!keys || !keys.binance_api_key) {
+            console.warn('Nenhuma chave de API encontrada para o usuário.');
+            return res.json({ balance: 0, positions: [], orders: [], error: 'Chaves não encontradas' });
+        }
+
+        console.log(`Tentando conectar na Binance com a chave: ${keys.binance_api_key.substring(0, 10)}...`);
 
         const binance = new BinanceAPI(keys.binance_api_key, keys.binance_api_secret);
         const account = await binance.getAccountInfo();
         const positions = await binance.getPositions();
 
+        console.log('[DEBUG /account] Dados brutos recebidos:', { 
+            hasAccount: !!account, 
+            hasPositions: !!positions,
+            walletBalance: account?.totalWalletBalance 
+        });
+
+        if (!account || !account.totalWalletBalance) {
+            throw new Error(`Dados de conta inválidos da Binance: ${JSON.stringify(account)}`);
+        }
+
+        // Mapear para a interface AccountState do Frontend
         res.json({
-            balance: parseFloat(account.totalWalletBalance),
+            totalBalance: parseFloat(account.totalWalletBalance),
+            availableBalance: parseFloat(account.availableBalance),
+            totalUnrealizedPnl: parseFloat(account.totalUnrealizedProfit),
+            marginUsed: parseFloat(account.totalInitialMargin),
             positions: positions.filter(p => parseFloat(p.positionAmt) !== 0).map(p => ({
                 symbol: p.symbol.replace('USDT', '/USDT'),
-                side: parseFloat(p.positionAmt) > 0 ? 'long' : 'short',
+                side: parseFloat(p.positionAmt) > 0 ? 'LONG' : 'SHORT',
                 size: Math.abs(parseFloat(p.positionAmt)),
-                entry_price: parseFloat(p.entryPrice),
-                pnl: parseFloat(p.unRealizedProfit)
+                entryPrice: parseFloat(p.entryPrice),
+                markPrice: parseFloat(p.markPrice),
+                pnl: parseFloat(p.unRealizedProfit),
+                margin: parseFloat(p.isolatedMargin) || 0
             })),
             orders: []
         });
     } catch (error) {
-        console.error('Account error:', error);
-        res.json({ balance: 0, positions: [], orders: [] });
+        console.error('Account error:', error.response?.data || error.message);
+        res.status(500).json({ 
+            totalBalance: 0, 
+            availableBalance: 0, 
+            totalUnrealizedPnl: 0, 
+            marginUsed: 0, 
+            positions: [], 
+            orders: [], 
+            error: error.message 
+        });
     }
 });
 
@@ -260,25 +331,35 @@ wss.on('connection', (ws) => {
         data: robotStates
     }));
 
-    // Simular atualizações de preço
-    const priceInterval = setInterval(() => {
-        const symbols = ['BTC/USDT', 'ETH/USDT', 'SOL/USDT', 'BNB/USDT'];
-        symbols.forEach(symbol => {
-            ws.send(JSON.stringify({
-                type: 'price_update',
-                data: {
-                    symbol,
-                    price: Math.random() * 100000,
-                    time: Date.now()
-                }
-            }));
-        });
-    }, 1000);
+    // Simulação removida para usar dados reais da Binance via fetch/ohlcv
+    // const priceInterval = setInterval(() => { ... }, 1000);
+
+    // Keep-alive (Ping-Pong)
+    ws.isAlive = true;
+    ws.on('pong', () => {
+        ws.isAlive = true;
+    });
 
     ws.on('close', () => {
         console.log('❌ Cliente WebSocket desconectado');
-        clearInterval(priceInterval);
     });
+
+    ws.on('error', (err) => {
+        console.error('WebSocket error:', err.message);
+    });
+});
+
+// Ping interval para detectar conexões mortas (keep-alive)
+const pingInterval = setInterval(() => {
+    wss.clients.forEach((ws) => {
+        if (ws.isAlive === false) return ws.terminate();
+        ws.isAlive = false;
+        ws.ping();
+    });
+}, 30000);
+
+wss.on('close', () => {
+    clearInterval(pingInterval);
 });
 
 // ==================== SERVER START ====================

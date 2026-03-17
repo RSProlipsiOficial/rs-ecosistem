@@ -23,11 +23,11 @@ export function connectWS(
       currentHostname.startsWith('10.') ||
       currentHostname.startsWith('127.0.');
 
-    // Se for local, SEMPRE tentar conectar no mesmo IP, porta 4000
+    // Se for local, SEMPRE tentar conectar no mesmo IP, porta 3016 (Backend do Kagi)
     if (isLocal) {
       const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-      console.log(`[WebSocket] Ambiente local detectado. Tentando conectar em ${protocol}://${currentHostname}:4000/ws`);
-      return `${protocol}://${currentHostname}:4000/ws`;
+      console.log(`[WebSocket] Ambiente local detectado. Tentando conectar em ${protocol}://${currentHostname}:3016/ws`);
+      return `${protocol}://${currentHostname}:3016/ws`;
     }
 
     // Se não for local, usar a URL de produção do env
@@ -41,7 +41,7 @@ export function connectWS(
     const isProd = window.location.protocol === 'https:';
     const protocol = isProd ? 'wss' : 'ws';
     const hostname = window.location.hostname || 'localhost';
-    const port = isProd ? '' : ':4000';
+    const port = isProd ? '' : ':3016';
     return `${protocol}://${hostname}${port}/ws`;
   };
 
@@ -84,27 +84,7 @@ export function connectWS(
       reconnectDelay = 1000; // Reset delay on successful connection
       reconnectAttempts = 0; // Reset attempts on successful connection
 
-      // SIMULATE REAL-TIME PRICE FEEDS
       if (priceUpdateInterval) clearInterval(priceUpdateInterval);
-      const symbolsToUpdate = ['BTC/USDT', 'ETH/USDT', 'SOL/USDT', 'BNB/USDT'];
-      let lastPrices: Record<string, number> = { 'BTC/USDT': 68000, 'ETH/USDT': 3800, 'SOL/USDT': 165, 'BNB/USDT': 600 };
-      priceUpdateInterval = window.setInterval(() => {
-        if (ws.readyState === WebSocket.OPEN) {
-          symbolsToUpdate.forEach(symbol => {
-            const change = (Math.random() - 0.5) * (lastPrices[symbol] * 0.0005);
-            lastPrices[symbol] += change;
-            const priceUpdate = {
-              type: 'price_update',
-              data: {
-                symbol: symbol,
-                price: lastPrices[symbol],
-                time: Date.now()
-              }
-            };
-            onMsg(priceUpdate);
-          });
-        }
-      }, 1000); // Send updates every second
     };
 
     ws.onclose = () => {

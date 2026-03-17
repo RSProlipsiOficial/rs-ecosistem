@@ -85,11 +85,11 @@ async function registerSale(paymentData) {
         product_id: product.id,
         product_name: product.name,
         product_sku: product.sku,
-        price_original: product.price_base,
+        price_original: product.price_base || product.price || 0,
         price_final: item.price_final,
         quantity: item.quantity,
         total_amount: item.total,
-        contributes_to_matrix: product.contributes_to_matrix,
+        contributes_to_matrix: product.specifications?.qualifiesForCycle || product.contributes_to_matrix || false,
         payment_method: method,
         payment_status: 'completed',
         payment_id: mpPaymentId,
@@ -109,7 +109,7 @@ async function registerSale(paymentData) {
     sales.push(sale);
 
     // Acumular valor para matriz
-    if (product.contributes_to_matrix) {
+    if (product.specifications?.qualifiesForCycle || product.contributes_to_matrix) {
       totalMatrixValue += parseFloat(item.total);
     }
 
@@ -132,7 +132,7 @@ async function registerSale(paymentData) {
           });
 
           // Creditar Carteira
-          await creditWallet(order.referred_by, totalCommission, 'sale', `Comissão Venda #${order.id}`);
+          await creditWallet(order.referred_by, totalCommission, 'sale', `Comissão Venda #${order.id}`, order.id);
           console.log(`💰 Comissão Creditada: R$ ${totalCommission} para ${order.referred_by}`);
         }
       } catch (commError) {
@@ -219,7 +219,8 @@ async function registerSale(paymentData) {
           upline.consultor_id,
           bonusAmount,
           'depth_bonus',
-          `Bônus Profundidade L${upline.nivel} - Venda #${orderId}`
+          `Bônus Profundidade L${upline.nivel} - Venda #${orderId}`,
+          orderId
         );
       }
 
@@ -444,26 +445,60 @@ async function createOrder(orderData) {
 /**
  * Credita wallet do consultor
  */
-async function creditWallet(consultorId, amount, type = 'sale', description = 'Venda de produto') {
+async function creditWallet(consultorId, amount, type = 'sale', description = 'Venda de produto', referenceId = null) {
   console.log(`💰 Creditando wallet: ${consultorId} + R$ ${amount}`);
 
   // 1. Buscar wallet
-  const { data: wallet } = await supabase
+  const { data: wallet, error: fetchErr } = await supabase
     .from('wallets')
     .select('*')
     .eq('consultor_id', consultorId)
-    .single();
+    .maybeSingle();
 
   if (!wallet) {
-    throw new Error(`Carteira não encontrada para consultor ${consultorId}`);
+    console.log(`🆕 Criando carteira para consultor ${consultorId}...`);
+    const { data: newWallet, error: createErr } = await supabase
+      .from('wallets')
+      .insert({
+        consultor_id: consultorId,
+        balance: amount,
+        total_received: amount,
+        status: 'active'
+      })
+      .select()
+      .single();
+
+    if (createErr) {
+      console.error(`❌ Erro ao criar wallet: ${createErr.message}`);
+      // Tenta registrar transação mesmo assim (o trigger pode falhar se não houver wallet_id)
+      return;
+    }
+
+    // Registrar transação manual se não houver trigger
+    await supabase.from('wallet_transactions').insert({
+      wallet_id: newWallet.id,
+      consultant_id: consultorId,
+      type: 'credit',
+      amount,
+      balance_after: amount,
+      description,
+      reference_id: referenceId,
+      reference_type: 'order',
+      status: 'completed'
+    });
+
+    return newWallet;
   }
 
-  // 2. Atualizar saldo (TRIGGER registra transação automaticamente!)
+  // 2. Atualizar saldo
+  const newBalance = parseFloat(wallet.balance || 0) + parseFloat(amount);
+  const newTotal = parseFloat(wallet.total_received || 0) + parseFloat(amount);
+
   const { data, error } = await supabase
     .from('wallets')
     .update({
-      balance: parseFloat(wallet.balance) + parseFloat(amount),
-      total_received: parseFloat(wallet.total_received) + parseFloat(amount),
+      balance: newBalance,
+      total_received: newTotal,
       updated_at: new Date().toISOString()
     })
     .eq('id', wallet.id)
@@ -471,6 +506,19 @@ async function creditWallet(consultorId, amount, type = 'sale', description = 'V
     .single();
 
   if (error) throw new Error(`Erro ao creditar wallet: ${error.message}`);
+
+  // 3. Registrar transação com referência ao pedido
+  await supabase.from('wallet_transactions').insert({
+    wallet_id: wallet.id,
+    consultant_id: consultorId,
+    type: 'credit',
+    amount,
+    balance_after: newBalance,
+    description,
+    reference_id: referenceId,
+    reference_type: 'order',
+    status: 'completed'
+  });
 
   console.log(`✅ Wallet creditada: R$ ${amount.toFixed(2)}`);
   return data;

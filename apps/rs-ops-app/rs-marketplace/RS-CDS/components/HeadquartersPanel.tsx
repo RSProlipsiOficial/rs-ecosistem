@@ -4,6 +4,15 @@ import React, { useState } from 'react';
 import { CDRegistry, FranchiseRule, ReplenishmentOrder, ExternalConsultant, GlobalSalesOrder } from '../types';
 import { Shield, Building2, Users, DollarSign, Plus, Search, Edit, Lock, Unlock, Save, FileText, CheckCircle, Package, Truck, Eye, X, Send, History, Filter, ShoppingBag, BarChart2, Calendar, MapPin } from 'lucide-react';
 import { mockCDRegistry, mockFranchiseRules, mockExternalConsultants, mockReplenishmentOrders, mockGlobalSales } from '../services/mockData';
+import { getDisplayOrderHeading } from '../utils/orderDisplay';
+
+const shouldShowCommercialIdentifier = (value?: string | null): boolean => {
+    const normalized = String(value || '').trim();
+    if (!normalized) return false;
+    if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(normalized)) return false;
+    if (normalized.length > 24) return false;
+    return true;
+};
 
 const HeadquartersPanel: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'REQUESTS' | 'RULES' | 'SALES'>('OVERVIEW');
@@ -403,7 +412,9 @@ const HeadquartersPanel: React.FC = () => {
                                         <td className="px-6 py-4 font-mono text-xs">{sale.id}</td>
                                         <td className="px-6 py-4">
                                             <div>{sale.consultantName}</div>
-                                            <div className="text-[10px] text-gray-500">PIN: {sale.consultantPin}</div>
+                                            {shouldShowCommercialIdentifier(sale.consultantPin) ? (
+                                                <div className="text-[10px] text-gray-500">LOGIN/MMN: {sale.consultantPin}</div>
+                                            ) : null}
                                         </td>
                                         <td className="px-6 py-4 text-right font-bold text-gold-400">R$ {sale.total.toFixed(2)}</td>
                                         <td className="px-6 py-4 text-right text-blue-400 font-bold">{sale.totalPoints}</td>
@@ -723,7 +734,7 @@ const HeadquartersPanel: React.FC = () => {
                         <Truck size={24} />
                     </div>
                     <div>
-                        <h3 className="text-xl font-bold text-white">Pedido #{selectedOrder.id}</h3>
+                        <h3 className="text-xl font-bold text-white">{getDisplayOrderHeading(selectedOrder)}</h3>
                         <p className="text-sm text-gray-400">Solicitado por {selectedOrder.cdName}</p>
                     </div>
                     <div className="ml-auto">
@@ -823,7 +834,7 @@ const HeadquartersPanel: React.FC = () => {
                          <div>
                             <h3 className="text-xl font-bold text-white flex items-center gap-2">
                                 <ShoppingBag className="text-gold-400" />
-                                Venda #{selectedGlobalSale.id}
+                                {getDisplayOrderHeading(selectedGlobalSale)}
                             </h3>
                             <p className="text-sm text-gray-500 mt-1">Realizada em {selectedGlobalSale.date.split('-').reverse().join('/')}</p>
                          </div>
@@ -838,7 +849,9 @@ const HeadquartersPanel: React.FC = () => {
                      <div className="bg-dark-950 p-3 rounded-lg border border-dark-800">
                          <p className="text-xs text-gray-500 uppercase font-bold mb-1">Consultor Comprador</p>
                          <p className="text-white font-medium">{selectedGlobalSale.consultantName}</p>
-                         <p className="text-xs text-gray-500">PIN: {selectedGlobalSale.consultantPin}</p>
+                         {shouldShowCommercialIdentifier(selectedGlobalSale.consultantPin) ? (
+                             <p className="text-xs text-gray-500">LOGIN/MMN: {selectedGlobalSale.consultantPin}</p>
+                         ) : null}
                      </div>
                      <div className="bg-dark-950 p-3 rounded-lg border border-dark-800">
                          <p className="text-xs text-gray-500 uppercase font-bold mb-1">Pontuação Gerada</p>

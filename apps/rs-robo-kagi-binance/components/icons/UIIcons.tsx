@@ -126,7 +126,6 @@ export const LogoutIcon = ({ className = "h-6 w-6" }: { className?: string }) =>
 );
 
 export const KeyIcon = ({ className = "h-5 w-5", title }: { className?: string, title?: string }) => (
-    // FIX: Replaced the 'title' attribute with a nested <title> element for React compatibility and accessibility.
     <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
         {title && <title>{title}</title>}
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.629 5.655l-2.93 2.93a1 1 0 01-1.414 0l-1.414-1.414a1 1 0 010-1.414l2.93-2.93A6 6 0 0121 11zM10.344 13.656a4.5 4.5 0 00-6.364 6.364m6.364-6.364l-1.414-1.414" />
@@ -136,5 +135,11 @@ export const KeyIcon = ({ className = "h-5 w-5", title }: { className?: string, 
 export const RefreshIcon = ({ className = "h-5 w-5" }: { className?: string }) => (
     <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0011.667 0l3.181-3.183m-11.667 0a8.25 8.25 0 010 11.667l-3.181 3.183" />
+    </svg>
+);
+
+export const MaximizeIcon = ({ className = "h-5 w-5" }: { className?: string }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
     </svg>
 );

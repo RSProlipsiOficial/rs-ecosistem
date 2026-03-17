@@ -121,6 +121,7 @@ export interface AIAnalysis {
 export interface ChartState {
     symbol: string;
     timeframe: string;
+    visible?: boolean; // Propriedade opcional para suporte a fechar/abrir
 }
 
 export interface VisibleComponents {
@@ -255,10 +256,10 @@ export default function App() {
     const [toasts, setToasts] = useState<ToastMessage[]>([]);
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [chartStates, setChartStates] = useState<ChartState[]>([
-        { symbol: 'BTC/USDT', timeframe: '1h' },
-        { symbol: 'ETH/USDT', timeframe: '4h' },
-        { symbol: 'SOL/USDT', timeframe: '1h' },
-        { symbol: 'BNB/USDT', timeframe: '1D' },
+        { symbol: 'BTC/USDT', timeframe: '1h', visible: true },
+        { symbol: 'ETH/USDT', timeframe: '4h', visible: true },
+        { symbol: 'SOL/USDT', timeframe: '1h', visible: true },
+        { symbol: 'BNB/USDT', timeframe: '1D', visible: true },
     ]);
     const [activeChartIndex, setActiveChartIndex] = useState<number>(0);
     const [visibleComponents, setVisibleComponents] = useState<VisibleComponents>(loadVisibleComponents());
@@ -307,6 +308,19 @@ export default function App() {
         setChartStates(prev => {
             const newChartStates = [...prev];
             newChartStates[index] = { ...newChartStates[index], ...newState };
+            return newChartStates;
+        });
+    };
+
+    const handleToggleChartVisibility = (index: number) => {
+        setChartStates(prev => {
+            const newChartStates = [...prev];
+            newChartStates[index] = { ...newChartStates[index], visible: !newChartStates[index].visible };
+            // Se fechou o atual ativo, mudar o activeChartIndex para o próximo visível
+            if (!newChartStates[index].visible && index === activeChartIndex) {
+                 const nextVisible = newChartStates.findIndex(c => c.visible);
+                 if (nextVisible > -1) setActiveChartIndex(nextVisible);
+            }
             return newChartStates;
         });
     };
@@ -401,7 +415,7 @@ export default function App() {
         return () => {
             ws(); // Chamar a função de cleanup
         };
-    }, [user, isAccountLoading, accountError, subscriptionStatus, activeView]);
+    }, [user, subscriptionStatus]); // REMOVIDO activeView para evitar quedas ao trocar abas
 
 
     // Supabase: Initial data load effect
@@ -797,6 +811,7 @@ export default function App() {
                     setOrders={setOrders}
                     visibleComponents={visibleComponents}
                     latestPrices={latestPrices}
+                    handleToggleChartVisibility={handleToggleChartVisibility}
                 />;
             case 'dashboard':
                 return <Dashboard orders={orders} accountState={accountState} visibleComponents={visibleComponents} />;
@@ -856,6 +871,7 @@ export default function App() {
                     setOrders={setOrders}
                     visibleComponents={visibleComponents}
                     latestPrices={latestPrices}
+                    handleToggleChartVisibility={handleToggleChartVisibility}
                 />;
         }
     }

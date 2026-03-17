@@ -8,7 +8,7 @@ import {
 } from '../data';
 import { useUser } from '../ConsultantLayout';
 import { sigmaApi } from '../services/sigmaApi';
-import { IconGitFork, IconCheckCircle, IconTruck, IconMapPin, IconPlus, IconLock, IconBuilding2, IconShoppingCart, IconWhatsapp, IconMinus, IconTrash, IconChevronLeft, IconWallet, IconReceipt, IconHandCoins, IconCreditCard } from '../../components/icons';
+import { IconGitFork, IconCheckCircle, IconTruck, IconMapPin, IconPlus, IconLock, IconBuilding2, IconShoppingCart, IconWhatsapp, IconMinus, IconTrash, IconChevronLeft, IconChevronDown, IconChevronUp, IconWallet, IconReceipt, IconHandCoins, IconCreditCard } from '../../components/icons';
 import type { CDProduct } from '../../types';
 
 const formatCurrency = (value: number) => `R$ ${value.toFixed(2).replace('.', ',')}`;
@@ -82,6 +82,51 @@ const CicloGlobal: React.FC = () => {
     setTempSelectedDistributionCenter(cd);
     setAutoConfigStep(2);
     await loadProducts(cd.id);
+  };
+
+  const renderDistributionCenterOptions = (
+    cds: any[],
+    onSelect: (cd: any) => void
+  ) => {
+    if (loadingCDs) {
+      return (
+        <div className="rounded-lg border border-brand-gray bg-brand-gray-light p-4 text-sm text-gray-400">
+          Carregando locais de compra...
+        </div>
+      );
+    }
+
+    if (!cds.length) {
+      return (
+        <div className="rounded-lg border border-yellow-500/30 bg-yellow-500/5 p-4 text-sm text-yellow-200">
+          Nenhum local de compra foi encontrado agora. Verifique o cadastro do CD ou a conexão com a API.
+        </div>
+      );
+    }
+
+    return cds.map(cd => (
+      <div key={cd.id} className={`flex items-center justify-between p-3 bg-brand-gray-light rounded-lg transition-all hover:bg-brand-gray ${cd.isFederalSede ? 'border-2 border-brand-gold/50' : ''}`}>
+        <button onClick={() => onSelect(cd)} className="flex-grow text-left">
+          <div className="flex items-center gap-4">
+            <IconBuilding2 className="text-brand-gold flex-shrink-0" size={32} />
+            <div>
+              <p className={`font-semibold text-white ${cd.isFederalSede ? 'text-brand-gold' : ''}`}>{cd.name}</p>
+              <p className="text-sm text-gray-400">
+                {[cd.city, cd.state].filter(Boolean).join(' - ') || 'Local de compra'}
+              </p>
+              {cd.zip && (
+                <p className="text-xs text-gray-500">CEP: {cd.zip}</p>
+              )}
+            </div>
+          </div>
+        </button>
+        {cd.whatsapp ? (
+          <a href={`https://wa.me/${String(cd.whatsapp).replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="p-3 bg-green-500/10 rounded-full hover:bg-green-500/30 text-green-400 ml-4 flex-shrink-0">
+            <IconWhatsapp size={24} />
+          </a>
+        ) : null}
+      </div>
+    ));
   };
 
   // State for manual activation flow
@@ -222,6 +267,7 @@ const CicloGlobal: React.FC = () => {
       const cd = realCDs.find(c => String(c.id) === String(savedAutoConfigData.cdId));
       const product = realProducts.find(p => String(p.id) === String(savedAutoConfigData.productId));
       if (cd && product) {
+        setIsAutoReinvestActive(true); // Garante que o botão fique ligado se houver config válida
         setAutoReinvestConfig({
           distributionCenter: cd,
           product: product,
@@ -493,25 +539,10 @@ const CicloGlobal: React.FC = () => {
       case 1: // CD Selection
         return (
           <div className="space-y-4">
-            <h3 className="text-xl font-bold text-white">Passo 1: Escolha o CD</h3>
+            <h3 className="text-xl font-bold text-white">Passo 1: Escolha o local de compra</h3>
             <p className="text-sm text-gray-400">Selecione de onde seus produtos serão processados e enviados.</p>
             <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
-              {sortedCDs.map(cd => (
-                <div key={cd.id} className={`flex items-center justify-between p-3 bg-brand-gray-light rounded-lg transition-all hover:bg-brand-gray ${cd.isFederalSede ? 'border-2 border-brand-gold/50' : ''}`}>
-                  <button onClick={() => handleSelectCD(cd)} className="flex-grow text-left">
-                    <div className="flex items-center gap-4">
-                      <IconBuilding2 className="text-brand-gold flex-shrink-0" size={32} />
-                      <div>
-                        <p className={`font-semibold text-white ${cd.isFederalSede ? 'text-brand-gold' : ''}`}>{cd.name}</p>
-                        <p className="text-sm text-gray-400">{cd.city}</p>
-                      </div>
-                    </div>
-                  </button>
-                  <a href={`https://wa.me/${cd.whatsapp}`} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="p-3 bg-green-500/10 rounded-full hover:bg-green-500/30 text-green-400 ml-4 flex-shrink-0">
-                    <IconWhatsapp size={24} />
-                  </a>
-                </div>
-              ))}
+              {renderDistributionCenterOptions(sortedCDs, handleSelectCD)}
             </div>
           </div>
         );
@@ -519,18 +550,51 @@ const CicloGlobal: React.FC = () => {
         return (
           <div className="flex flex-col h-full">
             <h3 className="text-xl font-bold text-white mb-4">Passo 2: Escolha seus produtos</h3>
+            {selectedDistributionCenter && (
+              <div className="mb-4 rounded-lg border border-brand-gold/30 bg-brand-gold/5 p-3 text-sm text-brand-gold">
+                Local de compra: <span className="font-semibold">{selectedDistributionCenter.name}</span>
+              </div>
+            )}
             <div className="flex-grow space-y-3 max-h-[60vh] overflow-y-auto pr-2">
               {realProducts.length > 0 ? realProducts.map(product => {
                 const discountedPrice = product.fullPrice * (1 - product.discount / 100);
                 return (
-                  <div key={product.id} className="p-3 bg-brand-gray-light rounded-lg flex items-center justify-between">
-                    <div>
-                      <p className="font-semibold text-white">{product.name}</p>
-                      <p className="text-lg font-bold text-brand-gold">{formatCurrency(discountedPrice)}</p>
+                  <div key={product.id} className="p-4 bg-brand-gray/40 border border-brand-gray-light/50 rounded-xl flex items-center justify-between group hover:border-brand-gold/40 transition-all duration-300">
+                    <div className="flex-grow pr-4">
+                      <p className="font-bold text-white group-hover:text-brand-gold transition-colors text-sm sm:text-base">{product.name}</p>
+                      <p className="text-xl font-black text-brand-gold mt-1">{formatCurrency(discountedPrice)}</p>
                     </div>
-                    <button onClick={() => addToCart(product, 1)} className="bg-brand-gold text-brand-dark font-bold py-2 px-3 rounded-lg hover:bg-yellow-400 flex items-center gap-1">
-                      <IconPlus size={16} />
-                    </button>
+                    
+                    {/* Controle de Quantidade Premium (Vertical Arrows) */}
+                    <div className="flex items-center bg-brand-dark/90 rounded-xl p-1 px-3 border border-brand-gold/40 shadow-[0_0_15px_rgba(212,175,55,0.05)]">
+                      <div className="w-10 text-center font-black text-white text-2xl tabular-nums mr-2">
+                        {cart.find(i => i.id === product.id)?.quantity || 0}
+                      </div>
+                      <div className="flex flex-col border-l border-brand-gold/20 pl-2">
+                        <button 
+                          onClick={() => addToCart(product, 1)}
+                          className="p-1 text-brand-gold hover:text-white transition-colors"
+                          title="Aumentar"
+                        >
+                          <IconChevronUp size={22} weight="bold" />
+                        </button>
+                        <button 
+                          onClick={() => {
+                            const item = cart.find(i => i.id === product.id);
+                            if (item && item.quantity > 0) updateCartQuantity(product.id, item.quantity - 1);
+                          }}
+                          className={`p-1 transition-all ${
+                            (cart.find(i => i.id === product.id)?.quantity || 0) > 0 
+                            ? 'text-brand-gold hover:text-white' 
+                            : 'text-brand-gray opacity-30 cursor-not-allowed'
+                          }`}
+                          disabled={(cart.find(i => i.id === product.id)?.quantity || 0) === 0}
+                          title="Diminuir"
+                        >
+                          <IconChevronDown size={22} weight="bold" />
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 );
               }) : (
@@ -541,9 +605,13 @@ const CicloGlobal: React.FC = () => {
             </div>
             <div className="pt-4 mt-4 border-t border-brand-gray-light flex justify-between items-center">
               <button onClick={() => setModalStep(1)} className="text-sm text-gray-400 hover:text-white">&larr; Voltar para CDs</button>
-              <button onClick={() => setModalStep(3)} disabled={cart.length === 0} className="bg-brand-gold text-brand-dark font-bold py-2 px-4 rounded-lg hover:bg-yellow-400 disabled:bg-brand-gray flex items-center gap-2">
-                <IconShoppingCart size={16} />
-                Ver Carrinho ({cart.reduce((acc, item) => acc + item.quantity, 0)})
+              <button 
+                onClick={() => setModalStep(3)} 
+                disabled={cart.length === 0} 
+                className="flex items-center gap-3 bg-brand-dark border-2 border-brand-gold text-brand-gold font-black py-3 px-6 rounded-xl hover:bg-brand-gold hover:text-brand-dark transition-all disabled:opacity-30 disabled:grayscale disabled:cursor-not-allowed shadow-lg shadow-brand-gold/10"
+              >
+                <IconShoppingCart size={20} />
+                <span>Ver Carrinho ({cart.reduce((acc, item) => acc + item.quantity, 0)})</span>
               </button>
             </div>
           </div>
@@ -552,6 +620,11 @@ const CicloGlobal: React.FC = () => {
         return (
           <div className="space-y-4">
             <h3 className="text-xl font-bold text-white">Passo 3: Revisão e Entrega</h3>
+            {selectedDistributionCenter && (
+              <div className="rounded-lg border border-brand-gold/30 bg-brand-gold/5 p-3 text-sm text-brand-gold">
+                Local de compra: <span className="font-semibold">{selectedDistributionCenter.name}</span>
+              </div>
+            )}
             <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
               {cart.map(item => (
                 <div key={item.id} className="flex items-center justify-between pb-3 border-b border-brand-gray-light last:border-b-0">
@@ -702,24 +775,9 @@ const CicloGlobal: React.FC = () => {
       case 1: // CD Selection
         return (
           <div className="space-y-4">
-            <h3 className="text-xl font-bold text-white">Passo 1: Escolha o CD</h3>
+            <h3 className="text-xl font-bold text-white">Passo 1: Escolha o local de compra</h3>
             <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
-              {sortedCDs.map(cd => (
-                <div key={cd.id} className={`flex items-center justify-between p-3 bg-brand-gray-light rounded-lg transition-all hover:bg-brand-gray ${cd.isFederalSede ? 'border-2 border-brand-gold/50' : ''}`}>
-                  <button onClick={() => handleSelectAutoCD(cd)} className="flex-grow text-left">
-                    <div className="flex items-center gap-4">
-                      <IconBuilding2 className="text-brand-gold flex-shrink-0" size={32} />
-                      <div>
-                        <p className={`font-semibold text-white ${cd.isFederalSede ? 'text-brand-gold' : ''}`}>{cd.name}</p>
-                        <p className="text-sm text-gray-400">{cd.city}</p>
-                      </div>
-                    </div>
-                  </button>
-                  <a href={`https://wa.me/${cd.whatsapp}`} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="p-3 bg-green-500/10 rounded-full hover:bg-green-500/30 text-green-400 ml-4 flex-shrink-0" aria-label={`Contact ${cd.name} on WhatsApp`}>
-                    <IconWhatsapp size={24} />
-                  </a>
-                </div>
-              ))}
+              {renderDistributionCenterOptions(sortedCDs, handleSelectAutoCD)}
             </div>
           </div>
         );
@@ -733,12 +791,36 @@ const CicloGlobal: React.FC = () => {
                 const discountedPrice = product.fullPrice * (1 - product.discount / 100);
                 const isSelected = tempSelectedProduct?.id === product.id;
                 return (
-                  <button key={product.id} onClick={() => setTempSelectedProduct(product)} className={`w-full text-left p-3 bg-brand-gray-light rounded-lg hover:bg-brand-gray border-2 transition-all ${isSelected ? 'border-brand-gold' : 'border-transparent'}`}>
-                    <p className="font-semibold text-white">{product.name}</p>
-                    <div className="flex items-center gap-2">
-                      <p className="text-lg font-bold text-brand-gold">{formatCurrency(discountedPrice)}</p>
+                  <div key={product.id} className={`p-4 bg-brand-gray/40 border-2 rounded-xl flex items-center justify-between group transition-all duration-300 ${isSelected ? 'border-brand-gold shadow-[0_0_15px_rgba(212,175,55,0.1)]' : 'border-brand-gray-light/50 hover:border-brand-gold/30'}`}>
+                    <div className="flex-grow pr-4 cursor-pointer" onClick={() => setTempSelectedProduct(product)}>
+                      <p className={`font-bold transition-colors text-sm sm:text-base ${isSelected ? 'text-brand-gold' : 'text-white'}`}>{product.name}</p>
+                      <p className="text-xl font-black text-brand-gold mt-1">{formatCurrency(discountedPrice)}</p>
                     </div>
-                  </button>
+                    
+                    <div className="flex items-center bg-brand-dark/90 rounded-xl p-1 px-3 border border-brand-gold/40 shadow-[0_0_15px_rgba(212,175,55,0.05)]">
+                      <div className="w-10 text-center font-black text-white text-2xl tabular-nums mr-2">
+                        {isSelected ? 1 : 0}
+                      </div>
+                      <div className="flex flex-col border-l border-brand-gold/20 pl-2">
+                        <button 
+                          onClick={() => setTempSelectedProduct(product)}
+                          className={`p-1 transition-colors ${isSelected ? 'text-brand-gray opacity-30 cursor-not-allowed' : 'text-brand-gold hover:text-white'}`}
+                          disabled={isSelected}
+                          title="Selecionar"
+                        >
+                          <IconChevronUp size={22} weight="bold" />
+                        </button>
+                        <button 
+                          onClick={() => { if (isSelected) setTempSelectedProduct(null); }}
+                          className={`p-1 transition-all ${isSelected ? 'text-brand-gold hover:text-white' : 'text-brand-gray opacity-30 cursor-not-allowed'}`}
+                          disabled={!isSelected}
+                          title="Remover"
+                        >
+                          <IconChevronDown size={22} weight="bold" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 );
               }) : (
                 <div className="text-center py-8 text-gray-400">
@@ -807,7 +889,9 @@ const CicloGlobal: React.FC = () => {
 
       const resConfig = await sigmaApi.getUserConfig();
       if (resConfig.success && resConfig.data) {
-        setIsAutoReinvestActive(resConfig.data.autoReinvest);
+        if (resConfig.data.autoReinvest) {
+          setIsAutoReinvestActive(true);
+        }
         setSavedAutoConfigData(resConfig.data);
       }
     } catch (error) {
@@ -965,14 +1049,29 @@ const CicloGlobal: React.FC = () => {
 
       <div>
         <h2 className="text-xl font-bold text-white mb-4">Sua Jornada de Ciclos</h2>
-        <div className="flex space-x-4 overflow-x-auto pb-4 scrollbar-hide">
+        <div className="relative group/journey">
+          {/* Scroll Indicators */}
+          <div className="absolute left-0 top-0 bottom-4 w-12 bg-gradient-to-r from-brand-dark to-transparent z-20 pointer-events-none opacity-0 group-hover/journey:opacity-100 transition-opacity"></div>
+          <div className="absolute right-0 top-0 bottom-4 w-12 bg-gradient-to-l from-brand-dark to-transparent z-20 pointer-events-none opacity-60 group-hover/journey:opacity-100 transition-opacity"></div>
+          
+          <div className="flex space-x-4 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory">
           {(() => {
             let hasRenderedNextCycleCard = false;
             // Se journey estiver vazio, o primeiro card é o Ciclo 1 como "Próximo"
-            const displayedJourney = journey.length > 0 ? journey : [{ level: 1, completed: 0, bonus: 108 }];
+            // Sempre exibir 10 ciclos conforme regra de negócio
+            const totalCyclesCount = 10;
+            const displayedJourney = Array.from({ length: totalCyclesCount }, (_, i) => {
+              const level = i + 1;
+              const existing = journey.find(j => j.level === level);
+              return existing || { level, completed: 0, bonus: 108, slots_filled: 0, slots_total: 6 };
+            });
 
             return displayedJourney.map((summary, idx) => {
-              if (summary.completed > 0) {
+              const slotsFilled = summary.slots_filled || 0;
+              const slotsTotal = summary.slots_total || 6;
+              const isCompleted = summary.completed > 0;
+
+              if (isCompleted) {
                 return ( // --- Completed Card ---
                   <div key={summary.level} className="w-60 h-72 flex-shrink-0 bg-brand-gray border border-brand-gold/30 rounded-xl p-4 flex flex-col justify-between relative overflow-hidden shadow-lg">
                     <div className="absolute inset-0 bg-gradient-to-br from-brand-gold/10 to-transparent"></div>
@@ -991,40 +1090,62 @@ const CicloGlobal: React.FC = () => {
                 );
               } else if (!hasRenderedNextCycleCard) {
                 hasRenderedNextCycleCard = true;
-                if (isAutoReinvestActive && autoReinvestConfig.product) {
-                  return (
-                    <div key={summary.level} className="w-60 h-72 flex-shrink-0 bg-brand-gray-light border-2 border-green-500 rounded-xl p-4 flex flex-col justify-center items-center text-center shadow-lg">
-                      <IconCheckCircle size={40} className="text-green-400" />
-                      <h3 className="text-lg font-bold text-white mt-4">Ativação Automática</h3>
-                      <p className="text-7xl font-extrabold text-green-400 my-4">{summary.level}</p>
-                      <p className="text-sm text-gray-300">será ativado ao final do ciclo atual.</p>
+                
+                // --- Progress/Next Card ---
+                return ( 
+                  <div key={summary.level} className="w-60 h-72 flex-shrink-0 bg-brand-gray-light border-2 border-brand-gold rounded-xl p-4 flex flex-col justify-between items-center text-center shadow-gold-glow-lg">
+                    <h3 className="text-lg font-bold text-white">Ciclo {summary.level}</h3>
+                    
+                    <div className="flex-grow flex flex-col justify-center items-center">
+                      <div className="relative w-24 h-24 mb-2">
+                        <svg className="w-full h-full transform -rotate-90">
+                          <circle cx="48" cy="48" r="40" stroke="currentColor" strokeWidth="8" fill="transparent" className="text-gray-700" />
+                          <circle cx="48" cy="48" r="40" stroke="currentColor" strokeWidth="8" fill="transparent" strokeDasharray={251.2} strokeDashoffset={251.2 - (251.2 * slotsFilled) / slotsTotal} className="text-brand-gold transition-all duration-1000" />
+                        </svg>
+                        <div className="absolute inset-0 flex flex-col items-center justify-center">
+                          <span className="text-2xl font-black text-white">{slotsFilled}</span>
+                          <span className="text-[10px] text-gray-400 uppercase font-bold">de {slotsTotal}</span>
+                        </div>
+                      </div>
+                      <p className="text-xs font-bold text-brand-gold uppercase tracking-wider">Membros Ativos</p>
                     </div>
-                  );
-                }
-                return ( // --- Next to Activate Card ---
-                  <div key={summary.level} className="w-60 h-72 flex-shrink-0 bg-brand-gray-light border-2 border-brand-gold rounded-xl p-4 flex flex-col justify-center items-center text-center animate-pulse-gold shadow-gold-glow-lg">
-                    <h3 className="text-lg font-bold text-white">Próximo Ciclo</h3>
-                    <p className="text-7xl font-extrabold text-brand-gold my-4">{summary.level}</p>
-                    <p className="text-sm text-gray-300 mb-6">Pronto para ativar!</p>
-                    <button
-                      onClick={() => setIsActivationModalOpen(true)}
-                      className="w-full bg-brand-gold text-brand-dark font-bold py-3 px-6 rounded-lg hover:bg-yellow-400 transition-colors"
-                    >
-                      Ativar Novo Ciclo
-                    </button>
+
+                    <div className="w-full space-y-2 mt-auto">
+                        <p className="text-[10px] text-gray-400 leading-tight">Complete 6 diretos ativos com R$ 60 cada para fechar o ciclo.</p>
+                        {isAutoReinvestActive && (
+                             <div className="flex items-center justify-center gap-1 text-[10px] text-green-400 font-bold">
+                                <IconCheckCircle size={10} /> AUTO-REINVEST ATIVO
+                             </div>
+                        )}
+                        {!isCompleted && slotsFilled < slotsTotal && (
+                            <button
+                              onClick={() => setIsActivationModalOpen(true)}
+                              className="w-full bg-brand-gold/10 text-brand-gold border border-brand-gold/30 font-bold py-1 px-2 rounded-md hover:bg-brand-gold hover:text-brand-dark transition-all text-[10px] mt-1"
+                            >
+                              Ver Detalhes
+                            </button>
+                        )}
+                    </div>
                   </div>
                 );
               } else {
-                return ( // --- Locked Card ---
-                  <div key={summary.level} className="w-60 h-72 flex-shrink-0 bg-brand-gray-light opacity-60 border border-dashed border-brand-gray rounded-xl p-4 flex flex-col justify-center items-center text-center">
-                    <IconLock size={40} className="text-gray-500" />
-                    <p className="text-6xl font-extrabold text-gray-600 my-4">{summary.level}</p>
-                    <p className="font-semibold text-gray-500">Bloqueado</p>
+                return ( // --- Locked Card (Premium Drawn Style) ---
+                  <div key={summary.level} className="w-60 h-72 flex-shrink-0 bg-brand-dark/40 border-2 border-dashed border-brand-gray/30 rounded-xl p-4 flex flex-col justify-center items-center text-center group hover:border-brand-gold/20 transition-all duration-500">
+                    <div className="relative mb-4">
+                      <div className="absolute inset-0 bg-brand-gray/20 blur-xl rounded-full scale-150 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                      <IconLock size={48} className="text-brand-gray group-hover:text-brand-gold/30 transition-colors relative z-10" />
+                    </div>
+                    <p className="text-7xl font-black text-brand-gray-light/10 my-2 group-hover:text-brand-gold/5 transition-colors tracking-tighter select-none">{summary.level}</p>
+                    <div className="space-y-1">
+                      <p className="text-xs font-bold text-brand-gray uppercase tracking-[0.2em]">Ciclo {summary.level}</p>
+                      <p className="text-[10px] font-semibold text-brand-gray-light/40 uppercase">Aguardando Progresso</p>
+                    </div>
                   </div>
                 );
               }
             });
           })()}
+          </div>
         </div>
       </div>
 

@@ -1,6 +1,4 @@
-
 import React, { useState } from 'react';
-import { Order } from '../types';
 import { SearchIcon } from './icons/SearchIcon';
 import { SpinnerIcon } from './icons/SpinnerIcon';
 import { ordersAPI } from '../services/marketplaceAPI';
@@ -26,8 +24,15 @@ const OrderLookupView: React.FC<OrderLookupViewProps> = ({ onOrderFound }) => {
 
       if (result.success && result.data) {
         const order = result.data;
-        // Validação extra de e-mail por segurança
-        if (order.customer_email?.toLowerCase() === email.toLowerCase().trim()) {
+        const orderEmail = String(
+          order.customerEmail ||
+          order.customer_email ||
+          order.buyerEmail ||
+          order.buyer_email ||
+          ''
+        ).toLowerCase().trim();
+
+        if (orderEmail && orderEmail === email.toLowerCase().trim()) {
           onOrderFound(order);
         } else {
           setError('Pedido não encontrado ou e-mail não confere.');
@@ -65,7 +70,7 @@ const OrderLookupView: React.FC<OrderLookupViewProps> = ({ onOrderFound }) => {
                 value={orderId}
                 onChange={(e) => setOrderId(e.target.value)}
                 className="appearance-none relative block w-full px-3 py-3 border-2 border-[rgb(var(--color-brand-gray-light))] bg-[rgb(var(--color-brand-dark))] text-[rgb(var(--color-brand-text-light))] placeholder-[rgb(var(--color-brand-text-dim))] rounded-md focus:outline-none focus:ring-[rgb(var(--color-brand-gold))] focus:border-[rgb(var(--color-brand-gold))] sm:text-sm"
-                placeholder="Ex: #2024-001"
+                placeholder="Ex: #2024-001 ou AC-D11A181E"
               />
             </div>
             <div>

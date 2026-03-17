@@ -42,7 +42,7 @@ export default function Dashboard({ orders, accountState, visibleComponents }: D
         let cumulativePnl = 0;
         const equityCurve = closedOrders.slice().reverse().map(o => {
             cumulativePnl += o.pnl || 0;
-            return { time: (o.timestamp || 0) / 1000, value: cumulativePnl };
+            return { time: ((o.timestamp || 0) / 1000) as any, value: cumulativePnl }; // Cast p/ evitar erro de tipo Time
         });
 
         const wins = closedOrders.filter(o => o.status === 'TP').length;
@@ -85,7 +85,7 @@ export default function Dashboard({ orders, accountState, visibleComponents }: D
     const pnlColor = performanceData.totalPnl > 0 ? 'text-green-400' : performanceData.totalPnl < 0 ? 'text-red-400' : 'text-zinc-100';
     
     return (
-        <div className="grid grid-cols-12 gap-4 animate-fade-in-up p-2">
+        <div className="grid grid-cols-12 gap-4 p-2">
             
             {visibleComponents.accountHealth && (
                 <div className="col-span-12 lg:col-span-3">

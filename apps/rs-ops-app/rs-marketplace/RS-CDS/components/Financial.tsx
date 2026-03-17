@@ -22,7 +22,50 @@ interface WithdrawRequest {
     admin_notes?: string;
 }
 
-const Financial: React.FC<FinancialProps> = ({ profile, transactions: propTransactions, cdId }) => {
+const dedupeTransactions = (transactions: Transaction[]): Transaction[] => {
+    const map = new Map<string, Transaction>();
+
+    transactions.forEach((transaction) => {
+        const key = String(transaction.id || '').trim()
+            || `${transaction.type}-${transaction.description}-${transaction.amount}-${transaction.date}`;
+        if (!map.has(key)) {
+            map.set(key, transaction);
+        }
+    });
+
+    return Array.from(map.values()).sort((a, b) => {
+        const aDate = new Date(a.date || 0).getTime();
+        const bDate = new Date(b.date || 0).getTime();
+        return bDate - aDate;
+    });
+};
+
+const computeAvailableBalance = (transactions: Transaction[], storedBalance?: number): number => {
+    const computed = transactions.reduce((acc, transaction) => {
+        const status = String(transaction.status || '').trim().toUpperCase();
+        if (status === 'CANCELADO' || status === 'REJEITADO') {
+            return acc;
+        }
+
+        const amount = Number(transaction.amount || 0);
+        return transaction.type === 'IN' ? acc + amount : acc - amount;
+    }, 0);
+
+    const stored = Number.isFinite(storedBalance) ? Number(storedBalance || 0) : 0;
+    return Math.max(0, Math.max(stored, computed));
+};
+
+const formatTransactionDate = (value: string): string => {
+    const raw = String(value || '').trim();
+    if (!raw) return '-';
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(raw)) return raw;
+
+    const parsed = new Date(raw);
+    if (Number.isNaN(parsed.getTime())) return '-';
+    return parsed.toLocaleDateString('pt-BR');
+};
+
+const Financial: React.FC<FinancialProps> = ({ profile, transactions: _propTransactions, cdId }) => {
     const [isWithdrawModalOpen, setIsWithdrawModalOpen] = useState(false);
     const [withdrawAmount, setWithdrawAmount] = useState('');
     const [withdrawDate, setWithdrawDate] = useState('');
@@ -34,11 +77,13 @@ const Financial: React.FC<FinancialProps> = ({ profile, transactions: propTransa
     // Real data states
     const [withdrawHistory, setWithdrawHistory] = useState<WithdrawRequest[]>([]);
     const [realTransactions, setRealTransactions] = useState<Transaction[]>([]);
+    const [availableBalance, setAvailableBalance] = useState<number>(Number(profile.walletBalance || 0));
+    const [withdrawableSalesBalance, setWithdrawableSalesBalance] = useState<number>(0);
     const [loadingData, setLoadingData] = useState(true);
     const [activeTab, setActiveTab] = useState<'ALL' | 'IN' | 'OUT'>('ALL');
 
-    // Merge prop transactions with real ones
-    const allTransactions = [...propTransactions, ...realTransactions];
+    const allTransactions = dedupeTransactions(realTransactions);
+    const filteredTransactions = allTransactions.filter(t => activeTab === 'ALL' || t.type === activeTab);
 
     // Calculations
     const totalIn = allTransactions.filter(t => t.type === 'IN').reduce((acc, t) => acc + t.amount, 0);
@@ -60,6 +105,13 @@ const Financial: React.FC<FinancialProps> = ({ profile, transactions: propTransa
         loadFinancialData();
     }, [cdId]);
 
+    useEffect(() => {
+        if (realTransactions.length === 0) {
+            setAvailableBalance(computeAvailableBalance([], Number(profile.walletBalance || 0)));
+            setWithdrawableSalesBalance(0);
+        }
+    }, [profile.walletBalance, realTransactions.length]);
+
     const loadFinancialData = async () => {
         if (!cdId) return;
         setLoadingData(true);
@@ -71,14 +123,28 @@ const Financial: React.FC<FinancialProps> = ({ profile, transactions: propTransa
                 if (financialData.transactions) {
                     const mapped: Transaction[] = financialData.transactions.map((t: any) => ({
                         id: t.id,
-                        type: t.type as 'IN' | 'OUT',
+                        type: (String(t.type || '').trim().toUpperCase() === 'OUT' ? 'OUT' : 'IN') as 'IN' | 'OUT',
                         category: t.category,
                         description: t.description,
                         amount: parseFloat(t.amount),
-                        status: t.status,
-                        date: t.created_at || t.date || new Date().toISOString()
+                        status: (String(t.status || '').trim().toUpperCase() === 'PENDENTE'
+                            ? 'PENDENTE'
+                            : String(t.status || '').trim().toUpperCase() === 'CANCELADO'
+                                ? 'CANCELADO'
+                                : 'CONCLUIDO') as 'CONCLUIDO' | 'PENDENTE' | 'CANCELADO',
+                        date: t.created_at || t.date || new Date().toISOString(),
+                        referenceId: t.referenceId || t.reference_id || undefined,
                     }));
-                    setRealTransactions(mapped);
+                    const normalizedTransactions = dedupeTransactions(mapped);
+                    setRealTransactions(normalizedTransactions);
+                    const nextAvailableBalance = Number(
+                        financialData.withdrawableBalance
+                        ?? financialData.availableBalance
+                        ?? financialData.storedBalance
+                        ?? computeAvailableBalance(normalizedTransactions, Number(profile.walletBalance || 0))
+                    );
+                    setAvailableBalance(nextAvailableBalance);
+                    setWithdrawableSalesBalance(Number(financialData.withdrawableBalance ?? nextAvailableBalance ?? 0));
                 }
             }
         } catch (err) {
@@ -113,8 +179,8 @@ const Financial: React.FC<FinancialProps> = ({ profile, transactions: propTransa
             setWithdrawError("Valor mínimo para saque: R$ 150,00.");
             return;
         }
-        if (amount > profile.walletBalance) {
-            setWithdrawError("Saldo insuficiente.");
+        if (amount > withdrawableSalesBalance) {
+            setWithdrawError("Saldo insuficiente para saque.");
             return;
         }
         if (!withdrawDate) {
@@ -207,7 +273,7 @@ const Financial: React.FC<FinancialProps> = ({ profile, transactions: propTransa
                         <p className="text-gray-400 text-xs font-bold uppercase">Saldo Disponível</p>
                         <div className="p-2 bg-gold-500/10 text-gold-400 rounded-lg"><Wallet size={20} /></div>
                     </div>
-                    <h3 className="text-2xl font-bold text-white">R$ {profile.walletBalance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</h3>
+                    <h3 className="text-2xl font-bold text-white">R$ {availableBalance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</h3>
                     <p className="text-xs text-gray-500 mt-1">Atualizado agora</p>
                 </div>
 
@@ -216,7 +282,7 @@ const Financial: React.FC<FinancialProps> = ({ profile, transactions: propTransa
                         <p className="text-gray-400 text-xs font-bold uppercase">Entradas (Mês)</p>
                         <div className="p-2 bg-green-900/20 text-green-500 rounded-lg"><ArrowUpRight size={20} /></div>
                     </div>
-                    <h3 className="text-2xl font-bold text-white">R$ {totalIn.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</h3>
+                    <h3 className="text-2xl font-bold text-green-500">R$ {totalIn.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</h3>
                     <p className="text-xs text-green-500 mt-1 flex items-center gap-1"><TrendingUp size={12} /> Vendas e comissões</p>
                 </div>
 
@@ -225,7 +291,7 @@ const Financial: React.FC<FinancialProps> = ({ profile, transactions: propTransa
                         <p className="text-gray-400 text-xs font-bold uppercase">Saídas (Mês)</p>
                         <div className="p-2 bg-red-900/20 text-red-500 rounded-lg"><ArrowDownRight size={20} /></div>
                     </div>
-                    <h3 className="text-2xl font-bold text-white">R$ {totalOut.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</h3>
+                    <h3 className="text-2xl font-bold text-red-500">R$ {totalOut.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</h3>
                     <p className="text-xs text-gray-500 mt-1">Compras de estoque e taxas</p>
                 </div>
 
@@ -300,7 +366,7 @@ const Financial: React.FC<FinancialProps> = ({ profile, transactions: propTransa
                                 <button onClick={() => setActiveTab('OUT')} className={`px-3 py-1 text-xs font-bold rounded ${activeTab === 'OUT' ? 'bg-red-900/30 text-red-500' : 'text-gray-500 hover:text-white'}`}>Saídas</button>
                             </div>
                         </div>
-                        <span className="text-xs text-gray-500">{allTransactions.filter(t => activeTab === 'ALL' || t.type === activeTab).length} registro(s)</span>
+                        <span className="text-xs text-gray-500">{filteredTransactions.length} registro(s)</span>
                     </div>
                     <div className="overflow-x-auto flex-1">
                         <table className="w-full text-left text-sm text-gray-400">
@@ -314,12 +380,14 @@ const Financial: React.FC<FinancialProps> = ({ profile, transactions: propTransa
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-dark-800">
-                                {allTransactions.filter(t => activeTab === 'ALL' || t.type === activeTab).length === 0 ? (
+                                {loadingData ? (
+                                    <tr><td colSpan={5} className="text-center py-12 text-gray-500 italic">Carregando transações...</td></tr>
+                                ) : filteredTransactions.length === 0 ? (
                                     <tr><td colSpan={5} className="text-center py-12 text-gray-500 italic">Nenhuma transação {activeTab === 'IN' ? 'de entrada ' : activeTab === 'OUT' ? 'de saída ' : ''}registrada.</td></tr>
                                 ) : (
-                                    allTransactions.filter(t => activeTab === 'ALL' || t.type === activeTab).map(t => (
+                                    filteredTransactions.map(t => (
                                         <tr key={t.id} className="hover:bg-dark-800/50 transition-colors">
-                                            <td className="px-6 py-4 whitespace-nowrap">{t.date ? t.date.split('-').reverse().join('/') : '-'}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap">{formatTransactionDate(t.date)}</td>
                                             <td className="px-6 py-4 font-medium text-white">{t.description}</td>
                                             <td className="px-6 py-4">
                                                 <span className="text-xs bg-dark-800 px-2 py-1 rounded border border-dark-700">
@@ -463,7 +531,8 @@ const Financial: React.FC<FinancialProps> = ({ profile, transactions: propTransa
                             <>
                                 <div className="bg-dark-950 p-4 rounded-xl border border-dark-800 mb-6">
                                     <p className="text-sm text-gray-400 mb-1">Saldo Disponível</p>
-                                    <p className="text-2xl font-bold text-white">R$ {profile.walletBalance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                                    <p className="text-2xl font-bold text-white">R$ {withdrawableSalesBalance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                                    <p className="text-xs text-green-400 mt-2">Vendas disponÃ­veis para saque: R$ {withdrawableSalesBalance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
                                 </div>
 
                                 <div className="space-y-4">

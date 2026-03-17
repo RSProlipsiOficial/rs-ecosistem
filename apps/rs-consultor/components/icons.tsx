@@ -59,6 +59,7 @@ export const IconChart = createIcon(<><path d="M3 3v18h18" /><path d="M18 17V9" 
 export const IconCheck = createIcon(<polyline points="20 6 9 17 4 12" />);
 export const IconCheckCircle = createIcon(<><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></>);
 export const IconChevronDown = createIcon(<><path d="m6 9 6 6 6-6" /></>);
+export const IconChevronUp = createIcon(<><path d="m6 15 6-6 6 6" /></>);
 export const IconChevronLeft = createIcon(<><path d="m15 18-6-6 6-6" /></>);
 export const IconChevronRight = createIcon(<><path d="m9 18 6-6-6-6" /></>);
 export const IconCircle = createIcon(<circle cx="12" cy="12" r="10" />);

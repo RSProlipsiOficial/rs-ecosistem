@@ -43,6 +43,44 @@ import { FunnelAnalysis } from './components/FunnelAnalysis';
 import { ProductReports } from './components/ProductReports';
 import { SubscriptionManager } from './components/SubscriptionManager';
 import { marketingTrackingService } from './marketingTrackingService';
+import {
+  activateCatalogProductForCd,
+  appendRealExperimentData,
+  createRealCatalogProduct,
+  createRealSupplier,
+  createRealCustomer,
+  createRealOrder,
+  deleteRealCatalogProduct,
+  deleteRealSupplier,
+  deleteRealCustomer,
+  deleteRealOrder,
+  loadRealCatalogProducts,
+  loadRealCustomers,
+  loadRealDistributionCenters,
+  loadRealExperimentData,
+  loadRealExperiments,
+  loadRealOrders,
+  loadRealProductPageTemplates,
+  loadRealSuppliers,
+  saveRealCatalogProducts,
+  saveRealExperiments,
+  saveRealProductPageTemplates,
+  updateRealCatalogProduct,
+  updateRealSupplier,
+  updateRealCustomer,
+  updateRealOrder,
+} from './services/realDataLoader';
+
+const DEFAULT_BRANDING_ASSET = 'https://raw.githubusercontent.com/RS-Prolipsi/assets/main/logo_rs_gold.png';
+
+const normalizeAssetUrl = (value: unknown) => {
+  if (typeof value !== 'string') return '';
+  const normalized = value.trim();
+  if (!normalized || ['null', 'undefined', '[object Object]'].includes(normalized)) {
+    return '';
+  }
+  return normalized;
+};
 
 // --- MOCK DATA ---
 const INITIAL_GLOBAL_PRODUCTS: GlobalProduct[] = [];
@@ -119,7 +157,7 @@ const App: React.FC<AppProps> = ({
   currentUser, setCurrentUser, users, auditLogs, logAction,
   whatsAppTemplates, setWhatsAppTemplates
 }) => {
-  const { products, productSuppliers, addProduct, updateProduct, updateProductStock, stockMovements } = useProducts();
+  const { products, productSuppliers, addProduct, updateProduct, updateProductStock, stockMovements, refreshProducts } = useProducts();
   const { carts, checkouts, abandonmentLogs, updateAbandonmentLog } = useCartCheckout();
 
   const [activeTab, setActiveTab] = useState<string>('dashboard');
@@ -160,9 +198,10 @@ const App: React.FC<AppProps> = ({
   const [alerts, setAlerts] = useState<AppAlert[]>([]);
   const [selectedLogistaId, setSelectedLogistaId] = useState<string>('all');
   const [branding, setBranding] = useState<any>(null);
+  const [isOperationalDataLoading, setIsOperationalDataLoading] = useState(false);
 
-  const visibleProducts = useMemo(() => [], []);
-  const visibleOrders = useMemo(() => [], []);
+  const visibleProducts = useMemo(() => products, [products]);
+  const visibleOrders = useMemo(() => orders, [orders]);
 
   const monthlySummary = useMemo(() => ({ grossRevenue: 0, discounts: 0, refundsAndChargebacks: 0, netSales: 0, productCost: 0, shippingCost: 0, shippingRevenue: 0, shippingProfit: 0, taxCost: 0, otherExpenses: 0, grossProfit: 0, adSpend: 0, netProfit: 0, globalRoi: 0, profitMargin: 0, avgTicket: 0, leadConversionRate: 0, salesCount: 0, ordersCount: 0, leadsCount: 0, leadsFromTraffic: 0 }), []);
 
@@ -178,13 +217,112 @@ const App: React.FC<AppProps> = ({
       try {
         const res = await fetch('http://localhost:4000/v1/admin/settings/general');
         const json = await res.json();
-        if (json.success) setBranding(json.data);
+        const brandingData = json?.data?.data || json?.data;
+        if (json.success && brandingData) {
+          setBranding(brandingData);
+        }
       } catch (e) {
         console.error('Error fetching branding:', e);
       }
     };
     fetchBranding();
+
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === 'rs-branding-update') {
+        fetchBranding();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
+
+  useEffect(() => {
+    const faviconUrl =
+      normalizeAssetUrl(branding?.favicon) ||
+      normalizeAssetUrl(branding?.logo) ||
+      normalizeAssetUrl(branding?.avatar) ||
+      DEFAULT_BRANDING_ASSET;
+    const cacheBustedUrl = `${faviconUrl}${faviconUrl.includes('?') ? '&' : '?'}v=${Date.now()}`;
+
+    const iconLink = document.querySelector<HTMLLinkElement>('link[rel="icon"]') || document.createElement('link');
+    iconLink.rel = 'icon';
+    iconLink.type = 'image/png';
+    iconLink.href = cacheBustedUrl;
+    if (!iconLink.parentNode) {
+      document.head.appendChild(iconLink);
+    }
+
+    const shortcutIconLink =
+      document.querySelector<HTMLLinkElement>('link[rel="shortcut icon"]') || document.createElement('link');
+    shortcutIconLink.rel = 'shortcut icon';
+    shortcutIconLink.type = 'image/png';
+    shortcutIconLink.href = cacheBustedUrl;
+    if (!shortcutIconLink.parentNode) {
+      document.head.appendChild(shortcutIconLink);
+    }
+
+    const appleTouchLink =
+      document.querySelector<HTMLLinkElement>('link[rel="apple-touch-icon"]') || document.createElement('link');
+    appleTouchLink.rel = 'apple-touch-icon';
+    appleTouchLink.href = cacheBustedUrl;
+    if (!appleTouchLink.parentNode) {
+      document.head.appendChild(appleTouchLink);
+    }
+  }, [branding]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const hydrateOperationalData = async () => {
+      if (!currentUser?.id) return;
+
+      setIsOperationalDataLoading(true);
+      try {
+        const [realOrders, realCustomers, realCenters, realSuppliers, realCatalog, realTemplates, realExperiments, realExperimentData] = await Promise.all([
+          loadRealOrders(currentUser.id),
+          loadRealCustomers(currentUser.id),
+          loadRealDistributionCenters(),
+          loadRealSuppliers(currentUser.id),
+          loadRealCatalogProducts(),
+          loadRealProductPageTemplates(currentUser.id),
+          loadRealExperiments(currentUser.id),
+          loadRealExperimentData(currentUser.id),
+        ]);
+
+        if (!isMounted) return;
+        setOrders(realOrders);
+        setCustomers(realCustomers);
+        setDistributionCenters(realCenters);
+        setSuppliers(realSuppliers);
+        setGlobalProducts(realCatalog);
+        setProductPageTemplates(realTemplates);
+        setExperiments(realExperiments);
+        setExperimentData(realExperimentData);
+      } catch (error) {
+        console.error('[RS Drop] Erro ao carregar dados operacionais reais:', error);
+        if (!isMounted) return;
+        setOrders([]);
+        setCustomers([]);
+        setDistributionCenters([]);
+        setSuppliers([]);
+        setGlobalProducts([]);
+        setProductPageTemplates([]);
+        setExperiments([]);
+        setExperimentData([]);
+      } finally {
+        if (isMounted) {
+          setIsOperationalDataLoading(false);
+        }
+      }
+    };
+
+    void hydrateOperationalData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [currentUser?.id]);
 
   // --- INTERNAL NOTIFICATION TRIGGERS ---
   const prevOrdersCount = useRef(orders.length);
@@ -219,24 +357,145 @@ const App: React.FC<AppProps> = ({
     setActiveTab(tab);
   };
 
-  const handleUpdateOrder = (updatedOrder: Order) => {
-    setOrders(prev => prev.map(o => o.id === updatedOrder.id ? updatedOrder : o));
-    logAction('UPDATE', 'Order', updatedOrder.id, `Pedido #${updatedOrder.id.slice(0, 8)} atualizado.`);
+  const refreshOrderData = async () => {
+    if (!currentUser?.id) return;
+
+    const [realOrders, realCustomers] = await Promise.all([
+      loadRealOrders(currentUser.id),
+      loadRealCustomers(currentUser.id),
+    ]);
+
+    setOrders(realOrders);
+    setCustomers(realCustomers);
   };
 
-  const handleAddOrder = (order: Omit<Order, 'id'>) => {
-    const newOrder: Order = { ...order, id: crypto.randomUUID(), userId: currentUser.id };
-    setOrders(prev => [newOrder, ...prev]);
-    // AUDITORIA: Baixa de estoque
-    newOrder.items.forEach(item => {
-      updateProductStock(item.productId, -item.quantity, 'VENDA', newOrder.id);
-    });
-    logAction('CREATE', 'Order', newOrder.id, `Pedido #${newOrder.id.slice(0, 8)} criado.`);
+  const refreshSupplierData = async () => {
+    if (!currentUser?.id) return;
+    const realSuppliers = await loadRealSuppliers(currentUser.id);
+    setSuppliers(realSuppliers);
   };
-  const handleDeleteCustomer = (id: string) => { };
-  const handleDeleteSupplier = (id: string) => { };
+
+  const handleUpdateOrder = async (updatedOrder: Order) => {
+    const selectedCustomer = customers.find((customer) => customer.id === updatedOrder.customerId);
+    const savedOrder = await updateRealOrder(
+      currentUser.id,
+      { ...updatedOrder, userId: currentUser.id },
+      selectedCustomer
+    );
+    await refreshOrderData();
+    logAction('UPDATE', 'Order', savedOrder.id, `Pedido #${savedOrder.id.slice(0, 8)} atualizado.`);
+  };
+
+  const handleAddOrder = async (order: Omit<Order, 'id'>) => {
+    const selectedCustomer = customers.find((customer) => customer.id === order.customerId);
+    const savedOrder = await createRealOrder(
+      currentUser.id,
+      { ...order, userId: currentUser.id },
+      selectedCustomer
+    );
+    await refreshOrderData();
+    savedOrder.items.forEach((item) => {
+      updateProductStock(item.productId, -item.quantity, 'VENDA', savedOrder.id);
+    });
+    logAction('CREATE', 'Order', savedOrder.id, `Pedido #${savedOrder.id.slice(0, 8)} criado.`);
+  };
+  const handleDeleteOrder = async (id: string) => {
+    await deleteRealOrder(currentUser.id, id);
+    await refreshOrderData();
+    logAction('DELETE', 'Order', id, `Pedido #${id.slice(0, 8)} excluído.`);
+  };
+  const handleAddCustomer = async (customer: Omit<Customer, 'id'>) => {
+    const savedCustomer = await createRealCustomer(currentUser.id, {
+      ...customer,
+      userId: currentUser.id,
+    });
+    const realCustomers = await loadRealCustomers(currentUser.id);
+    setCustomers(realCustomers);
+    logAction('CREATE', 'Customer', savedCustomer.id, `Cliente ${savedCustomer.name} criado.`);
+    return savedCustomer;
+  };
+  const handleUpdateCustomer = async (customer: Customer) => {
+    const savedCustomer = await updateRealCustomer(currentUser.id, {
+      ...customer,
+      userId: customer.userId || currentUser.id,
+    });
+    const realCustomers = await loadRealCustomers(currentUser.id);
+    setCustomers(realCustomers);
+    logAction('UPDATE', 'Customer', savedCustomer.id, `Cliente ${savedCustomer.name} atualizado.`);
+    return savedCustomer;
+  };
+  const handleDeleteCustomer = async (id: string) => {
+    await deleteRealCustomer(currentUser.id, id);
+    const realCustomers = await loadRealCustomers(currentUser.id);
+    setCustomers(realCustomers);
+    logAction('DELETE', 'Customer', id, `Cliente ${id.slice(0, 8)} excluÃ­do.`);
+  };
+  const handleAddSupplier = async (supplier: Omit<Supplier, 'id'>) => {
+    const savedSupplier = await createRealSupplier(currentUser.id, {
+      ...supplier,
+      userId: supplier.userId || currentUser.id,
+    });
+    await refreshSupplierData();
+    logAction('CREATE', 'Supplier', savedSupplier.id, `Fornecedor ${savedSupplier.name} criado.`);
+  };
+  const handleUpdateSupplier = async (supplier: Supplier) => {
+    const savedSupplier = await updateRealSupplier(currentUser.id, supplier);
+    await refreshSupplierData();
+    logAction('UPDATE', 'Supplier', savedSupplier.id, `Fornecedor ${savedSupplier.name} atualizado.`);
+  };
+  const handleDeleteSupplier = async (id: string) => {
+    await deleteRealSupplier(currentUser.id, id);
+    await refreshSupplierData();
+    logAction('DELETE', 'Supplier', id, `Fornecedor ${id.slice(0, 8)} excluído.`);
+  };
+  const handleActivateCatalogProduct = async (globalProduct: GlobalProduct) => {
+    const saved = await activateCatalogProductForCd(currentUser.id, globalProduct);
+    await refreshProducts();
+    logAction('CREATE', 'Product', saved.product.id, `Produto ${saved.product.name} ativado a partir do catálogo RS.`);
+  };
+  const handleUpdateGlobalProducts = (nextProducts: GlobalProduct[]) => {
+    setGlobalProducts(nextProducts);
+    void saveRealCatalogProducts(nextProducts)
+      .then(setGlobalProducts)
+      .catch((error) => {
+        console.error('[RS Drop] Erro ao salvar catálogo global:', error);
+      });
+  };
+  const handleCreateGlobalProduct = async (product: Omit<GlobalProduct, 'id'>) => {
+    const savedProduct = await createRealCatalogProduct(product);
+    setGlobalProducts((prev) => [...prev, savedProduct].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')));
+    return savedProduct;
+  };
+  const handlePatchGlobalProduct = async (product: GlobalProduct) => {
+    const savedProduct = await updateRealCatalogProduct(product);
+    setGlobalProducts((prev) => prev.map((item) => (item.id === savedProduct.id ? savedProduct : item)));
+    return savedProduct;
+  };
+  const handleDeleteGlobalProduct = async (productId: string) => {
+    await deleteRealCatalogProduct(productId);
+    setGlobalProducts((prev) => prev.filter((item) => item.id !== productId));
+  };
+  const handleUpdateProductPageTemplates = (templates: ProductPageTemplate[]) => {
+    setProductPageTemplates(templates);
+    void saveRealProductPageTemplates(currentUser.id, templates)
+      .then(setProductPageTemplates)
+      .catch((error) => {
+        console.error('[RS Drop] Erro ao salvar templates da página do produto:', error);
+      });
+  };
+  const handleUpdateExperiments = (nextExperiments: Experiment[]) => {
+    setExperiments(nextExperiments);
+    void saveRealExperiments(currentUser.id, nextExperiments)
+      .then(setExperiments)
+      .catch((error) => {
+        console.error('[RS Drop] Erro ao salvar testes A/B:', error);
+      });
+  };
   const handleAddExperimentData = (dataPoints: ExperimentDataPoint[]) => {
     setExperimentData(prev => [...prev, ...dataPoints]);
+    void appendRealExperimentData(currentUser.id, dataPoints).then(setExperimentData).catch((error) => {
+      console.error('[RS Drop] Erro ao salvar dados de experimento:', error);
+    });
   };
   const handleAddSubscription = (sub: Omit<Subscription, 'id' | 'userId'>) => {
     setSubscriptions(prev => [...prev, { ...sub, id: crypto.randomUUID(), userId: currentUser.id }]);
@@ -249,6 +508,11 @@ const App: React.FC<AppProps> = ({
   };
 
   const customerMetrics: CustomerWithMetrics[] = useMemo(() => [], [customers, orders]);
+  const headerAvatar =
+    normalizeAssetUrl(currentUser.avatar) ||
+    normalizeAssetUrl(branding?.avatar) ||
+    normalizeAssetUrl(branding?.logo) ||
+    DEFAULT_BRANDING_ASSET;
 
 
   return (
@@ -333,13 +597,13 @@ const App: React.FC<AppProps> = ({
             <div className="relative group">
               <div className="absolute -inset-0.5 bg-gradient-to-r from-rs-gold to-rs-goldDim rounded-full blur opacity-30 group-hover:opacity-100 transition duration-300"></div>
               <div className="relative w-12 h-12 rounded-full border-2 border-rs-gold/50 flex items-center justify-center bg-rs-black text-rs-gold font-bold text-xl cursor-all-scroll shadow-lg group-hover:scale-105 transition-transform overflow-hidden">
-                {(currentUser as any).avatar ? (
+                {headerAvatar ? (
                   <img
-                    src={(currentUser as any).avatar}
+                    src={headerAvatar}
                     alt="Avatar"
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-contain bg-black p-1"
                     onError={(e) => {
-                      (e.target as HTMLImageElement).src = 'https://raw.githubusercontent.com/RS-Prolipsi/assets/main/logo_rs_gold.png';
+                      (e.target as HTMLImageElement).src = DEFAULT_BRANDING_ASSET;
                     }}
                   />
                 ) : (
@@ -356,13 +620,13 @@ const App: React.FC<AppProps> = ({
           </div>
 
 
-          {activeTab === 'dashboard' && <Dashboard onAnalyze={() => { }} onAlertClick={() => { }} alerts={alerts} summary={monthlySummary} orders={visibleOrders} trafficData={traffic} products={visibleProducts} isAnalyzing={false} aiAnalysis={null} currentMonth={currentMonth} onMonthChange={setCurrentMonth} currentUser={currentUser} users={users} selectedLogistaId={selectedLogistaId} onLogistaChange={setSelectedLogistaId} setActiveTab={setActiveTab} />}
-          {activeTab === 'products' && <ProductManager suppliers={suppliers} currentUser={currentUser} users={users} reviews={reviews} onUpdateReview={() => { }} onAddSupplier={() => { }} onViewOrders={(productName) => handleNavigate('orders', { search: productName })} distributionCenters={distributionCenters} stockLocations={stockLocations} onUpdateStockLocations={() => { }} productPageTemplates={productPageTemplates} onUpdateProductPageTemplates={() => { }} experiments={experiments} targetProductId={deepLinkParams?.id} onClearTargetProduct={() => setDeepLinkParams(null)} />}
-          {activeTab === 'orders' && <OrderManager orders={orders} products={products} customers={customers} suppliers={suppliers} productSuppliers={productSuppliers} paymentConfigs={paymentConfigs} onAdd={handleAddOrder} onUpdate={handleUpdateOrder} onDelete={() => { }} currentUser={currentUser} users={users} shippingConfigs={shippingConfigs} automationLogs={automationLogs} rmas={rmas} onAddRma={() => { }} distributionCenters={distributionCenters} stockLocations={stockLocations} affiliates={affiliates} initialSearch={deepLinkParams?.search} />}
-          {activeTab === 'customers' && <CustomerManager customers={customers} orders={orders} leads={leads} tickets={tickets} rmas={rmas} onAdd={() => { }} onUpdate={() => { }} onDelete={handleDeleteCustomer} currentUser={currentUser} users={users} />}
+          {activeTab === 'dashboard' && <Dashboard onAnalyze={() => { }} onAlertClick={() => { }} alerts={alerts} summary={monthlySummary} orders={visibleOrders} trafficData={traffic} products={visibleProducts} isAnalyzing={isOperationalDataLoading} aiAnalysis={null} currentMonth={currentMonth} onMonthChange={setCurrentMonth} currentUser={currentUser} users={users} selectedLogistaId={selectedLogistaId} onLogistaChange={setSelectedLogistaId} setActiveTab={setActiveTab} />}
+          {activeTab === 'products' && <ProductManager suppliers={suppliers} currentUser={currentUser} users={users} reviews={reviews} onUpdateReview={() => { }} onAddSupplier={handleAddSupplier} onViewOrders={(productName) => handleNavigate('orders', { search: productName })} distributionCenters={distributionCenters} stockLocations={stockLocations} onUpdateStockLocations={() => { }} productPageTemplates={productPageTemplates} onUpdateProductPageTemplates={handleUpdateProductPageTemplates} experiments={experiments} targetProductId={deepLinkParams?.id} onClearTargetProduct={() => setDeepLinkParams(null)} />}
+          {activeTab === 'orders' && <OrderManager orders={orders} products={products} customers={customers} suppliers={suppliers} productSuppliers={productSuppliers} paymentConfigs={paymentConfigs} onAdd={handleAddOrder} onUpdate={handleUpdateOrder} onDelete={handleDeleteOrder} onCreateCustomer={handleAddCustomer} currentUser={currentUser} users={users} shippingConfigs={shippingConfigs} automationLogs={automationLogs} rmas={rmas} onAddRma={() => { }} distributionCenters={distributionCenters} stockLocations={stockLocations} affiliates={affiliates} initialSearch={deepLinkParams?.search} />}
+          {activeTab === 'customers' && <CustomerManager customers={customers} orders={orders} leads={leads} tickets={tickets} rmas={rmas} onAdd={handleAddCustomer} onUpdate={handleUpdateCustomer} onDelete={handleDeleteCustomer} currentUser={currentUser} users={users} />}
           {activeTab === 'crm-clientes' && <CrmManager customers={customers} orders={orders} />}
           {activeTab === 'subscriptions' && <SubscriptionManager subscriptions={subscriptions} customers={customers} products={products} onAdd={handleAddSubscription} onUpdate={handleUpdateSubscription} onDelete={handleDeleteSubscription} />}
-          {activeTab === 'suppliers' && <SupplierManager suppliers={suppliers} orders={orders} onAdd={() => { }} onUpdate={() => { }} onDelete={handleDeleteSupplier} currentUser={currentUser} users={users} />}
+          {activeTab === 'suppliers' && <SupplierManager suppliers={suppliers} orders={orders} onAdd={handleAddSupplier} onUpdate={handleUpdateSupplier} onDelete={handleDeleteSupplier} currentUser={currentUser} users={users} />}
           {activeTab === 'traffic' && <TrafficManager trafficData={traffic} leadsData={leads} onAdd={() => { }} onUpdate={() => { }} onDelete={() => { }} currentUser={currentUser} users={users} onImport={() => { }} />}
           {activeTab === 'leads' && <LeadsManager leads={leads} onAdd={() => { }} onUpdate={() => { }} onDelete={() => { }} currentUser={currentUser} users={users} />}
           {activeTab === 'marketing-tools' && <MarketingTools pixels={trackingPixels} onAddPixel={(p) => setTrackingPixels(prev => [...prev, { ...p, id: crypto.randomUUID(), userId: currentUser.id, createdAt: new Date().toISOString() }])} onUpdatePixel={(p) => setTrackingPixels(prev => prev.map(pix => pix.id === p.id ? p : pix))} onDeletePixel={(id) => setTrackingPixels(prev => prev.filter(p => p.id !== id))} links={shortLinks} onAddLink={() => { }} onUpdateLink={() => { }} onDeleteLink={() => { }} currentUser={currentUser} users={users} orders={orders} leads={leads} onRegisterClick={() => { }} products={products} affiliates={affiliates} />}
@@ -377,12 +641,25 @@ const App: React.FC<AppProps> = ({
           {activeTab === 'automations' && <AutomationManager rules={automationRules} templates={whatsAppTemplates} onAdd={() => { }} onUpdate={() => { }} onDelete={() => { }} />}
           {activeTab === 'rma' && <RmaManager rmas={rmas} orders={orders} customers={customers} onAdd={() => { }} onUpdate={() => { }} onDelete={() => { }} currentUser={currentUser} users={users} />}
           {activeTab === 'reviews' && <ReviewManager reviews={reviews} onUpdate={handleUpdateReview} />}
-          {activeTab === 'catalog' && <CatalogManager currentUser={currentUser} globalProducts={globalProducts} products={products} onActivate={() => { }} onUpdateGlobalProduct={() => { }} />}
+          {activeTab === 'catalog' && (
+            <CatalogManager
+              currentUser={currentUser}
+              globalProducts={globalProducts}
+              products={products}
+              onActivate={(globalProduct) => {
+                void handleActivateCatalogProduct(globalProduct);
+              }}
+              onUpdateGlobalProduct={handleUpdateGlobalProducts}
+              onCreateGlobalProduct={handleCreateGlobalProduct}
+              onPatchGlobalProduct={handlePatchGlobalProduct}
+              onDeleteGlobalProduct={handleDeleteGlobalProduct}
+            />
+          )}
           {activeTab === 'distribution-centers' && <DistributionCenterManager centers={distributionCenters} onAdd={() => { }} onUpdate={() => { }} onDelete={() => { }} />}
           {activeTab === 'product-quality' && <ProductQualityDashboard orders={orders} rmas={rmas} tickets={tickets} abandonmentLogs={abandonmentLogs} />}
           {activeTab === 'landing-pages' && <LandingPageManager landingPages={landingPages} products={products} onUpdatePages={setLandingPages} />}
-          {activeTab === 'ab-tests' && <AbTestManager experiments={experiments} experimentData={experimentData} products={products} productPageTemplates={productPageTemplates} onUpdateExperiments={setExperiments} onAddExperimentData={handleAddExperimentData} onUpdateProduct={updateProduct} currentUser={currentUser} />}
-          {activeTab === 'price-optimizer' && <PriceOptimizer products={products} orders={orders} abandonmentLogs={abandonmentLogs} productSuppliers={productSuppliers} onUpdateProduct={updateProduct} />}
+          {activeTab === 'ab-tests' && <AbTestManager experiments={experiments} experimentData={experimentData} products={products} productPageTemplates={productPageTemplates} onUpdateExperiments={handleUpdateExperiments} onAddExperimentData={handleAddExperimentData} onUpdateProduct={(product) => { void updateProduct(product); }} currentUser={currentUser} />}
+          {activeTab === 'price-optimizer' && <PriceOptimizer products={products} orders={orders} abandonmentLogs={abandonmentLogs} productSuppliers={productSuppliers} onUpdateProduct={(product) => { void updateProduct(product); }} />}
           {activeTab === 'storefront' && <Storefront products={products} orders={orders} customers={customers} />}
           {activeTab === 'crm-clientes' && <CrmManager customers={customers} orders={orders} />}
           {activeTab === 'affiliates' && <AffiliateManager affiliates={affiliates} orders={orders} onUpdateAffiliates={setAffiliates} onUpdateOrders={setOrders} currentUser={currentUser} />}
@@ -391,7 +668,7 @@ const App: React.FC<AppProps> = ({
           {activeTab === 'product-reports' && <ProductReports products={products} orders={orders} productSuppliers={productSuppliers} />}
           {activeTab === 'push-notifications' && <PushManager logs={pushLogs} onAddLog={(log) => setPushLogs(prev => [log, ...prev])} customerMetrics={customerMetrics} />}
 
-          {activeTab === 'ai' && <AICopilot currentUser={currentUser} monthlySummary={monthlySummary} orders={orders} products={products} traffic={traffic} leads={leads} customers={customers} carts={carts} checkouts={checkouts} abandonmentLogs={abandonmentLogs} templates={whatsAppTemplates} suppliers={suppliers} alerts={alerts} productSuppliers={productSuppliers} onNavigate={(tab, params) => setActiveTab(tab)} onUpdateProduct={updateProduct} onUpdateOrder={(o) => { }} onUpdateAbandonmentLog={(id, u) => { }} />}
+          {activeTab === 'ai' && <AICopilot currentUser={currentUser} monthlySummary={monthlySummary} orders={orders} products={products} traffic={traffic} leads={leads} customers={customers} carts={carts} checkouts={checkouts} abandonmentLogs={abandonmentLogs} templates={whatsAppTemplates} suppliers={suppliers} alerts={alerts} productSuppliers={productSuppliers} onNavigate={(tab, params) => setActiveTab(tab)} onUpdateProduct={(product) => { void updateProduct(product); }} onUpdateOrder={(o) => { }} onUpdateAbandonmentLog={(id, u) => { }} />}
         </main>
       </div>
     </div>

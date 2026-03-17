@@ -116,7 +116,7 @@ export async function updateSigmaSettings(payload: SigmaConfig): Promise<void> {
     spillover_mode: payload.cycle.spilloverMode,
     fidelity_source_percent: payload.fidelityBonus.percentTotal,
     top_pool_percent: payload.topSigma.percentTotal,
-    career_percent: payload.career.percentTotal,
+    career_percent: 6.39,
     updated_at: new Date().toISOString()
   }
   let settingsId = current?.id

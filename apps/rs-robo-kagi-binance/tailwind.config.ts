@@ -1,7 +1,12 @@
 import type { Config } from 'tailwindcss'
 
 export default {
-  content: ['./index.html', './**/*.{ts,tsx}'],
+  content: [
+    './index.html',
+    './*.{ts,tsx}',
+    './components/**/*.{ts,tsx}',
+    './lib/**/*.{ts,tsx}'
+  ],
   theme: {
     extend: {
       keyframes: {
@@ -17,3 +22,4 @@ export default {
   },
   plugins: [],
 } satisfies Config
+// Forçar re-build do Tailwind para restaurar design premium

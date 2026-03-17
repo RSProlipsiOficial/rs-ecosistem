@@ -2,6 +2,15 @@
 import React, { useState } from 'react';
 import { Order, OrderDetail } from '../types';
 import { Search, History, Filter, Eye, X, User, ShoppingBag, Truck, Calendar, Clock, Download, FileText, DollarSign } from 'lucide-react';
+import { getDisplayOrderHeading } from '../utils/orderDisplay';
+
+const shouldShowCommercialIdentifier = (value?: string | null): boolean => {
+    const normalized = String(value || '').trim();
+    if (!normalized) return false;
+    if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(normalized)) return false;
+    if (normalized.length > 24) return false;
+    return true;
+};
 
 interface SalesHistoryProps {
     orders: Order[];
@@ -282,7 +291,7 @@ const SalesHistory: React.FC<SalesHistoryProps> = ({ orders }) => {
                                 Detalhes da Compra
                             </h3>
                             <p className="text-sm text-gray-500 mt-1">
-                                Pedido <span className="text-white font-mono font-bold">#AC-{selectedOrder.id.split('-')[0].toUpperCase()}</span> • {selectedOrder.date.split('-').reverse().join('/')} {selectedOrder.time && `às ${selectedOrder.time}`}
+                                {getDisplayOrderHeading(selectedOrder)} • {selectedOrder.date.split('-').reverse().join('/')} {selectedOrder.time && `às ${selectedOrder.time}`}
                             </p>
                         </div>
 
@@ -291,7 +300,9 @@ const SalesHistory: React.FC<SalesHistoryProps> = ({ orders }) => {
                                 <div className="bg-dark-950 p-3 rounded-lg border border-dark-800">
                                     <span className="text-xs text-gray-500 uppercase font-bold block mb-1">Consultor</span>
                                     <p className="text-white font-medium">{selectedOrder.consultantName}</p>
-                                    <p className="text-xs text-gray-500">PIN: {selectedOrder.consultantPin}</p>
+                                    {shouldShowCommercialIdentifier(selectedOrder.consultantPin) ? (
+                                        <p className="text-xs text-gray-500">LOGIN/MMN: {selectedOrder.consultantPin}</p>
+                                    ) : null}
                                 </div>
                                 <div className="bg-dark-950 p-3 rounded-lg border border-dark-800">
                                     <span className="text-xs text-gray-500 uppercase font-bold block mb-1">Veículo / Placa</span>

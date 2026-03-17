@@ -1,7 +1,3 @@
-
-
-
-
 import React, { useState } from 'react';
 import Modal from '../Modal';
 import type { User } from '../../App';
@@ -18,8 +14,8 @@ interface AuthViewProps {
 
 const Spinner = () => (
     <div className="flex items-center justify-center gap-2">
-        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-black"></div>
-        <span>Processando...</span>
+        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-amber-500"></div>
+        <span className="text-amber-500 font-medium">Processando...</span>
     </div>
 );
 
@@ -77,7 +73,6 @@ const AuthView: React.FC<AuthViewProps> = ({ onLogin, onRegister, onProceedToPay
         setError(null);
         
         try {
-            // Step 1: Validate Binance account for ALL registrations
             const validation = await verifyBinanceAccount(regApiKey, regDoc);
             if (!validation.isValid) {
                 const reason = validation.reason || 'Falha na validação da conta Binance.';
@@ -96,7 +91,6 @@ const AuthView: React.FC<AuthViewProps> = ({ onLogin, onRegister, onProceedToPay
                 plan: regPlan,
             };
 
-            // Step 2: Decide flow based on plan
             if (regPlan === 'Teste Grátis') {
                 const result = await onRegister(registrationData);
                 if (!result.success) {
@@ -104,8 +98,7 @@ const AuthView: React.FC<AuthViewProps> = ({ onLogin, onRegister, onProceedToPay
                 }
             } else {
                 onProceedToPayment(registrationData);
-                // The view will change, no need to stop loading spinner here.
-                return; // Exit to avoid setting loading to false
+                return;
             }
         
         } catch (e) {
@@ -121,7 +114,6 @@ const AuthView: React.FC<AuthViewProps> = ({ onLogin, onRegister, onProceedToPay
         e.preventDefault();
         if (!forgotPasswordEmail) return;
         setIsLoading(true);
-        // Simulate API call
         setTimeout(() => {
             addToast(`Instruções de recuperação foram enviadas para ${forgotPasswordEmail}.`, 'success');
             setIsForgotPasswordModalOpen(false);
@@ -135,138 +127,203 @@ const AuthView: React.FC<AuthViewProps> = ({ onLogin, onRegister, onProceedToPay
 
     return (
         <>
-            <div className="min-h-screen flex items-center justify-center bg-zinc-950 text-zinc-200 p-4">
-                <div className="w-full max-w-md p-6 sm:p-8 bg-zinc-900 rounded-2xl shadow-2xl border border-zinc-800 animate-fade-in-up">
-                    <div className="text-center mb-6">
-                        <h1 className="text-3xl font-bold text-amber-300">Robô Kagi + Fibo</h1>
-                        <p className="mt-2 text-zinc-400">Acesse sua conta ou registre-se para começar.</p>
-                    </div>
-                    
-                    {/* Tabs */}
-                    <div className="flex bg-zinc-800/50 p-1 rounded-lg mb-6">
-                        <button onClick={() => { setActiveTab('login'); setError(null); }} className={`flex-1 p-2 rounded-md font-semibold transition-colors ${activeTab === 'login' ? 'bg-amber-500 text-black' : 'text-zinc-300 hover:bg-zinc-700'}`}>Login</button>
-                        <button onClick={() => { setActiveTab('register'); setError(null); }} className={`flex-1 p-2 rounded-md font-semibold transition-colors ${activeTab === 'register' ? 'bg-amber-500 text-black' : 'text-zinc-300 hover:bg-zinc-700'}`}>Registrar-se</button>
-                    </div>
+            <div className="min-h-screen relative flex items-center justify-center bg-zinc-950 p-4 font-sans overflow-hidden">
+                {/* Image Background with overlay */}
+                <div 
+                    className="absolute inset-0 z-0 bg-cover bg-center brightness-[0.3]" 
+                    style={{ backgroundImage: "url('/bg-premium.png')" }}
+                ></div>
+                
+                {/* Glowing decorations */}
+                <div className="absolute top-1/4 -left-20 w-80 h-80 bg-amber-500/10 rounded-full blur-[120px] z-0"></div>
+                <div className="absolute bottom-1/4 -right-20 w-80 h-80 bg-amber-600/10 rounded-full blur-[120px] z-0"></div>
 
-                    {error && (
-                        <div className="bg-red-900/50 border border-red-700 text-red-200 px-3 py-2 rounded-lg text-sm mb-4 text-center">
-                            {error}
-                        </div>
-                    )}
-                    
-                    {activeTab === 'login' ? (
-                        <form onSubmit={handleLoginSubmit} className="space-y-6">
-                            <label className="flex flex-col gap-1">
-                                <span className="text-zinc-400">Email</span>
-                                <input type="email" value={loginEmail} onChange={e => setLoginEmail(e.target.value)} placeholder="seuemail@exemplo.com" className="bg-zinc-800 border border-zinc-700 rounded p-2 w-full" />
-                            </label>
-                            <label className="flex flex-col gap-1">
-                                <div className="flex justify-between items-center">
-                                    <span className="text-zinc-400">Senha</span>
-                                     <button 
-                                        type="button" 
-                                        onClick={() => setIsForgotPasswordModalOpen(true)}
-                                        className="text-xs text-amber-400 hover:text-amber-500 hover:underline"
-                                    >
-                                        Esqueci minha senha
-                                    </button>
-                                </div>
-                                <input type="password" value={loginPassword} onChange={e => setLoginPassword(e.target.value)} placeholder="********" className="bg-zinc-800 border border-zinc-700 rounded p-2 w-full" />
-                            </label>
-                            <button type="submit" className="w-full bg-amber-500 hover:bg-amber-600 text-black font-bold p-3 rounded transition-colors">Entrar</button>
-                        </form>
-                    ) : (
-                        <form onSubmit={handleRegisterSubmit} className="space-y-4 text-sm">
-                            <label className="flex flex-col gap-1"><span>Nome Completo</span><input value={regName} onChange={e => setRegName(e.target.value)} className="bg-zinc-800 border border-zinc-700 rounded p-2 w-full" /></label>
-                            <label className="flex flex-col gap-1"><span>Email</span><input type="email" value={regEmail} onChange={e => setRegEmail(e.target.value)} className="bg-zinc-800 border border-zinc-700 rounded p-2 w-full" /></label>
-                            <label className="flex flex-col gap-1"><span>Senha</span><input type="password" value={regPassword} onChange={e => setRegPassword(e.target.value)} className="bg-zinc-800 border border-zinc-700 rounded p-2 w-full" /></label>
-                            <label className="flex flex-col gap-1">
-                                <span>Plano de Assinatura</span>
-                                <select 
-                                    value={regPlan} 
-                                    onChange={e => setRegPlan(e.target.value as User['plan'])} 
-                                    className="bg-zinc-800 border border-zinc-700 rounded p-2 w-full"
-                                >
-                                    {planOptions.map(plan => (
-                                        <option key={plan} value={plan}>{plan}{plan === 'Pro' ? ' (Mais Popular)' : ''}</option>
-                                    ))}
-                                </select>
-                            </label>
-                            <label className="flex flex-col gap-1"><span>CPF / CNPJ (deve ser o mesmo da conta Binance)</span><input value={regDoc} onChange={e => setRegDoc(e.target.value)} className="bg-zinc-800 border border-zinc-700 rounded p-2 w-full" placeholder="12.345.678/0001-90" /></label>
-                            <label className="flex flex-col gap-1"><span>Nome de usuário de quem indicou (Opcional)</span><input value={regReferrer} onChange={e => setRegReferrer(e.target.value)} className="bg-zinc-800 border border-zinc-700 rounded p-2 w-full" /></label>
-                            
-                            <div className="pt-4 mt-2 border-t border-zinc-700 space-y-3">
-                                <span className="text-zinc-300 font-semibold">Você já tem uma conta na Binance? *</span>
-                                <div className="flex gap-4">
-                                    <label className="flex items-center gap-2 cursor-pointer">
-                                        <input type="radio" name="hasBinanceAccount" value="yes" checked={hasBinanceAccount === 'yes'} onChange={() => setHasBinanceAccount('yes')} className="h-4 w-4 text-amber-500 bg-zinc-800 border-zinc-600 focus:ring-amber-500 focus:ring-offset-zinc-900" />
-                                        <span>Sim, já tenho</span>
-                                    </label>
-                                    <label className="flex items-center gap-2 cursor-pointer">
-                                        <input type="radio" name="hasBinanceAccount" value="no" checked={hasBinanceAccount === 'no'} onChange={() => setHasBinanceAccount('no')} className="h-4 w-4 text-amber-500 bg-zinc-800 border-zinc-600 focus:ring-amber-500 focus:ring-offset-zinc-900" />
-                                        <span>Não, preciso criar</span>
-                                    </label>
+                <div className="w-full max-w-[450px] relative z-10 animate-fade-in-up">
+                    <div className="rs-card p-8 sm:p-10 shadow-[0_0_50px_rgba(0,0,0,0.5)] border-zinc-800/50">
+                        <div className="text-center mb-8">
+                            <div className="flex justify-center mb-4">
+                                <div className="w-16 h-16 bg-gradient-to-tr from-amber-400 to-amber-600 rounded-2xl flex items-center justify-center p-3 shadow-lg shadow-amber-500/20 transform rotate-3">
+                                    <svg viewBox="0 0 24 24" fill="none" className="w-full h-full text-zinc-950" stroke="currentColor" strokeWidth="2">
+                                        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" strokeLinecap="round" strokeLinejoin="round" />
+                                    </svg>
                                 </div>
                             </div>
-
-                            {hasBinanceAccount === 'no' && (
-                                <div className="bg-blue-900/30 border border-blue-700 text-blue-200 p-4 rounded-lg text-sm text-center animate-fade-in-up">
-                                    <p className="font-semibold">Crie sua conta na Binance primeiro.</p>
-                                    <p className="mt-2 text-xs">É necessário ter uma conta para usar a plataforma. Use o link abaixo para se cadastrar.</p>
-                                    <a href="https://www.binance.com/referral/earn-together/refer2earn-usdc/claim?hl=pt&ref=GRO_28502_H6DL9&utm_source=default&utm_medium=web_share_copy" target="_blank" rel="noopener noreferrer" className="mt-4 inline-block bg-amber-500 hover:bg-amber-600 text-black font-bold py-2 px-4 rounded transition-colors">
-                                        Criar Conta na Binance
-                                    </a>
-                                    <p className="mt-3 text-xs text-zinc-400">Após criar sua conta, volte aqui, selecione "Sim" e continue o cadastro.</p>
-                                </div>
-                            )}
-
-                            {hasBinanceAccount === 'yes' && (
-                                <div className="pt-2 space-y-4 animate-fade-in-up">
-                                    <p className="text-xs text-zinc-400">
-                                        Ótimo! Agora, forneça sua chave de API da Binance para validação. O sistema irá verificar se o CPF/CNPJ da conta corresponde ao seu cadastro.
-                                    </p>
-                                    <label className="flex flex-col gap-1">
-                                        <span className="text-zinc-400">Binance API Key</span>
-                                        <input value={regApiKey} onChange={e => setRegApiKey(e.target.value)} placeholder="Sua chave de API da Binance" className="bg-zinc-800 border border-zinc-700 rounded p-2 w-full font-mono"/>
-                                    </label>
-                                    <label className="flex flex-col gap-1">
-                                        <span className="text-zinc-400">Binance API Secret</span>
-                                        <input type="password" value={regApiSecret} onChange={e => setRegApiSecret(e.target.value)} placeholder="Seu segredo de API (permanecerá oculto)" className="bg-zinc-800 border border-zinc-700 rounded p-2 w-full font-mono"/>
-                                    </label>
-                                </div>
-                            )}
-
-                            <button type="submit" className="w-full bg-amber-500 hover:bg-amber-600 text-black font-bold p-3 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed h-12 flex items-center justify-center" disabled={isLoading || hasBinanceAccount !== 'yes'}>
-                                {isLoading ? <Spinner /> : submitButtonText}
+                            <h1 className="text-3xl font-extrabold tracking-tight rs-gradient-text uppercase">Robô Kagi + Fibo</h1>
+                            <p className="mt-2 text-zinc-400 font-medium">Inteligência Financeira RS Prólipsi</p>
+                        </div>
+                        
+                        {/* Tabs */}
+                        <div className="flex bg-zinc-950/50 p-1 rounded-xl mb-8 border border-zinc-800/50">
+                            <button 
+                                onClick={() => { setActiveTab('login'); setError(null); }} 
+                                className={`flex-1 py-2.5 rounded-lg font-bold transition-all duration-300 ${activeTab === 'login' ? 'bg-amber-500 text-zinc-950 shadow-lg shadow-amber-500/20' : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/50'}`}
+                            >
+                                Login
                             </button>
-                        </form>
-                    )}
+                            <button 
+                                onClick={() => { setActiveTab('register'); setError(null); }} 
+                                className={`flex-1 py-2.5 rounded-lg font-bold transition-all duration-300 ${activeTab === 'register' ? 'bg-amber-500 text-zinc-950 shadow-lg shadow-amber-500/20' : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/50'}`}
+                            >
+                                Registro
+                            </button>
+                        </div>
+
+                        {error && (
+                            <div className="bg-red-500/10 border border-red-500/50 text-red-400 px-4 py-3 rounded-xl text-sm mb-6 text-center animate-shake">
+                                {error}
+                            </div>
+                        )}
+                        
+                        {activeTab === 'login' ? (
+                            <form onSubmit={handleLoginSubmit} className="space-y-6">
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest ml-1">Email</label>
+                                    <input 
+                                        type="email" 
+                                        value={loginEmail} 
+                                        onChange={e => setLoginEmail(e.target.value)} 
+                                        placeholder="seuemail@exemplo.com" 
+                                        className="rs-input w-full" 
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <div className="flex justify-between items-center ml-1">
+                                        <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest">Senha</label>
+                                        <button 
+                                            type="button" 
+                                            onClick={() => setIsForgotPasswordModalOpen(true)}
+                                            className="text-xs text-amber-500 hover:text-amber-400 font-bold transition-colors"
+                                        >
+                                            Esqueceu?
+                                        </button>
+                                    </div>
+                                    <input 
+                                        type="password" 
+                                        value={loginPassword} 
+                                        onChange={e => setLoginPassword(e.target.value)} 
+                                        placeholder="********" 
+                                        className="rs-input w-full" 
+                                    />
+                                </div>
+                                <button type="submit" className="rs-button-primary w-full mt-4 !py-4 shadow-xl shadow-amber-500/10">
+                                    Entrar no Terminal
+                                </button>
+                            </form>
+                        ) : (
+                            <form onSubmit={handleRegisterSubmit} className="space-y-4 text-sm max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest ml-1">Nome Completo</label>
+                                    <input value={regName} onChange={e => setRegName(e.target.value)} className="rs-input w-full" placeholder="Seu nome" />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest ml-1">Email Profissional</label>
+                                    <input type="email" value={regEmail} onChange={e => setRegEmail(e.target.value)} className="rs-input w-full" placeholder="email@exemplo.com" />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest ml-1">Senha de Acesso</label>
+                                    <input type="password" value={regPassword} onChange={e => setRegPassword(e.target.value)} className="rs-input w-full" placeholder="********" />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest ml-1">Plano Estratégico</label>
+                                    <select 
+                                        value={regPlan} 
+                                        onChange={e => setRegPlan(e.target.value as User['plan'])} 
+                                        className="rs-input w-full cursor-pointer appearance-none"
+                                    >
+                                        {planOptions.map(plan => (
+                                            <option key={plan} value={plan} className="bg-zinc-900">{plan}{plan === 'Pro' ? ' (Popular)' : ''}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest ml-1">CPF / CNPJ (Binance)</label>
+                                    <input value={regDoc} onChange={e => setRegDoc(e.target.value)} className="rs-input w-full" placeholder="000.000.000-00" />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest ml-1">Indicação (Opcional)</label>
+                                    <input value={regReferrer} onChange={e => setRegReferrer(e.target.value)} className="rs-input w-full" placeholder="@usuario" />
+                                </div>
+                                
+                                <div className="pt-6 mt-4 border-t border-zinc-800 space-y-4">
+                                    <span className="text-xs font-bold text-zinc-300 uppercase tracking-widest">Verificação de Conta Binance *</span>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <label className={`flex items-center justify-center gap-2 p-3 rounded-lg border cursor-pointer transition-all ${hasBinanceAccount === 'yes' ? 'bg-amber-500/10 border-amber-500 text-amber-500' : 'bg-zinc-900 border-zinc-800 text-zinc-500'}`}>
+                                            <input type="radio" name="hasBinanceAccount" value="yes" checked={hasBinanceAccount === 'yes'} onChange={() => setHasBinanceAccount('yes')} className="hidden" />
+                                            <span className="font-bold">Sim</span>
+                                        </label>
+                                        <label className={`flex items-center justify-center gap-2 p-3 rounded-lg border cursor-pointer transition-all ${hasBinanceAccount === 'no' ? 'bg-amber-500/10 border-amber-500 text-amber-500' : 'bg-zinc-900 border-zinc-800 text-zinc-500'}`}>
+                                            <input type="radio" name="hasBinanceAccount" value="no" checked={hasBinanceAccount === 'no'} onChange={() => setHasBinanceAccount('no')} className="hidden" />
+                                            <span className="font-bold">Não</span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                {hasBinanceAccount === 'no' && (
+                                    <div className="bg-zinc-950 border border-amber-500/30 p-5 rounded-xl text-center shadow-lg">
+                                        <p className="font-bold text-zinc-200">Requisito Obrigatório</p>
+                                        <p className="mt-2 text-xs text-zinc-500">O Robô Kagi opera exclusivamente via API da Binance. Crie sua conta primeiro.</p>
+                                        <a href="https://www.binance.com/..." target="_blank" rel="noopener noreferrer" className="rs-button-primary w-full mt-4 inline-block text-center !py-2.5">
+                                            Criar Conta Binance
+                                        </a>
+                                    </div>
+                                )}
+
+                                {hasBinanceAccount === 'yes' && (
+                                    <div className="space-y-4 pt-2">
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest ml-1">Binance API Key</label>
+                                            <input value={regApiKey} onChange={e => setRegApiKey(e.target.value)} placeholder="0x..." className="rs-input w-full font-mono text-xs"/>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest ml-1">Binance API Secret</label>
+                                            <input type="password" value={regApiSecret} onChange={e => setRegApiSecret(e.target.value)} placeholder="********" className="rs-input w-full font-mono text-xs"/>
+                                        </div>
+                                    </div>
+                                )}
+
+                                <button type="submit" className="rs-button-primary w-full mt-6 !py-4" disabled={isLoading || hasBinanceAccount !== 'yes'}>
+                                    {isLoading ? <Spinner /> : submitButtonText}
+                                </button>
+                            </form>
+                        )}
+                        
+                        <div className="mt-8 text-center text-xs text-zinc-600 font-medium">
+                            © 2026 RS Prólipsi Ecosystem. Todos os direitos reservados.
+                        </div>
+                    </div>
                 </div>
             </div>
             
-            <Modal isOpen={isForgotPasswordModalOpen} onClose={() => setIsForgotPasswordModalOpen(false)} title="Recuperação de Senha">
-                <form onSubmit={handleForgotPasswordSubmit} className="space-y-4">
-                    <p className="text-sm text-zinc-400">
-                        Digite seu email de cadastro. Enviaremos um link para você resetar sua senha. Se preferir, contate o administrador para resetar sua senha para o padrão "RS123".
+            <Modal isOpen={isForgotPasswordModalOpen} onClose={() => setIsForgotPasswordModalOpen(false)} title="Recuperação de Acesso">
+                <form onSubmit={handleForgotPasswordSubmit} className="space-y-6 p-2">
+                    <p className="text-sm text-zinc-400 leading-relaxed">
+                        Esqueceu sua chave de acesso? Digite seu email institucional para receber o protocolo de recuperação.
                     </p>
-                    <label className="flex flex-col gap-1">
-                        <span className="text-zinc-400">Email</span>
+                    <div className="space-y-2">
+                        <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest ml-1">Email de Cadastro</label>
                         <input 
                             type="email" 
                             value={forgotPasswordEmail} 
                             onChange={e => setForgotPasswordEmail(e.target.value)} 
                             placeholder="seuemail@exemplo.com" 
-                            className="bg-zinc-800 border border-zinc-700 rounded p-2 w-full" 
+                            className="rs-input w-full" 
                             required 
                         />
-                    </label>
-                    <div className="flex justify-end pt-4 mt-4 border-t border-zinc-700">
+                    </div>
+                    <div className="flex justify-end gap-3 pt-4 border-t border-zinc-800">
+                        <button 
+                            type="button"
+                            onClick={() => setIsForgotPasswordModalOpen(false)}
+                            className="rs-button-secondary !py-2.5 px-6"
+                        >
+                            Cancelar
+                        </button>
                         <button 
                             type="submit" 
-                            className="w-48 h-10 bg-amber-500 hover:bg-amber-600 text-black font-bold p-2 rounded transition-colors disabled:opacity-50 disabled:cursor-wait"
+                            className="rs-button-primary !py-2.5 px-8"
                             disabled={isLoading}
                         >
-                             {isLoading ? <Spinner /> : 'Enviar Link'}
+                             {isLoading ? <Spinner /> : 'Enviar Protocolo'}
                         </button>
                     </div>
                 </form>
@@ -274,5 +331,6 @@ const AuthView: React.FC<AuthViewProps> = ({ onLogin, onRegister, onProceedToPay
         </>
     );
 };
+
 
 export default AuthView;

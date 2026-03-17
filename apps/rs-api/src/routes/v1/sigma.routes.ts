@@ -200,25 +200,61 @@ router.get('/stats', supabaseAuth, async (req: any, res) => {
             return acc;
         }, {});
 
-        const filteredDirects = (directConsultants || []).filter(c => {
-            // EXCLUSÃO: Rota Fácil Teste
-            if (c.id === '9552d54f-10eb-4d34-86ef-924cd871d4cf' || c.user_id === '9552d54f-10eb-4d34-86ef-924cd871d4cf') return false;
-
-            // FILTRO DE MIGRAÇÃO
-            const profile = profileMap[c.user_id || ''];
-            if (profile && profile.mmn_active === false) return false;
-
-            return true;
-        });
-
-        const totalDirects = filteredDirects.length;
-        const activeDirects = filteredDirects.filter((c: any) => c.status === 'ativo' || c.status === 'Ativo').length || 0;
-        const inactiveDirects = totalDirects - activeDirects;
-
         // 2. BUSCAR TODA A REDE RECURSIVA PARA ESTATÍSTICAS REAIS
         const { data: allConsultants } = await supabase
             .from('consultores')
-            .select('id, patrocinador_id, pin_atual, status');
+            .select('id, patrocinador_id, pin_atual, status, email, cpf');
+
+        // BUSCAR PEDIDOS DO MÊS ATUAL PARA DEFINIR STATUS REAL (UNIFICADO)
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        
+        // A. Pedidos Sede (orders)
+        const { data: monthlyOrders } = await supabase
+            .from('orders')
+            .select('buyer_id, matrix_accumulated, total, payment_date, created_at')
+            .in('payment_status', ['approved', 'paid', 'Pago'])
+            .in('status', ['paid', 'processing', 'delivered', 'in_transit', 'shipped']);
+
+        const monthlyAccMap = new Map<string, number>();
+        monthlyOrders?.forEach(o => {
+            const orderDate = new Date(o.payment_date || o.created_at);
+            if (orderDate >= startOfMonth) {
+                const current = monthlyAccMap.get(o.buyer_id) || 0;
+                const value = Number(o.matrix_accumulated || 0) > 0 
+                    ? Number(o.matrix_accumulated) 
+                    : Number(o.total || 0);
+                monthlyAccMap.set(o.buyer_id, current + value);
+            }
+        });
+
+        // B. Pedidos Multi-CD (cd_orders)
+        // Mapear CPFs e Emails para IDs para unificação
+        const emailToId = new Map<string, string>();
+        const cpfToId = new Map<string, string>();
+        allConsultants?.forEach(c => {
+            if (c.email) emailToId.set(c.email.toLowerCase().trim(), c.id);
+            if (c.cpf) cpfToId.set(c.cpf.replace(/\D/g, ''), c.id);
+        });
+
+        const { data: cdOrders } = await supabase
+            .from('cd_orders')
+            .select('total, created_at, buyer_email, buyer_cpf, order_date')
+            .in('status', ['ENTREGUE', 'EM_TRANSPORTE', 'PAGO', 'paid', 'delivered'])
+            .is('marketplace_order_id', null);
+
+        cdOrders?.forEach(o => {
+            const orderDate = new Date(o.order_date || o.created_at);
+            if (orderDate >= startOfMonth) {
+                const buyerId = (o.buyer_email ? emailToId.get(o.buyer_email.toLowerCase().trim()) : null) || 
+                               (o.buyer_cpf ? cpfToId.get(o.buyer_cpf.replace(/\D/g, '')) : null);
+                
+                if (buyerId) {
+                    const current = monthlyAccMap.get(buyerId) || 0;
+                    monthlyAccMap.set(buyerId, current + Number(o.total || 0));
+                }
+            }
+        });
 
         const getAllDescendants = (parentIds: string[]): any[] => {
             const children = (allConsultants || []).filter(c => parentIds.includes(c.patrocinador_id));
@@ -228,8 +264,6 @@ router.get('/stats', supabaseAuth, async (req: any, res) => {
 
         const networkMembers = getAllDescendants(effectiveSponsorIds);
         const pinSummary: Record<string, number> = {};
-
-        // Inicializar com 0 para os PINs principais (Opcional, mas limpo)
         ['Bronze', 'Prata', 'Ouro', 'Safira', 'Esmeralda', 'Diamante'].forEach(p => pinSummary[p] = 0);
 
         networkMembers.forEach(m => {
@@ -238,18 +272,33 @@ router.get('/stats', supabaseAuth, async (req: any, res) => {
             }
         });
 
-        const activeInNetwork = networkMembers.filter(m => m.status === 'ativo' || m.status === 'Ativo').length;
+        const activeInNetwork = networkMembers.filter(m => (monthlyAccMap.get(m.id) || 0) >= 60).length;
 
-        res.json({
+        const statsResponse = {
             data: {
                 totalDownline: networkMembers.length,
                 activeDirects,
                 inactiveDirects,
                 activeInNetwork,
-                maxDepth: 0, // Poderia ser calculado se necessário
-                pinSummary
+                maxDepth: 0,
+                pinSummary,
+                totalEarnings: 0,
+                totalCycles: 0
             }
-        });
+        };
+
+        const { data: cycleStats } = await supabase
+            .from('matriz_cycles')
+            .select('cycle_payout')
+            .eq('consultor_id', userId)
+            .eq('status', 'completed');
+            
+        if (cycleStats && cycleStats.length > 0) {
+            statsResponse.data.totalCycles = cycleStats.length;
+            statsResponse.data.totalEarnings = cycleStats.reduce((sum, c) => sum + (Number(c.cycle_payout) || 108.00), 0);
+        }
+
+        res.json(statsResponse);
 
     } catch (error: any) {
         console.error('Erro ao buscar estatísticas Sigma:', error);
@@ -673,7 +722,7 @@ router.get('/tree', supabaseAuth, async (req: any, res) => {
         // 2. Buscar TODOS os consultores para construir a árvore recursiva 
         const { data: allConsultants, error: allErr } = await supabase
             .from('consultores')
-            .select('id, nome, email, username, pin_atual, status, patrocinador_id, created_at, user_id, whatsapp')
+            .select('id, nome, email, username, pin_atual, status, patrocinador_id, created_at, user_id, whatsapp, cpf')
             .order('created_at', { ascending: true });
 
         if (allErr) throw allErr;
@@ -687,7 +736,56 @@ router.get('/tree', supabaseAuth, async (req: any, res) => {
         const OFFICIAL_EMAILS = ['rsprolipsioficial@gmail.com', 'robertorjbc@gmail.com'];
         const isOfficial = OFFICIAL_EMAILS.includes(userNode.email?.toLowerCase().trim());
 
-        // 3. Buscar ciclos de todos
+        // 3. BUSCAR PEDIDOS DO MÊS ATUAL PARA DEFINIR STATUS REAL EM TODO O GRUPO
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        
+        // A. Pedidos Sede
+        const { data: monthlyOrders } = await supabase
+            .from('orders')
+            .select('buyer_id, matrix_accumulated, total, payment_date, created_at')
+            .in('payment_status', ['approved', 'paid', 'Pago'])
+            .in('status', ['paid', 'processing', 'delivered', 'in_transit', 'shipped']);
+
+        const monthlyAccMap = new Map<string, number>();
+        monthlyOrders?.forEach(o => {
+            const orderDate = new Date(o.payment_date || o.created_at);
+            if (orderDate >= startOfMonth) {
+                const current = monthlyAccMap.get(o.buyer_id) || 0;
+                const value = Number(o.matrix_accumulated || 0) > 0 
+                    ? Number(o.matrix_accumulated) 
+                    : Number(o.total || 0);
+                monthlyAccMap.set(o.buyer_id, current + value);
+            }
+        });
+
+        // B. Pedidos CD (Multi-CD)
+        const emailToId = new Map<string, string>();
+        const cpfToId = new Map<string, string>();
+        allConsultants?.forEach(c => {
+            if (c.email) emailToId.set(c.email.toLowerCase().trim(), c.id);
+            if (c.cpf) cpfToId.set(c.cpf.replace(/\D/g, ''), c.id); // campo cpf pode não vir no select acima, vou checar se preciso incluir
+        });
+
+        const { data: cdOrders } = await supabase
+            .from('cd_orders')
+            .select('total, created_at, buyer_email, buyer_cpf, order_date')
+            .in('status', ['ENTREGUE', 'EM_TRANSPORTE', 'PAGO', 'paid', 'delivered'])
+            .is('marketplace_order_id', null);
+
+        cdOrders?.forEach(o => {
+            const orderDate = new Date(o.order_date || o.created_at);
+            if (orderDate >= startOfMonth) {
+                const bId = (o.buyer_email ? emailToId.get(o.buyer_email.toLowerCase().trim()) : null) || 
+                            (o.buyer_cpf ? cpfToId.get(o.buyer_cpf.replace(/\D/g, '')) : null);
+                if (bId) {
+                    const current = monthlyAccMap.get(bId) || 0;
+                    monthlyAccMap.set(bId, current + Number(o.total || 0));
+                }
+            }
+        });
+
+        // 4. Buscar ciclos de todos
         const { data: allCycles } = await supabase
             .from('matriz_cycles')
             .select('consultor_id, status')
@@ -755,7 +853,8 @@ router.get('/tree', supabaseAuth, async (req: any, res) => {
 	                    email: c.email,
                     whatsapp: c.whatsapp,
                     pin: c.pin_atual || 'Consultor',
-                    status: c.status,
+                    status: (monthlyAccMap.get(c.id) || 0) >= 60 ? 'ativo' : 'inativo',
+                    hasPurchased: (monthlyAccMap.get(c.id) || 0) > 0,
                     level: currentLevel,
                     avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(c.nome)}&background=random`,
                     directCount: (allConsultants || []).filter(sub => sub.patrocinador_id === c.id).length,
@@ -802,7 +901,8 @@ router.get('/tree', supabaseAuth, async (req: any, res) => {
             email: userNode.email,
             whatsapp: (userNode as any).whatsapp,
             pin: userNode.pin_atual || 'Consultor',
-            status: userNode.status,
+            status: (monthlyAccMap.get(userNode.id) || 0) >= 60 ? 'ativo' : 'inativo',
+            hasPurchased: (monthlyAccMap.get(userNode.id) || 0) > 0,
             level: 0,
             avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(userNode.nome)}&background=random`,
             directCount: (allConsultants || []).filter(sub => startIds.includes(sub.patrocinador_id)).length,
@@ -826,17 +926,31 @@ router.get('/cycle-journey', supabaseAuth, async (req: any, res) => {
         const authUserId = req.user.id;
         const { data: currentConsultant } = await supabase
             .from('consultores')
-            .select('id')
+            .select('id, email')
             .or(`user_id.eq."${authUserId}",id.eq."${authUserId}"`)
             .maybeSingle();
 
-        const userId = currentConsultant?.id || authUserId;
-        console.log(`[Sigma Journey] Fetching for: ${userId}`);
+        if (!currentConsultant) return res.status(404).json({ error: 'Consultor não encontrado' });
+        
+        const OFFICIAL_EMAILS = ['rsprolipsioficial@gmail.com', 'robertorjbc@gmail.com'];
+        const userEmail = currentConsultant.email?.toLowerCase().trim();
+        const isOfficial = OFFICIAL_EMAILS.includes(userEmail || '');
+
+        let targetUserId = currentConsultant.id;
+        
+        // Se for conta oficial, sempre buscar os ciclos da Sede RS Principal (a que tem o ID d107da4e...)
+        // ou consolidar se houver disparidade. Como o sync já roda consolidado para ambas, 
+        // buscar de qualquer uma delas deve funcionar, mas o ideal é ser consistente.
+        if (isOfficial) {
+           targetUserId = 'd107da4e-e266-41b0-947a-0c66b2f2b9ef';
+        }
+
+        console.log(`[Sigma Journey] Fetching for: ${targetUserId} (Official: ${isOfficial})`);
 
         const { data: cycles, error } = await supabase
             .from('matriz_cycles')
             .select('*')
-            .eq('consultor_id', userId)
+            .eq('consultor_id', targetUserId)
             .order('cycle_number', { ascending: true });
 
         if (error) throw error;
@@ -845,6 +959,8 @@ router.get('/cycle-journey', supabaseAuth, async (req: any, res) => {
             level: c.cycle_number,
             completed: c.status === 'completed' ? 1 : 0,
             bonus: c.cycle_payout || 108.00,
+            slots_filled: c.slots_filled || 0,
+            slots_total: c.slots_total || 6,
             opened_at: c.opened_at,
             completed_at: c.completed_at
         }));
@@ -856,6 +972,40 @@ router.get('/cycle-journey', supabaseAuth, async (req: any, res) => {
 });
 
 // PUT /v1/sigma/user-config
+// GET /v1/sigma/user-config
+router.get('/user-config', supabaseAuth, async (req: any, res) => {
+    try {
+        const authUserId = req.user.id;
+        const { data: consultant } = await supabase
+            .from('consultores')
+            .select('mes_referencia')
+            .or(`user_id.eq."${authUserId}",id.eq."${authUserId}"`)
+            .maybeSingle();
+
+        if (!consultant || !consultant.mes_referencia) {
+            return res.json({ success: true, data: { autoReinvest: false } });
+        }
+
+        const configStr = consultant.mes_referencia;
+        if (configStr.startsWith('SIGME_AUTO|')) {
+            const [, productId, cdId, shippingMethod] = configStr.split('|');
+            return res.json({
+                success: true,
+                data: {
+                    autoReinvest: true,
+                    productId,
+                    cdId,
+                    shippingMethod
+                }
+            });
+        }
+
+        res.json({ success: true, data: { autoReinvest: false } });
+    } catch (error: any) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 router.put('/user-config', supabaseAuth, async (req: any, res) => {
     try {
         const authUserId = req.user.id;

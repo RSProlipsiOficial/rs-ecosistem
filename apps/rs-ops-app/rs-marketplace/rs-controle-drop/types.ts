@@ -5,6 +5,8 @@ export interface User {
   id: string;
   name: string;
   role: UserRole;
+  avatar?: string;
+  email?: string;
 }
 
 // --- NEW: Global Catalog ---
@@ -15,6 +17,10 @@ export interface GlobalProduct {
   imageUrl?: string;
   videoUrl?: string;
   sku: string;
+  category?: string;
+  points?: number;
+  stockLevel?: number;
+  memberPrice?: number;
   suggestedPrice: number;
   minAllowedPrice: number; // For price range control
   maxAllowedPrice: number;
@@ -65,6 +71,11 @@ export interface Supplier {
   phone?: string;
   email?: string;
   userId: string;
+  marketplaceLoginId?: string;
+  marketplaceUserId?: string;
+  sourceType?: 'manual' | 'marketplace';
+  linkedProductCount?: number;
+  logoUrl?: string;
 }
 
 export interface ProductSupplier {
@@ -236,6 +247,10 @@ export interface Order {
   date: string;
   customerId: string;
   customerName: string;
+  customerDocument?: string;
+  customerEmail?: string;
+  customerPhone?: string;
+  shippingAddress?: string;
   items: OrderItem[];
   itemsTotal: number;
   discountTotal: number;

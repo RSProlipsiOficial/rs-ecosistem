@@ -1,50 +1,20 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Product, ProductSupplier, User, AuditAction, AuditEntity, AuditChange, StockMovement } from '../types';
+import { createRealProduct, deleteRealProduct, loadRealProductState, updateRealProduct } from '../services/realDataLoader';
 
-const INITIAL_PRODUCTS: Product[] = [
-  { 
-    id: '1', name: 'Inflamax Pro 60 Caps', sku: 'INF-001', category: 'Saúde',
-    salePrice: 197.00, shippingCost: 18.00, shippingCharged: 0, gatewayFeeRate: 4.99,
-    currentStock: 120, minStock: 20, status: 'Active', userId: 'logista1'
-  },
-  { 
-    id: '2', name: 'Pro3+ Joint Relief', sku: 'PRO-002', category: 'Saúde',
-    salePrice: 249.00, shippingCost: 22.00, shippingCharged: 0, gatewayFeeRate: 4.99,
-    currentStock: 15, minStock: 20, status: 'Active', userId: 'logista1'
-  },
-  { 
-    id: '3', name: 'Ultra Vision 30ml', sku: 'VIS-003', category: 'Beleza',
-    salePrice: 149.00, shippingCost: 15.00, shippingCharged: 19.90, gatewayFeeRate: 4.99,
-    currentStock: 80, minStock: 10, status: 'Active', userId: 'logista2'
-  },
-  {
-    id: '4', name: 'Camiseta DryFit Pro', sku: 'TSH-DRY-001', category: 'Vestuário',
-    salePrice: 89.90, shippingCost: 12.00, shippingCharged: 15.00, gatewayFeeRate: 4.99,
-    currentStock: 50, minStock: 10, status: 'Active', userId: 'logista1',
-    variants: [
-        { id: 'v1', name: 'Preta - P', sku: 'TSH-DRY-BLK-S', price: 89.90, costPrice: 25.00, stock: 20, minStock: 5 },
-        { id: 'v2', name: 'Preta - M', sku: 'TSH-DRY-BLK-M', price: 89.90, costPrice: 25.00, stock: 30, minStock: 5 }
-    ]
-  }
-];
-
-const INITIAL_PRODUCT_SUPPLIERS: ProductSupplier[] = [
-  { productId: '1', supplierId: 'sup1', costPrice: 45.00, isDefault: true },
-  { productId: '1', supplierId: 'sup2', costPrice: 42.50, isDefault: false },
-  { productId: '2', supplierId: 'sup1', costPrice: 52.50, isDefault: true },
-  { productId: '3', supplierId: 'sup2', costPrice: 38.00, isDefault: true },
-  { productId: '4', supplierId: 'sup1', costPrice: 25.00, isDefault: true },
-];
+const INITIAL_PRODUCTS: Product[] = [];
+const INITIAL_PRODUCT_SUPPLIERS: ProductSupplier[] = [];
 
 interface ProductContextType {
   products: Product[];
   productSuppliers: ProductSupplier[];
   stockMovements: StockMovement[];
-  addProduct: (product: Product) => void;
-  updateProduct: (product: Product) => void;
-  deleteProduct: (id: string) => void;
+  refreshProducts: () => Promise<void>;
+  addProduct: (product: Product, supplierLinks?: ProductSupplier[]) => Promise<void>;
+  updateProduct: (product: Product, supplierLinks?: ProductSupplier[]) => Promise<void>;
+  deleteProduct: (id: string) => Promise<void>;
   updateProductStock: (productId: string, quantityChange: number, reason: StockMovement['reason'], orderId?: string) => void;
-  updateProductSuppliers: (productId: string, suppliers: ProductSupplier[]) => void;
+  updateProductSuppliers: (productId: string, suppliers: ProductSupplier[]) => Promise<void>;
 }
 
 const ProductContext = createContext<ProductContextType | undefined>(undefined);
@@ -60,86 +30,164 @@ export const ProductProvider: React.FC<ProductProviderProps> = ({ children, curr
   const [productSuppliers, setProductSuppliers] = useState<ProductSupplier[]>(INITIAL_PRODUCT_SUPPLIERS);
   const [stockMovements, setStockMovements] = useState<StockMovement[]>([]);
 
+  const refreshProducts = async () => {
+    if (!currentUser?.id) {
+      setProducts([]);
+      setProductSuppliers([]);
+      return;
+    }
+
+    const realState = await loadRealProductState(currentUser.id);
+    setProducts(realState.products || []);
+    setProductSuppliers(realState.productSuppliers || []);
+  };
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const hydrateProducts = async () => {
+      if (!currentUser?.id) {
+        if (isMounted) {
+          setProducts([]);
+          setProductSuppliers([]);
+        }
+        return;
+      }
+
+      try {
+        const realState = await loadRealProductState(currentUser.id);
+        if (!isMounted) return;
+        setProducts(realState.products || []);
+        setProductSuppliers(realState.productSuppliers || []);
+      } catch (error) {
+        console.error('[RS Drop] Erro ao carregar produtos reais:', error);
+        if (isMounted) {
+          setProducts([]);
+          setProductSuppliers([]);
+        }
+      }
+    };
+
+    void hydrateProducts();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [currentUser?.id]);
+
   const logStockMovement = (productId: string, quantityChange: number, reason: StockMovement['reason'], orderId?: string) => {
     const newMovement: StockMovement = {
-        id: crypto.randomUUID(),
-        productId,
-        date: new Date().toISOString(),
-        quantityChange,
-        reason,
-        relatedOrderId: orderId
+      id: crypto.randomUUID(),
+      productId,
+      date: new Date().toISOString(),
+      quantityChange,
+      reason,
+      relatedOrderId: orderId,
     };
-    setStockMovements(prev => [newMovement, ...prev]);
+    setStockMovements((prev) => [newMovement, ...prev]);
   };
 
   const updateProductStock = (productId: string, quantityChange: number, reason: StockMovement['reason'], orderId?: string) => {
-      setProducts(prev => prev.map(p => {
-          if (p.id === productId) {
-              const newStock = p.currentStock + quantityChange;
-              logStockMovement(productId, quantityChange, reason, orderId);
-              return { ...p, currentStock: newStock };
-          }
-          return p;
-      }));
+    setProducts((prev) =>
+      prev.map((product) => {
+        if (product.id !== productId) return product;
+        const newStock = product.currentStock + quantityChange;
+        logStockMovement(productId, quantityChange, reason, orderId);
+        return { ...product, currentStock: newStock };
+      })
+    );
   };
 
-  const addProduct = (p: Product) => {
-    // Logic for variants stock aggregation
-    const productToAdd = { ...p };
+  const addProduct = async (product: Product, supplierLinks: ProductSupplier[] = []) => {
+    const productToAdd = { ...product };
     if (productToAdd.variants && productToAdd.variants.length > 0) {
-        productToAdd.currentStock = productToAdd.variants.reduce((acc, v) => acc + v.stock, 0);
+      productToAdd.currentStock = productToAdd.variants.reduce((acc, variant) => acc + variant.stock, 0);
     }
-    
-    setProducts(prev => [...prev, productToAdd]);
-    onLogAction('CREATE', 'Product', p.id, `Produto ${p.name} criado.`);
+
+    const created = await createRealProduct(currentUser.id, productToAdd, supplierLinks);
+    setProducts((prev) => [...prev, created.product]);
+    setProductSuppliers((prev) => {
+      const others = prev.filter((item) => item.productId !== created.product.id);
+      return [...others, ...(created.productSuppliers || [])];
+    });
+    onLogAction('CREATE', 'Product', created.product.id, `Produto ${created.product.name} criado.`);
   };
 
-  const updateProduct = (p: Product) => {
-    const oldProduct = products.find(prod => prod.id === p.id);
+  const updateProduct = async (product: Product, supplierLinks?: ProductSupplier[]) => {
+    const oldProduct = products.find((item) => item.id === product.id);
     if (!oldProduct) return;
 
-    // Logic for variants stock aggregation
-    const productToUpdate = { ...p };
+    const productToUpdate = { ...product };
     if (productToUpdate.variants && productToUpdate.variants.length > 0) {
-        productToUpdate.currentStock = productToUpdate.variants.reduce((acc, v) => acc + v.stock, 0);
+      productToUpdate.currentStock = productToUpdate.variants.reduce((acc, variant) => acc + variant.stock, 0);
     }
 
     const changes: AuditChange[] = [];
-    if (oldProduct.salePrice !== productToUpdate.salePrice) changes.push({ field: 'salePrice', old: oldProduct.salePrice, new: productToUpdate.salePrice });
-    if (oldProduct.status !== productToUpdate.status) changes.push({ field: 'status', old: oldProduct.status, new: productToUpdate.status });
-
-    // Log manual stock adjustment
+    if (oldProduct.salePrice !== productToUpdate.salePrice) {
+      changes.push({ field: 'salePrice', old: oldProduct.salePrice, new: productToUpdate.salePrice });
+    }
+    if (oldProduct.status !== productToUpdate.status) {
+      changes.push({ field: 'status', old: oldProduct.status, new: productToUpdate.status });
+    }
     if (oldProduct.currentStock !== productToUpdate.currentStock && !productToUpdate.variants?.length) {
-        const diff = productToUpdate.currentStock - oldProduct.currentStock;
-        logStockMovement(p.id, diff, 'AJUSTE_MANUAL');
-        changes.push({ field: 'currentStock', old: oldProduct.currentStock, new: productToUpdate.currentStock });
+      const diff = productToUpdate.currentStock - oldProduct.currentStock;
+      logStockMovement(product.id, diff, 'AJUSTE_MANUAL');
+      changes.push({ field: 'currentStock', old: oldProduct.currentStock, new: productToUpdate.currentStock });
     }
 
-    setProducts(prev => prev.map(prod => prod.id === p.id ? productToUpdate : prod));
-    
+    const nextSupplierLinks =
+      supplierLinks ||
+      productSuppliers.filter((item) => item.productId === product.id);
+
+    const saved = await updateRealProduct(currentUser.id, productToUpdate, nextSupplierLinks);
+    setProducts((prev) => prev.map((item) => (item.id === product.id ? saved.product : item)));
+    setProductSuppliers((prev) => {
+      const others = prev.filter((item) => item.productId !== product.id);
+      return [...others, ...(saved.productSuppliers || [])];
+    });
+
     if (changes.length > 0) {
-      onLogAction('UPDATE', 'Product', p.id, `Produto ${p.name} atualizado.`, changes);
+      onLogAction('UPDATE', 'Product', product.id, `Produto ${saved.product.name} atualizado.`, changes);
     }
   };
 
-  const deleteProduct = (id: string) => {
-    const p = products.find(prod => prod.id === id);
-    setProducts(prev => prev.filter(prod => prod.id !== id));
-    // Also cleanup suppliers
-    setProductSuppliers(prev => prev.filter(ps => ps.productId !== id));
-    
-    if(p) onLogAction('DELETE', 'Product', id, `Produto ${p.name} excluído.`);
+  const deleteProduct = async (id: string) => {
+    const product = products.find((item) => item.id === id);
+    await deleteRealProduct(currentUser.id, id);
+    setProducts((prev) => prev.filter((item) => item.id !== id));
+    setProductSuppliers((prev) => prev.filter((item) => item.productId !== id));
+
+    if (product) {
+      onLogAction('DELETE', 'Product', id, `Produto ${product.name} excluído.`);
+    }
   };
 
-  const updateProductSuppliers = (productId: string, newLinks: ProductSupplier[]) => {
-      setProductSuppliers(prev => {
-          const others = prev.filter(ps => ps.productId !== productId);
-          return [...others, ...newLinks];
-      });
+  const updateProductSuppliers = async (productId: string, suppliers: ProductSupplier[]) => {
+    const product = products.find((item) => item.id === productId);
+    if (!product) return;
+
+    const saved = await updateRealProduct(currentUser.id, product, suppliers);
+    setProducts((prev) => prev.map((item) => (item.id === productId ? saved.product : item)));
+    setProductSuppliers((prev) => {
+      const others = prev.filter((item) => item.productId !== productId);
+      return [...others, ...(saved.productSuppliers || [])];
+    });
   };
 
   return (
-    <ProductContext.Provider value={{ products, productSuppliers, stockMovements, addProduct, updateProduct, deleteProduct, updateProductStock, updateProductSuppliers }}>
+    <ProductContext.Provider
+      value={{
+        products,
+        productSuppliers,
+        stockMovements,
+        refreshProducts,
+        addProduct,
+        updateProduct,
+        deleteProduct,
+        updateProductStock,
+        updateProductSuppliers,
+      }}
+    >
       {children}
     </ProductContext.Provider>
   );

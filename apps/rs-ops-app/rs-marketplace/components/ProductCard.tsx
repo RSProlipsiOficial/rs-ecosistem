@@ -18,8 +18,29 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onClick, wishlist, o
   const currency = /^[A-Z]{3}$/.test(String(product.currency || '').toUpperCase())
     ? String(product.currency).toUpperCase()
     : 'BRL';
+  const inventoryLabel = String(product.inventoryStatusLabel || '').trim();
   const inventoryMessage = String(product.inventoryStatusMessage || '').trim();
-  const isUnavailableInCurrentCd = Number(product.inventory || 0) <= 0 && product.inventorySource === 'cd';
+  const productKind = String(product.productType || product.type || '').trim().toLowerCase();
+  const respectsInventory = product.trackQuantity !== false || product.inventorySource === 'cd';
+  const isStockControlledProduct = productKind !== 'digital' && respectsInventory;
+  const isInventoryChecking = Boolean(product.inventoryLoading);
+  const isOutOfStock = !isInventoryChecking && isStockControlledProduct && Number(product.inventory || 0) <= 0;
+  const resolvedInventoryMessage = inventoryMessage || (
+    isOutOfStock
+      ? (product.inventorySource === 'cd'
+          ? 'Indisponivel no CD selecionado'
+          : 'Produto sem estoque')
+      : ''
+  );
+  const resolvedInventoryLabel = inventoryLabel || (
+    isInventoryChecking
+      ? 'Verificando estoque'
+      : isOutOfStock
+        ? 'Sem estoque'
+        : isStockControlledProduct
+          ? 'Disponivel'
+          : ''
+  );
 
   const handleWishlistClick = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent card click
@@ -27,21 +48,23 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onClick, wishlist, o
   };
 
   const handleCardClick = () => {
-    if (isUnavailableInCurrentCd) return;
+    if (isOutOfStock || isInventoryChecking) return;
     onClick();
   };
 
   return (
     <div
       className={`w-full max-w-[280px] h-full min-h-[390px] mx-auto flex flex-col bg-[rgb(var(--color-brand-gray))]/[.50] backdrop-blur-sm border border-[rgb(var(--color-brand-gold))]/[.20] rounded-lg overflow-hidden shadow-lg transition-shadow duration-300 group ${
-        isUnavailableInCurrentCd
+        isOutOfStock
           ? 'cursor-not-allowed opacity-80'
-          : 'cursor-pointer hover:shadow-[rgb(var(--color-brand-gold))]/[.10]'
+          : isInventoryChecking
+            ? 'cursor-wait opacity-90'
+            : 'cursor-pointer hover:shadow-[rgb(var(--color-brand-gold))]/[.10]'
       }`}
       onClick={handleCardClick}
       role="button"
       tabIndex={0}
-      aria-disabled={isUnavailableInCurrentCd}
+      aria-disabled={isOutOfStock || isInventoryChecking}
       onKeyPress={(e) => e.key === 'Enter' && handleCardClick()}
     >
       <div className="relative overflow-hidden aspect-[4/5]">
@@ -80,10 +103,35 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onClick, wishlist, o
           )}
         </div>
 
-        {inventoryMessage && (
-          <p className={`mt-3 min-h-[32px] text-xs font-semibold leading-snug ${isUnavailableInCurrentCd ? 'text-red-400' : 'text-yellow-400'}`}>
-            {inventoryMessage}
-          </p>
+        {(resolvedInventoryLabel || resolvedInventoryMessage) && (
+          <div className="mt-3 min-h-[42px]">
+            {resolvedInventoryLabel && (
+              <p className={`text-[11px] font-bold uppercase tracking-[0.16em] ${
+                isInventoryChecking
+                  ? 'text-yellow-300'
+                  : isOutOfStock
+                    ? 'text-red-400'
+                    : resolvedInventoryLabel === 'Estoque baixo'
+                      ? 'text-yellow-400'
+                      : 'text-green-400'
+              }`}>
+                {resolvedInventoryLabel}
+              </p>
+            )}
+            {resolvedInventoryMessage && (
+              <p className={`mt-1 text-xs font-semibold leading-snug ${
+                isInventoryChecking
+                  ? 'text-yellow-300'
+                  : isOutOfStock
+                    ? 'text-red-400'
+                    : resolvedInventoryLabel === 'Estoque baixo'
+                      ? 'text-yellow-400'
+                      : 'text-green-300'
+              }`}>
+                {resolvedInventoryMessage}
+              </p>
+            )}
+          </div>
         )}
 
         <div className="mt-auto pt-4 flex justify-between items-center gap-3">
@@ -92,14 +140,16 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onClick, wishlist, o
           </p>
           <button
             type="button"
-            disabled={isUnavailableInCurrentCd}
+            disabled={isOutOfStock || isInventoryChecking}
             className={`shrink-0 border text-sm font-bold py-1 px-3 rounded-full transition-colors ${
-            isUnavailableInCurrentCd
+            isOutOfStock
               ? 'border-red-500/50 text-red-300 hover:bg-red-500/10'
+              : isInventoryChecking
+                ? 'border-yellow-500/50 text-yellow-300 hover:bg-yellow-500/10'
               : 'bg-transparent border-[rgb(var(--color-brand-gold))] text-[rgb(var(--color-brand-gold))] hover:bg-[rgb(var(--color-brand-gold))] hover:text-[rgb(var(--color-brand-dark))]'
           }`}
           >
-            {isUnavailableInCurrentCd ? 'Indisponivel' : 'Ver Mais'}
+            {isInventoryChecking ? 'Verificando' : isOutOfStock ? 'Indisponivel' : 'Ver Mais'}
           </button>
         </div>
       </div>

@@ -1,4 +1,4 @@
-﻿import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { CartItem, Customer, Distributor, Order, Coupon, OrderBump, OrderBumpRule, Product, OrderItem, PaymentSettings, CheckoutRoutingContext, ProductPricingTier } from '../types';
 import { ArrowLeftIcon } from './icons/ArrowLeftIcon';
 import { LockIcon } from './icons/LockIcon';
@@ -33,18 +33,8 @@ interface ActiveBumpOffer {
     offerPrice: number;
 }
 
-type CheckoutPaymentMethod = 'wallet' | 'credit-card' | 'pix' | 'boleto';
+type CheckoutPaymentMethod = 'wallet' | 'credit-card' | 'pix' | 'boleto' | 'store';
 type ExternalPaymentMethod = Exclude<CheckoutPaymentMethod, 'wallet'>;
-
-interface CheckoutConsultantMatch {
-    id: string;
-    userId?: string;
-    numericId?: string;
-    loginId?: string;
-    name: string;
-    email?: string;
-    cpfCnpj?: string;
-}
 
 interface CheckoutViewProps {
     cartItems: CartItem[];
@@ -167,10 +157,6 @@ const CheckoutView: React.FC<CheckoutViewProps> = ({ cartItems = [], onBack, onF
     });
     const [cardDetails, setCardDetails] = useState({ number: '', name: '', expiry: '', cvv: '' });
     const [cardBrand, setCardBrand] = useState<'visa' | 'mastercard' | 'unknown'>('unknown');
-    const [identifiedConsultant, setIdentifiedConsultant] = useState<CheckoutConsultantMatch | null>(null);
-    const [isCheckingConsultant, setIsCheckingConsultant] = useState(false);
-    const [consultantLookupMessage, setConsultantLookupMessage] = useState('');
-
     const [couponCode, setCouponCode] = useState('');
     const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
     const [discount, setDiscount] = useState(0);
@@ -255,7 +241,7 @@ const CheckoutView: React.FC<CheckoutViewProps> = ({ cartItems = [], onBack, onF
     const normalizeDigits = (value: any) => String(value || '').replace(/\D/g, '');
     const isReferralCheckout = salesRouting.mode === 'referral';
     const allowPickupShipping = salesRouting.fulfillmentOriginType === 'cd';
-    const consultantPricingUnlocked = !isReferralCheckout && Boolean(identifiedConsultant || salesRouting.buyerType === 'consultor');
+    const consultantPricingUnlocked = !isReferralCheckout && salesRouting.buyerType === 'consultor';
     const effectiveCartItems = useMemo(() => (
         cartItems.map((item) => {
             if (!consultantPricingUnlocked) return item;
@@ -278,96 +264,6 @@ const CheckoutView: React.FC<CheckoutViewProps> = ({ cartItems = [], onBack, onF
     );
     const shippingCost = selectedShipping?.price ?? 0;
 
-    const fetchConsultantMatches = async (query: string) => {
-        const cleanQuery = String(query || '').trim();
-        if (!cleanQuery) return [];
-
-        const response = await fetch(`${API_URL}/admin/consultor/search?q=${encodeURIComponent(cleanQuery)}`, {
-            headers: {
-                'Content-Type': 'application/json',
-                ...(localStorage.getItem('token') ? { 'Authorization': `Bearer ${localStorage.getItem('token')}` } : {})
-            }
-        });
-
-        if (!response.ok) {
-            throw new Error(`Falha ao consultar cadastro (${response.status})`);
-        }
-
-        const data = await response.json();
-        return Array.isArray(data.results) ? data.results : [];
-    };
-
-    const resolveCheckoutConsultant = async (silent = false) => {
-        if (isReferralCheckout) {
-            setIdentifiedConsultant(null);
-            if (!silent) {
-                setConsultantLookupMessage('Venda por indicacao utiliza preco publico. O consultor do link recebe a atribuicao da venda, sem desconto no checkout.');
-            }
-            return null;
-        }
-
-        const email = normalizeText(formData.email || currentCustomer?.email);
-        const cpf = normalizeDigits(formData.customerCpf);
-
-        if (!email && cpf.length < 11) {
-            setIdentifiedConsultant(null);
-            if (!silent) setConsultantLookupMessage('');
-            return null;
-        }
-
-        setIsCheckingConsultant(true);
-        try {
-            const [emailResults, cpfResults] = await Promise.all([
-                email ? fetchConsultantMatches(email) : Promise.resolve([]),
-                cpf.length >= 11 ? fetchConsultantMatches(cpf) : Promise.resolve([])
-            ]);
-
-            const candidates = [...emailResults, ...cpfResults].reduce<any[]>((acc, row) => {
-                if (!row?.id || acc.some((item) => item.id === row.id)) return acc;
-                acc.push(row);
-                return acc;
-            }, []);
-
-            const match = candidates.find((row) => {
-                const rowEmail = normalizeText(row.email);
-                const rowCpf = normalizeDigits(row.cpfCnpj);
-
-                if (email && cpf.length >= 11) return rowEmail === email && rowCpf === cpf;
-                if (email) return rowEmail === email;
-                if (cpf.length >= 11) return rowCpf === cpf;
-                return false;
-            }) || null;
-
-            if (match) {
-                const resolvedMatch: CheckoutConsultantMatch = {
-                    id: String(match.id),
-                    userId: String(match.userId || match.id || ''),
-                    numericId: String(match.numericId || ''),
-                    loginId: String(match.loginId || ''),
-                    name: String(match.nome || match.name || 'Consultor'),
-                    email: String(match.email || ''),
-                    cpfCnpj: String(match.cpfCnpj || '')
-                };
-
-                setIdentifiedConsultant(resolvedMatch);
-                setConsultantLookupMessage('Consultor identificado. Preco consultor aplicado a este pedido.');
-                return resolvedMatch;
-            }
-
-            setIdentifiedConsultant(null);
-            if (!silent && (email || cpf.length >= 11)) {
-                setConsultantLookupMessage('Cadastro nao identificado como consultor. O checkout permanece com preco publico.');
-            }
-            return null;
-        } catch (error: any) {
-            console.error('[Checkout] Falha ao consultar cadastro de consultor:', error);
-            if (!silent) setConsultantLookupMessage(error?.message || 'Nao foi possivel validar o cadastro do consultor agora.');
-            return null;
-        } finally {
-            setIsCheckingConsultant(false);
-        }
-    };
-
     useEffect(() => {
         setSelectedBumpOfferKeys((prev) => prev.filter((offerKey) => bumpOffers.some((item) => item.key === offerKey)));
     }, [bumpOffers]);
@@ -379,12 +275,6 @@ const CheckoutView: React.FC<CheckoutViewProps> = ({ cartItems = [], onBack, onF
             customerName: currentCustomer?.name || prev.customerName
         }));
     }, [currentCustomer?.email, currentCustomer?.name]);
-
-    useEffect(() => {
-        if (currentCustomer?.email && !isReferralCheckout) {
-            void resolveCheckoutConsultant(true);
-        }
-    }, [currentCustomer?.email, isReferralCheckout]);
 
     const total = useMemo(() => {
         const newSubtotal = (effectiveCartItems || []).reduce((sum, item) => sum + item.price * item.quantity, 0);
@@ -436,7 +326,7 @@ const CheckoutView: React.FC<CheckoutViewProps> = ({ cartItems = [], onBack, onF
             const loadWalletBalance = async () => {
                 setLoadingWallet(true);
                 try {
-                    const response = await fetch(`${API_URL}/api/wallet/balance/${currentCustomer.id}`, {
+                    const response = await fetch(`/api/wallet/balance/${currentCustomer.id}`, {
                         headers: {
                             'Authorization': `Bearer ${walletAuthToken}`
                         }
@@ -464,7 +354,7 @@ const CheckoutView: React.FC<CheckoutViewProps> = ({ cartItems = [], onBack, onF
             const generatePix = async () => {
                 setIsProcessingPayment(true);
                 try {
-                    const apiUrl = `${API_URL}/api/payment/pix`;
+                    const apiUrl = `/api/payment/pix`;
 
                     const response = await fetch(apiUrl, {
                         method: 'POST',
@@ -521,7 +411,6 @@ const CheckoutView: React.FC<CheckoutViewProps> = ({ cartItems = [], onBack, onF
 
     const handleContinueFromStep1 = async () => {
         if (!isStep1Valid) return;
-        await resolveCheckoutConsultant(false);
         setActiveStep(2);
     };
 
@@ -531,7 +420,7 @@ const CheckoutView: React.FC<CheckoutViewProps> = ({ cartItems = [], onBack, onF
             throw new Error('Para usar saldo da carteira, faca login na loja com sua conta.');
         }
 
-        const response = await fetch(`${API_URL}/api/wallet/transfer`, {
+        const response = await fetch(`/api/wallet/transfer`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -556,9 +445,16 @@ const CheckoutView: React.FC<CheckoutViewProps> = ({ cartItems = [], onBack, onF
             return { paymentStatus: 'Pago' as Order['paymentStatus'], paymentData: {} };
         }
 
+        if (method === 'store') {
+            return {
+                paymentStatus: 'Pendente' as Order['paymentStatus'],
+                paymentData: {}
+            };
+        }
+
         if (method === 'boleto') {
             try {
-                const response = await fetch(`${API_URL}/api/payment/boleto`, {
+                const response = await fetch(`/api/payment/boleto`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -604,7 +500,7 @@ const CheckoutView: React.FC<CheckoutViewProps> = ({ cartItems = [], onBack, onF
         }
 
         try {
-            const response = await fetch(`${API_URL}/api/payment/card`, {
+            const response = await fetch(`/api/payment/card`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -817,13 +713,16 @@ const CheckoutView: React.FC<CheckoutViewProps> = ({ cartItems = [], onBack, onF
         const paymentBreakdown: NonNullable<Order['paymentBreakdown']> = [];
 
         try {
-            const resolvedConsultant = isReferralCheckout
-                ? null
-                : (identifiedConsultant || (
-                    (formData.email || formData.customerCpf)
-                        ? await resolveCheckoutConsultant(true)
-                        : null
-                ));
+            const resolvedConsultant = consultantPricingUnlocked
+                ? {
+                    id: String(currentCustomer?.id || ''),
+                    userId: String(currentCustomer?.id || ''),
+                    numericId: String((currentCustomer as any)?.numericId || ''),
+                    loginId: String((currentCustomer as any)?.loginId || ''),
+                    name: String(currentCustomer?.name || 'Consultor'),
+                    email: String(currentCustomer?.email || ''),
+                }
+                : null;
 
             if (walletAppliedAmount > 0) {
                 await processWalletDebit(walletAppliedAmount);
@@ -900,7 +799,7 @@ const CheckoutView: React.FC<CheckoutViewProps> = ({ cartItems = [], onBack, onF
                 shippingMethod: selectedShipping!.name,
                 paymentMethod: paymentBreakdown.length > 1 ? 'hybrid' : (paymentBreakdown[0]?.method || visiblePaymentMethod),
                 paymentBreakdown,
-                pricingTierApplied: (consultantPricingUnlocked || Boolean(resolvedConsultant)) ? 'consultant' : 'retail',
+                pricingTierApplied: consultantPricingUnlocked ? 'consultant' : 'retail',
                 recognizedConsultantId: resolvedConsultant?.userId || resolvedConsultant?.id || null,
                 recognizedConsultantLoginId: resolvedConsultant?.loginId || '',
                 recognizedConsultantNumericId: resolvedConsultant?.numericId || '',
@@ -942,6 +841,7 @@ const CheckoutView: React.FC<CheckoutViewProps> = ({ cartItems = [], onBack, onF
         }
         if (visiblePaymentMethod === 'boleto') return 'Gerar boleto';
         if (visiblePaymentMethod === 'pix') return 'Confirmar pedido e gerar PIX';
+        if (visiblePaymentMethod === 'store') return 'Reservar para pagar na loja';
         if (visiblePaymentMethod === 'wallet') return 'Pagar com saldo';
         return 'Pagar com cartao';
     }
@@ -1038,23 +938,14 @@ const CheckoutView: React.FC<CheckoutViewProps> = ({ cartItems = [], onBack, onF
                                             <input type="text" name="customerCpf" value={formData.customerCpf} onChange={handleInputChange} placeholder="CPF ou CNPJ *" className="w-full bg-[rgb(var(--color-brand-dark))] border-2 border-[rgb(var(--color-brand-gray-light))] rounded-md py-3 px-4 focus:outline-none focus:border-[rgb(var(--color-brand-gold))]" />
                                             <input type="tel" name="customerPhone" value={formData.customerPhone} onChange={handleInputChange} placeholder="Telefone / WhatsApp *" className="w-full bg-[rgb(var(--color-brand-dark))] border-2 border-[rgb(var(--color-brand-gray-light))] rounded-md py-3 px-4 focus:outline-none focus:border-[rgb(var(--color-brand-gold))]" />
                                         </div>
-                                        {Boolean(consultantLookupMessage) && (
-                                            <div className={`rounded-lg border px-4 py-3 text-sm ${
-                                                consultantPricingUnlocked
-                                                    ? 'border-green-500/40 bg-green-500/10 text-green-300'
-                                                    : 'border-[rgb(var(--color-brand-gold))]/30 bg-[rgb(var(--color-brand-dark))] text-[rgb(var(--color-brand-text-dim))]'
-                                            }`}>
+                                        {consultantPricingUnlocked && (
+                                            <div className="rounded-lg border border-green-500/40 bg-green-500/10 px-4 py-3 text-sm text-green-300">
                                                 <div className="flex items-center justify-between gap-3">
-                                                    <span>{consultantLookupMessage}</span>
-                                                    {isCheckingConsultant && <SpinnerIcon className="h-4 w-4 text-[rgb(var(--color-brand-gold))]" />}
+                                                    <span>Compra reconhecida como consultor logado. Preco consultor ativo.</span>
                                                 </div>
-                                                {consultantPricingUnlocked && (identifiedConsultant || salesRouting.buyerType === 'consultor') && (
-                                                    <p className="mt-2 text-xs text-[rgb(var(--color-brand-gold))]">
-                                                        {identifiedConsultant
-                                                            ? `ID conta ${identifiedConsultant.numericId || '--'} | Login ${identifiedConsultant.loginId || '--'}`
-                                                            : 'Sessao de consultor identificada. Preco consultor ativo.'}
-                                                    </p>
-                                                )}
+                                                <p className="mt-2 text-xs text-[rgb(var(--color-brand-gold))]">
+                                                    Sessao autenticada na loja.
+                                                </p>
                                             </div>
                                         )}
                                         {!currentCustomer && !isReferralCheckout && (
@@ -1062,7 +953,7 @@ const CheckoutView: React.FC<CheckoutViewProps> = ({ cartItems = [], onBack, onF
                                                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                                     <div>
                                                         <p className="font-semibold text-white">Ja tem cadastro na loja?</p>
-                                                        <p>Entre com sua conta para aplicar automaticamente preco consultor, saldo da carteira e identificar seu cadastro sem depender so do CPF.</p>
+                                                        <p>Entre com sua conta para aplicar automaticamente preco consultor, saldo da carteira e identificar seu cadastro.</p>
                                                     </div>
                                                     <button
                                                         type="button"
@@ -1074,7 +965,7 @@ const CheckoutView: React.FC<CheckoutViewProps> = ({ cartItems = [], onBack, onF
                                                 </div>
                                             </div>
                                         )}
-                                        <button onClick={handleContinueFromStep1} disabled={!isStep1Valid || isCheckingConsultant} className="w-full bg-[rgb(var(--color-brand-gold))] text-[rgb(var(--color-brand-dark))] font-bold py-3 px-4 rounded-md hover:bg-gold-400 disabled:opacity-50 disabled:cursor-not-allowed">
+                                        <button onClick={handleContinueFromStep1} disabled={!isStep1Valid} className="w-full bg-[rgb(var(--color-brand-gold))] text-[rgb(var(--color-brand-dark))] font-bold py-3 px-4 rounded-md hover:bg-gold-400 disabled:opacity-50 disabled:cursor-not-allowed">
                                             Continuar
                                         </button>
                                     </div>
@@ -1131,11 +1022,12 @@ const CheckoutView: React.FC<CheckoutViewProps> = ({ cartItems = [], onBack, onF
                                 </button>
                                 {activeStep === 3 && (
                                     <div className="p-6 border-t border-[rgb(var(--color-brand-gray-light))] space-y-4">
-                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 bg-[rgb(var(--color-brand-dark))] p-1 rounded-lg">
+                                        <div className="grid grid-cols-2 md:grid-cols-5 gap-2 bg-[rgb(var(--color-brand-dark))] p-1 rounded-lg">
                                             <button onClick={() => setActivePaymentMethod('wallet')} className={`py-2 px-3 text-sm font-semibold rounded-md transition-colors flex items-center justify-center gap-2 ${activePaymentMethod === 'wallet' ? 'bg-[rgb(var(--color-brand-gold))] text-black' : 'hover:bg-[rgb(var(--color-brand-gray-light))]'}`}><WalletIcon className="w-5 h-5" /> Saldo</button>
                                             <button onClick={() => setActivePaymentMethod('credit-card')} className={`py-2 px-3 text-sm font-semibold rounded-md transition-colors flex items-center justify-center gap-2 ${activePaymentMethod === 'credit-card' ? 'bg-[rgb(var(--color-brand-gold))] text-black' : 'hover:bg-[rgb(var(--color-brand-gray-light))]'}`}><CreditCardIcon className="w-5 h-5" /> Cartao</button>
                                             <button onClick={() => setActivePaymentMethod('pix')} className={`py-2 px-3 text-sm font-semibold rounded-md transition-colors flex items-center justify-center gap-2 ${activePaymentMethod === 'pix' ? 'bg-[rgb(var(--color-brand-gold))] text-black' : 'hover:bg-[rgb(var(--color-brand-gray-light))]'}`}><PixIcon className="w-5 h-5" /> Pix</button>
                                             <button onClick={() => setActivePaymentMethod('boleto')} className={`py-2 px-3 text-sm font-semibold rounded-md transition-colors flex items-center justify-center gap-2 ${activePaymentMethod === 'boleto' ? 'bg-[rgb(var(--color-brand-gold))] text-black' : 'hover:bg-[rgb(var(--color-brand-gray-light))]'}`}><BarcodeIcon className="w-5 h-5" /> Boleto</button>
+                                            <button onClick={() => setActivePaymentMethod('store')} className={`py-2 px-3 text-sm font-semibold rounded-md transition-colors flex items-center justify-center gap-2 ${activePaymentMethod === 'store' ? 'bg-[rgb(var(--color-brand-gold))] text-black' : 'hover:bg-[rgb(var(--color-brand-gray-light))]'}`}><UserCircleIcon className="w-5 h-5" /> Na loja</button>
                                         </div>
 
                                         {!paymentGatewayAvailable && (
@@ -1152,7 +1044,7 @@ const CheckoutView: React.FC<CheckoutViewProps> = ({ cartItems = [], onBack, onF
                                                     onChange={(event) => setUseWalletBalance(event.target.checked)}
                                                     className="h-4 w-4 rounded border-[rgb(var(--color-brand-gray-light))] bg-[rgb(var(--color-brand-gray))] text-[rgb(var(--color-brand-gold))] focus:ring-[rgb(var(--color-brand-gold))]"
                                                 />
-                                                <span>Usar saldo da carteira primeiro e completar com {activePaymentMethod === 'credit-card' ? 'cartao' : activePaymentMethod === 'pix' ? 'pix' : 'boleto'}</span>
+                                                <span>Usar saldo da carteira primeiro e completar com {activePaymentMethod === 'credit-card' ? 'cartao' : activePaymentMethod === 'pix' ? 'pix' : activePaymentMethod === 'boleto' ? 'boleto' : 'pagamento na loja'}</span>
                                             </label>
                                         )}
 
@@ -1205,7 +1097,7 @@ const CheckoutView: React.FC<CheckoutViewProps> = ({ cartItems = [], onBack, onF
                                                                     Completar restante com
                                                                 </p>
                                                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                                                                    {(['credit-card', 'pix', 'boleto'] as ExternalPaymentMethod[]).map((method) => (
+                                                                    {(['credit-card', 'pix', 'boleto', 'store'] as ExternalPaymentMethod[]).map((method) => (
                                                                         <button
                                                                             key={`hybrid-${method}`}
                                                                             type="button"
@@ -1216,7 +1108,7 @@ const CheckoutView: React.FC<CheckoutViewProps> = ({ cartItems = [], onBack, onF
                                                                                     : 'border-[rgb(var(--color-brand-gray-light))] hover:border-[rgb(var(--color-brand-gold))]/40'
                                                                             }`}
                                                                         >
-                                                                            {method === 'credit-card' ? 'Cartao' : method === 'pix' ? 'Pix' : 'Boleto'}
+                                                                            {method === 'credit-card' ? 'Cartao' : method === 'pix' ? 'Pix' : method === 'boleto' ? 'Boleto' : 'Na loja'}
                                                                         </button>
                                                                     ))}
                                                                 </div>
@@ -1280,6 +1172,17 @@ const CheckoutView: React.FC<CheckoutViewProps> = ({ cartItems = [], onBack, onF
                                                 <p>O boleto sera gerado apos a finalizacao da compra e podera ser pago em qualquer banco ou loterica ate o vencimento.</p>
                                             </div>
                                         )}
+                                        {visiblePaymentMethod === 'store' && (
+                                            <div className="text-center p-4 bg-[rgb(var(--color-brand-dark))] rounded-lg text-[rgb(var(--color-brand-text-dim))] space-y-3">
+                                                <p className="font-semibold text-white">Pagamento na Loja</p>
+                                                {walletAppliedAmount > 0 && externalPaymentAmount > 0 && (
+                                                    <p className="text-xs text-[rgb(var(--color-brand-gold))]">
+                                                        Restante para pagar na loja: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(externalPaymentAmount)}
+                                                    </p>
+                                                )}
+                                                <p>O pedido sera reservado como pendente. O pagamento sera confirmado pela loja ou pelo CD no recebimento presencial.</p>
+                                            </div>
+                                        )}
                                         <button onClick={processPayment} disabled={isProcessingPayment} className="mt-4 w-full bg-[rgb(var(--color-brand-gold))] text-[rgb(var(--color-brand-dark))] font-bold py-3 rounded-md hover:bg-gold-400 transition-colors flex items-center justify-center gap-2 disabled:bg-[rgb(var(--color-brand-gray-light))] disabled:cursor-not-allowed">
                                             {isProcessingPayment ? <SpinnerIcon className="w-5 h-5" /> : <LockIcon className="w-5 h-5" />}
                                             {getButtonText()}
@@ -1332,7 +1235,7 @@ const CheckoutView: React.FC<CheckoutViewProps> = ({ cartItems = [], onBack, onF
                                 ))}
                             </div>
 
-                            {bumpOffersByRule.length > 0 && (
+                        {!consultantPricingUnlocked && bumpOffersByRule.length > 0 && (
                                 <div className="my-6 space-y-4">
                                     {bumpOffersByRule.map((group) => (
                                         <div key={`bump-group-${group.ruleId}`} className="rounded-lg border-2 border-dashed border-[rgb(var(--color-brand-gold))] bg-[rgb(var(--color-brand-gold))]/[.05] p-4">

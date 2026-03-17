@@ -216,6 +216,7 @@ const normalizeStringArray = (value: any): string[] => {
 const MARKETPLACE_SSO_TOKEN_KEY = 'rs-marketplace-sso-token';
 const MARKETPLACE_SPONSOR_STORAGE_KEY = 'rs-marketplace-sponsor-ref';
 const MARKETPLACE_DISTRIBUTOR_STORAGE_KEY = 'rs-marketplace-selected-distributor';
+const MARKETPLACE_DISTRIBUTOR_INVENTORY_CACHE_PREFIX = 'rs-marketplace-distributor-inventory';
 const DEFAULT_MARKETPLACE_SPONSOR_REF = 'rsprolipsi';
 const CENTRAL_MARKETPLACE_DISTRIBUTOR_ID = 'cd-oficial-matriz';
 
@@ -247,19 +248,70 @@ const normalizeAvatarUrl = (value: unknown) => {
     return trimmed;
 };
 
-const applyDistributorInventoryToProducts = (catalog: Product[], inventoryItems: DistributorInventoryItem[], distributorName?: string) => {
+type DistributorInventoryLoadStatus = 'idle' | 'loading' | 'loaded' | 'error';
+
+const readDistributorInventoryCache = (distributorId?: string | null): DistributorInventoryItem[] => {
+    if (typeof window === 'undefined' || !distributorId) return [];
+    try {
+        const raw = localStorage.getItem(`${MARKETPLACE_DISTRIBUTOR_INVENTORY_CACHE_PREFIX}:${distributorId}`);
+        if (!raw) return [];
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed?.items) ? parsed.items : [];
+    } catch {
+        return [];
+    }
+};
+
+const writeDistributorInventoryCache = (distributorId: string, items: DistributorInventoryItem[]) => {
+    if (typeof window === 'undefined' || !distributorId) return;
+    try {
+        localStorage.setItem(
+            `${MARKETPLACE_DISTRIBUTOR_INVENTORY_CACHE_PREFIX}:${distributorId}`,
+            JSON.stringify({ updatedAt: Date.now(), items })
+        );
+    } catch {
+        // noop
+    }
+};
+
+const applyDistributorInventoryToProducts = (
+    catalog: Product[],
+    inventoryItems: DistributorInventoryItem[],
+    distributorName?: string,
+    inventoryStatus: DistributorInventoryLoadStatus = 'loaded'
+) => {
     const unavailableMessage = distributorName
         ? `Indisponivel no CD ${distributorName}`
         : 'Indisponivel no CD selecionado';
     const lowStockMessage = distributorName
         ? `Estoque baixo no CD ${distributorName}`
         : 'Estoque baixo no CD selecionado';
+    const loadingMessage = distributorName
+        ? `Consultando estoque do CD ${distributorName}`
+        : 'Consultando estoque do CD selecionado';
+    const errorMessage = distributorName
+        ? `Falha ao sincronizar estoque do CD ${distributorName}`
+        : 'Falha ao sincronizar estoque do CD selecionado';
 
     if (!Array.isArray(catalog) || catalog.length === 0) return catalog;
+    if (inventoryStatus === 'loading' || inventoryStatus === 'idle' || inventoryStatus === 'error') {
+        const statusLabel = inventoryStatus === 'error' ? 'Estoque indisponivel' : 'Verificando estoque';
+        const statusMessage = inventoryStatus === 'error' ? errorMessage : loadingMessage;
+
+        return catalog.map((product) => ({
+            ...product,
+            inventorySource: 'cd',
+            inventoryLoading: true,
+            inventoryStatusLabel: statusLabel,
+            inventoryStatusMessage: statusMessage,
+        }));
+    }
+
     if (!Array.isArray(inventoryItems) || inventoryItems.length === 0) {
         return catalog.map((product) => ({
             ...product,
             inventorySource: 'cd',
+            inventoryLoading: false,
             inventoryStatusLabel: 'Sem estoque',
             inventoryStatusMessage: unavailableMessage,
             inventory: product.trackQuantity === false ? product.inventory : 0,
@@ -289,6 +341,8 @@ const applyDistributorInventoryToProducts = (catalog: Product[], inventoryItems:
     });
 
     return catalog.map((product) => {
+        const productType = String(product.type || '').trim().toLowerCase();
+        const shouldRespectCdInventory = productType !== 'digital';
         const productIdKey = normalizeInventoryLookupKey(product.id);
         const productSkuKey = normalizeInventoryLookupKey(product.sku);
         const productNameKey = normalizeInventoryLookupKey(product.name);
@@ -301,21 +355,22 @@ const applyDistributorInventoryToProducts = (catalog: Product[], inventoryItems:
             null;
         const distributorStock = matchedInventory ? Math.max(0, Number(matchedInventory.stockLevel || 0)) : 0;
         const minStock = Math.max(0, Number(matchedInventory?.minStock || 0));
-        const inventoryStatusLabel = distributorStock <= 0 ? 'Sem estoque' : (minStock > 0 && distributorStock <= minStock ? 'Estoque baixo' : '');
+        const inventoryStatusLabel = distributorStock <= 0 ? 'Sem estoque' : (minStock > 0 && distributorStock <= minStock ? 'Estoque baixo' : 'Disponivel');
         const inventoryStatusMessage = distributorStock <= 0 ? unavailableMessage : (minStock > 0 && distributorStock <= minStock ? lowStockMessage : '');
 
         return {
             ...product,
             inventorySource: 'cd',
+            inventoryLoading: false,
             inventoryStatusLabel,
             inventoryStatusMessage,
-            inventory: product.trackQuantity === false ? product.inventory : distributorStock,
+            inventory: shouldRespectCdInventory ? distributorStock : product.inventory,
             variants: Array.isArray(product.variants)
                 ? product.variants.map((variant) => ({
                     ...variant,
-                    inventory: product.trackQuantity === false
-                        ? variant.inventory
-                        : Math.max(0, Math.min(Number(variant.inventory ?? distributorStock), distributorStock))
+                    inventory: shouldRespectCdInventory
+                        ? Math.max(0, Math.min(Number(variant.inventory ?? distributorStock), distributorStock))
+                        : variant.inventory
                 }))
                 : product.variants
         };
@@ -410,6 +465,24 @@ const resolveMarketplaceSignupContext = (): MarketplaceSignupContext => {
     };
 };
 
+const isExplicitMarketplaceStorefrontRoute = (pathname: string = '') =>
+    /\/(?:loja|indicacao)\/[^\/?#]+/i.test(String(pathname || ''));
+
+const ADMIN_DASHBOARD_VIEWS: readonly View[] = [
+    'consultantStore', 'manageProducts', 'addEditProduct', 'editDropshippingProduct', 'manageInventory',
+    'manageOrders', 'orderDetail', 'manageReturns', 'returnDetail', 'manageDropshippingOrders',
+    'dropshippingCatalog', 'managePromotions', 'addEditCoupon', 'manageAffiliates', 'storeEditor',
+    'storeBannerEditor', 'virtualOfficeDropshipping', 'virtualOfficeAffiliateLinks',
+    'virtualOfficePixels', 'virtualOfficeLinkShortener', 'addEditMarketingPixel', 'bannerDashboard',
+    'dashboardEditor', 'consultantProfile', 'managePayments', 'manageShipping', 'compensationPlan', 'manageCollections',
+    'addEditCollection', 'userProfileEditor', 'walletOverview', 'walletReports', 'walletTransfers',
+    'walletCharges', 'walletSettings', 'rsStudio', 'communication', 'manageOrderBump', 'manageUpsell',
+    'managePromotionBoost', 'manageAbandonedCarts', 'manageReviews', 'manageAnnouncements', 'addEditAnnouncement',
+    'manageTrainings', 'addEditTraining', 'trainingModuleDetail', 'manageMarketingAssets',
+    'addEditMarketingAsset', 'rsCD', 'rsControleDrop',
+    'marketplaceAdmin', 'marketplaceAdminOrders', 'marketplaceAdminProducts', 'marketplaceAdminFinancial'
+];
+
 type MarketplaceBridgePayload = {
     token?: string;
     accessToken?: string;
@@ -450,6 +523,22 @@ const extractMarketplaceBridgeToken = () => {
     }
 
     return null;
+};
+
+const extractMarketplaceBridgeTarget = () => {
+    if (typeof window === 'undefined') return '';
+
+    const fromSearch = new URLSearchParams(window.location.search).get('target');
+    if (fromSearch) return fromSearch;
+
+    const hash = window.location.hash || '';
+    const queryIndex = hash.indexOf('?');
+    if (queryIndex >= 0) {
+        const params = new URLSearchParams(hash.slice(queryIndex + 1));
+        return String(params.get('target') || '').trim();
+    }
+
+    return '';
 };
 
 const normalizeMarketplaceAccessToken = (rawToken: string) => {
@@ -540,13 +629,56 @@ const normalizeProductVariants = (value: any, fallbackPrice = 0): Product['varia
 const readCachedDashboardBanners = (): Banner[] => {
     if (typeof window === 'undefined') return initialDashboardBanners;
     try {
-        const raw = localStorage.getItem('rs-marketplace-dashboard-banners');
+        const raw = localStorage.getItem(getScopedCacheKey('rs-marketplace-dashboard-banners'))
+            || localStorage.getItem('rs-marketplace-dashboard-banners');
         if (!raw) return initialDashboardBanners;
 
         const parsed = JSON.parse(raw);
         return Array.isArray(parsed) ? parsed : initialDashboardBanners;
     } catch {
         return initialDashboardBanners;
+    }
+};
+
+const resolveStorefrontCacheScope = () => {
+    if (typeof window === 'undefined') return 'central';
+
+    try {
+        const pathname = String(window.location.pathname || '').toLowerCase();
+        const storeMatch = pathname.match(/\/loja\/([^\/?#]+)/i);
+        if (storeMatch?.[1]) {
+            return `loja:${storeMatch[1].trim().toLowerCase()}`;
+        }
+
+        const params = new URLSearchParams(window.location.search || '');
+        const ref = String(params.get('ref') || '').trim().toLowerCase();
+        if (ref) {
+            return `ref:${ref}`;
+        }
+    } catch {
+        // noop
+    }
+
+    return 'central';
+};
+
+const getScopedCacheKey = (baseKey: string) => `${baseKey}:${resolveStorefrontCacheScope()}`;
+
+const readCachedDashboardSettings = (): DashboardSettings => {
+    if (typeof window === 'undefined') return initialDashboardSettings;
+    try {
+        const raw = localStorage.getItem('rs-marketplace-dashboard-settings');
+        if (!raw) return initialDashboardSettings;
+
+        const parsed = JSON.parse(raw);
+        if (!parsed || typeof parsed !== 'object') return initialDashboardSettings;
+
+        return {
+            components: Array.isArray(parsed.components) ? parsed.components : initialDashboardSettings.components,
+            cards: Array.isArray(parsed.cards) ? parsed.cards : initialDashboardSettings.cards,
+        };
+    } catch {
+        return initialDashboardSettings;
     }
 };
 
@@ -564,6 +696,26 @@ const mapPromoBannersToCarousel = (promoBanners: any[] = []): Banner[] => {
             } as Banner;
         })
         .filter(banner => Boolean(banner.desktopImage || banner.mobileImage));
+};
+
+const mapCarouselBannersToPromo = (banners: Banner[] = []) => {
+    return banners
+        .map((banner, index) => {
+            const image = String(banner?.desktopImage || banner?.mobileImage || '').trim();
+            if (!image) return null;
+
+            return {
+                id: String(banner?.id || `dash-banner-${index + 1}`),
+                preTitle: String(banner?.subtitle || ''),
+                title: String(banner?.title || ''),
+                imageUrl: image,
+                imageDataUrl: image,
+                desktopImage: String(banner?.desktopImage || image),
+                mobileImage: String(banner?.mobileImage || image),
+                link: String(banner?.link || '#'),
+            };
+        })
+        .filter(Boolean);
 };
 
 const initialDashboardSettings: DashboardSettings = {
@@ -932,8 +1084,11 @@ const App: React.FC = () => {
     const [storeCustomization, setStoreCustomization] = useState<StoreCustomization>(() => {
         if (typeof window !== 'undefined') {
             // v6.0: Uso da detecÃ§Ã£o consolidada para inicializaÃ§Ã£o
-            const cachedCustomization = readCachedAppState<Record<string, any> | null>(APP_CACHE_KEYS.storeCustomization, null);
-            const saved = isPreviewDetected ? localStorage.getItem('rs_editor_draft') : localStorage.getItem('rs-store-customization');
+            const cachedCustomization = readCachedAppState<Record<string, any> | null>(getScopedCacheKey(APP_CACHE_KEYS.storeCustomization), null)
+                || readCachedAppState<Record<string, any> | null>(APP_CACHE_KEYS.storeCustomization, null);
+            const saved = isPreviewDetected
+                ? localStorage.getItem('rs_editor_draft')
+                : localStorage.getItem(getScopedCacheKey('rs-store-customization')) || localStorage.getItem('rs-store-customization');
             const fallback = localStorage.getItem('rs-store-customization');
 
             const finalSaved = saved || fallback || (cachedCustomization ? JSON.stringify(cachedCustomization) : null);
@@ -978,6 +1133,12 @@ const App: React.FC = () => {
         }
         return initialStoreCustomization;
     });
+    const [storeCustomizationLoadStatus, setStoreCustomizationLoadStatus] = useState<'loading' | 'loaded' | 'error'>(() => {
+        if (typeof window === 'undefined') return 'loading';
+        const hasScopedCache = Boolean(readCachedAppState<Record<string, any> | null>(getScopedCacheKey(APP_CACHE_KEYS.storeCustomization), null));
+        const hasGenericCache = Boolean(readCachedAppState<Record<string, any> | null>(APP_CACHE_KEYS.storeCustomization, null));
+        return hasScopedCache || hasGenericCache ? 'loaded' : 'loading';
+    });
     const [paymentSettings, setPaymentSettings] = useState<PaymentSettings>(emptyPaymentSettings);
     const [shippingSettings, setShippingSettings] = useState<ShippingSettings>(emptyShippingSettings);
     const [walletSettings, setWalletSettings] = useState<WalletSettings>(emptyWalletSettings);
@@ -990,7 +1151,7 @@ const App: React.FC = () => {
         nextPinName: '',
         nextLevelVolume: 0
     });
-    const [dashboardBanners, setDashboardBanners] = useState<Banner[]>(() => readCachedDashboardBanners());
+    const [dashboardBanners, setDashboardBanners] = useState<Banner[]>(initialDashboardBanners);
     const [dashboardSettings, setDashboardSettings] = useState<DashboardSettings>(initialDashboardSettings);
     const hasLoadedDashboardLayoutRef = useRef(false);
     const [collections, setCollections] = useState<Collection[]>(() => readCachedAppState<Collection[]>(APP_CACHE_KEYS.collections, []));
@@ -1095,7 +1256,6 @@ const App: React.FC = () => {
 
                 const mappedBanners = marketplaceBanners.length > 0 ? marketplaceBanners : consultantBanners;
                 setDashboardBanners(mappedBanners);
-                localStorage.setItem('rs-marketplace-dashboard-banners', JSON.stringify(mappedBanners));
             } catch (error) {
                 console.warn('[Dashboard Banners] Falha ao carregar layout do marketplace:', error);
             }
@@ -1120,16 +1280,18 @@ const App: React.FC = () => {
             document.removeEventListener('visibilitychange', refreshWhenVisible);
             window.removeEventListener('rs-marketplace-auth-updated', refreshAfterAuth);
         };
-    }, []);
+    }, [signupContext.sponsorRef]);
 
     // v11.0: Carregamento Inicial Robusto via API (Banco de Dados)
     useEffect(() => {
         const loadCustomization = async () => {
             console.log('%c[App v11.0] ðŸ“¡ Carregando customizaÃ§Ã£o do banco...', 'color: #ff00ff; font-weight: bold;');
+            setStoreCustomizationLoadStatus('loading');
             const result = await storeCustomizationAPI.get();
 
             if (result && result.success !== false && result.data) {
                 const dbData = result.data;
+                writeCachedAppState(getScopedCacheKey(APP_CACHE_KEYS.storeCustomization), dbData);
                 writeCachedAppState(APP_CACHE_KEYS.storeCustomization, dbData);
                 console.log('[App v11.0] âœ… Dados do banco recebidos:', dbData);
 
@@ -1141,6 +1303,7 @@ const App: React.FC = () => {
                             try {
                                 const parsed = JSON.parse(savedDraft);
                                 console.log('[App v11.0] ðŸ“” Mantendo rascunho local em modo Preview.');
+                                setStoreCustomizationLoadStatus('loaded');
                                 return { ...prev, ...parsed };
                             } catch (e) { }
                         }
@@ -1212,10 +1375,12 @@ const App: React.FC = () => {
                         finalCustom.homepageSections = dbSections.sort((a, b) => (a.order || 0) - (b.order || 0));
                     }
 
+                    setStoreCustomizationLoadStatus('loaded');
                     return finalCustom;
                 });
             } else {
                 console.warn('[App v11.0] âš ï¸ Falha ao carregar do banco. Usando fallback local.');
+                setStoreCustomizationLoadStatus('error');
             }
         };
 
@@ -1333,23 +1498,23 @@ const App: React.FC = () => {
 
                         setUserProfile(prev => {
                             const newProfile: UserProfile = {
-                                ...prev,
+                                ...createEmptyMarketplaceUserProfile(),
                                 id: activeSession.user.id,
-                                email: activeSession.user.email || prev.email,
+                                email: activeSession.user.email || '',
                                 name: resolvedName || '',
                                 avatarUrl: normalizeAvatarUrl(realProfile?.avatar_url || realConsultor?.avatar_url || prev.avatarUrl) || prev.avatarUrl,
-                                graduation: realConsultor?.graduacao || realProfile?.graduation || prev.graduation || 'CONSULTOR',
-                                accountStatus: realConsultor?.status_conta || realProfile?.account_status || prev.accountStatus || 'Ativo',
-                                monthlyActivity: realConsultor?.atividade_mensal || realProfile?.monthly_activity || prev.monthlyActivity || 'Ativo',
+                                graduation: realConsultor?.graduacao || realProfile?.graduation || 'CONSULTOR',
+                                accountStatus: realConsultor?.status_conta || realProfile?.account_status || 'Ativo',
+                                monthlyActivity: realConsultor?.atividade_mensal || realProfile?.monthly_activity || 'Ativo',
                                 category: realConsultor?.categoria || realProfile?.category || (
                                     ['lojista', 'seller', 'marketplace_admin', 'super_admin', 'admin'].includes(String(userRole || '').trim().toLowerCase())
                                         ? 'LOJISTA'
-                                        : prev.category || ''
+                                        : ''
                                 ),
-                                cpfCnpj: realProfile?.cpf_cnpj || realConsultor?.cpf_cnpj || prev.cpfCnpj,
-                                code: String(realConsultor?.codigo_consultor || realConsultor?.id_numerico || realProfile?.id_numerico || fallbackCode || prev.code || ''),
+                                cpfCnpj: realProfile?.cpf_cnpj || realConsultor?.cpf_cnpj || '',
+                                code: String(realConsultor?.codigo_consultor || realConsultor?.id_numerico || realProfile?.id_numerico || fallbackCode || ''),
                                 loginId: realConsultor?.username || realConsultor?.id_consultor || realProfile?.slug || resolvedSlug || '',
-                                idNumerico: realConsultor?.id_numerico || realConsultor?.codigo_consultor || realProfile?.id_numerico || fallbackCode || prev.idNumerico,
+                                idNumerico: realConsultor?.id_numerico || realConsultor?.codigo_consultor || realProfile?.id_numerico || fallbackCode || '',
                                 idConsultor: resolvedSlug || '',
                                 slug: realConsultor?.slug || realProfile?.slug || resolvedSlug || ''
                             };
@@ -1385,6 +1550,55 @@ const App: React.FC = () => {
                             .select('*')
                             .eq('email', activeSession.user.email)
                             .maybeSingle();
+
+                        const fallbackName =
+                            realProfile?.full_name ||
+                            userProfileData?.full_name ||
+                            userProfileData?.name ||
+                            activeSession.user?.user_metadata?.full_name ||
+                            activeSession.user?.user_metadata?.name ||
+                            (activeSession.user?.email ? String(activeSession.user.email).split('@')[0] : '');
+                        const fallbackSlug =
+                            realProfile?.slug ||
+                            userProfileData?.slug ||
+                            (activeSession.user?.email ? String(activeSession.user.email).split('@')[0] : '');
+                        const fallbackCode = await resolveConsultantNumericCode({
+                            slug: fallbackSlug,
+                            email: activeSession.user.email || userProfileData?.email || realProfile?.email,
+                            name: fallbackName,
+                        });
+
+                        setUserProfile(prev => {
+                            const nextProfile: UserProfile = {
+                                ...createEmptyMarketplaceUserProfile(),
+                                id: activeSession.user.id,
+                                email: activeSession.user.email || '',
+                                name: fallbackName || '',
+                                avatarUrl: normalizeAvatarUrl(realProfile?.avatar_url || userProfileData?.avatar_url || prev.avatarUrl) || prev.avatarUrl,
+                                graduation: realProfile?.graduation || (canOperateMarketplaceAsConsultant ? 'LOJISTA' : 'CONSULTOR'),
+                                accountStatus: realProfile?.account_status || 'Ativo',
+                                monthlyActivity: realProfile?.monthly_activity || 'Ativo',
+                                category: realProfile?.category || (
+                                    ['lojista', 'seller', 'marketplace_admin', 'super_admin', 'admin'].includes(String(userRole || '').trim().toLowerCase())
+                                        ? 'LOJISTA'
+                                        : 'CONSULTOR'
+                                ),
+                                cpfCnpj: realProfile?.cpf_cnpj || '',
+                                code: String(userProfileData?.id_numerico || realProfile?.id_numerico || fallbackCode || ''),
+                                loginId: String(userProfileData?.username || userProfileData?.slug || realProfile?.slug || fallbackSlug || ''),
+                                idNumerico: userProfileData?.id_numerico || realProfile?.id_numerico || fallbackCode || '',
+                                idConsultor: fallbackSlug || '',
+                                slug: fallbackSlug || '',
+                            };
+
+                            localStorage.setItem('rs-consultant-profile', JSON.stringify(nextProfile));
+                            window.dispatchEvent(new StorageEvent('storage', {
+                                key: 'rs-consultant-profile',
+                                newValue: JSON.stringify(nextProfile)
+                            }));
+                            window.dispatchEvent(new Event('rs-consultant-profile-updated'));
+                            return nextProfile;
+                        });
 
                         if (realProfile || userProfileData || canOperateMarketplaceAsConsultant) {
                             setCurrentCustomer({
@@ -1428,7 +1642,11 @@ const App: React.FC = () => {
                 });
 
                 if (typeof window !== 'undefined' && window.location.hash.includes('/sso')) {
-                    window.history.replaceState({}, document.title, window.location.pathname);
+                    const targetPath = extractMarketplaceBridgeTarget();
+                    const preservedSearch = window.location.search || '';
+                    const nextUrl = `${window.location.pathname}${preservedSearch}${targetPath ? `#${targetPath}` : ''}`;
+                    window.history.replaceState({}, document.title, nextUrl);
+                    window.dispatchEvent(new Event('hashchange'));
                 }
 
                 return true;
@@ -1495,6 +1713,7 @@ const App: React.FC = () => {
     const [distributors, setDistributors] = useState<Distributor[]>([]);
     const [selectedDistributor, setSelectedDistributor] = useState<Distributor | null>(null);
     const [selectedDistributorInventory, setSelectedDistributorInventory] = useState<DistributorInventoryItem[]>([]);
+    const [selectedDistributorInventoryStatus, setSelectedDistributorInventoryStatus] = useState<DistributorInventoryLoadStatus>('idle');
     const [isDistributorSelectionModalOpen, setIsDistributorSelectionModalOpen] = useState(false);
     const [selectedCDId, setSelectedCDId] = useState<string>('');
 
@@ -1512,24 +1731,7 @@ const App: React.FC = () => {
         };
     }, [signupContext.sponsorRef]);
 
-    const [userProfile, setUserProfile] = useState<UserProfile>(() => {
-        const saved = localStorage.getItem('rs-consultant-profile');
-
-        // Initial default (Safe fallback)
-        let profile: UserProfile = createEmptyMarketplaceUserProfile();
-
-        if (saved) {
-            try {
-                const parsed = JSON.parse(saved) as UserProfile;
-                // v12.0: Garantir que campos de carreira existem no objeto recuperado
-                return {
-                    ...profile, // Campos padrÃ£o
-                    ...parsed,  // Sobrescreve com o que tem no cache
-                };
-            } catch { }
-        }
-        return profile;
-    });
+    const [userProfile, setUserProfile] = useState<UserProfile>(() => createEmptyMarketplaceUserProfile());
     const [bonuses, setBonuses] = useState(emptyBonusTotals);
     const [completedLessons, setCompletedLessons] = useState<string[]>([]);
     const [wishlist, setWishlist] = useState<string[]>([]);
@@ -1670,8 +1872,13 @@ const App: React.FC = () => {
 
     const storefrontProducts = useMemo(() => {
         if (!isLojistaSession || !selectedDistributor) return products;
-        return applyDistributorInventoryToProducts(products, selectedDistributorInventory, selectedDistributor.name);
-    }, [isLojistaSession, products, selectedDistributor, selectedDistributorInventory]);
+        return applyDistributorInventoryToProducts(
+            products,
+            selectedDistributorInventory,
+            selectedDistributor.name,
+            selectedDistributorInventoryStatus
+        );
+    }, [isLojistaSession, products, selectedDistributor, selectedDistributorInventory, selectedDistributorInventoryStatus]);
 
     const pricedProducts = useMemo(() => {
         if (!canUseMemberPricing) return storefrontProducts;
@@ -1700,6 +1907,39 @@ const App: React.FC = () => {
             };
         });
     }, [canUseMemberPricing, storefrontProducts]);
+    const isDefaultHeroSectionName = (value?: string) => {
+        const normalized = String(value || '').trim().toLowerCase();
+        return normalized === 'banner principal (hero)' || normalized === 'hero';
+    };
+    const isDefaultHeroContent = useMemo(() => (
+        String(storeCustomization.hero?.title || '').trim() === String(initialStoreCustomization.hero.title || '').trim() &&
+        String(storeCustomization.hero?.subtitle || '').trim() === String(initialStoreCustomization.hero.subtitle || '').trim() &&
+        String(storeCustomization.hero?.desktopImage || '').trim() === String(initialStoreCustomization.hero.desktopImage || '').trim()
+    ), [storeCustomization.hero]);
+    const isDefaultCarouselContent = useMemo(() => {
+        try {
+            return JSON.stringify(storeCustomization.carouselBanners || []) === JSON.stringify(initialStoreCustomization.carouselBanners || []);
+        } catch {
+            return false;
+        }
+    }, [storeCustomization.carouselBanners]);
+    const resolvedStoreHero = useMemo(() => {
+        if (!isDefaultHeroContent) return storeCustomization.hero;
+        const firstBanner = dashboardBanners[0];
+        if (!firstBanner) return storeCustomization.hero;
+        return {
+            ...storeCustomization.hero,
+            desktopImage: firstBanner.desktopImage || storeCustomization.hero.desktopImage,
+            mobileImage: firstBanner.mobileImage || firstBanner.desktopImage || storeCustomization.hero.mobileImage,
+            buttonAnchor: storeCustomization.hero.buttonAnchor || '#featuredProducts'
+        };
+    }, [dashboardBanners, isDefaultHeroContent, storeCustomization.hero]);
+    const resolvedStoreCarouselBanners = useMemo(() => {
+        if (!isDefaultCarouselContent && Array.isArray(storeCustomization.carouselBanners) && storeCustomization.carouselBanners.length > 0) {
+            return storeCustomization.carouselBanners;
+        }
+        return dashboardBanners.length > 0 ? dashboardBanners : (storeCustomization.carouselBanners || []);
+    }, [dashboardBanners, isDefaultCarouselContent, storeCustomization.carouselBanners]);
 
     const selectedProductForDisplay = useMemo(() => {
         if (!selectedProduct) return null;
@@ -1941,7 +2181,11 @@ const App: React.FC = () => {
 
     useEffect(() => {
         const resolveViewFromHash = () => {
-            const hash = (window.location.hash || '').replace('#', '');
+            const hashRoute = readMarketplaceHashRoute();
+            const targetFromSso = hashRoute.path === '/sso'
+                ? String(hashRoute.params.get('target') || '').trim()
+                : '';
+            const hash = targetFromSso || (window.location.hash || '').replace('#', '');
             const currentSignupContext = resolveMarketplaceSignupContext();
 
             setSignupContext(currentSignupContext);
@@ -1966,9 +2210,14 @@ const App: React.FC = () => {
                     case '/customer-forgot-password':
                         setView('customerForgotPassword');
                         break;
-	                    case '/dashboard-editor': {
+                    case '/dashboard-editor': {
+                            const isEmbeddedAdminRoute =
+                                (typeof window !== 'undefined' && (
+                                    new URLSearchParams(window.location.search).get('embedMarketplaceAdmin') === '1' ||
+                                    new URLSearchParams(window.location.search).get('previewDashboard') === '1'
+                                ));
 	                        const isSuperAdmin = (typeof window !== 'undefined' && (localStorage.getItem('rs-role') === 'super_admin' || (localStorage.getItem('rs-user-permissions') || '').includes('super_admin')));
-	                        setView(isSuperAdmin ? 'dashboardEditor' : 'consultantStore');
+	                        setView(isSuperAdmin || isEmbeddedAdminRoute ? 'dashboardEditor' : 'consultantStore');
 	                        break;
 	                    }
 	                    case '/store-editor':
@@ -2009,6 +2258,47 @@ const App: React.FC = () => {
             }
         }
     }, [view, cart.length, selectedProduct]);
+
+    useEffect(() => {
+        if (view !== 'home') return;
+        if (typeof window === 'undefined') return;
+
+        const params = new URLSearchParams(window.location.search || '');
+        const paramProductId = String(params.get('productId') || '').trim();
+        if (!paramProductId) return;
+
+        const targetProduct = pricedProducts.find((product) => String(product.id) === paramProductId);
+        if (!targetProduct) return;
+
+        setSelectedProduct(targetProduct);
+        setView('productDetail');
+    }, [view, pricedProducts]);
+
+    useEffect(() => {
+        if (view !== 'checkout') return;
+        if (typeof window === 'undefined') return;
+        if (cart.length > 0) return;
+
+        const params = new URLSearchParams(window.location.search || '');
+        const paramProductId = String(params.get('productId') || '').trim();
+        if (!paramProductId) return;
+
+        const targetProduct = pricedProducts.find((product) => String(product.id) === paramProductId);
+        if (!targetProduct) return;
+
+        const defaultVariant: ProductVariant =
+            Array.isArray(targetProduct.variants) && targetProduct.variants.length > 0
+                ? targetProduct.variants[0]
+                : {
+                    id: `${targetProduct.id}-default`,
+                    options: {},
+                    price: Number(targetProduct.price || 0),
+                    inventory: Number(targetProduct.inventory || 0),
+                    sku: targetProduct.sku,
+                };
+
+        handleAddToCart(targetProduct, 1, defaultVariant);
+    }, [view, cart.length, pricedProducts]);
 
     useEffect(() => {
         let cancelled = false;
@@ -2189,11 +2479,13 @@ const App: React.FC = () => {
                     if (cdRes && cdRes.success !== false && Array.isArray(cdRes.data)) {
                         const cds: Distributor[] = cdRes.data.map((d: any) => ({
                             id: String(d.id ?? ''),
+                            managerId: String(d.manager_id ?? d.managerId ?? ''),
                             name: String(d.name ?? 'CD'),
                             ownerName: String(d.owner_name ?? d.ownerName ?? ''),
                             cpfCnpj: String(d.cnpj_cpf ?? ''),
                             email: String(d.email ?? ''),
                             phone: String(d.phone ?? ''),
+                            zipCode: String(d.address_zip ?? d.zipCode ?? ''),
                             stores: Array.isArray(d.stores) ? d.stores : [],
                         }));
                         setDistributors(cds);
@@ -2217,34 +2509,32 @@ const App: React.FC = () => {
         if (!shouldLoadDashboardLayout || hasLoadedDashboardLayoutRef.current) return;
 
         hasLoadedDashboardLayoutRef.current = true;
-        const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:4000';
         (async () => {
             try {
                 if (!navigator.onLine) return;
-                const res = await fetch(`${API_URL}/v1/dashboard-layout/marketplace`);
-                if (res.ok) {
-                    const json = await res.json().catch(() => ({}));
-                    if (json && json.success && json.config) {
-                        const cfg = json.config as any;
-                        const srcMap: Record<string, string> = {
-                            bonusCicloGlobal: 'cycleBonus',
-                            bonusTopSigme: 'topSigmeBonus',
-                            bonusPlanoCarreira: 'careerPlanBonus'
-                        };
-                        const mappedCards = Array.isArray(cfg.bonusCards)
-                            ? cfg.bonusCards.map((c: any, idx: number) => ({
-                                id: `card-${idx + 1}`,
-                                title: c.title || 'BÃ´nus',
-                                icon: c.icon || 'IconAward',
-                                dataKey: srcMap[c.source] || 'custom'
-                            }))
-                            : initialDashboardSettings.cards;
+                const layoutResult = await dashboardLayoutAPI.getMarketplaceLayoutConfig();
+                const cfg = layoutResult?.config || layoutResult?.data?.config || layoutResult?.data;
+                if (layoutResult?.success !== false && cfg) {
+                    const srcMap: Record<string, string> = {
+                        bonusCicloGlobal: 'cycleBonus',
+                        bonusTopSigme: 'topSigmeBonus',
+                        bonusPlanoCarreira: 'careerPlanBonus'
+                    };
+                    const mappedCards = Array.isArray(cfg.bonusCards)
+                        ? cfg.bonusCards.map((c: any, idx: number) => ({
+                            id: `card-${idx + 1}`,
+                            title: c.title || 'BÃ´nus',
+                            icon: c.icon || 'IconAward',
+                            dataKey: srcMap[c.source] || 'custom'
+                        }))
+                        : initialDashboardSettings.cards;
 
-                        setDashboardSettings(prev => ({
-                            ...prev,
-                            cards: mappedCards
-                        }));
-                    }
+                    const persistedSettings: DashboardSettings = {
+                        components: Array.isArray(cfg.components) ? cfg.components : initialDashboardSettings.components,
+                        cards: Array.isArray(cfg.cards) ? cfg.cards : mappedCards
+                    };
+
+                    setDashboardSettings(persistedSettings);
                 }
             } catch (error) {
                 console.warn('Dashboard layout fetch failed, using defaults:', error);
@@ -2261,19 +2551,52 @@ const App: React.FC = () => {
     useEffect(() => {
         if (typeof window === 'undefined' || distributors.length === 0) return;
 
+        const normalizedOperatorUserId = String(currentOperatorUserId || '').trim().toLowerCase();
+        const normalizedOperatorEmails = new Set(
+            [currentCustomer?.email, userProfile.email]
+                .map((value) => String(value || '').trim().toLowerCase())
+                .filter(Boolean)
+        );
         const storedDistributorId = localStorage.getItem(distributorStorageKey);
-        if (!storedDistributorId) {
-            setSelectedDistributor(null);
-            return;
-        }
 
-        const matchedDistributor = distributors.find((distributor) => distributor.id === storedDistributorId);
-        if (matchedDistributor) {
-            setSelectedDistributor((previous) => previous?.id === matchedDistributor.id ? previous : matchedDistributor);
+        const matchedDistributor = storedDistributorId
+            ? distributors.find((distributor) => distributor.id === storedDistributorId)
+            : null;
+
+        const autoMatchedDistributor = isLojistaSession
+            ? distributors.find((distributor) => {
+                const distributorId = String(distributor.id || '').trim().toLowerCase();
+                const distributorManagerId = String(distributor.managerId || '').trim().toLowerCase();
+                const distributorEmail = String(distributor.email || '').trim().toLowerCase();
+
+                return (
+                    (normalizedOperatorUserId && (distributorId === normalizedOperatorUserId || distributorManagerId === normalizedOperatorUserId)) ||
+                    (distributorManagerId && currentOperatorLoginRefs.has(distributorManagerId)) ||
+                    (distributorId && currentOperatorLoginRefs.has(distributorId)) ||
+                    (distributorEmail && normalizedOperatorEmails.has(distributorEmail))
+                );
+            })
+            : null;
+
+        const resolvedDistributor = matchedDistributor || autoMatchedDistributor || null;
+
+        if (resolvedDistributor) {
+            setSelectedDistributor((previous) => previous?.id === resolvedDistributor.id ? previous : resolvedDistributor);
+            if (storedDistributorId !== resolvedDistributor.id) {
+                localStorage.setItem(distributorStorageKey, resolvedDistributor.id);
+            }
         } else {
             setSelectedDistributor(null);
         }
-    }, [distributorStorageKey, distributors]);
+    }, [
+        currentCustomer?.email,
+        currentOperatorLoginRefs,
+        currentOperatorUserId,
+        distributorStorageKey,
+        distributors,
+        isLojistaSession,
+        userProfile.email,
+    ]);
 
     useEffect(() => {
         let cancelled = false;
@@ -2281,7 +2604,17 @@ const App: React.FC = () => {
         const loadDistributorInventory = async () => {
             if (!isLojistaSession || !selectedDistributor?.id) {
                 setSelectedDistributorInventory([]);
+                setSelectedDistributorInventoryStatus('idle');
                 return;
+            }
+
+            const cachedInventory = readDistributorInventoryCache(selectedDistributor.id);
+            if (cachedInventory.length > 0) {
+                setSelectedDistributorInventory(cachedInventory);
+                setSelectedDistributorInventoryStatus('loaded');
+            } else {
+                setSelectedDistributorInventory([]);
+                setSelectedDistributorInventoryStatus('loading');
             }
 
             try {
@@ -2289,7 +2622,7 @@ const App: React.FC = () => {
                 if (cancelled) return;
 
                 if (response && response.success !== false && Array.isArray(response.data)) {
-                    setSelectedDistributorInventory(response.data.map((item: any) => ({
+                    const normalizedInventory = response.data.map((item: any) => ({
                         id: String(item.id ?? ''),
                         productId: item.productId ? String(item.productId) : (item.product_id ? String(item.product_id) : null),
                         sku: String(item.sku ?? ''),
@@ -2301,15 +2634,22 @@ const App: React.FC = () => {
                         costPrice: Number(item.costPrice ?? item.cost_price ?? 0),
                         points: Number(item.points ?? 0),
                         status: String(item.status ?? '')
-                    })));
+                    }));
+                    setSelectedDistributorInventory(normalizedInventory);
+                    setSelectedDistributorInventoryStatus('loaded');
+                    writeDistributorInventoryCache(selectedDistributor.id, normalizedInventory);
                     return;
                 }
 
                 setSelectedDistributorInventory([]);
+                setSelectedDistributorInventoryStatus('loaded');
             } catch (error) {
                 if (!cancelled) {
                     console.warn('[Marketplace] Falha ao carregar inventario do CD:', error);
-                    setSelectedDistributorInventory([]);
+                    if (cachedInventory.length === 0) {
+                        setSelectedDistributorInventory([]);
+                        setSelectedDistributorInventoryStatus('error');
+                    }
                 }
             }
         };
@@ -2363,6 +2703,10 @@ const App: React.FC = () => {
             const existingItem = prevCart.find(item => item.productId === product.id && item.variantId === selectedVariant.id);
             const sourceProduct = storefrontProducts.find((candidate) => String(candidate.id) === String(product.id)) || product;
             const isCdInventory = sourceProduct.inventorySource === 'cd';
+            const productKind = String(sourceProduct.productType || sourceProduct.type || '').trim().toLowerCase();
+            const respectsInventory = sourceProduct.trackQuantity !== false || isCdInventory;
+            const isStockControlledProduct = productKind !== 'digital' && respectsInventory;
+            const isInventoryLoading = Boolean(sourceProduct.inventoryLoading);
             const availableInventory = Math.max(0, Number(sourceProduct.inventory || 0));
             const existingQuantity = existingItem ? Number(existingItem.quantity || 0) : 0;
             const sourceFulfillmentType = normalizeFulfillmentOriginType(sourceProduct.fulfillmentOriginType);
@@ -2371,14 +2715,28 @@ const App: React.FC = () => {
                 : 'central';
             const sourceFulfillmentKey = `${sourceFulfillmentType}:${sourceFulfillmentId || 'central'}`;
             const existingFulfillmentKeys = new Set(prevCart.map(item => getFulfillmentOriginKey(item)));
+            const unavailableMessage = sourceProduct.inventoryStatusMessage || (
+                isCdInventory
+                    ? 'Produto indisponivel no CD selecionado.'
+                    : 'Produto sem estoque no momento.'
+            );
 
-            if (isCdInventory && availableInventory <= 0) {
-                alert(sourceProduct.inventoryStatusMessage || 'Produto indisponivel no CD selecionado.');
+            if (isInventoryLoading) {
+                alert(sourceProduct.inventoryStatusMessage || 'Aguarde a sincronizacao do estoque do CD.');
                 return prevCart;
             }
 
-            if (isCdInventory && existingQuantity + quantity > availableInventory) {
-                alert(`Estoque insuficiente no CD selecionado. Disponivel: ${availableInventory}.`);
+            if (isStockControlledProduct && availableInventory <= 0) {
+                alert(unavailableMessage);
+                return prevCart;
+            }
+
+            if (isStockControlledProduct && existingQuantity + quantity > availableInventory) {
+                alert(
+                    isCdInventory
+                        ? `Estoque insuficiente no CD selecionado. Disponivel: ${availableInventory}.`
+                        : `Estoque insuficiente para este produto. Disponivel: ${availableInventory}.`
+                );
                 return prevCart;
             }
 
@@ -2530,6 +2888,11 @@ const App: React.FC = () => {
     const handleNavigate = (newView: View, data?: any) => {
         console.log(' Navegando para:', newView);
         const isSuperAdmin = (typeof window !== 'undefined' && (localStorage.getItem('rs-role') === 'super_admin' || (localStorage.getItem('rs-user-permissions') || '').includes('super_admin')));
+        const isStorefrontRoute = typeof window !== 'undefined' && isExplicitMarketplaceStorefrontRoute(window.location.pathname);
+        if (isStorefrontRoute && ADMIN_DASHBOARD_VIEWS.includes(newView)) {
+            window.location.assign(`${window.location.origin}/#/seller`);
+            return;
+        }
         const adminOnlyViews: View[] = ['userProfileEditor', 'dashboardEditor', 'bannerDashboard'];
         if (!isSuperAdmin && adminOnlyViews.includes(newView)) {
             setView('consultantStore');
@@ -2571,7 +2934,7 @@ const App: React.FC = () => {
             setView('manageCollections');
             return;
         }
-        if ((newView === 'orderDetail' || newView === 'orderStatus') && data && !managedStoreOrders.some((order) => String(order.id) === String((data as Order).id))) {
+        if (newView === 'orderDetail' && data && !managedStoreOrders.some((order) => String(order.id) === String((data as Order).id))) {
             alert('Este pedido nao pertence a esta conta.');
             setView('manageOrders');
             return;
@@ -2607,7 +2970,10 @@ const App: React.FC = () => {
         setStoreCustomization(prev => {
             const newCustomization = { ...prev, ...updatedData };
             try {
+                localStorage.setItem(getScopedCacheKey('rs-store-customization'), JSON.stringify(newCustomization));
                 localStorage.setItem('rs-store-customization', JSON.stringify(newCustomization));
+                writeCachedAppState(getScopedCacheKey(APP_CACHE_KEYS.storeCustomization), newCustomization);
+                writeCachedAppState(APP_CACHE_KEYS.storeCustomization, newCustomization);
             } catch (e) {
                 console.error('Erro ao salvar customizaÃ§Ã£o:', e);
             }
@@ -2637,16 +3003,46 @@ const App: React.FC = () => {
 
         handleStoreCustomizationChange({ promotionRequests });
     };
-    const handleDashboardBannersUpdate = (newBanners: Banner[]) => {
+    const handleDashboardBannersUpdate = async (newBanners: Banner[]) => {
         setDashboardBanners(newBanners);
         try {
-            localStorage.setItem('rs-marketplace-dashboard-banners', JSON.stringify(newBanners));
-        } catch { }
+            const currentLayout = await dashboardLayoutAPI.getMarketplaceLayoutConfig();
+            const currentConfig = currentLayout?.config || currentLayout?.data?.config || currentLayout?.data || {};
+            const mergedConfig = {
+                ...currentConfig,
+                promoBanners: mapCarouselBannersToPromo(newBanners)
+            };
+            const saveResult = await dashboardLayoutAPI.updateMarketplaceLayoutConfig(mergedConfig);
+            if (saveResult && saveResult.success === false) {
+                throw new Error(saveResult.error || 'Falha ao salvar os banners do dashboard.');
+            }
+        } catch (error) {
+            console.error('Falha ao persistir banners do dashboard do lojista:', error);
+            alert('Falha ao salvar os banners reais no Supabase.');
+            return;
+        }
         alert('Banners do painel atualizados com sucesso!');
     };
 
-    const handleDashboardSettingsUpdate = (newSettings: DashboardSettings) => {
+    const handleDashboardSettingsUpdate = async (newSettings: DashboardSettings) => {
         setDashboardSettings(newSettings);
+        try {
+            const currentLayout = await dashboardLayoutAPI.getMarketplaceLayoutConfig();
+            const currentConfig = currentLayout?.config || currentLayout?.data?.config || currentLayout?.data || {};
+            const mergedConfig = {
+                ...currentConfig,
+                components: newSettings.components,
+                cards: newSettings.cards
+            };
+            const saveResult = await dashboardLayoutAPI.updateMarketplaceLayoutConfig(mergedConfig);
+            if (saveResult && saveResult.success === false) {
+                throw new Error(saveResult.error || 'Falha ao salvar o layout do marketplace.');
+            }
+        } catch (error) {
+            console.error('Falha ao persistir layout do dashboard do lojista:', error);
+            alert('Falha ao salvar o layout real no Supabase.');
+            return;
+        }
         alert('Painel atualizado com sucesso!');
     };
 
@@ -3186,6 +3582,7 @@ const App: React.FC = () => {
         setIsConsultantSession(false);
         setSelectedDistributor(null);
         setSelectedDistributorInventory([]);
+        setSelectedDistributorInventoryStatus('idle');
         setIsDistributorSelectionModalOpen(false);
         setViewAfterCustomerAuth(null);
         setUserProfile(createEmptyMarketplaceUserProfile());
@@ -3558,6 +3955,14 @@ const App: React.FC = () => {
 
 
         }
+        if (isEmbeddedMarketplaceAdmin || isEmbeddedDashboardPreview) {
+            return (
+                <div className="min-h-screen bg-[rgb(var(--color-brand-dark))] text-[rgb(var(--color-brand-text-light))]">
+                    {content}
+                </div>
+            );
+        }
+
         return (
             <AdminLayout title={adminViewTitles[view]} currentView={view} onNavigate={handleNavigate} onLogout={handleMarketplaceLogout}>
                 {content}
@@ -3613,19 +4018,25 @@ const App: React.FC = () => {
 
                     switch (sectionId) {
                         case 'hero':
+                            if (storeCustomizationLoadStatus === 'loading' && isDefaultHeroContent && dashboardBanners.length === 0) {
+                                return null;
+                            }
                             return <Hero key="hero" content={{
-                                ...storeCustomization.hero,
-                                title: section.name || storeCustomization.hero.title,
-                                subtitle: section.subtitle || storeCustomization.hero.subtitle,
-                                titleColor: section.titleColor || storeCustomization.hero.titleColor,
-                                subtitleColor: section.subtitleColor || storeCustomization.hero.subtitleColor || section.titleColor,
-                                backgroundColor: section.backgroundColor || storeCustomization.hero.backgroundColor
+                                ...resolvedStoreHero,
+                                title: (section.name && !isDefaultHeroSectionName(section.name)) ? section.name : resolvedStoreHero.title,
+                                subtitle: section.subtitle || resolvedStoreHero.subtitle,
+                                titleColor: section.titleColor || resolvedStoreHero.titleColor,
+                                subtitleColor: section.subtitleColor || resolvedStoreHero.subtitleColor || section.titleColor,
+                                backgroundColor: section.backgroundColor || resolvedStoreHero.backgroundColor
                             }} />;
                         case 'carousel':
+                            if (storeCustomizationLoadStatus === 'loading' && isDefaultCarouselContent && dashboardBanners.length === 0) {
+                                return null;
+                            }
                             return (
                                 <Carousel
                                     key="carousel"
-                                    banners={storeCustomization.carouselBanners}
+                                    banners={resolvedStoreCarouselBanners}
                                     height={storeCustomization.carouselHeight}
                                     mobileHeight={storeCustomization.carouselHeightMobile}
                                     fullWidth={storeCustomization.carouselFullWidth}
@@ -3700,12 +4111,16 @@ const App: React.FC = () => {
                         {/* Se houver busca, mantÃ©m Hero e Carousel no topo, mas foca nos resultados */}
                         {searchQuery ? (
                             <>
-                                <Hero content={storeCustomization.hero} />
-                                <Carousel
-                                    banners={storeCustomization.carouselBanners}
-                                    height={storeCustomization.carouselHeight}
-                                    mobileHeight={storeCustomization.carouselHeightMobile}
-                                />
+                                {!(storeCustomizationLoadStatus === 'loading' && isDefaultHeroContent && dashboardBanners.length === 0) && (
+                                    <Hero content={resolvedStoreHero} />
+                                )}
+                                {!(storeCustomizationLoadStatus === 'loading' && isDefaultCarouselContent && dashboardBanners.length === 0) && (
+                                    <Carousel
+                                        banners={resolvedStoreCarouselBanners}
+                                        height={storeCustomization.carouselHeight}
+                                        mobileHeight={storeCustomization.carouselHeightMobile}
+                                    />
+                                )}
                                 <div className="container mx-auto px-4 mt-8">
                                     <h2 className="text-2xl font-display text-[rgb(var(--color-brand-gold))]">
                                         Resultados para: "{searchQuery}"
@@ -3751,31 +4166,26 @@ const App: React.FC = () => {
                                     .map(section => section.enabled && renderHomepageSection(section.id))}
                             </>
                         )}
-                        <CustomerChatWidget orders={orders} />
-                    </div>
-                );
+                                {!isEmbeddedStorePreview && <CustomerChatWidget orders={orders} />}
+                            </div>
+                        );
         }
     };
+
+    const marketplaceSearchParams = typeof window !== 'undefined'
+        ? new URLSearchParams(window.location.search)
+        : new URLSearchParams();
+    const isEmbeddedMarketplaceAdmin = marketplaceSearchParams.get('embedMarketplaceAdmin') === '1';
+    const isEmbeddedStorePreview = marketplaceSearchParams.get('previewStore') === '1';
+    const isEmbeddedDashboardPreview = marketplaceSearchParams.get('previewDashboard') === '1';
 
     const isAuthView = ['consultantLogin', 'sellerRegistration', 'customerLogin', 'customerRegister', 'customerForgotPassword'].includes(view);
     const authBranding = {
         logo: storeCustomization.logoUrl || '/logo-rs.png',
         companyName: 'RS Prolipsi'
     };
-    const isAdminDashboardView = [
-        'consultantStore', 'manageProducts', 'addEditProduct', 'editDropshippingProduct', 'manageInventory',
-        'manageOrders', 'orderDetail', 'manageReturns', 'returnDetail', 'manageDropshippingOrders',
-        'dropshippingCatalog', 'managePromotions', 'addEditCoupon', 'manageAffiliates', 'storeEditor',
-        'storeBannerEditor', 'virtualOfficeDropshipping', 'virtualOfficeAffiliateLinks',
-        'virtualOfficePixels', 'virtualOfficeLinkShortener', 'addEditMarketingPixel', 'bannerDashboard',
-        'dashboardEditor', 'consultantProfile', 'managePayments', 'manageShipping', 'compensationPlan', 'manageCollections',
-        'addEditCollection', 'userProfileEditor', 'walletOverview', 'walletReports', 'walletTransfers',
-        'walletCharges', 'walletSettings', 'rsStudio', 'communication', 'manageOrderBump', 'manageUpsell',
-        'managePromotionBoost', 'manageAbandonedCarts', 'manageReviews', 'manageAnnouncements', 'addEditAnnouncement',
-        'manageTrainings', 'addEditTraining', 'trainingModuleDetail', 'manageMarketingAssets',
-        'addEditMarketingAsset', 'rsCD', 'rsControleDrop',
-        'marketplaceAdmin', 'marketplaceAdminOrders', 'marketplaceAdminProducts', 'marketplaceAdminFinancial'
-    ].includes(view);
+    const isStorefrontRoute = typeof window !== 'undefined' && isExplicitMarketplaceStorefrontRoute(window.location.pathname);
+    const isAdminDashboardView = ADMIN_DASHBOARD_VIEWS.includes(view) && !isStorefrontRoute;
 
     const cartFulfillmentContext = useMemo(() => {
         const normalizedOrigins = cart
@@ -3831,7 +4241,16 @@ const App: React.FC = () => {
         const explicitRouteRef = explicitRouteMatch?.[1] ? String(explicitRouteMatch[1]).trim().toLowerCase() : '';
         const isCentralCompanyRoute = explicitRouteRef === DEFAULT_MARKETPLACE_SPONSOR_REF;
         const hasExplicitLinkedRoute = Boolean(explicitRouteRef);
-        const hasLockedReferralRoute = (signupContext.sponsorSource === 'referral' || hasExplicitLinkedRoute) && !isCentralCompanyRoute;
+        const isOwnStoreRoute = Boolean(
+            explicitRouteRef &&
+            isLojistaSession &&
+            currentOperatorLoginRefs.has(explicitRouteRef)
+        );
+        const hasLockedReferralRoute = (
+            (signupContext.sponsorSource === 'referral' || hasExplicitLinkedRoute) &&
+            !isCentralCompanyRoute &&
+            !isOwnStoreRoute
+        );
         const effectiveDistributor = isLojistaSession ? selectedDistributor : null;
 
         if (hasLockedReferralRoute) {
@@ -3992,6 +4411,7 @@ const App: React.FC = () => {
         selectedDistributor,
         signupContext.sponsorRef,
         signupContext.sponsorSource,
+        Array.from(currentOperatorLoginRefs).join('|'),
     ]);
 
     const shouldPromptDistributorSelection = (
@@ -4180,7 +4600,7 @@ const App: React.FC = () => {
                         </div>
                     </div>
                 )}
-                {!isLivePreview && (
+                {!isLivePreview && !isEmbeddedStorePreview && (
                     <div className="bg-[rgb(var(--color-brand-gray))] border-b border-[rgb(var(--color-brand-gold))]/[.20] py-1.5 relative z-50">
                         <div className="container mx-auto px-4 flex flex-wrap items-center justify-center gap-x-3 gap-y-2 text-center">
                             <span className="text-[10px] font-bold text-[rgb(var(--color-brand-gold))] uppercase tracking-widest opacity-80">
@@ -4216,53 +4636,61 @@ const App: React.FC = () => {
                         </div>
                     </div>
                 )}
-                <Header
-                    logoUrl={storeCustomization.logoUrl}
-                    logoMaxWidth={storeCustomization.logoMaxWidth}
-                    onLogoClick={() => handleNavigate('home')}
-                    onConsultantClick={() => handleNavigate(currentCustomer ? 'consultantStore' : 'consultantLogin')}
-                    cartItems={cart}
-                    onCartClick={() => setIsCartOpen(true)}
-                    collections={collections}
-                    onNavigate={handleNavigate}
-                    currentCustomer={currentCustomer}
-                    onLogout={handleMarketplaceLogout}
-                    searchQuery={searchQuery}
-                    onSearch={setSearchQuery}
-                />
+                {!isEmbeddedStorePreview && (
+                    <Header
+                        logoUrl={storeCustomization.logoUrl}
+                        logoMaxWidth={storeCustomization.logoMaxWidth}
+                        onLogoClick={() => handleNavigate('home')}
+                        onConsultantClick={() => handleNavigate(currentCustomer ? 'consultantStore' : 'consultantLogin')}
+                        cartItems={cart}
+                        onCartClick={() => setIsCartOpen(true)}
+                        collections={collections}
+                        onNavigate={handleNavigate}
+                        currentCustomer={currentCustomer}
+                        onLogout={handleMarketplaceLogout}
+                        searchQuery={searchQuery}
+                        onSearch={setSearchQuery}
+                    />
+                )}
                 <main>
                     {renderPublicContent()}
                 </main>
-                <Footer logoUrl={storeCustomization.logoUrl} content={{
-                    ...initialStoreCustomization.footer,
-                    description: storeCustomization.footer?.description || initialStoreCustomization.footer.description,
-                    socialLinks: storeCustomization.footer?.socialLinks || initialStoreCustomization.footer.socialLinks,
-                    contactEmail: storeCustomization.footer?.contactEmail || initialStoreCustomization.footer.contactEmail,
-                    cnpj: storeCustomization.footer?.cnpj || initialStoreCustomization.footer.cnpj,
-                    businessAddress: storeCustomization.footer?.businessAddress || initialStoreCustomization.footer.businessAddress,
-                }} onConsultantClick={() => handleNavigate('consultantLogin')} onNavigate={handleNavigate} currentCustomer={currentCustomer} />
+                {!isEmbeddedStorePreview && (
+                    <Footer logoUrl={storeCustomization.logoUrl} content={{
+                        ...initialStoreCustomization.footer,
+                        description: storeCustomization.footer?.description || initialStoreCustomization.footer.description,
+                        socialLinks: storeCustomization.footer?.socialLinks || initialStoreCustomization.footer.socialLinks,
+                        contactEmail: storeCustomization.footer?.contactEmail || initialStoreCustomization.footer.contactEmail,
+                        cnpj: storeCustomization.footer?.cnpj || initialStoreCustomization.footer.cnpj,
+                        businessAddress: storeCustomization.footer?.businessAddress || initialStoreCustomization.footer.businessAddress,
+                    }} onConsultantClick={() => handleNavigate('consultantLogin')} onNavigate={handleNavigate} currentCustomer={currentCustomer} />
+                )}
             </div>
-            {showFloatingCartStatus && cart.length > 0 && (
+            {!isEmbeddedStorePreview && showFloatingCartStatus && cart.length > 0 && (
                 <FloatingCartStatus cartItems={cart} onViewCart={() => {
                     setIsCartOpen(true);
                     setShowFloatingCartStatus(false);
                 }} />
             )}
-            <CartView
-                isOpen={isCartOpen}
-                onClose={() => setIsCartOpen(false)}
-                cartItems={cart}
-                onUpdateQuantity={handleUpdateCartQuantity}
-                onRemoveItem={handleRemoveFromCart}
-                onNavigate={handleNavigate}
-            />
-            <CDSelectionModal
-                isOpen={shouldShowDistributorModal}
-                onClose={() => setIsDistributorSelectionModalOpen(false)}
-                distributors={distributors}
-                onSelect={handleDistributorSelection}
-                title="Escolha o centro de distribuicao para esta compra"
-            />
+            {!isEmbeddedStorePreview && (
+                <>
+                    <CartView
+                        isOpen={isCartOpen}
+                        onClose={() => setIsCartOpen(false)}
+                        cartItems={cart}
+                        onUpdateQuantity={handleUpdateCartQuantity}
+                        onRemoveItem={handleRemoveFromCart}
+                        onNavigate={handleNavigate}
+                    />
+                    <CDSelectionModal
+                        isOpen={shouldShowDistributorModal}
+                        onClose={() => setIsDistributorSelectionModalOpen(false)}
+                        distributors={distributors}
+                        onSelect={handleDistributorSelection}
+                        title="Escolha o centro de distribuicao para esta compra"
+                    />
+                </>
+            )}
         </ErrorBoundary>
     );
 };

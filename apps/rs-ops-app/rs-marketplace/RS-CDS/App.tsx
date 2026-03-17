@@ -19,6 +19,42 @@ interface RSCDAppProps {
   onLogout?: () => void;
 }
 
+const CD_CACHE_KEY = 'rs-cds-last-profile';
+const CD_SETTINGS_CACHE_KEY = 'rs-cds-last-settings';
+const HARDCODED_PRIMARY_CD_ID = 'd107da4e-e266-41b0-947a-0c66b2f2b9ef';
+
+const readCachedJson = <T,>(key: string): T | null => {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) as T : null;
+  } catch {
+    return null;
+  }
+};
+
+const writeCachedJson = (key: string, value: unknown) => {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    // ignora falha de storage
+  }
+};
+
+const computeWithdrawableBalance = (transactions: Transaction[]): number => {
+  return Math.max(0, (transactions || []).reduce((acc, transaction) => {
+    const status = String(transaction.status || '').trim().toUpperCase();
+    if (status === 'CANCELADO' || status === 'REJEITADO') return acc;
+
+    const amount = Number(transaction.amount || 0);
+    const type = String(transaction.type || '').trim().toUpperCase();
+    const category = String(transaction.category || '').trim().toUpperCase();
+
+    if (type === 'IN') return acc + amount;
+    if (category.includes('SAQUE')) return acc - amount;
+    return acc;
+  }, 0));
+};
+
 function resolveBrandingUrl() {
   const rawBaseUrl = (import.meta as any).env?.VITE_API_URL || 'http://localhost:4000';
   const normalizedBaseUrl = String(rawBaseUrl).replace(/\/+$/, '');
@@ -110,6 +146,27 @@ const App: React.FC<RSCDAppProps> = ({ cdId: propCdId, userId: propUserId, onBac
   // === LOAD CD DATA AUTOMATICALLY ===
   // Priority: 1) URL param ?cdId=xxx  2) prop cdId  3) First CD from minisite_profiles
   useEffect(() => {
+    const cachedProfile = readCachedJson<CDProfile & { address?: any }>(CD_CACHE_KEY);
+    const cachedSettings = readCachedJson<SettingsData>(CD_SETTINGS_CACHE_KEY);
+
+    if (cachedProfile?.id) {
+      setUserProfile((prev) => ({
+        ...prev,
+        ...cachedProfile,
+      }));
+      setCdRecordId(cachedProfile.id);
+      setCdBranding({
+        faviconUrl: cachedProfile.faviconUrl || undefined,
+        logoUrl: cachedProfile.logoUrl || undefined,
+      });
+    }
+
+    if (cachedSettings) {
+      setAppSettings(cachedSettings);
+    }
+  }, []);
+
+  useEffect(() => {
     const loadCDData = async () => {
       setLoading(true);
       try {
@@ -126,6 +183,7 @@ const App: React.FC<RSCDAppProps> = ({ cdId: propCdId, userId: propUserId, onBac
           if (linkedProfile) {
             targetCdId = linkedProfile.id;
             setUserProfile(linkedProfile);
+            writeCachedJson(CD_CACHE_KEY, linkedProfile);
 
             if (linkedProfile.faviconUrl || linkedProfile.logoUrl) {
               setCdBranding({
@@ -137,6 +195,30 @@ const App: React.FC<RSCDAppProps> = ({ cdId: propCdId, userId: propUserId, onBac
             const linkedSettings = await dataService.getCDSettingsExt(targetCdId) || {};
 
             setAppSettings({
+              profile: {
+                fantasyName: linkedProfile.name || '',
+                companyName: linkedProfile.managerName || linkedProfile.name || '',
+                document: linkedProfile.document || '',
+                email: linkedProfile.email || '',
+                phone: linkedProfile.phone || '',
+                avatarUrl: linkedProfile.avatarUrl || '',
+                faviconUrl: linkedProfile.faviconUrl || '',
+                logoUrl: linkedProfile.logoUrl || '',
+                address: {
+                  cep: linkedProfile.address?.cep || '',
+                  street: linkedProfile.address?.street || '',
+                  number: linkedProfile.address?.number || '',
+                  complement: linkedProfile.address?.complement || '',
+                  neighborhood: linkedProfile.address?.neighborhood || '',
+                  city: linkedProfile.address?.city || '',
+                  state: linkedProfile.address?.state || '',
+                }
+              },
+              bank: linkedSettings.bank || { bankName: '', accountType: 'CORRENTE', agency: '', accountNumber: '', pixKey: '', pixKeyType: 'CPF' },
+              paymentGateway: linkedSettings.paymentGateway || { provider: 'MERCADO_PAGO', enabled: false, apiKey: '', apiToken: '', environment: 'SANDBOX' },
+              shippingGateway: linkedSettings.shippingGateway || { provider: 'MELHOR_ENVIO', enabled: false, apiToken: '', environment: 'SANDBOX' }
+            });
+            writeCachedJson(CD_SETTINGS_CACHE_KEY, {
               profile: {
                 fantasyName: linkedProfile.name || '',
                 companyName: linkedProfile.managerName || linkedProfile.name || '',
@@ -184,6 +266,31 @@ const App: React.FC<RSCDAppProps> = ({ cdId: propCdId, userId: propUserId, onBac
               activeCustomers: 0,
               monthlyCycles: 0,
             });
+            writeCachedJson(CD_CACHE_KEY, {
+              id: cd.id,
+              name: cd.name || 'CD Em Configuração',
+              type: (cd.type === 'cd' ? 'PROPRIO' : cd.type?.toUpperCase()) || 'PROPRIO',
+              managerName: cd.manager_name || cd.name || '',
+              avatarUrl: cd.avatar_url || undefined,
+              faviconUrl: cd.favicon_url || undefined,
+              logoUrl: cd.logo_url || undefined,
+              region: cd.address_city ? `${cd.address_city} - ${cd.address_state}` : '',
+              walletBalance: parseFloat(cd.wallet_balance || '0'),
+              activeCustomers: 0,
+              monthlyCycles: 0,
+              document: cd.cpf || cd.cnpj || '',
+              email: cd.email || '',
+              phone: cd.phone || '',
+              address: {
+                cep: cd.address_zip || '',
+                street: cd.address_street || '',
+                number: cd.address_number || '',
+                complement: cd.address_complement || '',
+                neighborhood: cd.address_neighborhood || '',
+                city: cd.address_city || '',
+                state: cd.address_state || ''
+              }
+            });
 
             // Apply dynamic branding (favicon and logo from DB)
             if (cd.favicon_url || cd.logo_url) {
@@ -217,15 +324,94 @@ const App: React.FC<RSCDAppProps> = ({ cdId: propCdId, userId: propUserId, onBac
               paymentGateway: cdSettingsExt.paymentGateway || { provider: 'MERCADO_PAGO', enabled: false, apiKey: '', apiToken: '', environment: 'SANDBOX' },
               shippingGateway: cdSettingsExt.shippingGateway || { provider: 'MELHOR_ENVIO', enabled: false, apiToken: '', environment: 'SANDBOX' }
             });
+            writeCachedJson(CD_SETTINGS_CACHE_KEY, {
+              profile: {
+                fantasyName: cd.name || '',
+                companyName: cd.manager_name || cd.name || '',
+                document: cd.cpf || cd.cnpj || '',
+                email: cd.email || '',
+                phone: cd.phone || '',
+                avatarUrl: cd.avatar_url || '',
+                faviconUrl: cd.favicon_url || '',
+                logoUrl: cd.logo_url || '',
+                address: {
+                  cep: cd.address_zip || '',
+                  street: cd.address_street || '',
+                  number: cd.address_number || '',
+                  complement: cd.address_complement || '',
+                  neighborhood: cd.address_neighborhood || '',
+                  city: cd.address_city || '',
+                  state: cd.address_state || ''
+                }
+              },
+              bank: cdSettingsExt.bank || { bankName: '', accountType: 'CORRENTE', agency: '', accountNumber: '', pixKey: cd.pix_key || '', pixKeyType: 'CPF' },
+              paymentGateway: cdSettingsExt.paymentGateway || { provider: 'MERCADO_PAGO', enabled: false, apiKey: '', apiToken: '', environment: 'SANDBOX' },
+              shippingGateway: cdSettingsExt.shippingGateway || { provider: 'MELHOR_ENVIO', enabled: false, apiToken: '', environment: 'SANDBOX' }
+            });
           } else {
             console.warn('[RS-CDS] No CDs registered in the database');
-            setUserProfile(prev => ({
-              ...prev,
-              name: 'Nenhum CD cadastrado',
-              managerName: 'Cadastre um CD no Admin'
-            }));
-            setLoading(false);
-            return;
+            const cachedProfile = readCachedJson<CDProfile>(CD_CACHE_KEY);
+            const cachedSettings = readCachedJson<SettingsData>(CD_SETTINGS_CACHE_KEY);
+            if (cachedProfile?.id) {
+              targetCdId = cachedProfile.id;
+              setUserProfile(cachedProfile);
+              setCdRecordId(cachedProfile.id);
+              setCdBranding({
+                faviconUrl: cachedProfile.faviconUrl || undefined,
+                logoUrl: cachedProfile.logoUrl || undefined
+              });
+              if (cachedSettings) {
+                setAppSettings(cachedSettings);
+              }
+            } else {
+              const fallbackProfile = await dataService.getCDProfile(HARDCODED_PRIMARY_CD_ID);
+              if (fallbackProfile) {
+                targetCdId = fallbackProfile.id;
+                setUserProfile(fallbackProfile);
+                setCdRecordId(fallbackProfile.id);
+                writeCachedJson(CD_CACHE_KEY, fallbackProfile);
+                setCdBranding({
+                  faviconUrl: fallbackProfile.faviconUrl || undefined,
+                  logoUrl: fallbackProfile.logoUrl || undefined
+                });
+
+                const fallbackSettings = await dataService.getCDSettingsExt(fallbackProfile.id) || {};
+                const normalizedFallbackSettings: SettingsData = {
+                  profile: {
+                    fantasyName: fallbackProfile.name || '',
+                    companyName: fallbackProfile.managerName || fallbackProfile.name || '',
+                    document: fallbackProfile.document || '',
+                    email: fallbackProfile.email || '',
+                    phone: fallbackProfile.phone || '',
+                    avatarUrl: fallbackProfile.avatarUrl || '',
+                    faviconUrl: fallbackProfile.faviconUrl || '',
+                    logoUrl: fallbackProfile.logoUrl || '',
+                    address: {
+                      cep: fallbackProfile.address?.cep || '',
+                      street: fallbackProfile.address?.street || '',
+                      number: fallbackProfile.address?.number || '',
+                      complement: fallbackProfile.address?.complement || '',
+                      neighborhood: fallbackProfile.address?.neighborhood || '',
+                      city: fallbackProfile.address?.city || '',
+                      state: fallbackProfile.address?.state || '',
+                    }
+                  },
+                  bank: fallbackSettings.bank || { bankName: '', accountType: 'CORRENTE', agency: '', accountNumber: '', pixKey: '', pixKeyType: 'CPF' },
+                  paymentGateway: fallbackSettings.paymentGateway || { provider: 'MERCADO_PAGO', enabled: false, apiKey: '', apiToken: '', environment: 'SANDBOX' },
+                  shippingGateway: fallbackSettings.shippingGateway || { provider: 'MELHOR_ENVIO', enabled: false, apiToken: '', environment: 'SANDBOX' }
+                };
+                setAppSettings(normalizedFallbackSettings);
+                writeCachedJson(CD_SETTINGS_CACHE_KEY, normalizedFallbackSettings);
+              } else {
+                setUserProfile(prev => ({
+                  ...prev,
+                  name: 'Nenhum CD cadastrado',
+                  managerName: 'Cadastre um CD no Admin'
+                }));
+                setLoading(false);
+                return;
+              }
+            }
           }
         } else {
           // Load specific CD by ID
@@ -233,12 +419,39 @@ const App: React.FC<RSCDAppProps> = ({ cdId: propCdId, userId: propUserId, onBac
 
           if (cdSpecific) {
             const profile = await dataService.getCDProfile(targetCdId);
-            if (profile) setUserProfile(profile);
+            if (profile) {
+              setUserProfile(profile);
+              writeCachedJson(CD_CACHE_KEY, profile);
+            }
 
             const cdSettingsExt = await dataService.getCDSettingsExt(targetCdId) || {};
 
             // Also populate Settings with this CD's data
             setAppSettings({
+              profile: {
+                fantasyName: cdSpecific.name || '',
+                companyName: cdSpecific.manager_name || cdSpecific.name || '',
+                document: cdSpecific.cpf || cdSpecific.cnpj || '',
+                email: cdSpecific.email || '',
+                phone: cdSpecific.phone || '',
+                avatarUrl: cdSpecific.avatar_url || '',
+                faviconUrl: cdSpecific.favicon_url || '',
+                logoUrl: cdSpecific.logo_url || '',
+                address: {
+                  cep: cdSpecific.address_zip || '',
+                  street: cdSpecific.address_street || '',
+                  number: cdSpecific.address_number || '',
+                  complement: cdSpecific.address_complement || '',
+                  neighborhood: cdSpecific.address_neighborhood || '',
+                  city: cdSpecific.address_city || '',
+                  state: cdSpecific.address_state || ''
+                }
+              },
+              bank: cdSettingsExt.bank || { bankName: '', accountType: 'CORRENTE', agency: '', accountNumber: '', pixKey: cdSpecific.pix_key || '', pixKeyType: 'CPF' },
+              paymentGateway: cdSettingsExt.paymentGateway || { provider: 'MERCADO_PAGO', enabled: false, apiKey: '', apiToken: '', environment: 'SANDBOX' },
+              shippingGateway: cdSettingsExt.shippingGateway || { provider: 'MELHOR_ENVIO', enabled: false, apiToken: '', environment: 'SANDBOX' }
+            });
+            writeCachedJson(CD_SETTINGS_CACHE_KEY, {
               profile: {
                 fantasyName: cdSpecific.name || '',
                 companyName: cdSpecific.manager_name || cdSpecific.name || '',
@@ -273,15 +486,35 @@ const App: React.FC<RSCDAppProps> = ({ cdId: propCdId, userId: propUserId, onBac
         setCdRecordId(targetCdId);
 
         // 4. Load orders, products, transactions in parallel
-        const [ordersData, productsData, transactionsData] = await Promise.all([
+        const [ordersData, productsData, transactionsData, financialData] = await Promise.all([
           dataService.getOrders(targetCdId),
           dataService.getProducts(targetCdId),
-          dataService.getTransactions(targetCdId)
+          dataService.getTransactions(targetCdId),
+          dataService.getFinancialData(targetCdId)
         ]);
 
         setOrders(ordersData);
         setProducts(productsData);
         setTransactions(transactionsData);
+        if (financialData) {
+          const nextWalletBalance = Number(
+            financialData.withdrawableBalance
+            ?? financialData.availableBalance
+            ?? financialData.storedBalance
+            ?? computeWithdrawableBalance(transactionsData)
+          );
+          setUserProfile(prev => ({
+            ...prev,
+            walletBalance: nextWalletBalance
+          }));
+          const cachedProfile = readCachedJson<CDProfile & { address?: any }>(CD_CACHE_KEY);
+          if (cachedProfile?.id === targetCdId) {
+            writeCachedJson(CD_CACHE_KEY, {
+              ...cachedProfile,
+              walletBalance: nextWalletBalance
+            });
+          }
+        }
 
       } catch (err) {
         console.error('[RS-CDS] Error loading data:', err);
@@ -328,14 +561,34 @@ const App: React.FC<RSCDAppProps> = ({ cdId: propCdId, userId: propUserId, onBac
 
   const refreshData = async () => {
     if (!cdRecordId) return;
-    const [ordersData, productsData, transactionsData] = await Promise.all([
+    const [ordersData, productsData, transactionsData, financialData] = await Promise.all([
       dataService.getOrders(cdRecordId),
       dataService.getProducts(cdRecordId),
-      dataService.getTransactions(cdRecordId)
+      dataService.getTransactions(cdRecordId),
+      dataService.getFinancialData(cdRecordId)
     ]);
     setOrders(ordersData);
     setProducts(productsData);
     setTransactions(transactionsData);
+    if (financialData) {
+      const nextWalletBalance = Number(
+        financialData.withdrawableBalance
+        ?? financialData.availableBalance
+        ?? financialData.storedBalance
+        ?? computeWithdrawableBalance(transactionsData)
+      );
+      setUserProfile(prev => ({
+        ...prev,
+        walletBalance: nextWalletBalance
+      }));
+      const cachedProfile = readCachedJson<CDProfile & { address?: any }>(CD_CACHE_KEY);
+      if (cachedProfile?.id === cdRecordId) {
+        writeCachedJson(CD_CACHE_KEY, {
+          ...cachedProfile,
+          walletBalance: nextWalletBalance
+        });
+      }
+    }
   };
 
   useEffect(() => {
@@ -417,7 +670,7 @@ const App: React.FC<RSCDAppProps> = ({ cdId: propCdId, userId: propUserId, onBac
         </header>
 
         <div className="animate-fade-in-up pb-10 flex-1">
-          {currentView === 'DASHBOARD' && <Dashboard profile={userProfile} orders={orders} onNavigate={handleNavigate} />}
+          {currentView === 'DASHBOARD' && <Dashboard profile={userProfile} orders={orders} transactions={transactions} onNavigate={handleNavigate} />}
           {currentView === 'PEDIDOS' && <Orders orders={orders} onNavigate={handleNavigate} cdId={cdRecordId} />}
           {currentView === 'ESTOQUE' && <Inventory products={products} walletBalance={userProfile.walletBalance} cdId={cdRecordId} profile={userProfile} />}
           {currentView === 'FINANCEIRO' && <Financial profile={userProfile} transactions={transactions} cdId={cdRecordId} />}

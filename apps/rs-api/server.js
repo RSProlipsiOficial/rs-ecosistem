@@ -22,6 +22,7 @@ app.use(helmet());
 app.use(cors({
   origin: [
     'http://localhost:3000',
+    'http://localhost:3003',
     'http://localhost:5001',
     'http://localhost:5002',
     'http://localhost:5003',

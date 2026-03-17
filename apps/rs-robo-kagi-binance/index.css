@@ -1,0 +1,55 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-zinc-950 text-zinc-100 antialiased;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+}
+
+@layer components {
+  .rs-card {
+    @apply bg-zinc-900/50 border border-zinc-800 backdrop-blur-sm rounded-xl overflow-hidden;
+  }
+  
+  .rs-button-primary {
+    @apply bg-amber-500 hover:bg-amber-600 text-zinc-950 font-bold py-2 px-4 rounded-lg transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .rs-button-secondary {
+    @apply bg-zinc-800 hover:bg-zinc-700 text-zinc-100 font-semibold py-2 px-4 rounded-lg transition-all duration-200;
+  }
+
+  .rs-input {
+    @apply bg-zinc-900 border border-zinc-800 text-zinc-100 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 transition-all;
+  }
+
+  .rs-text-gold {
+    @apply text-amber-500;
+  }
+
+  .rs-gradient-text {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-amber-400 to-amber-600;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #3f3f46; /* zinc-700 */
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: #52525b; /* zinc-600 */
+}

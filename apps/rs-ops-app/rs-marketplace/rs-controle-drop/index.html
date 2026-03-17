@@ -5,8 +5,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>RS Controle Drop</title>
-  <link rel="icon" type="image/x-icon" href="/favicon.ico" />
-  <link rel="apple-touch-icon" href="/logo-rs.png" />
+  <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/RS-Prolipsi/assets/main/logo_rs_gold.png" />
+  <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/RS-Prolipsi/assets/main/logo_rs_gold.png" />
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -69,21 +69,26 @@
 <body>
   <div id="root"></div>
   <script>
-    // FIX: Robust Service Worker registration.
-    // 1. No 'load' listener to avoid InvalidStateError in sandboxes.
-    // 2. Explicit URL construction to avoid Origin Mismatch errors.
+    const isLocalhost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+
     if ('serviceWorker' in navigator) {
-      try {
-        const swUrl = new URL('sw.js', window.location.href);
-        navigator.serviceWorker.register(swUrl)
-          .then(registration => {
-            console.log('ServiceWorker registered with scope: ', registration.scope);
-          })
-          .catch(err => {
-            console.log('ServiceWorker registration failed (non-critical): ', err);
-          });
-      } catch (e) {
-        console.error('SW Setup Error:', e);
+      if (isLocalhost) {
+        navigator.serviceWorker.getRegistrations()
+          .then((registrations) => Promise.all(registrations.map((registration) => registration.unregister())))
+          .catch(() => {});
+      } else {
+        try {
+          const swUrl = new URL('sw.js', window.location.href);
+          navigator.serviceWorker.register(swUrl)
+            .then(registration => {
+              console.log('ServiceWorker registered with scope: ', registration.scope);
+            })
+            .catch(err => {
+              console.log('ServiceWorker registration failed (non-critical): ', err);
+            });
+        } catch (e) {
+          console.error('SW Setup Error:', e);
+        }
       }
     }
   </script>

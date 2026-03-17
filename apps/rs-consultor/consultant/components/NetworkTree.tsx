@@ -47,7 +47,13 @@ const getUserColor = (id: string, name: string): string => {
 const NodeCard: FC<{ node: NetworkNode }> = ({ node }) => {
     const { bgColor, iconColor } = pinColorMap[node.pin || 'Iniciante'] || pinColorMap['Iniciante'];
     const normalizedStatus = (node.status || '').toLowerCase();
-    const statusKey = normalizedStatus.includes('ativ') ? 'active' : (normalizedStatus.includes('pendent') ? 'pending' : 'inactive');
+    
+    // Tratando termos em inglês (do BD) e português
+    const isInactive = normalizedStatus.includes('inativ') || normalizedStatus.includes('inactiv') || normalizedStatus === 'inactive' || normalizedStatus === 'inativo';
+    const isActive = (normalizedStatus.includes('ativ') || normalizedStatus.includes('activ')) && !isInactive;
+    const isPending = normalizedStatus.includes('pendent') || normalizedStatus.includes('pending');
+    
+    const statusKey = isInactive ? 'inactive' : (isActive ? 'active' : (isPending ? 'pending' : 'inactive'));
     const statusInfo = statusMap[statusKey as keyof typeof statusMap] || statusMap.inactive;
     const StatusIcon = !node.isEmpty ? statusInfo.icon : () => null;
 
@@ -68,7 +74,13 @@ const NodeCard: FC<{ node: NetworkNode }> = ({ node }) => {
     const initials = generateInitials(node.name);
 
     return (
-        <div className="flex flex-col items-center group select-none">
+        <div className="flex flex-col items-center group select-none relative">
+            {!node.isEmpty && (
+                <div className={`absolute -top-1/4 right-0 z-20 flex items-center justify-center space-x-1 text-[8px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-brand-dark/90 border border-brand-gray shadow-md ${statusInfo.color}`}>
+                    <StatusIcon size={10} />
+                    <span>{statusInfo.label}</span>
+                </div>
+            )}
             <div className="relative w-24 h-24 flex items-center justify-center transition-all duration-300 transform group-hover:scale-105" style={{ clipPath: 'polygon(50% 0, 100% 50%, 50% 100%, 0 50%)' }}>
                 <div
                     className="absolute inset-0 opacity-80 group-hover:opacity-100 transition-opacity"
@@ -95,13 +107,9 @@ const NodeCard: FC<{ node: NetworkNode }> = ({ node }) => {
                     </div>
                 )}
             </div>
-            <div className="text-center mt-2 w-28">
+            <div className="text-center mt-2 w-28 pb-4">
                 <p className="font-bold text-white text-xs truncate" title={node.name}>{node.name}</p>
                 {node.pin && <p className="text-[10px] font-semibold" style={{ color: iconColor }}>{node.pin}</p>}
-                <div className={`flex items-center justify-center space-x-1 text-[10px] ${statusInfo.color}`}>
-                    <StatusIcon size={10} />
-                    <span>{statusInfo.label}</span>
-                </div>
             </div>
         </div>
     );

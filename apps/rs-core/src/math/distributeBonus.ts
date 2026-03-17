@@ -169,10 +169,10 @@ export async function calculateCareerBonus(
     pin_nivel: number;
     linhas_diretas: { linha: number; ciclos: number }[];
   }
-): Promise<BonusDistribution> {
+): Promise<BonusDistribution & { bestPin?: any }> {
   const cfg = await getSigmaConfigCore();
   if (!(await isActiveInMatrixBase(consultor.id))) {
-    return { tipo: 'carreira', valor: 0, percentual: cfg.career.percentTotal, beneficiarios: [] }
+    return { tipo: 'carreira', valor: 0, percentual: cfg.career.percentTotal, beneficiarios: [], bestPin: cfg.career.pins[0] }
   }
 
   // 1. Encontrar o maior PIN atingido (acumulado no trimestre)
@@ -198,7 +198,7 @@ export async function calculateCareerBonus(
   const quarterStart = new Date(now.getFullYear(), quarter * 3, 1).toISOString();
 
   const { data: results } = await sb.from('wallet_transactions').select('amount').eq('user_id', consultor.id).eq('type', 'bonus_career').gte('created_at', quarterStart);
-  const alreadyPaid = (results || []).reduce((sum, t) => sum + Number(t.amount), 0);
+  const alreadyPaid = (results || []).reduce((sum: number, t: any) => sum + Number(t.amount), 0);
 
   const toPay = Math.max(0, bestPin.rewardValue - alreadyPaid);
 
@@ -206,7 +206,8 @@ export async function calculateCareerBonus(
     tipo: 'carreira',
     valor: +toPay.toFixed(2),
     percentual: cfg.career.percentTotal,
-    beneficiarios: toPay > 0 ? [{ consultor_id: consultor.id, valor: +toPay.toFixed(2), percentual: cfg.career.percentTotal }] : []
+    beneficiarios: toPay > 0 ? [{ consultor_id: consultor.id, valor: +toPay.toFixed(2), percentual: cfg.career.percentTotal }] : [],
+    bestPin
   };
 }
 
@@ -235,8 +236,32 @@ export async function distributeAllBonuses(cycle: CycleData) {
 
   // 4. Carreira
   const consultorData = await getConsultorCareerData(cycle.consultor_id);
-  const careerBonus = await calculateCareerBonus(cycle.cycle_value, consultorData);
+  const careerBonusResult = await calculateCareerBonus(cycle.cycle_value, consultorData);
+  const careerBonus: BonusDistribution = {
+    tipo: careerBonusResult.tipo,
+    valor: careerBonusResult.valor,
+    percentual: careerBonusResult.percentual,
+    beneficiarios: careerBonusResult.beneficiarios
+  };
   distributions.push(careerBonus);
+
+  // 4.1 Persistência de Rank (se atingiu novo nível)
+  const bestPin = careerBonusResult.bestPin;
+  if (bestPin && bestPin.level > consultorData.pin_nivel) {
+    console.log(`🏆 [Career] Evolução de PIN detectada para ${cycle.consultor_id}: ${bestPin.name} (Lvl ${bestPin.level})`);
+    await sb.from('consultores').update({
+      pin_atual: bestPin.name,
+      pin_nivel: bestPin.level,
+      updated_at: new Date().toISOString()
+    }).eq('id', cycle.consultor_id);
+
+    // Auditoria de Carreira
+    await sb.from('audit_logs').insert({
+      user_id: consultorData.user_id_auth, // Ajustado abaixo
+      action: 'career_rank_up',
+      details: { old_pin: consultorData.pin_nivel, new_pin: bestPin.level, pin_name: bestPin.name }
+    });
+  }
 
   // 5. Liberação por Reentrada
   const { count: cycleCount } = await sb.from('matriz_cycles').select('*', { count: 'exact', head: true }).eq('consultor_id', cycle.consultor_id).eq('status', 'completed');
@@ -317,19 +342,35 @@ async function getUplines(id: string, levels: number): Promise<{ id: string; niv
 
 async function getConsultorCareerData(id: string) {
   const sb = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY!);
-  const { data: c } = await sb.from('consultores').select('pin_nivel').eq('id', id).single();
+  const { data: c } = await sb.from('consultores').select('pin_nivel, user_id').eq('id', id).single();
   const now = new Date(); const q = Math.floor(now.getMonth() / 3);
   const start = new Date(now.getFullYear(), q * 3, 1).toISOString();
+  
   const { data: directs } = await sb.from('consultores').select('id').eq('patrocinador_id', id);
   const linhas = [];
+  
   if (directs) {
     for (let i = 0; i < directs.length; i++) {
-      const { data: teamIds } = await sb.rpc('get_team_ids', { root_id: directs[i].id });
-      const { count } = await sb.from('matriz_cycles').select('*', { count: 'exact', head: true }).in('consultor_id', teamIds || [directs[i].id]).eq('status', 'completed').gte('completed_at', start);
+      const directId = directs[i].id;
+      
+      // FILTRO: Só conta ciclos da linha se o direto estiver ATIVO no mês atual
+      const active = await isActiveInMatrixBase(directId);
+      if (!active) {
+        console.log(`  ⏭️  Direto ${directId} inativo no mês. Ignorando ciclos da linha para carreira.`);
+        linhas.push({ linha: i + 1, ciclos: 0 });
+        continue;
+      }
+
+      const { data: teamIds } = await sb.rpc('get_team_ids', { root_id: directId });
+      const { count } = await sb.from('matriz_cycles').select('*', { count: 'exact', head: true })
+        .in('consultor_id', teamIds || [directId])
+        .eq('status', 'completed')
+        .gte('completed_at', start);
+      
       linhas.push({ linha: i + 1, ciclos: count || 0 });
     }
   }
-  return { id, pin_nivel: c?.pin_nivel || 1, linhas_diretas: linhas };
+  return { id, user_id_auth: c?.user_id, pin_nivel: c?.pin_nivel || 1, linhas_diretas: linhas };
 }
 
 export default { distributeAllBonuses };
