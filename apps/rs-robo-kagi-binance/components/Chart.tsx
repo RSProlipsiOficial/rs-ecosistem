@@ -176,16 +176,53 @@ const Chart: React.FC<ChartProps> = (props) => {
     }, [updateChartData, focusSymbol, wsStatus]);
 
     useEffect(() => {
-        if (latestPrice && priceSeries.current && lastCandle) {
-            if (latestPrice.time >= (lastCandle.time as number)) {
-                const newCandle = { ...lastCandle };
-                newCandle.close = latestPrice.price;
-                newCandle.high = Math.max(newCandle.high, latestPrice.price);
-                newCandle.low = Math.min(newCandle.low, latestPrice.price);
-                priceSeries.current.update(newCandle);
+        if (latestPrice && priceSeries.current) {
+            // Se não temos lastCandle, não podemos fazer o merge, mas podemos tentar criar uma vela simples
+            if (!lastCandle) {
+                 priceSeries.current.update({
+                    time: latestPrice.time as Time,
+                    open: latestPrice.price,
+                    high: latestPrice.price,
+                    low: latestPrice.price,
+                    close: latestPrice.price
+                });
+                return;
+            }
+
+            // Mapeamento de segundos por timeframe
+            const tfSeconds: Record<string, number> = {
+                '1m': 60, '5m': 300, '15m': 900, '30m': 1800, '1h': 3600, '4h': 14400, '1D': 86400
+            };
+            const interval = tfSeconds[timeframe] || 3600;
+            
+            // Arredondar tempo do tick para o início do intervalo da vela
+            const candleTime = Math.floor(latestPrice.time / interval) * interval;
+            const lastTime = lastCandle.time as number;
+
+            if (candleTime >= lastTime) {
+                if (candleTime === lastTime) {
+                    // Atualiza vela existente
+                    const updated = { ...lastCandle };
+                    updated.close = latestPrice.price;
+                    updated.high = Math.max(updated.high, latestPrice.price);
+                    updated.low = Math.min(updated.low, latestPrice.price);
+                    priceSeries.current.update(updated);
+                } else {
+                    // Abre nova vela
+                    const newCandle = {
+                        time: candleTime as Time,
+                        open: latestPrice.price,
+                        high: latestPrice.price,
+                        low: latestPrice.price,
+                        close: latestPrice.price
+                    };
+                    priceSeries.current.update(newCandle);
+                    // Opcional: atualizar lastCandle para que o próximo tick atualize a nova
+                    setLastCandle(newCandle);
+                }
             }
         }
-    }, [latestPrice, lastCandle]);
+    }, [latestPrice, lastCandle, timeframe]);
 
     useEffect(() => {
         if (!aiAnalyses || !priceSeries.current) return;

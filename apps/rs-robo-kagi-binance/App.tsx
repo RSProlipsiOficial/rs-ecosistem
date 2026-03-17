@@ -405,7 +405,10 @@ export default function App() {
             if (msg.type === 'price_update') {
                 setLatestPrices(prev => ({
                     ...prev,
-                    [msg.data.symbol]: { price: msg.data.price, time: msg.data.time / 1000 }
+                    [msg.data.symbol]: { 
+                        price: msg.data.price, 
+                        time: msg.data.time / 1000 - 10800 // Ajuste fuso BRT (-3h) para bater com gráfico
+                    }
                 }));
             }
         }, setWsStatus);
